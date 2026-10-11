@@ -1,0 +1,12 @@
+Username,DisplayName,Email,Role,DraftName,Employee,Active
+j.workman,Josh Workman,josh.workman@example.test,admin,Josh,,1
+d.whitfield,Dana Whitfield,dana.whitfield@example.test,pic,Dana,E101,1
+m.oyelaran,Marcus Oyelaran,marcus.oyelaran@example.test,pic,Marcus,E102,1
+p.raman,Priya Raman,priya.raman@example.test,pic,Priya,E103,1
+t.lindqvist,Tom Lindqvist,tom.lindqvist@example.test,pic,Tom,E104,1
+e.castellanos,Elena Castellanos,elena.castellanos@example.test,pic,Elena,E105,1
+b.okafor,Ben Okafor,ben.okafor@example.test,pic,Ben,E106,1
+j.ames,Jordan Ames,jordan.ames@example.test,pic,Jordan,E107,0
+m.hale,Morgan Hale,morgan.hale@example.test,finance,Morgan,,1
+c.brandt,Casey Brandt,casey.brandt@example.test,marketing,Casey,,1
+kent,Kent,kent@example.test,sysadmin,Kent,,1
