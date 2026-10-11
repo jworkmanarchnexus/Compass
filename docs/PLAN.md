@@ -26,5 +26,5 @@ Needs your attention, data checks, next runs, firm snapshot tiles (hidden until 
 ## Phase 5+: BD report, then Pipeline watch
 Blocked on open questions 3 and 4 (source queries, MWIP weighting).
 
-## Phase N: Handoff quality
+## Phase N: Handoff quality (done: SPECs, fixtures guide, FOR-KENT, DATA-MODEL, OPEN-QUESTIONS)
 SPECs, language-neutral fixtures, a `docs/FOR-KENT.md`.

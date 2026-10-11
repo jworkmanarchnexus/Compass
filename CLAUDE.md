@@ -15,6 +15,10 @@ This repo is a working prototype on Josh's computer only (localhost) until Kent'
 | `reference/handoff/sql/compass_negative_projects.sql` | Validated Vantagepoint query. Source of truth for profit math. |
 | `reference/handoff/design/` | Clickable mockup (`portal-mockup.html`), 1440px screens, page source. A design reference, not code to ship. |
 | `docs/PLAN.md` | Phases, in order. One at a time. |
+| `docs/SPEC-turnaround.md`, `docs/SPEC-shell-and-admin.md` | What is built: behavior, rules, permissions. Written from the tested code. |
+| `docs/DATA-MODEL.md` | The tables as built and the invariants the database enforces. |
+| `docs/FOR-KENT.md` | How to run it, what to keep, the five seams to replace, the API. |
+| `docs/OPEN-QUESTIONS.md` | Everything still undecided, with the default today. |
 | `docs/DECISIONS.md` | Decisions made, with reasons. |
 
 `reference/` is read-only. Never edit it. `reference/handoff/reference/chatgpt-engine-v0.1` is unreviewed ideas only; ask Josh before adopting anything from it.
