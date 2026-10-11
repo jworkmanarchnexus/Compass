@@ -24,6 +24,9 @@ test('settings: effective dating', () => {
 test('settings: validation', () => {
   for (const c of setFx.valid) assert.strictEqual(settings.isValid(c.key, c.value), c.expect, `${c.key}=${JSON.stringify(c.value)}`);
 });
+test('settings: rules that span several settings', () => {
+  for (const c of setFx.crossCheck) assert.strictEqual(settings.crossCheck(Object.assign({}, settings.DEFAULTS, c.changes)) === null, c.ok, c.name);
+});
 test('settings: every default is itself valid', () => {
   for (const [k, v] of Object.entries(settings.DEFAULTS)) assert.ok(settings.isValid(k, v), k);
 });

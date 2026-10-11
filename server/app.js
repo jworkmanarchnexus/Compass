@@ -9,6 +9,10 @@ const runsDb = require('./runs');
 const schedule = require('../modules/turnaround/logic/schedule');
 const { createLocalSource } = require('./vp-local');
 const { createFileMailer } = require('./mail');
+const planDb = require('./plan');
+const tdb = require('./turnaround');
+const planLogic = require('../modules/turnaround/logic/plan');
+const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
 const ROOT = path.resolve(__dirname, '..');
 const STATIC_DIRS = ['shell', 'shared', 'modules'];
@@ -60,7 +64,8 @@ function createServer(db, opts) {
   const o = opts || {};
   const source = o.source || createLocalSource();
   const mailer = o.mailer || createFileMailer();
-  const today = o.today || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+  // COMPASS_TODAY=2026-10-07 pins the date for a local demo (the seed data is written around that day)
+  const today = o.today || (() => process.env.COMPASS_TODAY || planDb.localDate(Date.now()));
   const baseUrl = o.baseUrl || 'http://localhost:5281';
   /* ---- settings (effective-dated rows, only ever added) ---- */
   const settingRows = () => db.all('SELECT key, value_json, effective_from, set_by FROM settings').map(r => ({ key: r.key, value: JSON.parse(r.value_json), effectiveFrom: r.effective_from, setBy: r.set_by }));
@@ -98,7 +103,9 @@ function createServer(db, opts) {
 
     if (p === '/api/me' && method === 'GET') {
       const access = currentSettings().access;
-      return sendJson(res, 200, Object.assign(userOut(user), roles.describe(user.role, access)));
+      const me = Object.assign(userOut(user), roles.describe(user.role, access));
+      if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db) };
+      return sendJson(res, 200, me);
     }
 
     if (p === '/api/admin/settings' && method === 'GET') {
@@ -120,6 +127,9 @@ function createServer(db, opts) {
         if (!settingsRules.isValid(k, v)) throw new HttpError(400, `That value is not allowed for ${k}.`);
       }
       const before = currentSettings();
+      const merged = Object.assign({}, before, changes);
+      const problem = settingsRules.crossCheck(merged);
+      if (problem) throw new HttpError(400, problem);
       let saved = 0;
       db.tx(() => {
         for (const [k, v] of Object.entries(changes)) {
@@ -199,11 +209,12 @@ function createServer(db, opts) {
       audit(user, 'run.build', runLabel(out.id), { runId: out.id });
       return sendJson(res, 201, runsDb.runDetail(db, out.id, { withWarnings: true }));
     }
-    const rm = /^\/api\/admin\/runs\/([^/]+)(?:\/(rebuild|publish|archive))?$/.exec(p);
+    const rm = /^\/api\/admin\/runs\/([^/]+)(?:\/(rebuild|publish|archive|overview))?$/.exec(p);
     if (rm) {
       requireTab(user, 'runs', 'edit'); // run contents are the admin's alone; the system admin sees the list only
       const id = rm[1]; const action = rm[2];
       if (!action && method === 'GET') return sendJson(res, 200, runsDb.runDetail(db, id, { withWarnings: true }));
+      if (action === 'overview' && method === 'GET') return sendJson(res, 200, Object.assign(tdb.buildOverview(db, id, { role: user.role, userId: user.id, employeeCode: user.employee_code }, { today: today(), settings: currentSettings() }), { warnings: runsDb.runDetail(db, id, { withWarnings: true }).warnings }));
       if (action && method === 'POST') {
         const body = await readJson(req);
         if (action === 'rebuild') {
@@ -223,9 +234,62 @@ function createServer(db, opts) {
     }
 
     /* what PICs, Finance and others may see: the last published run, never a draft */
+    const viewerOf = u => ({ role: u.role, userId: u.id, employeeCode: u.employee_code });
+    const canSee = () => roles.canView(user.role, 'turnaround', currentSettings().access);
     if (p === '/api/turnaround/current' && method === 'GET') {
-      if (!roles.canView(user.role, 'turnaround', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
-      return sendJson(res, 200, runsDb.currentPublished(db) || { run: null, projects: [] });
+      if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
+      const cur = lifecycleLogic.currentPublished(runsDb.allRuns(db), runsDb.KIND);
+      if (!cur) return sendJson(res, 200, { run: null });
+      return sendJson(res, 200, tdb.buildOverview(db, cur.id, viewerOf(user), { today: today(), settings: currentSettings() }));
+    }
+
+    /* a project's plan page and its log. Reading: anyone who may see Turnaround. Writing: the PIC on that project, or an admin note. */
+    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries)|\/commitments\/([^/]+)\/(done|revise))?$/.exec(p);
+    if (pp) {
+      if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
+      const wbs1 = decodeURIComponent(pp[1]);
+      if (!pp[2] && !pp[3] && method === 'GET') {
+        const cycle = Number(url.searchParams.get('cycle')) || undefined;
+        return sendJson(res, 200, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings: currentSettings(), cycle }));
+      }
+      if (method === 'POST') {
+        const body = await readJson(req);
+        const settings = currentSettings();
+        if (pp[2]) planDb.addEntry(db, user, wbs1, body, today());
+        else if (pp[4] === 'done') planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
+        else planDb.reviseDate(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
+        return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
+      }
+    }
+
+    /* ---- check-in drafts and the daily job: the admin's alone ---- */
+    if (p === '/api/admin/checkins' && method === 'GET') {
+      if (!roles.canView(user.role, 'checkins')) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, tdb.listCheckins(db, { today: today(), settings: currentSettings() }));
+    }
+    const cm = /^\/api\/admin\/checkins\/([^/]+)(?:\/(send|dismiss|undo))?$/.exec(p);
+    if (cm) {
+      if (!roles.canView(user.role, 'checkins')) throw new HttpError(403, 'You do not have access to this.');
+      if (!cm[2] && method === 'PUT') {
+        const body = await readJson(req);
+        tdb.editDraft(db, cm[1], body);
+        return sendJson(res, 200, { ok: true });
+      }
+      if (cm[2] && method === 'POST') {
+        tdb.setDraftStatus(db, cm[1], cm[2], today());
+        audit(user, 'checkin.' + cm[2], cm[1], {});
+        return sendJson(res, 200, tdb.listCheckins(db, { today: today(), settings: currentSettings() }));
+      }
+    }
+    if (p === '/api/admin/daily' && method === 'POST') {
+      requireTab(user, 'reminders', 'edit');
+      const out = tdb.dailyChecks(db, { today: today(), settings: currentSettings(), mailer, baseUrl, adminEmails: db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email) });
+      audit(user, 'daily.run', 'Daily checks', out);
+      return sendJson(res, 200, out);
+    }
+    if (p === '/api/admin/patterns' && method === 'GET') {
+      requireTab(user, 'patterns', 'edit');
+      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today() }));
     }
 
     throw new HttpError(404, 'Not found.');

@@ -6,7 +6,7 @@ const { createServer } = require('../app');
 /* a fresh in-memory database (seeded) with a real server on a random local port */
 async function start(opts) {
   const db = dbmod.open(':memory:');
-  seed(db);
+  seed(db, { demo: !!(opts && opts.demo) }); // most tests want a clean start; `demo: true` loads the two published runs and the plan logs
   const server = createServer(db, Object.assign({ today: () => '2026-10-11', mailer: { sent: [], sendToAdmin(m) { this.sent.push(m); } } }, opts));
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   server.unref(); // a test that fails before close() must not keep the process alive

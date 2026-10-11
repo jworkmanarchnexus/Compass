@@ -8,6 +8,7 @@
     "start": "node server/index.js",
     "seed": "node server/seed.js",
     "run-month": "node server/jobs/monthly-run.js",
+    "daily": "node server/jobs/daily.js",
     "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\""
   }
 }

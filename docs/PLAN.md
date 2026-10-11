@@ -17,7 +17,7 @@ Repo, handoff unpacked untouched in `reference/handoff/`, design system copied f
 - Draft/publish/archive lifecycle with the lock and the `RERUN` rule, tested. Audit log.
 - Josh's email: a stub that writes to a file locally.
 
-## Phase 3: Project Turnaround
+## Phase 3: Project Turnaround (built; see DECISIONS)
 - Josh's review/publish view and PIC view ("Just mine / Everyone"), plan page with the append-only log and commitments, plan status and standing rules (tested), check-in drafts queue.
 
 ## Phase 4: Home

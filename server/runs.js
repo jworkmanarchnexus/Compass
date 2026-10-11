@@ -19,20 +19,39 @@ const lifeRow = r => ({ id: r.id, kind: r.kind, period: r.period, version: r.ver
 
 function allRuns(db) { return db.all('SELECT * FROM runs ORDER BY period DESC, version DESC'); }
 
-/* work out which projects belong on a run for this period, with the settings in force now */
+const prevPeriod = p => (p % 100 === 1 ? (Math.floor(p / 100) - 1) * 100 + 12 : p - 1);
+const trailing = (period, n) => { const out = []; let p = period; for (let i = 0; i < n; i++) { out.unshift(p); p = prevPeriod(p); } return out; };
+
+/* work out which projects belong on a run for this period, with the settings in force now, plus the history the
+   run's charts need: firm-wide month-end figures for 12 months, and each listed project's YTD profit by month this year. */
 function compute(source, period, settings) {
   const pull = source.load(period);
-  const computed = profit.computeProjects({ projects: pull.projects, ledger: pull.ledger, overhead: pull.overhead, runPeriod: period });
-  return selection.selectForRun(computed, settings);
+  const at = p => profit.computeProjects({ projects: pull.projects, ledger: pull.ledger, overhead: pull.overhead, runPeriod: p });
+  const result = selection.selectForRun(at(period), settings);
+  const listed = new Set(result.included.map(p => p.wbs1));
+  const yearStart = Math.floor(period / 100) * 100 + 1;
+  const aggregate = []; const series = [];
+  const months = new Set(trailing(period, 12).concat(trailing(period, period - yearStart + 1)));
+  for (const p of [...months].sort()) {
+    const computed = at(p);
+    if (trailing(period, 12).includes(p)) {
+      const inc = selection.selectForRun(computed, settings).included;
+      aggregate.push({ period: p, negativeYtd: inc.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: inc.length });
+    }
+    if (p >= yearStart) for (const c of computed) if (listed.has(c.wbs1) && c.profit.ytd !== null) series.push({ wbs1: c.wbs1, period: p, profitYtd: c.profit.ytd });
+  }
+  return Object.assign(result, { history: { aggregate, series } });
 }
 
-function fill(db, runId, period, { included, warnings }) {
+function fill(db, runId, period, { included, warnings, history }) {
   for (const p of included) {
     const seen = db.get('SELECT MIN(r.period) AS p FROM run_projects rp JOIN runs r ON r.id = rp.run_id WHERE rp.wbs1 = ? AND rp.run_id <> ?', p.wbs1, runId);
     db.run(`INSERT INTO run_projects (run_id, wbs1, name, pic_code, pm_code, billed_cur, billed_ytd, billed_jtd, profit_cur, profit_ytd, profit_jtd, first_seen_period)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     runId, p.wbs1, p.name, p.principal, p.projMgr, p.billed.cur, p.billed.ytd, p.billed.jtd, p.profit.cur, p.profit.ytd, p.profit.jtd, seen && seen.p ? Math.min(seen.p, period) : period);
   }
+  for (const h of history.aggregate) db.run('INSERT INTO run_history (run_id, period, negative_ytd, below_count) VALUES (?, ?, ?, ?)', runId, h.period, h.negativeYtd, h.belowCount);
+  for (const h of history.series) db.run('INSERT INTO run_project_history (run_id, wbs1, period, profit_ytd) VALUES (?, ?, ?, ?)', runId, h.wbs1, h.period, h.profitYtd);
   for (const w of warnings) db.run('INSERT INTO run_warnings (run_id, kind, wbs1, detail, ytd_billed) VALUES (?, ?, ?, ?, ?)', runId, w.kind, w.wbs1, w.detail, w.ytdBilled);
 }
 
@@ -58,6 +77,8 @@ function rebuildDraft(db, runId, { source, settings }) {
   const result = compute(source, run.period, settings);
   db.tx(() => {
     db.run('DELETE FROM run_projects WHERE run_id = ?', runId);
+    db.run('DELETE FROM run_history WHERE run_id = ?', runId);
+    db.run('DELETE FROM run_project_history WHERE run_id = ?', runId);
     db.run('DELETE FROM run_warnings WHERE run_id = ?', runId);
     db.run('UPDATE runs SET settings_json = ? WHERE id = ?', JSON.stringify(settings), runId);
     fill(db, runId, run.period, result);
@@ -147,4 +168,4 @@ function runMonthly(db, { source, settings, period, mailer, baseUrl, adminEmails
   return { created: true, id };
 }
 
-module.exports = { KIND, buildDraft, rebuildDraft, publish, archiveAndRerun, listRuns, runDetail, currentPublished, runMonthly, getRun };
+module.exports = { allRuns, KIND, buildDraft, rebuildDraft, publish, archiveAndRerun, listRuns, runDetail, currentPublished, runMonthly, getRun };

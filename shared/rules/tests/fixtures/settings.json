@@ -1,26 +1,224 @@
 {
   "settingAt": [
-    { "name": "no rows gives the default", "rows": [], "key": "due.newProjectDays", "at": 1000, "expect": 14 },
-    { "name": "a row not yet in force is ignored", "rows": [{ "key": "due.newProjectDays", "value": 7, "effectiveFrom": 2000 }], "key": "due.newProjectDays", "at": 1000, "expect": 14 },
-    { "name": "the latest row in force wins", "rows": [{ "key": "due.newProjectDays", "value": 7, "effectiveFrom": 500 }, { "key": "due.newProjectDays", "value": 10, "effectiveFrom": 900 }, { "key": "due.newProjectDays", "value": 3, "effectiveFrom": 2000 }], "key": "due.newProjectDays", "at": 1000, "expect": 10 },
-    { "name": "rows of other keys do not interfere", "rows": [{ "key": "due.afterEntryDays", "value": 45, "effectiveFrom": 1 }], "key": "due.newProjectDays", "at": 1000, "expect": 14 },
-    { "name": "an old run still sees the old value", "rows": [{ "key": "due.afterEntryDays", "value": 45, "effectiveFrom": 5000 }], "key": "due.afterEntryDays", "at": 4999, "expect": 30 }
+    {
+      "name": "no rows gives the default",
+      "rows": [],
+      "key": "due.newProjectDays",
+      "at": 1000,
+      "expect": 14
+    },
+    {
+      "name": "a row not yet in force is ignored",
+      "rows": [
+        {
+          "key": "due.newProjectDays",
+          "value": 7,
+          "effectiveFrom": 2000
+        }
+      ],
+      "key": "due.newProjectDays",
+      "at": 1000,
+      "expect": 14
+    },
+    {
+      "name": "the latest row in force wins",
+      "rows": [
+        {
+          "key": "due.newProjectDays",
+          "value": 7,
+          "effectiveFrom": 500
+        },
+        {
+          "key": "due.newProjectDays",
+          "value": 10,
+          "effectiveFrom": 900
+        },
+        {
+          "key": "due.newProjectDays",
+          "value": 3,
+          "effectiveFrom": 2000
+        }
+      ],
+      "key": "due.newProjectDays",
+      "at": 1000,
+      "expect": 10
+    },
+    {
+      "name": "rows of other keys do not interfere",
+      "rows": [
+        {
+          "key": "due.afterEntryDays",
+          "value": 45,
+          "effectiveFrom": 1
+        }
+      ],
+      "key": "due.newProjectDays",
+      "at": 1000,
+      "expect": 14
+    },
+    {
+      "name": "an old run still sees the old value",
+      "rows": [
+        {
+          "key": "due.afterEntryDays",
+          "value": 45,
+          "effectiveFrom": 5000
+        }
+      ],
+      "key": "due.afterEntryDays",
+      "at": 4999,
+      "expect": 30
+    }
   ],
   "valid": [
-    { "key": "due.newProjectDays", "value": 14, "expect": true },
-    { "key": "due.newProjectDays", "value": -1, "expect": false },
-    { "key": "due.newProjectDays", "value": 14.5, "expect": false },
-    { "key": "due.newProjectDays", "value": "14", "expect": false },
-    { "key": "due.graceUntil", "value": "02-01", "expect": true },
-    { "key": "due.graceUntil", "value": "13-01", "expect": false },
-    { "key": "run.time", "value": "06:00", "expect": true },
-    { "key": "run.time", "value": "6am", "expect": false },
-    { "key": "include.ytdProfitBelow", "value": -5000, "expect": true },
-    { "key": "include.ignoreBilledUnder", "value": -1, "expect": false },
-    { "key": "include.noPic", "value": "unassigned", "expect": true },
-    { "key": "include.noPic", "value": "ignore", "expect": false },
-    { "key": "access", "value": { "marketingTurnaround": true, "picBd": false, "picPipeline": false }, "expect": true },
-    { "key": "access", "value": { "marketingTurnaround": true }, "expect": false },
-    { "key": "no.such.setting", "value": 1, "expect": false }
+    {
+      "key": "due.newProjectDays",
+      "value": 14,
+      "expect": true
+    },
+    {
+      "key": "due.newProjectDays",
+      "value": -1,
+      "expect": false
+    },
+    {
+      "key": "due.newProjectDays",
+      "value": 14.5,
+      "expect": false
+    },
+    {
+      "key": "due.newProjectDays",
+      "value": "14",
+      "expect": false
+    },
+    {
+      "key": "due.graceUntil",
+      "value": "02-01",
+      "expect": true
+    },
+    {
+      "key": "due.graceUntil",
+      "value": "13-01",
+      "expect": false
+    },
+    {
+      "key": "run.time",
+      "value": "06:00",
+      "expect": true
+    },
+    {
+      "key": "run.time",
+      "value": "6am",
+      "expect": false
+    },
+    {
+      "key": "include.ytdProfitBelow",
+      "value": -5000,
+      "expect": true
+    },
+    {
+      "key": "include.ignoreBilledUnder",
+      "value": -1,
+      "expect": false
+    },
+    {
+      "key": "include.noPic",
+      "value": "unassigned",
+      "expect": true
+    },
+    {
+      "key": "include.noPic",
+      "value": "ignore",
+      "expect": false
+    },
+    {
+      "key": "access",
+      "value": {
+        "marketingTurnaround": true,
+        "picBd": false,
+        "picPipeline": false
+      },
+      "expect": true
+    },
+    {
+      "key": "access",
+      "value": {
+        "marketingTurnaround": true
+      },
+      "expect": false
+    },
+    {
+      "key": "no.such.setting",
+      "value": 1,
+      "expect": false
+    },
+    {
+      "key": "ladder.reminder1Days",
+      "value": 3,
+      "expect": true
+    },
+    {
+      "key": "standing.goodOnTime",
+      "value": 101,
+      "expect": false
+    },
+    {
+      "key": "standing.goodOnTime",
+      "value": 85.5,
+      "expect": false
+    },
+    {
+      "key": "visibility.picRecords",
+      "value": "principals",
+      "expect": true
+    },
+    {
+      "key": "visibility.picRecords",
+      "value": "nobody",
+      "expect": false
+    }
+  ],
+  "crossCheck": [
+    {
+      "name": "defaults are fine",
+      "changes": {},
+      "ok": true
+    },
+    {
+      "name": "ladder out of order",
+      "changes": {
+        "ladder.reminder2Days": 2
+      },
+      "ok": false
+    },
+    {
+      "name": "ladder with equal days",
+      "changes": {
+        "ladder.reminder1Days": 10
+      },
+      "ok": false
+    },
+    {
+      "name": "escalated above good (on time)",
+      "changes": {
+        "standing.escalatedOnTime": 90
+      },
+      "ok": false
+    },
+    {
+      "name": "escalated above good (kept)",
+      "changes": {
+        "standing.escalatedKept": 81
+      },
+      "ok": false
+    },
+    {
+      "name": "a valid change",
+      "changes": {
+        "ladder.escalateDays": 30,
+        "standing.goodKept": 90
+      },
+      "ok": true
+    }
   ]
 }

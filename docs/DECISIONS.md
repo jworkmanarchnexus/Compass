@@ -34,3 +34,32 @@
 - **System admin sees the run list but not run contents** (profit by PIC is performance data, not site operation). Same reading as phase 1.
 - **Found while testing:** the shared stylesheet shows the mobile-menu overlay (`.side-scrim`) whenever the window is narrow, which greys out the whole page. Compass overrides it in `shell/shell.css`. **The Toolbox probably has the same problem at narrow widths** (not checked).
 - **Review screen is plain on purpose.** Admin > Report runs > Review is a basic table so the lifecycle can be clicked through; phase 3 builds the mockup's Turnaround page (KPI strip, charts, PIC cards) on top of the same data.
+
+## Phase 3 decisions: Project Turnaround (2026-10-11)
+
+**The plan log**
+- **Append-only, twice over.** There is no API path that edits or deletes an entry, and database triggers refuse any `UPDATE` or `DELETE` on `plan_entries` (a test tries both). A mistake is a Correction entry pointing at the original, which shows "Corrected Jul 21".
+- **Commitments are not their own table.** Whether one is open, done, missed or moved is worked out by replaying the log (`modules/turnaround/logic/plan.js`), so nothing mutable can drift from the history. This replaces the `commitments` and `commitment_events` tables in the handoff's data-model sketch. Entry kinds are explanation, commitment, update, correction, done, date_revised, missed (written by the system) and admin_note.
+- **Entries belong to the project, not the run**; the plan cycle is the calendar year (YTD only, fresh start in January, last year stays readable).
+- **A closed commitment is final.** Done after its date is "not kept" (shown as Done late); a Missed one cannot be reopened. Moving a date needs a reason and keeps every earlier date.
+- **The lever, the number and the actual result never reach a PIC**, not even the author after posting. The server strips them (tested against every PIC, Finance and the plan page). Consequence: the Mark done form cannot say "dollars" or "hours", so it asks for the result "in the same unit as your estimate".
+- **Admin may only add labeled notes**, which never count toward a PIC's record. Only the project's own PIC writes plan content; Finance, Marketing and the system admin cannot.
+
+**Rules I had to choose** (the mockup's own rows disagree with each other, so I wrote one consistent rule and made every number a setting; **please confirm or change**):
+1. **Update due date** = the earlier of (last PIC entry + 30 days) and the next open commitment's date. Status: Overdue past that date; Update due within 14 days (`due.soonDays`); otherwise Current. Current also needs an open commitment. No commitment yet this year = No plan (an explanation alone does not count); its due date is 14 days after the project first appeared on a published run, never before Feb 1.
+2. **Missed**: the daily job records a commitment as Missed 14 days after its date (`due.missedAfterDays`). The mockup shows one marked Missed after 2 days and others still "past due" after 11, so there is no rule to copy.
+3. **On time**: an entry is on time if made by its due date: the first by the first-plan date, each later one within 30 days of the one before. Kept = Done on or before its (current) date.
+4. **Standing** needs a minimum of 3 items behind a measure (`standing.minSample`, my addition). Without it, one missed commitment made a PIC "Escalated". With fewer than 3 on a measure it is left out of the label.
+5. **Drafts are one per PIC per situation** ("overdue", "no plan"), listing that PIC's projects, taking "one per PIC" literally. The mockup shows one project per card because each PIC had one. Reminder 1 at +3 days (casual), reminder 2 at +10 (direct, only if reminder 1 was sent), escalate at +21 (listed as a conversation, no draft). A dismissed draft never returns for that item; a waiting draft is withdrawn if the PIC fixes it. A PIC who wrote in the last 2 days, or was sent a reminder in the last 5, is skipped that day.
+6. **Not built from the ladder:** "Repeat next monthly run" (needs the monthly summary, which does not exist yet).
+7. The mockup's no-plan drafts appear 6 days after a project joins the list; the ladder counts from the due date (14 days), so they would start at 17. Shorten `due.newProjectDays` to see them sooner.
+
+**Screens and data**
+- **One page for everyone.** The server builds the Turnaround page and removes what the viewer may not see (`visibility.picRecords` hides on-time/kept/standing; each PIC always sees their own). The admin reviews a draft run on the same page before publishing. "Just mine / Everyone" is shown to PICs only.
+- **Charts come from the run.** Each run stores 12 months of firm-wide month-end figures and each listed project's YTD profit by month (`run_history`, `run_project_history`), locked with the run, so no page ever asks Vantagepoint. Kent's pull must be able to produce past month-ends (the SQL run once per month, as the Excel report does).
+- **Not built yet:** Export Excel; "Contract fee" and "Billed to date" on the plan page (the validated SQL does not pull fees); market sector on the plan page; Home's "Needs your attention" (phase 4).
+- **Daily job** (`npm run daily`): records Missed, prepares and withdraws drafts, and emails the admin a count and a link on weekdays, once a day. Nothing is scheduled; Kent does that.
+- **`COMPASS_TODAY=2026-10-07`** pins the date. The demo's plan logs are written around the mockup's day; on any other day the statuses shift (days overdue grow) and the daily job may record more Missed. In PowerShell: `$env:COMPASS_TODAY='2026-10-07'; npm.cmd start`.
+- **The demo seed** now has two published runs (August and September) and made-up plan logs, and runs the daily job once on the demo day. September 2026 reproduces the mockup's numbers: 16 projects, -$450,040, 8 of 16 plans current, 4 waiting, 2 new since August. Differences: "3 off" is 0 (no seed project leaves the list), and all 14 continuing projects "got worse" (year-to-date losses only deepen as months pass). The mockup shows 7 and 7.
+- **Fixed from phase 2:** `npm run seed` would have failed once a run was published (the lock triggers blocked the reset). A reset now drops the guard triggers, clears the tables and recreates them. Tested.
+- **Found while testing:** the shell's native `append()` prints a `null` child as the word "null". Fixed on the plan page and the run page (archived runs had it).

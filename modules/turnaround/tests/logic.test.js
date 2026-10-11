@@ -56,3 +56,51 @@ test('schedule: last closed month, first business day, labels', () => {
   for (const c of schedFx.isFirstBusinessDay) assert.strictEqual(sched.isFirstBusinessDay(c.date), c.expect, c.date + ' ' + (c.why || ''));
   for (const c of schedFx.periodLabel) assert.strictEqual(sched.periodLabel(c.period), c.expect);
 });
+
+/* ---- phase 3: the plan log, plan status, standing, drafts ---- */
+const plan = require('../logic/plan');
+const drafts = require('../logic/drafts');
+const planFx = require('./fixtures/plan.json');
+const draftFx = require('./fixtures/drafts.json');
+
+test('plan status: every fixture case', () => {
+  for (const c of planFx.planStatus) {
+    const got = plan.planStatus({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, settings: planFx.settings });
+    for (const [k, v] of Object.entries(c.expect)) assert.strictEqual(got[k], v, `${c.name}: ${k}`);
+  }
+});
+test('commitments: replayed from the log', () => {
+  for (const c of planFx.commitmentStates) {
+    const got = plan.commitmentStates(c.entries).map(s => ({ id: s.id, status: s.status, dueDate: s.dueDate, promisedBy: s.promisedBy, revisions: s.revisions.length, kept: s.kept }));
+    assert.strictEqual(got.length, c.expect.length, c.name);
+    c.expect.forEach((e, i) => { for (const [k, v] of Object.entries(e)) assert.strictEqual(got[i][k], v, `${c.name}: ${k}`); });
+  }
+  for (const c of planFx.commitmentsToMiss) assert.deepStrictEqual(plan.commitmentsToMiss(c.entries, c.today, 14).map(s => s.id), c.expect, c.name);
+});
+test('on time and kept', () => {
+  for (const c of planFx.onTimeStats) assert.deepStrictEqual(plan.onTimeStats({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, settings: planFx.settings }), c.expect, c.name);
+  for (const c of planFx.keptStats) assert.deepStrictEqual(plan.keptStats(c.states), c.expect, c.name);
+});
+test('standing labels', () => {
+  for (const c of planFx.standing) assert.strictEqual(plan.standing({ onTime: c.onTime, kept: c.kept }, Object.assign({}, planFx.settings, c.settings)).label, c.expect, c.name);
+});
+test('who may write what in the plan log', () => {
+  for (const c of planFx.canWrite) assert.strictEqual(plan.canWrite(c.role, c.kind, c.isPic), c.expect, `${c.role} ${c.kind} pic=${c.isPic}`);
+});
+test('check-in drafts: who gets one and when', () => {
+  for (const c of draftFx.cases) {
+    const out = drafts.planDrafts({ today: c.today || draftFx.today, items: c.items, existing: c.existing, lastEntryByPic: c.lastEntryByPic, settings: Object.assign({}, draftFx.settings, c.settings) });
+    assert.deepStrictEqual(out.create.map(d => [d.picUserId, d.situation, d.step, d.tone, d.items.map(i => i.wbs1)]), c.expect.create, c.name + ' (create)');
+    assert.deepStrictEqual(out.withdraw, c.expect.withdraw, c.name + ' (withdraw)');
+    assert.deepStrictEqual(out.escalate.map(x => [x.picUserId, x.wbs1, x.situation, x.daysOverdue]), c.expect.escalate, c.name + ' (escalate)');
+  }
+});
+test('check-in drafts: the words', () => {
+  for (const c of draftFx.text) {
+    const out = drafts.draftText({ tone: c.tone, situation: c.situation, picName: c.picName, items: c.items });
+    assert.strictEqual(out.subject, c.subject, c.name);
+    if (c.body) assert.strictEqual(out.body, c.body, c.name);
+    for (const s of c.contains || []) assert.ok(out.body.includes(s), `${c.name}: ${s}`);
+    assert.ok(!/undefined|NaN|null/.test(out.subject + out.body), c.name + ' has no stray values');
+  }
+});

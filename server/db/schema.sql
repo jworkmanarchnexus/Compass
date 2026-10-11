@@ -130,3 +130,80 @@ BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
 CREATE TRIGGER IF NOT EXISTS runs_no_delete BEFORE DELETE ON runs
 WHEN OLD.status <> 'draft'
 BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+-- ---- Phase 3: the plan log, check-in drafts, and the history a run carries for its charts ----
+
+-- The plan log. Entries belong to the PROJECT (wbs1), never to a run, and are APPEND-ONLY: nothing here is ever edited or deleted.
+-- A mistake is fixed by a 'correction' entry that points back at the original. Commitments are not a table of their own:
+-- whether one is open, done, missed or moved is worked out by replaying the log (modules/turnaround/logic/plan.js).
+CREATE TABLE IF NOT EXISTS plan_entries (
+  id                TEXT PRIMARY KEY,
+  wbs1              TEXT NOT NULL,
+  author_id         TEXT,                          -- NULL = the system (it writes only 'missed')
+  kind              TEXT NOT NULL CHECK (kind IN ('explanation','commitment','update','correction','done','date_revised','missed','admin_note')),
+  body              TEXT NOT NULL DEFAULT '',
+  created_at        INTEGER NOT NULL,              -- ms, strictly increasing, so order within a day is exact
+  entry_date        TEXT NOT NULL,                 -- the calendar date it was written, 'YYYY-MM-DD'
+  corrects_entry_id TEXT,
+  commitment_id     TEXT,                          -- a commitment entry's own id; later entries about it carry the same id
+  data_json         TEXT NOT NULL DEFAULT '{}'     -- promisedBy, lever, qty | from, to | actual | dueDate
+);
+CREATE INDEX IF NOT EXISTS plan_entries_wbs1 ON plan_entries (wbs1, created_at);
+CREATE TRIGGER IF NOT EXISTS plan_entries_no_update BEFORE UPDATE ON plan_entries
+BEGIN SELECT RAISE(ABORT, 'the plan log is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS plan_entries_no_delete BEFORE DELETE ON plan_entries
+BEGIN SELECT RAISE(ABORT, 'the plan log is append-only'); END;
+
+-- Check-in drafts: prepared by the system, sent (if at all) by the admin from their own mailbox.
+CREATE TABLE IF NOT EXISTS checkin_drafts (
+  id            TEXT PRIMARY KEY,
+  pic_user_id   TEXT NOT NULL,
+  situation     TEXT NOT NULL CHECK (situation IN ('overdue','no_plan')),
+  step          INTEGER NOT NULL,                  -- 1 = reminder 1 (casual), 2 = reminder 2 (direct)
+  tone          TEXT NOT NULL,
+  subject       TEXT NOT NULL,
+  body          TEXT NOT NULL,
+  items_json    TEXT NOT NULL,                     -- [{ wbs1, name, dueDate, ... }] the projects this draft is about
+  status        TEXT NOT NULL CHECK (status IN ('waiting','sent','dismissed','withdrawn')),
+  created_at    INTEGER NOT NULL,
+  resolved_at   INTEGER,
+  resolved_date TEXT
+);
+
+-- small bits of job state (for example: the day the admin was last emailed about waiting drafts)
+CREATE TABLE IF NOT EXISTS system_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+
+-- What a run carries for its charts, frozen with it: firm-wide month-end figures for the last 12 months, and for
+-- each listed project its year-to-date profit at each month end. Locked with the run like everything else.
+CREATE TABLE IF NOT EXISTS run_history (
+  run_id        TEXT NOT NULL REFERENCES runs(id),
+  period        INTEGER NOT NULL,
+  negative_ytd  INTEGER NOT NULL,                  -- cents; total YTD profit of the projects below the line that month
+  below_count   INTEGER NOT NULL,
+  PRIMARY KEY (run_id, period)
+);
+CREATE TABLE IF NOT EXISTS run_project_history (
+  run_id     TEXT NOT NULL REFERENCES runs(id),
+  wbs1       TEXT NOT NULL,
+  period     INTEGER NOT NULL,
+  profit_ytd INTEGER NOT NULL,
+  PRIMARY KEY (run_id, wbs1, period)
+);
+CREATE TRIGGER IF NOT EXISTS run_history_locked_insert BEFORE INSERT ON run_history
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_history_locked_update BEFORE UPDATE ON run_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_history_locked_delete BEFORE DELETE ON run_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_project_history_locked_insert BEFORE INSERT ON run_project_history
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_project_history_locked_update BEFORE UPDATE ON run_project_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_project_history_locked_delete BEFORE DELETE ON run_project_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
