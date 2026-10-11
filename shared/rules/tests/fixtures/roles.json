@@ -1,0 +1,30 @@
+{
+  "canView": [
+    { "role": "admin", "access": {}, "see": ["turnaround", "checkins", "bd", "pipeline", "admin"] },
+    { "role": "pic", "access": {}, "see": ["turnaround"] },
+    { "role": "pic", "access": { "picBd": true, "picPipeline": true }, "see": ["turnaround", "bd", "pipeline"] },
+    { "role": "finance", "access": {}, "see": ["turnaround", "bd", "pipeline"] },
+    { "role": "marketing", "access": {}, "see": ["bd", "pipeline"] },
+    { "role": "marketing", "access": { "marketingTurnaround": true }, "see": ["turnaround", "bd", "pipeline"] },
+    { "role": "sysadmin", "access": {}, "see": ["admin"] }
+  ],
+  "adminTab": [
+    { "role": "admin", "tab": "patterns", "expect": "edit" },
+    { "role": "admin", "tab": "audit", "expect": "edit" },
+    { "role": "sysadmin", "tab": "audit", "expect": "view" },
+    { "role": "sysadmin", "tab": "people", "expect": "view" },
+    { "role": "sysadmin", "tab": "patterns", "expect": null },
+    { "role": "pic", "tab": "people", "expect": null },
+    { "role": "finance", "tab": "audit", "expect": null },
+    { "role": "marketing", "tab": "runs", "expect": null }
+  ],
+  "canChangeUser": [
+    { "name": "demote the only admin", "users": [{ "id": "a", "role": "admin", "active": true }, { "id": "b", "role": "pic", "active": true }], "target": "a", "change": { "role": "pic" }, "expect": { "ok": false, "reason": "last-admin" } },
+    { "name": "deactivate the only admin", "users": [{ "id": "a", "role": "admin", "active": true }], "target": "a", "change": { "active": false }, "expect": { "ok": false, "reason": "last-admin" } },
+    { "name": "demote one of two admins", "users": [{ "id": "a", "role": "admin", "active": true }, { "id": "b", "role": "admin", "active": true }], "target": "a", "change": { "role": "pic" }, "expect": { "ok": true } },
+    { "name": "an inactive admin does not count as a second admin", "users": [{ "id": "a", "role": "admin", "active": true }, { "id": "b", "role": "admin", "active": false }], "target": "a", "change": { "role": "finance" }, "expect": { "ok": false, "reason": "last-admin" } },
+    { "name": "unknown role", "users": [{ "id": "a", "role": "admin", "active": true }], "target": "a", "change": { "role": "boss" }, "expect": { "ok": false, "reason": "bad-role" } },
+    { "name": "unknown person", "users": [{ "id": "a", "role": "admin", "active": true }], "target": "zz", "change": { "active": false }, "expect": { "ok": false, "reason": "not-found" } },
+    { "name": "change a PIC freely", "users": [{ "id": "a", "role": "admin", "active": true }, { "id": "p", "role": "pic", "active": true }], "target": "p", "change": { "active": false }, "expect": { "ok": true } }
+  ]
+}
