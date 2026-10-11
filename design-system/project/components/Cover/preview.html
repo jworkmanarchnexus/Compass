@@ -1,0 +1,27 @@
+<!-- @dsCard height=288 -->
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:288px;overflow:hidden}
+body{position:relative;width:960px;background:var(--bg)}
+svg{position:absolute;left:0;top:0}
+.slab{fill:var(--nx-blue);rx:var(--r4)} .deep{fill:var(--nx-d60);rx:var(--r4)} .tint{fill:var(--nx-t20);rx:var(--r4)}
+.orange{fill:var(--nx-orange);rx:var(--r4)} .green{fill:var(--nx-green);rx:var(--r4)}
+.dot{fill:var(--nx-t40)} .dot2{fill:var(--nx-g2)}
+.txt-block{position:absolute;left:32px;bottom:32px;width:440px}
+h1{margin:0;font:700 88px/.95 var(--f-cond);letter-spacing:.005em;color:var(--text-strong)}
+p{margin:12px 0 0;font:400 14px/1.3 var(--f-ui);color:var(--text-2)}
+</style></head><body>
+<svg width="960" height="288" viewBox="0 0 960 288" aria-hidden="true">
+<!-- derivation
+blocks: nx-blue 200x200 (bleeds top), nx-d60 136x248 (bleeds bottom), nx-t20 96x160 (bleeds top-right), nx-orange 40x40, nx-green 40x40; all corners r4.
+arrangement: a staggered stack right of x=480 - a blue slab, a taller deep-blue slab offset to the right, a tint at the edge, two small tertiary accents under the slab.
+pattern: dot grid, because the system is a precise 4px-grid tool UI; pitch 24 (s6) on the deep block and in the open ground at lower right, r=2.
+steps and radii: pitch s6, block sides are multiples of s2/s5, corner r4. -->
+<rect class="slab" x="496" y="-8" width="200" height="208"/>
+<rect class="deep" x="712" y="40" width="136" height="256"/>
+<rect class="tint" x="864" y="-8" width="104" height="168"/>
+<rect class="orange" x="496" y="216" width="40" height="40"/>
+<rect class="green" x="552" y="216" width="40" height="40"/>
+<circle class="dot" cx="736" cy="64" r="2"/><circle class="dot" cx="736" cy="88" r="2"/><circle class="dot" cx="736" cy="112" r="2"/><circle class="dot" cx="736" cy="136" r="2"/><circle class="dot" cx="736" cy="160" r="2"/><circle class="dot" cx="736" cy="184" r="2"/><circle class="dot" cx="736" cy="208" r="2"/><circle class="dot" cx="736" cy="232" r="2"/><circle class="dot" cx="736" cy="256" r="2"/><circle class="dot" cx="736" cy="280" r="2"/><circle class="dot" cx="760" cy="64" r="2"/><circle class="dot" cx="760" cy="88" r="2"/><circle class="dot" cx="760" cy="112" r="2"/><circle class="dot" cx="760" cy="136" r="2"/><circle class="dot" cx="760" cy="160" r="2"/><circle class="dot" cx="760" cy="184" r="2"/><circle class="dot" cx="760" cy="208" r="2"/><circle class="dot" cx="760" cy="232" r="2"/><circle class="dot" cx="760" cy="256" r="2"/><circle class="dot" cx="760" cy="280" r="2"/><circle class="dot" cx="784" cy="64" r="2"/><circle class="dot" cx="784" cy="88" r="2"/><circle class="dot" cx="784" cy="112" r="2"/><circle class="dot" cx="784" cy="136" r="2"/><circle class="dot" cx="784" cy="160" r="2"/><circle class="dot" cx="784" cy="184" r="2"/><circle class="dot" cx="784" cy="208" r="2"/><circle class="dot" cx="784" cy="232" r="2"/><circle class="dot" cx="784" cy="256" r="2"/><circle class="dot" cx="784" cy="280" r="2"/><circle class="dot" cx="808" cy="64" r="2"/><circle class="dot" cx="808" cy="88" r="2"/><circle class="dot" cx="808" cy="112" r="2"/><circle class="dot" cx="808" cy="136" r="2"/><circle class="dot" cx="808" cy="160" r="2"/><circle class="dot" cx="808" cy="184" r="2"/><circle class="dot" cx="808" cy="208" r="2"/><circle class="dot" cx="808" cy="232" r="2"/><circle class="dot" cx="808" cy="256" r="2"/><circle class="dot" cx="808" cy="280" r="2"/><circle class="dot" cx="832" cy="64" r="2"/><circle class="dot" cx="832" cy="88" r="2"/><circle class="dot" cx="832" cy="112" r="2"/><circle class="dot" cx="832" cy="136" r="2"/><circle class="dot" cx="832" cy="160" r="2"/><circle class="dot" cx="832" cy="184" r="2"/><circle class="dot" cx="832" cy="208" r="2"/><circle class="dot" cx="832" cy="232" r="2"/><circle class="dot" cx="832" cy="256" r="2"/><circle class="dot" cx="832" cy="280" r="2"/><circle class="dot2" cx="880" cy="192" r="2"/><circle class="dot2" cx="880" cy="216" r="2"/><circle class="dot2" cx="880" cy="240" r="2"/><circle class="dot2" cx="880" cy="264" r="2"/><circle class="dot2" cx="904" cy="192" r="2"/><circle class="dot2" cx="904" cy="216" r="2"/><circle class="dot2" cx="904" cy="240" r="2"/><circle class="dot2" cx="904" cy="264" r="2"/><circle class="dot2" cx="928" cy="192" r="2"/><circle class="dot2" cx="928" cy="216" r="2"/><circle class="dot2" cx="928" cy="240" r="2"/><circle class="dot2" cx="928" cy="264" r="2"/><circle class="dot2" cx="952" cy="192" r="2"/><circle class="dot2" cx="952" cy="216" r="2"/><circle class="dot2" cx="952" cy="240" r="2"/><circle class="dot2" cx="952" cy="264" r="2"/>
+</svg>
+<div class="txt-block"><h1>Arch Nexus<br>Toolbox</h1><p>One look for every internal tool.</p></div>
+</body></html>

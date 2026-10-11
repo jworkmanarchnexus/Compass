@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Turnaround</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Condensed:wght@400;700&display=swap">
+<style>
+/* ==========================================================================
+   Arch Nexus design tokens (Toolbox)
+   Source: Arch Nexus Brand Elements Guide (2019), pages 5, 10, 11.
+   Brand values are kept exact. Where a brand value fails WCAG AA for small text,
+   a darker brand shade (or a darkened derivative, marked "derived") is used for
+   text only; the brand value stays in graphics. See docs/DESIGN-SYSTEM.md.
+   ========================================================================== */
+:root {
+  /* brand: primary */
+  --nx-blue: #0099D8;            /* Pantone Process Blue C. The dominant accent. */
+  /* brand: shades of Nexus Blue (page 11) */
+  --nx-t20: #BEDAEC; --nx-t40: #87BEDE; --nx-t70: #6FAFE0;
+  --nx-d20: #0084BA; --nx-d40: #006B97; --nx-d60: #005175;
+  /* brand: secondary */
+  --nx-bluegray: #778390; --nx-lightgray: #EDEDEE; --nx-darkgray: #504F51;
+  /* brand: grey shades (page 11) */
+  --nx-g1: #CDD1D2; --nx-g2: #85939E; --nx-g3: #50585E;
+  /* brand: tertiary (infographic support, small accents only) */
+  --nx-orange: #F18A00; --nx-green: #93D500; --nx-lightblue: #99D6EF;
+
+  /* surfaces */
+  --bg: #FFFFFF;                 /* working canvas */
+  --surface: #FFFFFF;
+  --surface-2: #F7F7F8;          /* quiet bands, side bar */
+  --surface-3: #EDEDEE;          /* brand light gray: headers, hover on quiet */
+  --scrim: rgba(36, 40, 46, .44);
+
+  /* lines */
+  --line: #DFE2E5;               /* hairline divider (blue-gray at ~22%) */
+  --line-2: #ECEEF0;             /* row rule */
+  --line-strong: #C3C9CF;        /* input borders */
+
+  /* text */
+  --text: #504F51;               /* brand dark gray, 8.1:1 on white */
+  --text-strong: #3A393B;        /* titles */
+  --text-2: #66707B;             /* derived from Blue Gray, 5.0:1 (brand #778390 is 3.9:1) */
+  --text-3: #8C959E;             /* placeholders, disabled */
+  --on-accent: #FFFFFF;
+
+  /* interaction */
+  --accent: var(--nx-blue);      /* indicators, focus, selected marks, bars */
+  --accent-text: var(--nx-d40);  /* links and primary buttons: 5.9:1 */
+  --accent-hover: var(--nx-d60);
+  --accent-soft: #E5F5FB;        /* selected rows (Nexus Blue 10%) */
+  --accent-softer: #F2FAFD;      /* hover tint */
+  --focus: 0 0 0 3px rgba(0, 153, 216, .28);
+  --primary-bg: var(--nx-d40); --primary-hover: var(--nx-d60); --primary-fg: #FFFFFF;
+
+  /* semantic states (one meaning each) */
+  --info: var(--nx-d40);   --info-bg: #EAF5FB;
+  --warn: #A65F00;         --warn-fill: var(--nx-orange); --warn-bg: #FEF4E6;   /* derived text value, 4.9:1 */
+  --ok: #4D7A00;           --ok-fill: var(--nx-green);    --ok-bg: #F2F9E6;     /* derived text value, 5.1:1 */
+  --crit: #C4312B;         --crit-bg: #FCECEB;   /* not in the brand palette: used only for errors and conflicts */
+  --today: var(--nx-orange);
+
+  /* schedule graphics */
+  --bar: var(--nx-blue);
+  --bar-ms: var(--nx-d60);
+  --bar-hold: var(--nx-t40);
+  --wknd: #F4F5F6;
+  --hol: #E9EBED;
+  --ghost: #9AA4AD;
+
+  /* audience colors (overridden per schedule at runtime) */
+  --lv-client: var(--nx-blue); --lv-design: var(--nx-d40); --lv-internal: var(--nx-bluegray);
+
+  /* legacy preset colors used by older schedules */
+  --p-blue: #3B79C3; --p-teal: #1F8A8A; --p-green: #4C8F3F; --p-violet: #7653B5; --p-slate: #5F7285; --p-brown: #8A5A3A; --p-amber: #C98A1B; --p-red: #B94A48; --p-rose: #B5527E; --p-olive: #7F8A2E; --p-navy: #2B4C7E; --p-sky: #3C9BD1; --p-mint: #2FA77A; --p-coral: #E0663F; --p-plum: #7A3E6E; --p-indigo: #4B4FB5; --p-sand: #B49A6B; --p-charcoal: #3A4550;
+  /* brand presets */
+  --p-nexus: #0099D8; --p-nexus-t20: #BEDAEC; --p-nexus-t40: #87BEDE; --p-nexus-t70: #6FAFE0; --p-nexus-d20: #0084BA; --p-nexus-d40: #006B97; --p-nexus-d60: #005175;
+  --p-nexus-light: #99D6EF; --p-bluegray: #778390; --p-darkgray: #504F51; --p-brand-orange: #F18A00; --p-brand-green: #93D500;
+
+  /* type */
+  --f-ui: 'Lato', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-cond: 'Roboto Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --fs-xs: 11px; --fs-sm: 12.5px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 28px;
+
+  /* space (4px grid) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --r1: 3px; --r2: 4px; --r3: 6px; --r4: 8px;
+  --shadow-1: 0 1px 2px rgba(40, 46, 52, .08);
+  --shadow-2: 0 8px 24px rgba(40, 46, 52, .14), 0 1px 3px rgba(40, 46, 52, .08);
+
+  /* layout */
+  --side-w: 232px;
+  --row-h: 32px;                 /* table and timeline row height (density) */
+  --ctl-h: 32px;
+  color-scheme: light;
+}
+body.dense { --row-h: 27px; }
+
+/* dark theme: same roles, values chosen for contrast on dark surfaces */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+    --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+    --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+    --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+    --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+    --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+    --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+    --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+  --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+  --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+  --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+  --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+  --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+  --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+  --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+  color-scheme: dark;
+}
+/* ==========================================================================
+   Toolbox UI components: shared by every module.
+   Rules of thumb: hairlines over boxes, one accent, no heavy shadows,
+   4px grid, 32px controls, condensed type for labels and numbers.
+   ========================================================================== */
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 var(--fs-md)/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+::selection { background: rgba(0, 153, 216, .22); }
+h1, h2, h3, h4 { font-family: var(--f-cond); color: var(--text-strong); margin: 0; font-weight: 700; letter-spacing: .005em; }
+h2 { font-size: var(--fs-xl); line-height: 1.2; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--text-2); }
+.num, .mono { font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pad { padding: var(--s5); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ico-svg { display: block; flex: none; }
+.lbl, .eyebrow { font-family: var(--f-cond); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+
+/* ----- buttons ----- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl-h); padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13.5px; white-space: nowrap; line-height: 1; transition: background-color .12s, border-color .12s, color .12s; }
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--text-3); }
+.btn:active:not(:disabled) { background: var(--surface-3); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+.btn.lg { height: 38px; padding: 0 16px; font-size: 14.5px; }
+.btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.quiet, .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.quiet:hover:not(:disabled), .btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--text); }
+.btn.danger { background: var(--crit); border-color: var(--crit); color: #fff; font-weight: 700; }
+.btn.danger:hover:not(:disabled) { filter: brightness(.92); background: var(--crit); }
+.btn.icon { width: var(--ctl-h); padding: 0; }
+.btn.icon.sm { width: 28px; }
+.btn[aria-pressed="true"]:not(.primary) { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
+.btn.pulse { box-shadow: 0 0 0 3px rgba(0, 107, 151, .18); }
+.btn .kbd { font-family: var(--f-cond); font-size: 11px; color: var(--text-3); margin-left: 2px; }
+.btn.primary .kbd { color: rgba(255, 255, 255, .7); }
+.ib { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: var(--r2); background: transparent; color: var(--text-2); cursor: pointer; }
+.ib:hover:not(:disabled) { background: var(--surface-3); color: var(--text-strong); }
+.ib:disabled { opacity: .35; cursor: default; }
+.ib.del:hover:not(:disabled) { color: var(--crit); background: var(--crit-bg); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); cursor: pointer; text-align: left; font: inherit; }
+.linkbtn:hover { text-decoration: underline; }
+.vsep { width: 1px; height: 20px; background: var(--line); margin: 0 var(--s1); flex: none; }
+
+/* segmented control: a quiet track with one raised choice */
+.seg { display: inline-flex; align-items: center; gap: 2px; padding: 2px; height: var(--ctl-h); border-radius: var(--r3); background: var(--surface-3); flex: none; }
+.seg > button, .seg > .btn { height: 28px; border: 0; border-radius: var(--r2); background: transparent; padding: 0 12px; color: var(--text-2); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.seg > button:hover:not(:disabled), .seg > .btn:hover:not(:disabled) { color: var(--text-strong); background: transparent; }
+.seg > button.on, .seg > button[aria-pressed="true"], .seg > .btn[aria-pressed="true"] { background: var(--surface); color: var(--text-strong); box-shadow: var(--shadow-1), inset 0 -2px 0 var(--accent); font-weight: 700; border: 0; }
+.seg > button:disabled { opacity: .5; cursor: default; }
+
+/* ----- form controls ----- */
+.txt { height: var(--ctl-h); padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); width: 100%; min-width: 0; transition: border-color .12s, box-shadow .12s; }
+textarea.txt { height: auto; padding: 8px 10px; }
+.txt.sm { height: 28px; width: auto; }
+.txt:hover:not(:disabled) { border-color: var(--text-3); }
+.txt:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+.txt:disabled { background: var(--surface-2); color: var(--text-2); }
+.txt::placeholder, td input::placeholder { color: var(--text-3); }
+select.txt { padding-right: 28px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366707B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+input[type=checkbox], input[type=radio] { accent-color: var(--nx-blue); width: 15px; height: 15px; margin: 0; flex: none; }
+label.chk { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; cursor: pointer; }
+label.chk.top { align-items: flex-start; }
+label.chk.top input { margin-top: 3px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > label, .field > .lbl { font-family: var(--f-cond); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.field .hint { font-size: var(--fs-sm); color: var(--text-2); }
+.form { display: flex; flex-direction: column; gap: var(--s3); }
+.searchbox { position: relative; display: flex; align-items: center; }
+.searchbox .ico-svg { position: absolute; left: 10px; color: var(--text-3); pointer-events: none; }
+.searchbox .txt { padding-left: 34px; }
+
+/* switch: an on/off setting that takes effect immediately */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text); user-select: none; height: var(--ctl-h); padding: 0 6px; border-radius: var(--r2); border: 0; background: transparent; }
+.switch:hover:not(:disabled) { background: var(--surface-2); }
+.switch .track { width: 28px; height: 16px; border-radius: 8px; background: var(--line-strong); position: relative; transition: background-color .15s; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .15s; }
+.switch[aria-pressed="true"] .track, .switch[aria-checked="true"] .track { background: var(--nx-blue); }
+.switch[aria-pressed="true"] .track::after, .switch[aria-checked="true"] .track::after { transform: translateX(12px); }
+.switch:disabled { opacity: .45; cursor: default; }
+
+/* ----- chips and counts ----- */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 11px; background: var(--surface-3); color: var(--text-2); font: 700 11.5px/1 var(--f-cond); letter-spacing: .02em; white-space: nowrap; }
+.chip.blue { background: var(--accent-soft); color: var(--accent-text); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.crit { background: var(--crit-bg); color: var(--crit); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.editing { background: var(--warn-bg); color: var(--warn); }
+.chip.away { background: transparent; color: var(--text-3); }
+.cnt { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font: 700 11px/1 var(--f-cond); }
+.cnt.err { background: var(--crit); color: #fff; }
+.cnt.warn { background: var(--warn-fill); color: #2A1A00; }
+.cnt.ok { color: var(--text-3); font-weight: 400; padding: 0; }
+.avatar { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); color: var(--text-strong); font: 700 11px/1 var(--f-cond); border: 2px solid var(--surface); }
+.avatar.editing { box-shadow: 0 0 0 2px var(--warn-fill); }
+.avatar + .avatar { margin-left: -6px; }
+
+/* ----- menus ----- */
+.menu-wrap { position: relative; display: inline-flex; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 240px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-2); padding: 6px; display: flex; flex-direction: column; }
+.menu.left { left: 0; right: auto; }
+.menu > button, .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; background: transparent; border: 0; border-radius: var(--r2); cursor: pointer; color: var(--text); font-size: 13.5px; }
+.menu > button:hover:not(:disabled), .menu-item:hover { background: var(--surface-2); }
+.menu > button:disabled { opacity: .45; cursor: default; }
+.menu > button .ico-svg { color: var(--text-2); }
+.menu > button > span:first-child:not(.tick) { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; }
+.menu small { color: var(--text-2); font-size: 12px; }
+.menu .danger { color: var(--crit); }
+.menu .danger .ico-svg { color: var(--crit); }
+.menu-head { font-family: var(--f-cond); font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); padding: 6px 10px 4px; }
+.menu-foot { font-size: 12px; color: var(--text-2); padding: 8px 10px 4px; border-top: 1px solid var(--line-2); margin-top: 4px; }
+.menu-sep { height: 1px; background: var(--line-2); margin: 4px 2px; }
+.menu .tick { visibility: hidden; color: var(--accent); margin-left: auto; }
+.menu button[aria-checked="true"] .tick { visibility: visible; }
+.menu button[aria-checked="true"] strong { color: var(--accent-text); }
+
+/* ----- banners: one line, a colored rule, an icon ----- */
+.banner { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; padding: 7px 12px 7px 14px; background: var(--info-bg); box-shadow: inset 3px 0 var(--info); font-size: 13px; }
+.banner.warn { background: var(--warn-bg); box-shadow: inset 3px 0 var(--warn-fill); }
+.banner.err { background: var(--crit-bg); box-shadow: inset 3px 0 var(--crit); }
+.banner .bmsg { flex: 1 1 320px; min-width: 0; display: flex; gap: 8px; align-items: baseline; }
+.banner .bmsg > .ico-svg { align-self: center; color: var(--info); }
+.banner.warn .bmsg > .ico-svg { color: var(--warn); }
+.banner.err .bmsg > .ico-svg { color: var(--crit); }
+.banner .bact { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.banner .btn { height: 26px; font-size: 12.5px; background: transparent; }
+.banner .btn:hover:not(:disabled) { background: var(--surface); }
+.shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+body.side-collapsed { --side-w: 60px; }
+
+/* side navigation */
+.side { display: flex; flex-direction: column; min-height: 0; background: var(--surface-2); border-right: 1px solid var(--line); overflow: hidden; }
+.side-brand { padding: 20px 20px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+/* the logo is never below 1in (96 CSS px) wide and keeps clear space equal to "ARC" (~20% of its width) */
+.side-logo { width: 96px; height: auto; display: block; margin: 19px 0 0 0; }
+.side-product { display: flex; align-items: baseline; gap: 8px; width: 100%; padding-top: 12px; border-top: 1px solid var(--nx-blue); }
+.side-product strong { font: 700 15px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--text-strong); }
+.side-product span { font-size: 12px; color: var(--text-2); }
+.side-nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; flex: 1 1 auto; overflow: auto; }
+.side-nav .navh { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 10px 10px 6px; }
+.nav-item { position: relative; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--r2); color: var(--text); text-decoration: none; font-size: 14px; }
+.nav-item:hover { background: var(--surface-3); text-decoration: none; }
+.nav-item.on { background: var(--accent-soft); color: var(--text-strong); font-weight: 700; }
+.nav-item.on::before { content: ""; position: absolute; left: -10px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 2px 2px 0; background: var(--nx-blue); }
+.nav-item .ico-svg { color: var(--text-2); }
+.nav-item.on .ico-svg { color: var(--accent); }
+.side-foot { display: flex; align-items: center; gap: 4px; padding: 10px; border-top: 1px solid var(--line); }
+.side-user { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--text); }
+.side-user .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.side-collapsed .side-brand, body.side-collapsed .side-user .nm, body.side-collapsed .nav-item span, body.side-collapsed .side-nav .navh { display: none; }
+body.side-collapsed .side-nav { padding: 12px 8px; }
+body.side-collapsed .nav-item { justify-content: center; padding: 0; }
+body.side-collapsed .nav-item.on::before { left: -8px; }
+body.side-collapsed .side-foot { flex-direction: column; }
+body.side-collapsed .side-user { justify-content: center; }
+
+.mainwrap { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.mtop { display: none; }
+.page { min-height: 0; flex: 1 1 auto; overflow: auto; }
+
+/* page header: a Nexus Blue rule, a condensed title (the brand guide's page heading, quieter) */
+.phead { padding: 22px 32px 0; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); margin-bottom: 10px; }
+.crumbs a { color: var(--text-2); }
+.crumbs a:hover { color: var(--accent-text); }
+.crumbs .ico-svg { color: var(--text-3); }
+.ptitle { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.ptitle h1 { font-size: var(--fs-2xl); line-height: 1.05; letter-spacing: .01em; }
+.ptitle h1.brand { color: var(--nx-blue); text-transform: uppercase; letter-spacing: .02em; }
+.ptitle .sub { color: var(--text-2); font-size: 14px; padding-bottom: 2px; }
+.ptitle .grow { flex: 1 1 auto; }
+.pbody { padding: 18px 32px 48px; }
+
+/* Scheduler home */
+.home-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.home-tools .searchbox { flex: 1 1 320px; max-width: 520px; }
+.home-tools .grow { flex: 1 1 auto; }
+.section-h { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 8px; }
+.section-h h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.section-h .muted { font-size: 12.5px; }
+.recent { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.rcard { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); text-align: left; cursor: pointer; min-width: 0; color: inherit; }
+.rcard:hover { border-color: var(--nx-blue); text-decoration: none; }
+.rcard .pn { font: 700 12px/1 var(--f-cond); letter-spacing: .04em; color: var(--accent-text); }
+.rcard .pt { font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rcard .pm { font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the project list: a dense, sortable list rather than a card grid (it has to work with hundreds) */
+.plist { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.plist th { position: sticky; top: 0; z-index: 1; background: var(--bg); text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.plist th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.plist th button:hover { color: var(--text-strong); }
+.plist th[aria-sort] button { color: var(--text-strong); }
+.plist td { padding: 0 12px; height: 46px; border-bottom: 1px solid var(--line-2); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist tbody tr { cursor: pointer; }
+.plist tbody tr:hover td { background: var(--accent-softer); }
+.plist tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.plist .pn { font: 700 13px/1 var(--f-cond); letter-spacing: .02em; color: var(--text-2); }
+.plist .pt { font-weight: 700; color: var(--text-strong); }
+.plist .nosched { color: var(--text-3); font-style: italic; }
+.plist .when { color: var(--text-2); font-size: 13px; }
+.plist .acts { text-align: right; }
+.plist .acts .btn { visibility: hidden; }
+.plist tr:hover .acts .btn, .plist tr:focus-within .acts .btn { visibility: visible; }
+.plist col.c-num { width: 120px; } .plist col.c-client { width: 22%; } .plist col.c-sch { width: 22%; } .plist col.c-upd { width: 190px; } .plist col.c-act { width: 150px; }
+
+:root { --c-prev:#CDD1D2; --c-bar:#50585E; --c-now:var(--nx-blue); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-prev:#39414A; --c-bar:#9AA6B1; } }
+:root[data-theme="dark"] { --c-prev:#39414A; --c-bar:#9AA6B1; }
+html, body { height: auto; }
+.shell { height: auto; min-height: 100vh; }
+.side { min-height: 100vh; }
+.page { overflow: visible; }
+.mainwrap { background: var(--bg); }
+.phead { padding-top: 24px; }
+.ptitle h1.plain { color: var(--text-strong); }
+.ptitle .sub { max-width: 62ch; }
+.chip.out { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.chip.pn { background: transparent; color: var(--text-2); padding: 0; font-size: 13px; }
+.sm { font-size: 12.5px; }
+.banner .btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); }
+.banner .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.nav-item .cnt { margin-left: auto; }
+.nav-item.nav-sub { height: 32px; padding-left: 36px; font-size: 13.5px; }
+.nav-item.nav-sub .ico-svg { width: 15px; height: 15px; }
+.side-foot .nm { font-size: 13px; }
+
+/* KPI strip: hairline cells, condensed figures */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); margin-bottom: 16px; }
+.kpi { padding: 14px 18px 14px; border-left: 1px solid var(--line); min-width: 0; }
+.kpi:first-child { border-left: 0; }
+.kpi .v { font: 700 28px/1.1 var(--f-cond); color: var(--text-strong); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.kpi .s { font-size: 12.5px; color: var(--text-2); }
+@media (max-width: 760px) { .kpi { border-left: 0; border-top: 1px solid var(--line); } .kpi:first-child { border-top: 0; } }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.cc { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 14px 18px 8px; min-width: 0; }
+.cc .ch { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.cc h3 { font-size: 16px; }
+.cc .cs { font-size: 12.5px; color: var(--text-2); }
+.cc .big { font: 700 26px/1 var(--f-cond); color: var(--text-strong); text-align: right; font-variant-numeric: tabular-nums; }
+.cc .dlt { font-size: 12.5px; color: var(--text-2); text-align: right; margin-top: 2px; }
+.cc svg { display: block; width: 100%; height: auto; max-height: 230px; }
+
+/* PIC groups */
+.grp { margin-top: 26px; }
+.grp > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 0 10px; border-bottom: 1px solid var(--line-strong); }
+.grp > summary::-webkit-details-marker { display: none; }
+.grp .gname { font: 700 18px/1 var(--f-cond); color: var(--text-strong); letter-spacing: .01em; }
+.grp .gamt { font: 700 16px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .gmeta { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; font-size: 12.5px; color: var(--text-2); }
+.grp .gmeta b { font-family: var(--f-cond); font-size: 14px; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .chev { color: var(--text-3); transition: transform .15s; flex: none; }
+.grp[open] > summary .chev { transform: rotate(90deg); }
+.meter { display: inline-block; width: 56px; height: 4px; border-radius: 2px; background: var(--surface-3); vertical-align: middle; margin: 0 6px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--nx-blue); }
+.tt { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.tt th { text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tt th.r, .tt td.r { text-align: right; }
+.tt td { padding: 12px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.tt tbody tr:hover td { background: var(--accent-softer); }
+.tt tbody tr:last-child td { border-bottom: 0; }
+.tt .pt { font-weight: 700; color: var(--text-strong); display: block; }
+.tt a.pt:hover { color: var(--accent-text); }
+.tt .pm { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.tt .pm .pnum { font-family: var(--f-cond); font-weight: 700; letter-spacing: .02em; }
+.tt .amt { font: 700 16px/1.2 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.tt .when { font: 700 12.5px/1.3 var(--f-cond); letter-spacing: .02em; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt .tx { font-size: 13.5px; color: var(--text); margin-top: 2px; }
+.tt .warnline { font-size: 12.5px; color: var(--warn); margin-top: 4px; }
+.tt .nothing { color: var(--text-3); font-style: italic; font-size: 13px; }
+.tt .row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.tblwrap { overflow-x: auto; }
+.tblwrap .tt { min-width: 860px; }
+
+/* plan page */
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 14px 0 18px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+@media (max-width: 1100px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sec { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; min-width: 0; }
+.sec > h2 { font-size: 18px; }
+.sec > .hint { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.sec .form { margin-top: 12px; }
+.pick { display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); font-size: 13px; }
+.pick:hover { border-color: var(--text-3); }
+.pick.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); font-weight: 700; }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lever-group + .lever-group { margin-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.log { list-style: none; margin: 10px 0 0; padding: 0; }
+.ent { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 0 14px; padding: 12px 0; border-top: 1px solid var(--line-2); }
+.ent:first-child { border-top: 0; }
+.ent .d { font: 700 13px/1.2 var(--f-cond); color: var(--text-strong); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.ent .t { font: 400 12px/1.3 var(--f-cond); color: var(--text-3); }
+.ent .eh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 4px; }
+.ent .eh .by { font-size: 13px; color: var(--text-2); }
+.ent p { font-size: 14px; }
+.ent.admin { box-shadow: inset 3px 0 var(--nx-bluegray); padding-left: 12px; margin-left: -12px; background: var(--surface-2); }
+.ent.fresh .d::after { content: ""; }
+.cm { padding: 12px 0; border-top: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 6px; }
+.cm:first-child { border-top: 0; padding-top: 4px; }
+.cm .ct { font-weight: 700; color: var(--text-strong); }
+.cm .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin: 12px 0 0; }
+.facts dt { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 4px; }
+.facts dd { margin: 0; font: 700 20px/1.1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.keys { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.keys > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; color: var(--text); }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font: 700 13px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary .ico-svg { transition: transform .15s; }
+details.fold[open] > summary .ico-svg { transform: rotate(90deg); }
+
+/* check-in drafts */
+.draft { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.draft .dh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.draft .dh .who2 { flex: 1 1 260px; min-width: 0; }
+.draft .dh .nm { font-weight: 700; color: var(--text-strong); }
+.done-row { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface-2); padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.done-row .grow { flex: 1 1 280px; min-width: 0; font-size: 13.5px; }
+.dlist { display: flex; flex-direction: column; gap: 14px; }
+.qn { font: 700 28px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+
+/* ported pages (Home, BD, Pipeline, Admin) */
+.pbody.col { display: flex; flex-direction: column; gap: 20px; }
+.metaline { font-size: 12.5px; color: var(--text-2); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.seg.wrap { height: auto; flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
+.sec.flush { padding: 0; overflow: hidden; }
+.sec.flush > h2 { font-size: 18px; }
+.sec.flush h2 { font-size: 18px; }
+.sec ul { list-style: none; margin: 0; padding: 0; }
+.sec.flush li { border-top: 1px solid var(--line-2); }
+.sec.flush li:first-child { border-top: 0; }
+a.btn.primary, a.btn.primary:hover { color: var(--primary-fg); text-decoration: none; }
+a.btn { text-decoration: none; }
+a.btn:hover { text-decoration: none; }
+table.dt, table.bd { width: 100%; border-collapse: separate; border-spacing: 0; }
+table.dt th, table.bd th { text-align: left; font: 700 11.5px/1.25 var(--f-cond); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); background: var(--surface); vertical-align: bottom; }
+table.dt td, table.bd td { padding: 9px 12px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+table.dt th.r, table.dt td.r, table.bd th, table.bd td { text-align: right; }
+table.bd th:first-child, table.bd td:first-child { text-align: left; }
+table.bd th:last-child, table.bd td:last-child { text-align: left; }
+table.dt td.num, table.bd td, table.dt td .num { font-variant-numeric: tabular-nums; }
+table.pt th, table.pt td { padding: 9px 5px; white-space: nowrap; font-size: 12.5px; }
+table.pt th:first-child, table.pt td:first-child { padding-left: 10px; }
+table.pt th { white-space: normal; }
+table.dt tr.tot td, table.bd tr.tf td { font-weight: 700; color: var(--text-strong); background: var(--surface-2); }
+table.dt tbody tr:hover td, table.bd tbody tr:hover td { background: var(--accent-softer); }
+table.dt tr.sel td { background: var(--accent-soft); }
+table.dt tbody tr[onclick] { cursor: pointer; }
+table.bd td.pb { color: var(--accent-text); }
+table.bd td.pg { color: var(--ok); }
+.neg { color: var(--crit); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pos { color: var(--ok); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+svg text { font-family: var(--f-cond); }
+label { font-size: 13.5px; }
+input[type=checkbox] { width: 16px; height: 16px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { display: none; }
+  .phead, .pbody { padding-left: 16px; padding-right: 16px; }
+}
+
+</style>
+</helmet>
+<div class="shell"><aside class="side" aria-label="Compass navigation"><div class="side-brand"><img class="side-logo" src="data:image/png;base64,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" alt="Arch Nexus" width="96" height="119"><div class="side-product"><strong>Compass</strong></div></div><nav class="side-nav" aria-label="Modules"><div class="navh">Modules</div><a class="nav-item" href="Main.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a class="nav-item on" href="Turnaround.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Project Turnaround</span></a><a class="nav-item nav-sub" href="TurnaroundCheckins.dc.html"><svg class="ico-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Check-in drafts</span><span class="cnt warn">4</span></a><a class="nav-item" href="BD.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>BD report</span></a><a class="nav-item" href="Pipeline.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>Pipeline watch</span><span class="cnt warn">2</span></a><a class="nav-item" href="Admin.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span>Admin</span></a></nav><div class="side-foot"><div class="side-user"><span class="avatar">JW</span><span class="nm">Josh Workman</span></div><span class="chip warn" title="Every figure on these screens is made up">Sample data</span></div></aside><div class="mainwrap"><main class="page">
+<div class="phead">
+<nav class="crumbs" aria-label="Breadcrumb"><span>Compass</span><svg class="ico-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Project Turnaround</span></nav>
+<div class="ptitle">
+<h1 class="brand">Project Turnaround</h1>
+<span class="sub">Projects below break-even this year, and what is being done to turn each one around.</span>
+<span class="grow"></span>
+<div class="seg" role="group" aria-label="Whose projects">
+<button type="button" class="{{ clsAll }}" onClick="{{ pickAll }}">All PICs</button>
+<button type="button" class="{{ clsMe }}" onClick="{{ pickMe }}">Just mine</button>
+</div>
+<button class="btn" type="button"><svg class="ico-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Export Excel</button>
+</div>
+</div>
+<div class="pbody">
+<sc-if value="{{ isDraft }}" hint-placeholder-val="{{ true }}">
+<div class="banner warn" style="margin-bottom:16px;border-radius:var(--r2)">
+<div class="bmsg"><span class="chip warn">Draft</span><span>September run, period 2026-09. PICs still see the previous published run until you publish. Plan entries carry over because they belong to the project, not the run. A published run is locked.</span></div>
+<div class="bact"><button class="btn primary sm" type="button" onClick="{{ publish }}"><svg class="ico-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Publish for viewing</button></div>
+</div>
+</sc-if>
+<sc-if value="{{ isPub }}" hint-placeholder-val="{{ false }}">
+<div class="banner" style="margin-bottom:16px;border-radius:var(--r2)">
+<div class="bmsg"><span class="chip ok">Published</span><span>September run is live for PICs and locked. If a number is wrong, archive and rerun. It needs a reason, and the old run stays in the archive.</span></div>
+<div class="bact"><button class="btn quiet sm" type="button">Archive and rerun</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><div class="kpis"><div class="kpi"><div class="lbl">Total negative YTD profit</div><div class="v">-$450,040</div><div class="s">-15.4% of $2.92M billed, 16 projects</div></div><div class="kpi"><div class="lbl">Plans current</div><div class="v">8 of 16</div><div class="s">Open commitment, entry in the last 30 days, nothing past due</div></div><div class="kpi"><div class="lbl">Waiting on an update</div><div class="v">4</div><div class="s">2 past due, 2 with no plan yet. <a href="TurnaroundCheckins.dc.html">4 check-in drafts ready</a></div></div><div class="kpi"><div class="lbl">Since August</div><div class="v">3 off, 2 new</div><div class="s">7 improved, 7 got worse</div></div></div><div class="charts"><section class="cc"><div class="ch"><div><h3>Total negative YTD profit</h3><div class="cs">In thousands. Gray is last year.</div></div><div><div class="big">-$450K</div><div class="dlt">$35K deeper than August</div></div></div><svg viewBox="0 0 560 250" role="img" aria-label="Bar chart of firm negative YTD profit by month, ending at 450 thousand dollars in September 2026."><line x1="56" y1="64" x2="544" y2="64" style="stroke:var(--line-2)"/><text x="50" y="68" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$100K</text><line x1="56" y1="98" x2="544" y2="98" style="stroke:var(--line-2)"/><text x="50" y="102" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$200K</text><line x1="56" y1="132" x2="544" y2="132" style="stroke:var(--line-2)"/><text x="50" y="136" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$300K</text><line x1="56" y1="166" x2="544" y2="166" style="stroke:var(--line-2)"/><text x="50" y="170" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$400K</text><text x="50" y="34" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">0</text><rect x="64" y="30" width="26" height="108" rx="2" style="fill:var(--c-prev)"/><rect x="105" y="30" width="26" height="120" rx="2" style="fill:var(--c-prev)"/><rect x="145" y="30" width="26" height="131" rx="2" style="fill:var(--c-prev)"/><rect x="186" y="30" width="26" height="24" rx="2" style="fill:var(--c-bar)"/><rect x="226" y="30" width="26" height="48" rx="2" style="fill:var(--c-bar)"/><rect x="267" y="30" width="26" height="64" rx="2" style="fill:var(--c-bar)"/><rect x="308" y="30" width="26" height="80" rx="2" style="fill:var(--c-bar)"/><rect x="348" y="30" width="26" height="96" rx="2" style="fill:var(--c-bar)"/><rect x="389" y="30" width="26" height="112" rx="2" style="fill:var(--c-bar)"/><rect x="429" y="30" width="26" height="126" rx="2" style="fill:var(--c-bar)"/><rect x="470" y="30" width="26" height="141" rx="2" style="fill:var(--c-bar)"/><rect x="511" y="30" width="26" height="153" rx="2" style="fill:var(--c-now)"/><line x1="56" y1="30" x2="544" y2="30" style="stroke:var(--line-strong)" stroke-width="1.2"/><text x="77" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">O</text><text x="118" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">N</text><text x="158" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">D</text><text x="199" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="239" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">F</text><text x="280" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="321" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="361" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="402" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="442" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="483" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="524" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">S</text><text x="117" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2025</text><text x="360" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2026</text></svg></section><section class="cc"><div class="ch"><div><h3>Projects below break-even</h3><div class="cs">Active projects below $0 YTD at each month end.</div></div><div><div class="big">16</div><div class="dlt">One fewer than August</div></div></div><svg viewBox="0 0 560 250" role="img" aria-label="Line chart of firm projects below break-even by month, ending at 16 in September 2026."><line x1="56" y1="158" x2="544" y2="158" style="stroke:var(--line-2)"/><text x="50" y="162" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">5</text><line x1="56" y1="115" x2="544" y2="115" style="stroke:var(--line-2)"/><text x="50" y="119" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">10</text><line x1="56" y1="72" x2="544" y2="72" style="stroke:var(--line-2)"/><text x="50" y="76" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">15</text><line x1="56" y1="30" x2="544" y2="30" style="stroke:var(--line-2)"/><text x="50" y="34" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">20</text><line x1="56" y1="200" x2="544" y2="200" style="stroke:var(--line-strong)" stroke-width="1.2"/><text x="50" y="204" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">0</text><polyline fill="none" style="stroke:var(--c-prev)" stroke-width="2.5" stroke-linejoin="round" points="77,72 118,64 158,56"/><polyline fill="none" style="stroke:var(--c-bar)" stroke-width="2.5" stroke-linejoin="round" points="199,149 239,124 280,106 321,90 361,81 402,64 442,56 483,56 524,64"/><circle cx="77" cy="72" r="3.5" style="fill:var(--c-prev)"/><circle cx="118" cy="64" r="3.5" style="fill:var(--c-prev)"/><circle cx="158" cy="56" r="3.5" style="fill:var(--c-prev)"/><circle cx="199" cy="149" r="3.5" style="fill:var(--c-bar)"/><circle cx="239" cy="124" r="3.5" style="fill:var(--c-bar)"/><circle cx="280" cy="106" r="3.5" style="fill:var(--c-bar)"/><circle cx="321" cy="90" r="3.5" style="fill:var(--c-bar)"/><circle cx="361" cy="81" r="3.5" style="fill:var(--c-bar)"/><circle cx="402" cy="64" r="3.5" style="fill:var(--c-bar)"/><circle cx="442" cy="56" r="3.5" style="fill:var(--c-bar)"/><circle cx="483" cy="56" r="3.5" style="fill:var(--c-bar)"/><circle cx="524" cy="64" r="5.5" style="fill:var(--c-now)"/><text x="77" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">O</text><text x="118" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">N</text><text x="158" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">D</text><text x="199" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="239" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">F</text><text x="280" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="321" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="361" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="402" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="442" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="483" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="524" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">S</text><text x="117" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2025</text><text x="360" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2026</text></svg></section></div></sc-if>
+<sc-if value="{{ showMe }}" hint-placeholder-val="{{ false }}"><div class="kpis"><div class="kpi"><div class="lbl">Your negative YTD profit</div><div class="v">-$85,960</div><div class="s">-15.3% of $561,800 billed, 4 projects</div></div><div class="kpi"><div class="lbl">Your plans current</div><div class="v">2 of 4</div><div class="s">Open commitment, entry in the last 30 days, nothing past due</div></div><div class="kpi"><div class="lbl">Need action</div><div class="v">1</div><div class="s">Hangar 7 Door Replacement is past due. <a href="TurnaroundPlan.dc.html">Open it</a></div></div><div class="kpi"><div class="lbl">Your record</div><div class="v">79% on time</div><div class="s">11 of 14 updates on time. 5 of 7 commitments kept.</div></div></div><div class="charts"><section class="cc"><div class="ch"><div><h3>Your negative YTD profit</h3><div class="cs">In thousands. Gray is last year.</div></div><div><div class="big">-$86K</div><div class="dlt">$7K deeper than August</div></div></div><svg viewBox="0 0 560 250" role="img" aria-label="Bar chart of your negative YTD profit by month, ending at 86 thousand dollars in September 2026."><line x1="56" y1="72" x2="544" y2="72" style="stroke:var(--line-2)"/><text x="50" y="76" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$25K</text><line x1="56" y1="115" x2="544" y2="115" style="stroke:var(--line-2)"/><text x="50" y="119" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$50K</text><line x1="56" y1="158" x2="544" y2="158" style="stroke:var(--line-2)"/><text x="50" y="162" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">-$75K</text><text x="50" y="34" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">0</text><rect x="64" y="30" width="26" height="99" rx="2" style="fill:var(--c-prev)"/><rect x="105" y="30" width="26" height="112" rx="2" style="fill:var(--c-prev)"/><rect x="145" y="30" width="26" height="126" rx="2" style="fill:var(--c-prev)"/><rect x="186" y="30" width="26" height="20" rx="2" style="fill:var(--c-bar)"/><rect x="226" y="30" width="26" height="37" rx="2" style="fill:var(--c-bar)"/><rect x="267" y="30" width="26" height="53" rx="2" style="fill:var(--c-bar)"/><rect x="308" y="30" width="26" height="70" rx="2" style="fill:var(--c-bar)"/><rect x="348" y="30" width="26" height="85" rx="2" style="fill:var(--c-bar)"/><rect x="389" y="30" width="26" height="104" rx="2" style="fill:var(--c-bar)"/><rect x="429" y="30" width="26" height="122" rx="2" style="fill:var(--c-bar)"/><rect x="470" y="30" width="26" height="134" rx="2" style="fill:var(--c-bar)"/><rect x="511" y="30" width="26" height="146" rx="2" style="fill:var(--c-now)"/><line x1="56" y1="30" x2="544" y2="30" style="stroke:var(--line-strong)" stroke-width="1.2"/><text x="77" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">O</text><text x="118" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">N</text><text x="158" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">D</text><text x="199" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="239" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">F</text><text x="280" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="321" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="361" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="402" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="442" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="483" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="524" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">S</text><text x="117" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2025</text><text x="360" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2026</text></svg></section><section class="cc"><div class="ch"><div><h3>Your projects below break-even</h3><div class="cs">Active projects below $0 YTD at each month end.</div></div><div><div class="big">4</div><div class="dlt">Same as August</div></div></div><svg viewBox="0 0 560 250" role="img" aria-label="Line chart of your projects below break-even by month, ending at 4 in September 2026."><line x1="56" y1="166" x2="544" y2="166" style="stroke:var(--line-2)"/><text x="50" y="170" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">1</text><line x1="56" y1="132" x2="544" y2="132" style="stroke:var(--line-2)"/><text x="50" y="136" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">2</text><line x1="56" y1="98" x2="544" y2="98" style="stroke:var(--line-2)"/><text x="50" y="102" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">3</text><line x1="56" y1="64" x2="544" y2="64" style="stroke:var(--line-2)"/><text x="50" y="68" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">4</text><line x1="56" y1="30" x2="544" y2="30" style="stroke:var(--line-2)"/><text x="50" y="34" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">5</text><line x1="56" y1="200" x2="544" y2="200" style="stroke:var(--line-strong)" stroke-width="1.2"/><text x="50" y="204" text-anchor="end" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">0</text><polyline fill="none" style="stroke:var(--c-prev)" stroke-width="2.5" stroke-linejoin="round" points="77,98 118,98 158,64"/><polyline fill="none" style="stroke:var(--c-bar)" stroke-width="2.5" stroke-linejoin="round" points="199,166 239,132 280,132 321,98 361,98 402,64 442,64 483,64 524,64"/><circle cx="77" cy="98" r="3.5" style="fill:var(--c-prev)"/><circle cx="118" cy="98" r="3.5" style="fill:var(--c-prev)"/><circle cx="158" cy="64" r="3.5" style="fill:var(--c-prev)"/><circle cx="199" cy="166" r="3.5" style="fill:var(--c-bar)"/><circle cx="239" cy="132" r="3.5" style="fill:var(--c-bar)"/><circle cx="280" cy="132" r="3.5" style="fill:var(--c-bar)"/><circle cx="321" cy="98" r="3.5" style="fill:var(--c-bar)"/><circle cx="361" cy="98" r="3.5" style="fill:var(--c-bar)"/><circle cx="402" cy="64" r="3.5" style="fill:var(--c-bar)"/><circle cx="442" cy="64" r="3.5" style="fill:var(--c-bar)"/><circle cx="483" cy="64" r="3.5" style="fill:var(--c-bar)"/><circle cx="524" cy="64" r="5.5" style="fill:var(--c-now)"/><text x="77" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">O</text><text x="118" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">N</text><text x="158" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">D</text><text x="199" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="239" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">F</text><text x="280" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="321" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="361" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">M</text><text x="402" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="442" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">J</text><text x="483" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">A</text><text x="524" y="226" text-anchor="middle" style="font:400 11.5px var(--f-cond);fill:var(--text-2)">S</text><text x="117" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2025</text><text x="360" y="243" text-anchor="middle" style="font:700 11.5px var(--f-cond);fill:var(--text-2)">2026</text></svg></section></div></sc-if>
+
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><details open class="grp"><summary><span class="avatar">TL</span><span class="gname">Tom Lindqvist</span><span class="muted sm">2 projects</span><span class="gamt">-$111,960</span><span class="muted sm">-18.3% of $611,400 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:50%"></span></span><b>1 of 2</b></span><span>On time <b>38%</b></span><span>Kept <b>1 of 4</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Airfield Maintenance Facility</a><div class="pm"><span class="pnum">2024-0207</span> · PM Ana Ruiz</div></td><td class="r"><div class="amt">-$96,800</div><div class="pm num">-18.5%</div></td><td><span class="chip crit">Overdue 11 days</span></td><td><div class="when">Aug 29</div><div class="tx">Owner rejected the first revised budget. Waiting on our second version.</div></td><td><div class="row2"><span class="when">Sep 26</span><span class="chip crit">Past due 11 days</span></div><div class="tx">Revised budget to owner</div><div class="warnline">1 earlier commitment missed</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Sandy Rec Center Reroof</a><div class="pm"><span class="pnum">2025-0187</span> · PM Ana Ruiz</div></td><td class="r"><div class="amt">-$15,160</div><div class="pm num">-17.1%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Sep 30</div><div class="tx">Roofing sub confirmed its price. Requesting an additional services fee.</div></td><td><div class="row2"><span class="when">Nov 14</span><span class="chip blue">Open</span></div><div class="tx">Request additional services fee</div></td></tr>
+</tbody></table></div></details>
+</sc-if>
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><details open class="grp"><summary><span class="avatar">MO</span><span class="gname">Marcus Oyelaran</span><span class="muted sm">3 projects</span><span class="gamt">-$96,250</span><span class="muted sm">-17.4% of $552,200 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:33%"></span></span><b>1 of 3</b></span><span>On time <b>55%</b></span><span>Kept <b>2 of 5</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Granite Ridge Elementary Addition</a><div class="pm"><span class="pnum">2024-0356</span> · PM Jo Nakamura</div></td><td class="r"><div class="amt">-$72,400</div><div class="pm num">-21.2%</div></td><td><span class="chip warn">Update due Oct 17</span></td><td><div class="when">Sep 24</div><div class="tx">Owner wants construction administration staffing cut by a third. I disagree; the scope has not changed.</div></td><td><div class="row2"><span class="when">Oct 17</span><span class="chip blue">Open</span></div><div class="tx">Meet owner on CA scope</div><div class="warnline">1 earlier commitment missed</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Beehive Credit Union HQ</a><div class="pm"><span class="pnum">2025-0098</span> · PM Jo Nakamura</div></td><td class="r"><div class="amt">-$19,540</div><div class="pm num">-12.4%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Oct 1</div><div class="tx">Client approved the extra programming review. Drafting a fee amendment.</div></td><td><div class="row2"><span class="when">Nov 7</span><span class="chip blue">Open</span></div><div class="tx">Request fee amendment</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Tooele Transit Hub</a><div class="pm"><span class="pnum">2025-0230</span> · PM Ravi Shah</div></td><td class="r"><div class="amt">-$4,310</div><div class="pm num">-8.2%</div></td><td><span class="chip crit">No plan, 21 days</span></td><td><span class="nothing">Nothing logged yet</span></td><td><span class="nothing">None</span></td></tr>
+</tbody></table></div></details>
+</sc-if>
+<details open class="grp"><summary><span class="avatar">DW</span><span class="gname">Dana Whitfield</span><span class="muted sm">4 projects</span><span class="gamt">-$85,960</span><span class="muted sm">-15.3% of $561,800 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:50%"></span></span><b>2 of 4</b></span><span>On time <b>79%</b></span><span>Kept <b>5 of 7</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Wasatch Valley Clinic TI</a><div class="pm"><span class="pnum">2025-0412</span> · PM Alex Moreno</div></td><td class="r"><div class="amt">-$41,250</div><div class="pm num">-22.1%</div></td><td><span class="chip warn">Update due Oct 17</span></td><td><div class="when">Sep 29</div><div class="tx">Reissued the consultant scope. Mechanical engineer agreed to credit back $4,200. Still waiting on the owner about the six added exam rooms.</div></td><td><div class="row2"><span class="when">Oct 17</span><span class="chip ">Date moved once</span></div><div class="tx">Submit a fee amendment for the added exam rooms</div><div class="warnline">1 earlier commitment missed</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Ogden Library Annex</a><div class="pm"><span class="pnum">2024-0388</span> · PM Sam Pereira</div></td><td class="r"><div class="amt">-$28,730</div><div class="pm num">-13.5%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Oct 2</div><div class="tx">Punch list is down to three items. Billing review with Sam is set for mid-November.</div></td><td><div class="row2"><span class="when">Nov 14</span><span class="chip blue">Open</span></div><div class="tx">Closeout billing review</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Hangar 7 Door Replacement</a><div class="pm"><span class="pnum">2025-0173</span> · PM Alex Moreno</div></td><td class="r"><div class="amt">-$9,860</div><div class="pm num">-15.4%</div></td><td><span class="chip crit">Overdue 7 days</span></td><td><div class="when">Aug 31</div><div class="tx">Door supplier raised its price 11%. Preparing a change order package for the owner.</div></td><td><div class="row2"><span class="when">Oct 3</span><span class="chip crit">Past due 4 days</span></div><div class="tx">Send change order package</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Riverton Fire Station 3</a><div class="pm"><span class="pnum">2024-0291</span> · PM Lee Tran</div></td><td class="r"><div class="amt">-$6,120</div><div class="pm num">-6.2%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Sep 30</div><div class="tx">Final inspection passed. The last invoice goes out after the retainage release.</div></td><td><div class="row2"><span class="when">Dec 5</span><span class="chip blue">Open</span></div><div class="tx">Final invoice</div></td></tr>
+</tbody></table></div></details>
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><details open class="grp"><summary><span class="avatar">PR</span><span class="gname">Priya Raman</span><span class="muted sm">3 projects</span><span class="gamt">-$73,270</span><span class="muted sm">-14.2% of $517,200 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:67%"></span></span><b>2 of 3</b></span><span>On time <b>92%</b></span><span>Kept <b>6 of 7</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Bluffdale Distribution Center</a><div class="pm"><span class="pnum">2025-0301</span> · PM Chris Dalton</div></td><td class="r"><div class="amt">-$58,900</div><div class="pm num">-14.5%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Sep 28</div><div class="tx">Cut site staff to two on Sep 15. Hours are now tracking close to budget.</div></td><td><div class="row2"><span class="when">Oct 30</span><span class="chip blue">Open</span></div><div class="tx">Second staffing reduction after Phase 2</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Canyon Rim Dental Office</a><div class="pm"><span class="pnum">2025-0144</span> · PM Chris Dalton</div></td><td class="r"><div class="amt">-$11,420</div><div class="pm num">-15.9%</div></td><td><span class="chip warn">Update due Oct 17</span></td><td><div class="when">Sep 12</div><div class="tx">Client asked for added services. No fee discussion yet.</div></td><td><div class="row2"><span class="when">Oct 17</span><span class="chip blue">Open</span></div><div class="tx">Client call on added services</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Murray Credit Union Branch</a><div class="pm"><span class="pnum">2024-0420</span> · PM Hana Berg</div></td><td class="r"><div class="amt">-$2,950</div><div class="pm num">-7.4%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Oct 3</div><div class="tx">Final invoice is drafted, waiting on punch list sign-off.</div></td><td><div class="row2"><span class="when">Nov 20</span><span class="chip blue">Open</span></div><div class="tx">Submit final invoice</div></td></tr>
+</tbody></table></div></details>
+</sc-if>
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><details open class="grp"><summary><span class="avatar">EC</span><span class="gname">Elena Castellanos</span><span class="muted sm">2 projects</span><span class="gamt">-$43,520</span><span class="muted sm">-12.9% of $337,800 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:50%"></span></span><b>1 of 2</b></span><span>On time <b>88%</b></span><span>Kept <b>4 of 4</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Lehi Tech Office Fit-Out</a><div class="pm"><span class="pnum">2025-0266</span> · PM Owen Pratt</div></td><td class="r"><div class="amt">-$34,880</div><div class="pm num">-12.6%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Sep 17</div><div class="tx">Phase 2 drafting hours cut. Hours are back near budget.</div></td><td><div class="row2"><span class="when">Nov 7</span><span class="chip blue">Open</span></div><div class="tx">Reduce drafting hours in Phase 3</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Park City Residence</a><div class="pm"><span class="pnum">2025-0121</span> · PM Owen Pratt</div></td><td class="r"><div class="amt">-$8,640</div><div class="pm num">-14.0%</div></td><td><span class="chip warn">Update due Oct 17</span></td><td><div class="when">Sep 20</div><div class="tx">Client added a second round of revisions. Preparing a fee request.</div></td><td><div class="row2"><span class="when">Oct 17</span><span class="chip blue">Open</span></div><div class="tx">Fee request to client</div></td></tr>
+</tbody></table></div></details>
+</sc-if>
+<sc-if value="{{ showAll }}" hint-placeholder-val="{{ true }}"><details open class="grp"><summary><span class="avatar">BO</span><span class="gname">Ben Okafor</span><span class="muted sm">2 projects</span><span class="gamt">-$39,080</span><span class="muted sm">-11.4% of $341,900 billed</span><span class="gmeta"><span>Plans current <span class="meter"><span style="width:50%"></span></span><b>1 of 2</b></span><span>On time <b>71%</b></span><span>Kept <b>2 of 3</b></span></span><svg class="ico-svg chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="tblwrap"><table class="tt"><colgroup><col style="width:25%"><col style="width:10%"><col style="width:13%"><col style="width:26%"><col style="width:26%"></colgroup><thead><tr><th>Project</th><th class="r">Profit YTD</th><th>Plan</th><th>Latest update</th><th>Next commitment</th></tr></thead><tbody>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Provo Lab Renovation</a><div class="pm"><span class="pnum">2025-0334</span> · PM Kim Ostrander</div></td><td class="r"><div class="amt">-$26,300</div><div class="pm num">-13.5%</div></td><td><span class="chip ok">Current</span></td><td><div class="when">Oct 1</div><div class="tx">Value engineering workshop is scheduled with the owner.</div></td><td><div class="row2"><span class="when">Nov 14</span><span class="chip blue">Open</span></div><div class="tx">Value engineering workshop</div></td></tr>
+<tr><td><a class="pt" href="TurnaroundPlan.dc.html">Draper Community Center</a><div class="pm"><span class="pnum">2024-0399</span> · PM Kim Ostrander</div></td><td class="r"><div class="amt">-$12,780</div><div class="pm num">-8.7%</div></td><td><span class="chip crit">No plan, 14 days</span></td><td><span class="nothing">Nothing logged yet</span></td><td><span class="nothing">None</span></td></tr>
+</tbody></table></div></details>
+</sc-if>
+
+</div>
+</main></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2900}}'>
+
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { who: 'all', pub: false };
+  }
+  renderVals() {
+    const all = this.state.who === 'all';
+    return {
+      showAll: all, showMe: !all,
+      clsAll: all ? 'on' : '', clsMe: all ? '' : 'on',
+      pickAll: () => this.setState({ who: 'all' }),
+      pickMe: () => this.setState({ who: 'me' }),
+      isDraft: !this.state.pub, isPub: this.state.pub,
+      publish: () => this.setState({ pub: true }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

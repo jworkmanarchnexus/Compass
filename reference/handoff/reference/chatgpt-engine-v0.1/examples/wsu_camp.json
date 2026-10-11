@@ -1,0 +1,17 @@
+{
+  "project_number": "0025054.00",
+  "project_name": "WSU CAMP",
+  "as_of_period": "202609",
+  "recognized_revenue": "511193.85",
+  "posted_labor": "70923.51",
+  "labor_including_unposted": "71287.91",
+  "include_unposted_labor": true,
+  "overhead_rate_pct": "200",
+  "overhead_rate_source": "RPPlan.OverheadPct",
+  "project_expenses": "241171.93",
+  "fee_components": {"fee": "364184.12", "consult_fee": "206101.88", "reimb_allow": "0"},
+  "billing_entries": [
+    {"array_type": "I", "section": "F", "subsection": "0", "category": "fee", "amount": "511193.85"}
+  ],
+  "jtd_total_billed": "511193.85"
+}

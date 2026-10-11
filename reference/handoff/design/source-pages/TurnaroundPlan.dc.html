@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Condensed:wght@400;700&display=swap">
+<style>
+/* ==========================================================================
+   Arch Nexus design tokens (Toolbox)
+   Source: Arch Nexus Brand Elements Guide (2019), pages 5, 10, 11.
+   Brand values are kept exact. Where a brand value fails WCAG AA for small text,
+   a darker brand shade (or a darkened derivative, marked "derived") is used for
+   text only; the brand value stays in graphics. See docs/DESIGN-SYSTEM.md.
+   ========================================================================== */
+:root {
+  /* brand: primary */
+  --nx-blue: #0099D8;            /* Pantone Process Blue C. The dominant accent. */
+  /* brand: shades of Nexus Blue (page 11) */
+  --nx-t20: #BEDAEC; --nx-t40: #87BEDE; --nx-t70: #6FAFE0;
+  --nx-d20: #0084BA; --nx-d40: #006B97; --nx-d60: #005175;
+  /* brand: secondary */
+  --nx-bluegray: #778390; --nx-lightgray: #EDEDEE; --nx-darkgray: #504F51;
+  /* brand: grey shades (page 11) */
+  --nx-g1: #CDD1D2; --nx-g2: #85939E; --nx-g3: #50585E;
+  /* brand: tertiary (infographic support, small accents only) */
+  --nx-orange: #F18A00; --nx-green: #93D500; --nx-lightblue: #99D6EF;
+
+  /* surfaces */
+  --bg: #FFFFFF;                 /* working canvas */
+  --surface: #FFFFFF;
+  --surface-2: #F7F7F8;          /* quiet bands, side bar */
+  --surface-3: #EDEDEE;          /* brand light gray: headers, hover on quiet */
+  --scrim: rgba(36, 40, 46, .44);
+
+  /* lines */
+  --line: #DFE2E5;               /* hairline divider (blue-gray at ~22%) */
+  --line-2: #ECEEF0;             /* row rule */
+  --line-strong: #C3C9CF;        /* input borders */
+
+  /* text */
+  --text: #504F51;               /* brand dark gray, 8.1:1 on white */
+  --text-strong: #3A393B;        /* titles */
+  --text-2: #66707B;             /* derived from Blue Gray, 5.0:1 (brand #778390 is 3.9:1) */
+  --text-3: #8C959E;             /* placeholders, disabled */
+  --on-accent: #FFFFFF;
+
+  /* interaction */
+  --accent: var(--nx-blue);      /* indicators, focus, selected marks, bars */
+  --accent-text: var(--nx-d40);  /* links and primary buttons: 5.9:1 */
+  --accent-hover: var(--nx-d60);
+  --accent-soft: #E5F5FB;        /* selected rows (Nexus Blue 10%) */
+  --accent-softer: #F2FAFD;      /* hover tint */
+  --focus: 0 0 0 3px rgba(0, 153, 216, .28);
+  --primary-bg: var(--nx-d40); --primary-hover: var(--nx-d60); --primary-fg: #FFFFFF;
+
+  /* semantic states (one meaning each) */
+  --info: var(--nx-d40);   --info-bg: #EAF5FB;
+  --warn: #A65F00;         --warn-fill: var(--nx-orange); --warn-bg: #FEF4E6;   /* derived text value, 4.9:1 */
+  --ok: #4D7A00;           --ok-fill: var(--nx-green);    --ok-bg: #F2F9E6;     /* derived text value, 5.1:1 */
+  --crit: #C4312B;         --crit-bg: #FCECEB;   /* not in the brand palette: used only for errors and conflicts */
+  --today: var(--nx-orange);
+
+  /* schedule graphics */
+  --bar: var(--nx-blue);
+  --bar-ms: var(--nx-d60);
+  --bar-hold: var(--nx-t40);
+  --wknd: #F4F5F6;
+  --hol: #E9EBED;
+  --ghost: #9AA4AD;
+
+  /* audience colors (overridden per schedule at runtime) */
+  --lv-client: var(--nx-blue); --lv-design: var(--nx-d40); --lv-internal: var(--nx-bluegray);
+
+  /* legacy preset colors used by older schedules */
+  --p-blue: #3B79C3; --p-teal: #1F8A8A; --p-green: #4C8F3F; --p-violet: #7653B5; --p-slate: #5F7285; --p-brown: #8A5A3A; --p-amber: #C98A1B; --p-red: #B94A48; --p-rose: #B5527E; --p-olive: #7F8A2E; --p-navy: #2B4C7E; --p-sky: #3C9BD1; --p-mint: #2FA77A; --p-coral: #E0663F; --p-plum: #7A3E6E; --p-indigo: #4B4FB5; --p-sand: #B49A6B; --p-charcoal: #3A4550;
+  /* brand presets */
+  --p-nexus: #0099D8; --p-nexus-t20: #BEDAEC; --p-nexus-t40: #87BEDE; --p-nexus-t70: #6FAFE0; --p-nexus-d20: #0084BA; --p-nexus-d40: #006B97; --p-nexus-d60: #005175;
+  --p-nexus-light: #99D6EF; --p-bluegray: #778390; --p-darkgray: #504F51; --p-brand-orange: #F18A00; --p-brand-green: #93D500;
+
+  /* type */
+  --f-ui: 'Lato', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-cond: 'Roboto Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --fs-xs: 11px; --fs-sm: 12.5px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 28px;
+
+  /* space (4px grid) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --r1: 3px; --r2: 4px; --r3: 6px; --r4: 8px;
+  --shadow-1: 0 1px 2px rgba(40, 46, 52, .08);
+  --shadow-2: 0 8px 24px rgba(40, 46, 52, .14), 0 1px 3px rgba(40, 46, 52, .08);
+
+  /* layout */
+  --side-w: 232px;
+  --row-h: 32px;                 /* table and timeline row height (density) */
+  --ctl-h: 32px;
+  color-scheme: light;
+}
+body.dense { --row-h: 27px; }
+
+/* dark theme: same roles, values chosen for contrast on dark surfaces */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+    --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+    --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+    --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+    --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+    --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+    --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+    --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+  --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+  --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+  --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+  --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+  --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+  --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+  --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+  color-scheme: dark;
+}
+/* ==========================================================================
+   Toolbox UI components: shared by every module.
+   Rules of thumb: hairlines over boxes, one accent, no heavy shadows,
+   4px grid, 32px controls, condensed type for labels and numbers.
+   ========================================================================== */
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 var(--fs-md)/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+::selection { background: rgba(0, 153, 216, .22); }
+h1, h2, h3, h4 { font-family: var(--f-cond); color: var(--text-strong); margin: 0; font-weight: 700; letter-spacing: .005em; }
+h2 { font-size: var(--fs-xl); line-height: 1.2; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--text-2); }
+.num, .mono { font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pad { padding: var(--s5); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ico-svg { display: block; flex: none; }
+.lbl, .eyebrow { font-family: var(--f-cond); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+
+/* ----- buttons ----- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl-h); padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13.5px; white-space: nowrap; line-height: 1; transition: background-color .12s, border-color .12s, color .12s; }
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--text-3); }
+.btn:active:not(:disabled) { background: var(--surface-3); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+.btn.lg { height: 38px; padding: 0 16px; font-size: 14.5px; }
+.btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.quiet, .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.quiet:hover:not(:disabled), .btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--text); }
+.btn.danger { background: var(--crit); border-color: var(--crit); color: #fff; font-weight: 700; }
+.btn.danger:hover:not(:disabled) { filter: brightness(.92); background: var(--crit); }
+.btn.icon { width: var(--ctl-h); padding: 0; }
+.btn.icon.sm { width: 28px; }
+.btn[aria-pressed="true"]:not(.primary) { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
+.btn.pulse { box-shadow: 0 0 0 3px rgba(0, 107, 151, .18); }
+.btn .kbd { font-family: var(--f-cond); font-size: 11px; color: var(--text-3); margin-left: 2px; }
+.btn.primary .kbd { color: rgba(255, 255, 255, .7); }
+.ib { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: var(--r2); background: transparent; color: var(--text-2); cursor: pointer; }
+.ib:hover:not(:disabled) { background: var(--surface-3); color: var(--text-strong); }
+.ib:disabled { opacity: .35; cursor: default; }
+.ib.del:hover:not(:disabled) { color: var(--crit); background: var(--crit-bg); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); cursor: pointer; text-align: left; font: inherit; }
+.linkbtn:hover { text-decoration: underline; }
+.vsep { width: 1px; height: 20px; background: var(--line); margin: 0 var(--s1); flex: none; }
+
+/* segmented control: a quiet track with one raised choice */
+.seg { display: inline-flex; align-items: center; gap: 2px; padding: 2px; height: var(--ctl-h); border-radius: var(--r3); background: var(--surface-3); flex: none; }
+.seg > button, .seg > .btn { height: 28px; border: 0; border-radius: var(--r2); background: transparent; padding: 0 12px; color: var(--text-2); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.seg > button:hover:not(:disabled), .seg > .btn:hover:not(:disabled) { color: var(--text-strong); background: transparent; }
+.seg > button.on, .seg > button[aria-pressed="true"], .seg > .btn[aria-pressed="true"] { background: var(--surface); color: var(--text-strong); box-shadow: var(--shadow-1), inset 0 -2px 0 var(--accent); font-weight: 700; border: 0; }
+.seg > button:disabled { opacity: .5; cursor: default; }
+
+/* ----- form controls ----- */
+.txt { height: var(--ctl-h); padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); width: 100%; min-width: 0; transition: border-color .12s, box-shadow .12s; }
+textarea.txt { height: auto; padding: 8px 10px; }
+.txt.sm { height: 28px; width: auto; }
+.txt:hover:not(:disabled) { border-color: var(--text-3); }
+.txt:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+.txt:disabled { background: var(--surface-2); color: var(--text-2); }
+.txt::placeholder, td input::placeholder { color: var(--text-3); }
+select.txt { padding-right: 28px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366707B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+input[type=checkbox], input[type=radio] { accent-color: var(--nx-blue); width: 15px; height: 15px; margin: 0; flex: none; }
+label.chk { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; cursor: pointer; }
+label.chk.top { align-items: flex-start; }
+label.chk.top input { margin-top: 3px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > label, .field > .lbl { font-family: var(--f-cond); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.field .hint { font-size: var(--fs-sm); color: var(--text-2); }
+.form { display: flex; flex-direction: column; gap: var(--s3); }
+.searchbox { position: relative; display: flex; align-items: center; }
+.searchbox .ico-svg { position: absolute; left: 10px; color: var(--text-3); pointer-events: none; }
+.searchbox .txt { padding-left: 34px; }
+
+/* switch: an on/off setting that takes effect immediately */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text); user-select: none; height: var(--ctl-h); padding: 0 6px; border-radius: var(--r2); border: 0; background: transparent; }
+.switch:hover:not(:disabled) { background: var(--surface-2); }
+.switch .track { width: 28px; height: 16px; border-radius: 8px; background: var(--line-strong); position: relative; transition: background-color .15s; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .15s; }
+.switch[aria-pressed="true"] .track, .switch[aria-checked="true"] .track { background: var(--nx-blue); }
+.switch[aria-pressed="true"] .track::after, .switch[aria-checked="true"] .track::after { transform: translateX(12px); }
+.switch:disabled { opacity: .45; cursor: default; }
+
+/* ----- chips and counts ----- */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 11px; background: var(--surface-3); color: var(--text-2); font: 700 11.5px/1 var(--f-cond); letter-spacing: .02em; white-space: nowrap; }
+.chip.blue { background: var(--accent-soft); color: var(--accent-text); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.crit { background: var(--crit-bg); color: var(--crit); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.editing { background: var(--warn-bg); color: var(--warn); }
+.chip.away { background: transparent; color: var(--text-3); }
+.cnt { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font: 700 11px/1 var(--f-cond); }
+.cnt.err { background: var(--crit); color: #fff; }
+.cnt.warn { background: var(--warn-fill); color: #2A1A00; }
+.cnt.ok { color: var(--text-3); font-weight: 400; padding: 0; }
+.avatar { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); color: var(--text-strong); font: 700 11px/1 var(--f-cond); border: 2px solid var(--surface); }
+.avatar.editing { box-shadow: 0 0 0 2px var(--warn-fill); }
+.avatar + .avatar { margin-left: -6px; }
+
+/* ----- menus ----- */
+.menu-wrap { position: relative; display: inline-flex; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 240px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-2); padding: 6px; display: flex; flex-direction: column; }
+.menu.left { left: 0; right: auto; }
+.menu > button, .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; background: transparent; border: 0; border-radius: var(--r2); cursor: pointer; color: var(--text); font-size: 13.5px; }
+.menu > button:hover:not(:disabled), .menu-item:hover { background: var(--surface-2); }
+.menu > button:disabled { opacity: .45; cursor: default; }
+.menu > button .ico-svg { color: var(--text-2); }
+.menu > button > span:first-child:not(.tick) { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; }
+.menu small { color: var(--text-2); font-size: 12px; }
+.menu .danger { color: var(--crit); }
+.menu .danger .ico-svg { color: var(--crit); }
+.menu-head { font-family: var(--f-cond); font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); padding: 6px 10px 4px; }
+.menu-foot { font-size: 12px; color: var(--text-2); padding: 8px 10px 4px; border-top: 1px solid var(--line-2); margin-top: 4px; }
+.menu-sep { height: 1px; background: var(--line-2); margin: 4px 2px; }
+.menu .tick { visibility: hidden; color: var(--accent); margin-left: auto; }
+.menu button[aria-checked="true"] .tick { visibility: visible; }
+.menu button[aria-checked="true"] strong { color: var(--accent-text); }
+
+/* ----- banners: one line, a colored rule, an icon ----- */
+.banner { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; padding: 7px 12px 7px 14px; background: var(--info-bg); box-shadow: inset 3px 0 var(--info); font-size: 13px; }
+.banner.warn { background: var(--warn-bg); box-shadow: inset 3px 0 var(--warn-fill); }
+.banner.err { background: var(--crit-bg); box-shadow: inset 3px 0 var(--crit); }
+.banner .bmsg { flex: 1 1 320px; min-width: 0; display: flex; gap: 8px; align-items: baseline; }
+.banner .bmsg > .ico-svg { align-self: center; color: var(--info); }
+.banner.warn .bmsg > .ico-svg { color: var(--warn); }
+.banner.err .bmsg > .ico-svg { color: var(--crit); }
+.banner .bact { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.banner .btn { height: 26px; font-size: 12.5px; background: transparent; }
+.banner .btn:hover:not(:disabled) { background: var(--surface); }
+.shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+body.side-collapsed { --side-w: 60px; }
+
+/* side navigation */
+.side { display: flex; flex-direction: column; min-height: 0; background: var(--surface-2); border-right: 1px solid var(--line); overflow: hidden; }
+.side-brand { padding: 20px 20px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+/* the logo is never below 1in (96 CSS px) wide and keeps clear space equal to "ARC" (~20% of its width) */
+.side-logo { width: 96px; height: auto; display: block; margin: 19px 0 0 0; }
+.side-product { display: flex; align-items: baseline; gap: 8px; width: 100%; padding-top: 12px; border-top: 1px solid var(--nx-blue); }
+.side-product strong { font: 700 15px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--text-strong); }
+.side-product span { font-size: 12px; color: var(--text-2); }
+.side-nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; flex: 1 1 auto; overflow: auto; }
+.side-nav .navh { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 10px 10px 6px; }
+.nav-item { position: relative; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--r2); color: var(--text); text-decoration: none; font-size: 14px; }
+.nav-item:hover { background: var(--surface-3); text-decoration: none; }
+.nav-item.on { background: var(--accent-soft); color: var(--text-strong); font-weight: 700; }
+.nav-item.on::before { content: ""; position: absolute; left: -10px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 2px 2px 0; background: var(--nx-blue); }
+.nav-item .ico-svg { color: var(--text-2); }
+.nav-item.on .ico-svg { color: var(--accent); }
+.side-foot { display: flex; align-items: center; gap: 4px; padding: 10px; border-top: 1px solid var(--line); }
+.side-user { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--text); }
+.side-user .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.side-collapsed .side-brand, body.side-collapsed .side-user .nm, body.side-collapsed .nav-item span, body.side-collapsed .side-nav .navh { display: none; }
+body.side-collapsed .side-nav { padding: 12px 8px; }
+body.side-collapsed .nav-item { justify-content: center; padding: 0; }
+body.side-collapsed .nav-item.on::before { left: -8px; }
+body.side-collapsed .side-foot { flex-direction: column; }
+body.side-collapsed .side-user { justify-content: center; }
+
+.mainwrap { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.mtop { display: none; }
+.page { min-height: 0; flex: 1 1 auto; overflow: auto; }
+
+/* page header: a Nexus Blue rule, a condensed title (the brand guide's page heading, quieter) */
+.phead { padding: 22px 32px 0; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); margin-bottom: 10px; }
+.crumbs a { color: var(--text-2); }
+.crumbs a:hover { color: var(--accent-text); }
+.crumbs .ico-svg { color: var(--text-3); }
+.ptitle { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.ptitle h1 { font-size: var(--fs-2xl); line-height: 1.05; letter-spacing: .01em; }
+.ptitle h1.brand { color: var(--nx-blue); text-transform: uppercase; letter-spacing: .02em; }
+.ptitle .sub { color: var(--text-2); font-size: 14px; padding-bottom: 2px; }
+.ptitle .grow { flex: 1 1 auto; }
+.pbody { padding: 18px 32px 48px; }
+
+/* Scheduler home */
+.home-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.home-tools .searchbox { flex: 1 1 320px; max-width: 520px; }
+.home-tools .grow { flex: 1 1 auto; }
+.section-h { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 8px; }
+.section-h h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.section-h .muted { font-size: 12.5px; }
+.recent { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.rcard { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); text-align: left; cursor: pointer; min-width: 0; color: inherit; }
+.rcard:hover { border-color: var(--nx-blue); text-decoration: none; }
+.rcard .pn { font: 700 12px/1 var(--f-cond); letter-spacing: .04em; color: var(--accent-text); }
+.rcard .pt { font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rcard .pm { font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the project list: a dense, sortable list rather than a card grid (it has to work with hundreds) */
+.plist { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.plist th { position: sticky; top: 0; z-index: 1; background: var(--bg); text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.plist th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.plist th button:hover { color: var(--text-strong); }
+.plist th[aria-sort] button { color: var(--text-strong); }
+.plist td { padding: 0 12px; height: 46px; border-bottom: 1px solid var(--line-2); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist tbody tr { cursor: pointer; }
+.plist tbody tr:hover td { background: var(--accent-softer); }
+.plist tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.plist .pn { font: 700 13px/1 var(--f-cond); letter-spacing: .02em; color: var(--text-2); }
+.plist .pt { font-weight: 700; color: var(--text-strong); }
+.plist .nosched { color: var(--text-3); font-style: italic; }
+.plist .when { color: var(--text-2); font-size: 13px; }
+.plist .acts { text-align: right; }
+.plist .acts .btn { visibility: hidden; }
+.plist tr:hover .acts .btn, .plist tr:focus-within .acts .btn { visibility: visible; }
+.plist col.c-num { width: 120px; } .plist col.c-client { width: 22%; } .plist col.c-sch { width: 22%; } .plist col.c-upd { width: 190px; } .plist col.c-act { width: 150px; }
+
+:root { --c-prev:#CDD1D2; --c-bar:#50585E; --c-now:var(--nx-blue); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-prev:#39414A; --c-bar:#9AA6B1; } }
+:root[data-theme="dark"] { --c-prev:#39414A; --c-bar:#9AA6B1; }
+html, body { height: auto; }
+.shell { height: auto; min-height: 100vh; }
+.side { min-height: 100vh; }
+.page { overflow: visible; }
+.mainwrap { background: var(--bg); }
+.phead { padding-top: 24px; }
+.ptitle h1.plain { color: var(--text-strong); }
+.ptitle .sub { max-width: 62ch; }
+.chip.out { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.chip.pn { background: transparent; color: var(--text-2); padding: 0; font-size: 13px; }
+.sm { font-size: 12.5px; }
+.banner .btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); }
+.banner .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.nav-item .cnt { margin-left: auto; }
+.nav-item.nav-sub { height: 32px; padding-left: 36px; font-size: 13.5px; }
+.nav-item.nav-sub .ico-svg { width: 15px; height: 15px; }
+.side-foot .nm { font-size: 13px; }
+
+/* KPI strip: hairline cells, condensed figures */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); margin-bottom: 16px; }
+.kpi { padding: 14px 18px 14px; border-left: 1px solid var(--line); min-width: 0; }
+.kpi:first-child { border-left: 0; }
+.kpi .v { font: 700 28px/1.1 var(--f-cond); color: var(--text-strong); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.kpi .s { font-size: 12.5px; color: var(--text-2); }
+@media (max-width: 760px) { .kpi { border-left: 0; border-top: 1px solid var(--line); } .kpi:first-child { border-top: 0; } }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.cc { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 14px 18px 8px; min-width: 0; }
+.cc .ch { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.cc h3 { font-size: 16px; }
+.cc .cs { font-size: 12.5px; color: var(--text-2); }
+.cc .big { font: 700 26px/1 var(--f-cond); color: var(--text-strong); text-align: right; font-variant-numeric: tabular-nums; }
+.cc .dlt { font-size: 12.5px; color: var(--text-2); text-align: right; margin-top: 2px; }
+.cc svg { display: block; width: 100%; height: auto; max-height: 230px; }
+
+/* PIC groups */
+.grp { margin-top: 26px; }
+.grp > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 0 10px; border-bottom: 1px solid var(--line-strong); }
+.grp > summary::-webkit-details-marker { display: none; }
+.grp .gname { font: 700 18px/1 var(--f-cond); color: var(--text-strong); letter-spacing: .01em; }
+.grp .gamt { font: 700 16px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .gmeta { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; font-size: 12.5px; color: var(--text-2); }
+.grp .gmeta b { font-family: var(--f-cond); font-size: 14px; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .chev { color: var(--text-3); transition: transform .15s; flex: none; }
+.grp[open] > summary .chev { transform: rotate(90deg); }
+.meter { display: inline-block; width: 56px; height: 4px; border-radius: 2px; background: var(--surface-3); vertical-align: middle; margin: 0 6px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--nx-blue); }
+.tt { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.tt th { text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tt th.r, .tt td.r { text-align: right; }
+.tt td { padding: 12px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.tt tbody tr:hover td { background: var(--accent-softer); }
+.tt tbody tr:last-child td { border-bottom: 0; }
+.tt .pt { font-weight: 700; color: var(--text-strong); display: block; }
+.tt a.pt:hover { color: var(--accent-text); }
+.tt .pm { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.tt .pm .pnum { font-family: var(--f-cond); font-weight: 700; letter-spacing: .02em; }
+.tt .amt { font: 700 16px/1.2 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.tt .when { font: 700 12.5px/1.3 var(--f-cond); letter-spacing: .02em; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt .tx { font-size: 13.5px; color: var(--text); margin-top: 2px; }
+.tt .warnline { font-size: 12.5px; color: var(--warn); margin-top: 4px; }
+.tt .nothing { color: var(--text-3); font-style: italic; font-size: 13px; }
+.tt .row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.tblwrap { overflow-x: auto; }
+.tblwrap .tt { min-width: 860px; }
+
+/* plan page */
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 14px 0 18px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+@media (max-width: 1100px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sec { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; min-width: 0; }
+.sec > h2 { font-size: 18px; }
+.sec > .hint { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.sec .form { margin-top: 12px; }
+.pick { display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); font-size: 13px; }
+.pick:hover { border-color: var(--text-3); }
+.pick.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); font-weight: 700; }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lever-group + .lever-group { margin-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.log { list-style: none; margin: 10px 0 0; padding: 0; }
+.ent { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 0 14px; padding: 12px 0; border-top: 1px solid var(--line-2); }
+.ent:first-child { border-top: 0; }
+.ent .d { font: 700 13px/1.2 var(--f-cond); color: var(--text-strong); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.ent .t { font: 400 12px/1.3 var(--f-cond); color: var(--text-3); }
+.ent .eh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 4px; }
+.ent .eh .by { font-size: 13px; color: var(--text-2); }
+.ent p { font-size: 14px; }
+.ent.admin { box-shadow: inset 3px 0 var(--nx-bluegray); padding-left: 12px; margin-left: -12px; background: var(--surface-2); }
+.ent.fresh .d::after { content: ""; }
+.cm { padding: 12px 0; border-top: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 6px; }
+.cm:first-child { border-top: 0; padding-top: 4px; }
+.cm .ct { font-weight: 700; color: var(--text-strong); }
+.cm .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin: 12px 0 0; }
+.facts dt { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 4px; }
+.facts dd { margin: 0; font: 700 20px/1.1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.keys { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.keys > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; color: var(--text); }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font: 700 13px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary .ico-svg { transition: transform .15s; }
+details.fold[open] > summary .ico-svg { transform: rotate(90deg); }
+
+/* check-in drafts */
+.draft { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.draft .dh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.draft .dh .who2 { flex: 1 1 260px; min-width: 0; }
+.draft .dh .nm { font-weight: 700; color: var(--text-strong); }
+.done-row { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface-2); padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.done-row .grow { flex: 1 1 280px; min-width: 0; font-size: 13.5px; }
+.dlist { display: flex; flex-direction: column; gap: 14px; }
+.qn { font: 700 28px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+
+/* ported pages (Home, BD, Pipeline, Admin) */
+.pbody.col { display: flex; flex-direction: column; gap: 20px; }
+.metaline { font-size: 12.5px; color: var(--text-2); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.seg.wrap { height: auto; flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
+.sec.flush { padding: 0; overflow: hidden; }
+.sec.flush > h2 { font-size: 18px; }
+.sec.flush h2 { font-size: 18px; }
+.sec ul { list-style: none; margin: 0; padding: 0; }
+.sec.flush li { border-top: 1px solid var(--line-2); }
+.sec.flush li:first-child { border-top: 0; }
+a.btn.primary, a.btn.primary:hover { color: var(--primary-fg); text-decoration: none; }
+a.btn { text-decoration: none; }
+a.btn:hover { text-decoration: none; }
+table.dt, table.bd { width: 100%; border-collapse: separate; border-spacing: 0; }
+table.dt th, table.bd th { text-align: left; font: 700 11.5px/1.25 var(--f-cond); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); background: var(--surface); vertical-align: bottom; }
+table.dt td, table.bd td { padding: 9px 12px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+table.dt th.r, table.dt td.r, table.bd th, table.bd td { text-align: right; }
+table.bd th:first-child, table.bd td:first-child { text-align: left; }
+table.bd th:last-child, table.bd td:last-child { text-align: left; }
+table.dt td.num, table.bd td, table.dt td .num { font-variant-numeric: tabular-nums; }
+table.pt th, table.pt td { padding: 9px 5px; white-space: nowrap; font-size: 12.5px; }
+table.pt th:first-child, table.pt td:first-child { padding-left: 10px; }
+table.pt th { white-space: normal; }
+table.dt tr.tot td, table.bd tr.tf td { font-weight: 700; color: var(--text-strong); background: var(--surface-2); }
+table.dt tbody tr:hover td, table.bd tbody tr:hover td { background: var(--accent-softer); }
+table.dt tr.sel td { background: var(--accent-soft); }
+table.dt tbody tr[onclick] { cursor: pointer; }
+table.bd td.pb { color: var(--accent-text); }
+table.bd td.pg { color: var(--ok); }
+.neg { color: var(--crit); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pos { color: var(--ok); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+svg text { font-family: var(--f-cond); }
+label { font-size: 13.5px; }
+input[type=checkbox] { width: 16px; height: 16px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { display: none; }
+  .phead, .pbody { padding-left: 16px; padding-right: 16px; }
+}
+
+</style>
+</helmet>
+<div class="shell"><aside class="side" aria-label="Compass navigation"><div class="side-brand"><img class="side-logo" src="data:image/png;base64,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" alt="Arch Nexus" width="96" height="119"><div class="side-product"><strong>Compass</strong></div></div><nav class="side-nav" aria-label="Modules"><div class="navh">Modules</div><a class="nav-item" href="Main.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a class="nav-item on" href="Turnaround.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Project Turnaround</span></a><a class="nav-item nav-sub" href="TurnaroundCheckins.dc.html"><svg class="ico-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Check-in drafts</span><span class="cnt warn">4</span></a><a class="nav-item" href="BD.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>BD report</span></a><a class="nav-item" href="Pipeline.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>Pipeline watch</span><span class="cnt warn">2</span></a><a class="nav-item" href="Admin.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span>Admin</span></a></nav><div class="side-foot"><div class="side-user"><span class="avatar">JW</span><span class="nm">Josh Workman</span></div><span class="chip warn" title="Every figure on these screens is made up">Sample data</span></div></aside><div class="mainwrap"><main class="page">
+<div class="phead">
+<nav class="crumbs" aria-label="Breadcrumb"><span>Compass</span><svg class="ico-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><a href="Turnaround.dc.html">Project Turnaround</a><svg class="ico-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Wasatch Valley Clinic TI</span></nav>
+<div class="ptitle">
+<h1 class="plain">Wasatch Valley Clinic TI</h1>
+<span class="chip pn num">2025-0412</span>
+<span class="chip warn">Update due Oct 17</span>
+<span class="sub" style="flex-basis:100%;max-width:none;padding:0">PIC Dana Whitfield · PM Alex Moreno · Healthcare · Plan cycle 2026, opened Jul 14</span>
+</div>
+</div>
+<div class="pbody">
+<div class="who"><span class="lbl">Who sees this</span><span class="chip out"><b>Dana</b>&nbsp;adds entries</span><span class="chip out"><b>Other PICs</b>&nbsp;read</span><span class="chip out"><b>Admin</b>&nbsp;read, add admin notes</span><span class="chip out"><b>Marketing director</b>&nbsp;read</span></div>
+<div class="cols">
+<div class="stack">
+
+<section class="sec">
+<h2>Add to the log</h2>
+<p class="hint">The aim is to find what can change on this project. Entries are permanent. To fix a mistake, add a correction that points back at the original.</p>
+<div class="form">
+<div class="seg" role="group" aria-label="Entry type" style="align-self:flex-start">
+<button type="button" class="{{ clsExplanation }}" onClick="{{ pickExplanation }}">Explanation</button>
+<button type="button" class="{{ clsCommitment }}" onClick="{{ pickCommitment }}">Commitment</button>
+<button type="button" class="{{ clsUpdate }}" onClick="{{ pickUpdate }}">Update</button>
+<button type="button" class="{{ clsCorrection }}" onClick="{{ pickCorrection }}">Correction</button>
+</div>
+<div class="field"><label for="entrytext">{{ promptLabel }}</label><textarea id="entrytext" class="txt" rows="4" placeholder="Write it the way you would tell Josh in the hallway."></textarea></div>
+<sc-if value="{{ isCommitment }}" hint-placeholder-val="{{ false }}">
+<div class="field" style="max-width:240px"><label for="promisedby">Promised by</label><input id="promisedby" class="txt" type="date" value="2026-10-24"><span class="hint">If the date moves, you log a revision. The first date stays on record.</span></div>
+<div class="field">
+<span class="lbl">What will this commitment change? Pick one.</span>
+<div class="lever-group"><span class="muted sm">Bring in money</span><div class="picks"><button type="button" class="{{ cl_fee }}" onClick="{{ pick_fee }}">Request additional services fee</button><button type="button" class="{{ cl_co }}" onClick="{{ pick_co }}">Submit a change order</button><button type="button" class="{{ cl_reneg }}" onClick="{{ pick_reneg }}">Renegotiate the fee</button><button type="button" class="{{ cl_speed }}" onClick="{{ pick_speed }}">Speed up billing or collection</button></div></div>
+<div class="lever-group"><span class="muted sm">Spend less</span><div class="picks"><button type="button" class="{{ cl_hours }}" onClick="{{ pick_hours }}">Reduce staffing hours</button><button type="button" class="{{ cl_staff }}" onClick="{{ pick_staff }}">Move work to lower-cost staff</button><button type="button" class="{{ cl_cons }}" onClick="{{ pick_cons }}">Reduce consultant cost</button><button type="button" class="{{ cl_sched }}" onClick="{{ pick_sched }}">Shorten the schedule</button></div></div>
+</div>
+<div class="field" style="max-width:320px"><label for="qty">{{ qtyLabel }}</label><input id="qty" class="txt" type="number" min="0" placeholder="Enter a number"><span class="hint">Your best estimate is fine.</span></div>
+</sc-if>
+<sc-if value="{{ isCorrection }}" hint-placeholder-val="{{ false }}">
+<div class="field"><label for="whichentry">Which entry are you correcting?</label><select id="whichentry" class="txt"><option>Jul 14, Explanation: the owner requested four more exam rooms</option><option>Sep 15, Commitment: submit a fee amendment</option><option>Sep 29, Update: reissued the consultant scope</option></select><span class="hint">The original stays in the log with a note that it was corrected.</span></div>
+</sc-if>
+<div class="actions"><button class="btn primary" type="button" onClick="{{ addEntry }}">Add to log</button><span class="muted sm">Posted as Dana Whitfield. Josh gets no email; he sees it in the next review.</span></div>
+</div>
+</section>
+
+<section class="sec">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Plan log</h2><span class="muted sm">Newest first. 2026 cycle. Nothing here is edited or deleted.</span></div>
+<ol class="log">
+
+<sc-if value="{{ stDone }}" hint-placeholder-val="{{ false }}"><li class="ent"><div><div class="d">Oct 7</div><div class="t">7:20 p.m.</div></div><div><div class="eh"><span class="chip ok">Done</span><span class="by">Marked by Dana Whitfield</span><span class="chip blue">New</span></div><p>Fee amendment submitted to the owner for the six added exam rooms. Promised Oct 3, moved to Oct 17, done Oct 7.</p><div class="eh" style="margin-top:6px"><span class="chip">Request additional services fee</span></div></div></li></sc-if>
+<sc-if value="{{ stRevised }}" hint-placeholder-val="{{ false }}"><li class="ent"><div><div class="d">Oct 7</div><div class="t">7:20 p.m.</div></div><div><div class="eh"><span class="chip">Date revised</span><span class="by">Dana Whitfield · Fee amendment commitment</span><span class="chip blue">New</span></div><p>Oct 17 moved to Oct 24. Reason given: owner asked for another week. Earlier dates stay on record.</p></div></li></sc-if>
+<sc-if value="{{ added }}" hint-placeholder-val="{{ false }}"><li class="ent"><div><div class="d">Oct 7</div><div class="t">5:52 p.m.</div></div><div><div class="eh"><span class="chip">{{ typeLabel }}</span><span class="by">Dana Whitfield</span><sc-if value="{{ isCommitment }}" hint-placeholder-val="{{ false }}"><span class="chip">{{ leverLabel }}</span></sc-if><span class="chip blue">New</span></div><p>This is where the text you typed would appear, stamped with the time and locked. Sample entry for the mockup.</p></div></li></sc-if>
+<li class="ent"><div><div class="d">Sep 29</div><div class="t">4:12 p.m.</div></div><div><div class="eh"><span class="chip ">Update</span><span class="by">Dana Whitfield</span></div><p>Reissued the consultant scope. Mechanical engineer agreed to credit back $4,200. Still waiting on the owner about the six added exam rooms.</p></div></li>
+<li class="ent"><div><div class="d">Sep 29</div><div class="t">4:14 p.m.</div></div><div><div class="eh"><span class="chip ">Date revised</span><span class="by">Fee amendment commitment</span></div><p>Oct 3 moved to Oct 17. Reason given: owner's rep out until Oct 10. The original date stays on record.</p></div></li>
+<li class="ent admin"><div><div class="d">Sep 22</div><div class="t">9:40 a.m.</div></div><div><div class="eh"><span class="chip out">Admin note</span><span class="by">Josh Workman</span></div><p>Third straight month in the red on this one. What does the owner need to sign to pay for the added exam rooms, and when can we expect it?</p></div></li>
+<li class="ent"><div><div class="d">Sep 15</div><div class="t">2:05 p.m.</div></div><div><div class="eh"><span class="chip warn">Commitment</span><span class="by">Dana Whitfield</span><span class="chip ">Promised by Oct 3</span><span class="chip ">Request additional services fee</span></div><p>Submit a fee amendment to the owner covering the six added exam rooms, using the hours report as backup.</p></div></li>
+<li class="ent"><div><div class="d">Sep 14</div><div class="t">6:00 a.m.</div></div><div><div class="eh"><span class="chip crit">Missed</span><span class="by">Recorded by the system</span></div><p>Commitment from Aug 31, meet the owner's rep on the added scope by Sep 12, passed with no update logged.</p></div></li>
+<li class="ent"><div><div class="d">Aug 31</div><div class="t">11:20 a.m.</div></div><div><div class="eh"><span class="chip warn">Commitment</span><span class="by">Dana Whitfield</span><span class="chip ">Promised by Sep 12</span></div><p>Meet the owner's rep on site to walk through the added exam rooms and agree on how they get paid for.</p></div></li>
+<li class="ent"><div><div class="d">Aug 27</div><div class="t">3:48 p.m.</div></div><div><div class="eh"><span class="chip ok">Done</span><span class="by">Marked by Dana, 2 days early</span></div><p>Hours report to price the added scope: 412 hours on the six added rooms so far, about $58,000 at standard rates.</p></div></li>
+<li class="ent"><div><div class="d">Aug 18</div><div class="t">10:15 a.m.</div></div><div><div class="eh"><span class="chip warn">Commitment</span><span class="by">Dana Whitfield</span><span class="chip ">Promised by Aug 29</span></div><p>Run an hours report on the added exam rooms so we can put a number on the extra work.</p></div></li>
+<li class="ent"><div><div class="d">Jul 21</div><div class="t">8:55 a.m.</div></div><div><div class="eh"><span class="chip out">Correction</span><span class="by">Dana Whitfield · corrects the Jul 14 explanation</span></div><p>The owner added six exam rooms, not four as I wrote last week.</p></div></li>
+<li class="ent"><div><div class="d">Jul 14</div><div class="t">1:30 p.m.</div></div><div><div class="eh"><span class="chip blue">Explanation</span><span class="by">Dana Whitfield</span><span class="chip ">Corrected Jul 21</span><span class="chip ">Plan opened</span></div><p>The owner requested four more exam rooms after the permit set went out. That work is outside our base scope and has not been invoiced, which is why hours are running ahead of billings.</p></div></li>
+</ol>
+</section>
+
+</div>
+<div class="stack">
+
+<section class="sec">
+<h2>Commitments</h2>
+<p class="hint">Kept 1, missed 1, open 1. One date revised.</p>
+<div style="margin-top:8px">
+<sc-if value="{{ stOpen }}" hint-placeholder-val="{{ true }}"><div class="cm"><div class="row"><span class="chip warn">Open, due Oct 17</span><span class="chip">Revised once</span></div><div class="ct">Submit a fee amendment for the added exam rooms</div><div class="muted sm">Promised Oct 3, now Oct 17</div><div class="actions"><button type="button" class="btn primary sm" onClick="{{ markDone }}">Mark done</button><button type="button" class="btn sm" onClick="{{ startRevise }}">Change date</button></div></div></sc-if>
+<sc-if value="{{ stRevising }}" hint-placeholder-val="{{ false }}"><div class="cm"><div class="ct">Submit a fee amendment for the added exam rooms</div><div class="field"><label for="newdate">New date</label><input id="newdate" class="txt" type="date" value="2026-10-24"></div><div class="field"><label for="whymoved">Why is it moving?</label><input id="whymoved" class="txt" type="text" placeholder="One line is enough"></div><div class="actions"><button type="button" class="btn primary sm" onClick="{{ saveRevise }}">Save new date</button><button type="button" class="btn quiet sm" onClick="{{ cancelRevise }}">Cancel</button></div><div class="muted sm">The earlier dates stay on record.</div></div></sc-if>
+<sc-if value="{{ stClosing }}" hint-placeholder-val="{{ false }}"><div class="cm"><div class="ct">Submit a fee amendment for the added exam rooms</div><div class="field"><label for="gotamt">Dollars the owner approved</label><input id="gotamt" class="txt" type="number" min="0" placeholder="Enter a number"></div><div class="field"><label for="gotnote">What happened?</label><input id="gotnote" class="txt" type="text" placeholder="One line is enough"></div><div class="actions"><button type="button" class="btn primary sm" onClick="{{ confirmDone }}">Save as done</button><button type="button" class="btn quiet sm" onClick="{{ cancelRevise }}">Cancel</button></div></div></sc-if>
+<sc-if value="{{ stRevised }}" hint-placeholder-val="{{ false }}"><div class="cm"><div class="row"><span class="chip warn">Open, due Oct 24</span><span class="chip">Revised twice</span></div><div class="ct">Submit a fee amendment for the added exam rooms</div><div class="muted sm">Promised Oct 3, moved to Oct 17, now Oct 24</div></div></sc-if>
+<sc-if value="{{ stDone }}" hint-placeholder-val="{{ false }}"><div class="cm"><div class="row"><span class="chip ok">Kept</span></div><div class="ct">Submit a fee amendment for the added exam rooms</div><div class="muted sm">Promised Oct 3, now Oct 17, done Oct 7</div></div></sc-if>
+<div class="cm"><div class="row"><span class="chip crit">Missed</span></div><div class="ct">Meet the owner's rep on the added scope</div><div class="muted sm">Promised Sep 12, no update logged</div></div>
+<div class="cm"><div class="row"><span class="chip ok">Kept</span></div><div class="ct">Run an hours report on the added rooms</div><div class="muted sm">Promised Aug 29, done Aug 27</div></div>
+</div>
+</section>
+
+<section class="sec">
+<h2>YTD profit on this project</h2>
+<p class="hint">Month-end, in thousands.</p>
+<div style="margin-top:8px"><svg viewBox="0 0 330 172" role="img" aria-label="Line chart of YTD profit on this project by month, from plus 6 thousand dollars in January to minus 41 thousand in September." style="display:block;width:100%;height:auto"><line x1="40" y1="10" x2="322" y2="10" style="stroke:var(--line-2)"/><text x="34" y="14" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">+$10K</text><line x1="40" y1="52" x2="322" y2="52" style="stroke:var(--line-2)"/><text x="34" y="56" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">-$10K</text><line x1="40" y1="73" x2="322" y2="73" style="stroke:var(--line-2)"/><text x="34" y="77" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">-$20K</text><line x1="40" y1="94" x2="322" y2="94" style="stroke:var(--line-2)"/><text x="34" y="98" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">-$30K</text><line x1="40" y1="115" x2="322" y2="115" style="stroke:var(--line-2)"/><text x="34" y="119" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">-$40K</text><line x1="40" y1="31" x2="322" y2="31" style="stroke:var(--text-3)" stroke-width="1.2"/><text x="34" y="35" text-anchor="end" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">0</text><polyline fill="none" style="stroke:var(--c-bar)" stroke-width="2.4" stroke-linejoin="round" points="50,18 83,27 116,42 148,56 181,69 214,86 246,101 279,111 312,118"/><circle cx="50" cy="18" r="3" style="fill:var(--c-bar)"/><circle cx="83" cy="27" r="3" style="fill:var(--c-bar)"/><circle cx="116" cy="42" r="3" style="fill:var(--c-bar)"/><circle cx="148" cy="56" r="3" style="fill:var(--c-bar)"/><circle cx="181" cy="69" r="3" style="fill:var(--c-bar)"/><circle cx="214" cy="86" r="3" style="fill:var(--c-bar)"/><circle cx="246" cy="101" r="3" style="fill:var(--c-bar)"/><circle cx="279" cy="111" r="3" style="fill:var(--c-bar)"/><circle cx="312" cy="118" r="5" style="fill:var(--c-now)"/><text x="50" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">J</text><text x="83" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">F</text><text x="116" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">M</text><text x="148" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">A</text><text x="181" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">M</text><text x="214" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">J</text><text x="246" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">J</text><text x="279" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">A</text><text x="312" y="158" text-anchor="middle" style="font:400 10.5px var(--f-cond);fill:var(--text-2)">S</text></svg></div>
+</section>
+
+<section class="sec">
+<h2>Project facts</h2>
+<dl class="facts">
+<div><dt>Billed YTD</dt><dd>$186,400</dd></div>
+<div><dt>Profit YTD</dt><dd>-$41,250</dd></div>
+<div><dt>Profit % YTD</dt><dd>-22.1%</dd></div>
+<div><dt>Profit % JTD</dt><dd>+4.8%</dd></div>
+<div><dt>Contract fee</dt><dd>$842,000</dd></div>
+<div><dt>Billed to date</dt><dd>71%</dd></div>
+</dl>
+</section>
+
+<section class="sec">
+<details class="fold"><summary><svg class="ico-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>What the labels mean</summary>
+<div class="keys">
+<div><span class="chip blue">Explanation</span><span>Dana. Why the project is below break-even. The first one opens the plan for the year.</span></div>
+<div><span class="chip warn">Commitment</span><span>Dana. A promise with a date. She also picks one lever and an amount.</span></div>
+<div><span class="chip ">Update</span><span>Dana. What has happened since the last entry.</span></div>
+<div><span class="chip ok">Done</span><span>Dana presses Mark done. On or before its date counts as kept.</span></div>
+<div><span class="chip ">Date revised</span><span>Dana presses Change date. Every earlier date stays visible.</span></div>
+<div><span class="chip crit">Missed</span><span>The system. A date passed and nobody pressed Done.</span></div>
+<div><span class="chip out">Correction</span><span>Dana. Fixes an earlier entry without deleting it.</span></div>
+<div><span class="chip out">Admin note</span><span>Josh. A question or comment, always labeled.</span></div>
+</div>
+<div class="keys" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
+<div><span class="chip ok">Current</span><span>Open commitment and an entry in the last 30 days, nothing past due.</span></div>
+<div><span class="chip warn">Update due</span><span>The next update comes due within 14 days.</span></div>
+<div><span class="chip crit">Overdue</span><span>The due date passed with no new entry.</span></div>
+<div><span class="chip crit">No plan</span><span>No commitment yet this year. An explanation alone does not count.</span></div>
+</div>
+</details>
+</section>
+
+</div>
+</div>
+</div>
+</main></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { type: 'explanation', added: false, st: 'open', cat: 'fee' };
+  }
+  renderVals() {
+    const t = this.state.type, cat = this.state.cat, st = this.state.st;
+    const labels = { explanation: 'Explanation', commitment: 'Commitment', update: 'Update', correction: 'Correction' };
+    const prompts = {
+      explanation: 'What is driving the loss?',
+      commitment: 'What specific action will you take?',
+      update: 'What has happened since your last entry?',
+      correction: 'What was wrong, and what is correct?',
+    };
+    const LEV = {fee:['Request additional services fee','Dollars you expect to bring in'],co:['Submit a change order','Dollars you expect to bring in'],reneg:['Renegotiate the fee','Dollars you expect to bring in'],speed:['Speed up billing or collection','Dollars you expect to bill or collect sooner'],hours:['Reduce staffing hours','Hours you will cut'],staff:['Move work to lower-cost staff','Dollars you expect to save'],cons:['Reduce consultant cost','Dollars you expect to save'],sched:['Shorten the schedule','Weeks you will cut']};
+    const out = {
+      leverLabel: LEV[cat][0], qtyLabel: LEV[cat][1],
+      clsExplanation: t === 'explanation' ? 'on' : '', clsCommitment: t === 'commitment' ? 'on' : '',
+      clsUpdate: t === 'update' ? 'on' : '', clsCorrection: t === 'correction' ? 'on' : '',
+      pickExplanation: () => this.setState({ type: 'explanation' }), pickCommitment: () => this.setState({ type: 'commitment' }),
+      pickUpdate: () => this.setState({ type: 'update' }), pickCorrection: () => this.setState({ type: 'correction' }),
+      isCommitment: t === 'commitment', isCorrection: t === 'correction',
+      promptLabel: prompts[t], typeLabel: labels[t],
+      added: this.state.added, addEntry: () => this.setState({ added: true }),
+      stOpen: st === 'open', stRevising: st === 'revising', stClosing: st === 'closing', stRevised: st === 'revised', stDone: st === 'done',
+      markDone: () => this.setState({ st: 'closing' }), confirmDone: () => this.setState({ st: 'done' }),
+      startRevise: () => this.setState({ st: 'revising' }), cancelRevise: () => this.setState({ st: 'open' }), saveRevise: () => this.setState({ st: 'revised' }),
+    };
+    ['fee','co','reneg','speed','hours','staff','cons','sched'].forEach((k) => {
+      out['cl_' + k] = cat === k ? 'pick on' : 'pick';
+      out['pick_' + k] = () => this.setState({ cat: k });
+    });
+    return out;
+  }
+}
+
+</script>
+</body>
+</html>

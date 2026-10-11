@@ -1,0 +1,12 @@
+<!-- @dsCard group="Forms" height=300 -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{height:auto}body{background:var(--bg)}</style></head><body>
+<div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:760px">
+<div class="field"><label for="a">Project name</label><input id="a" class="txt" value="Riverton Elementary"><span class="hint">Shown on every schedule.</span></div>
+<div class="field"><label for="b">Phase</label><select id="b" class="txt"><option>Schematic design</option><option>Design development</option></select></div>
+<div class="field"><label for="c">Search</label><div class="searchbox"><i data-i="search"></i><input id="c" class="txt" placeholder="Search projects"></div></div>
+<div class="field"><label for="d">Disabled</label><input id="d" class="txt" value="Locked" disabled></div>
+<div class="field" style="grid-column:1/-1"><label for="e">Notes</label><textarea id="e" class="txt" rows="2" placeholder="Optional"></textarea></div>
+<label class="chk"><input type="checkbox" checked> Include weekends</label>
+<label class="chk"><input type="radio" name="r" checked> Calendar days</label>
+</div>
+<script>if(window.Toolbox)Toolbox.hydrateIcons();</script></body></html>

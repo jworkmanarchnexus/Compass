@@ -1,0 +1,19 @@
+{
+  "project_number": "0022059.00",
+  "project_name": "EPIC Challenge Mutual",
+  "as_of_period": "202609",
+  "recognized_revenue": "3180856.04",
+  "posted_labor": "676526.62",
+  "include_unposted_labor": false,
+  "overhead_rate_pct": "200",
+  "overhead_rate_source": "REPORT_OBSERVED_NOT_RPPLAN_VERIFIED",
+  "project_expenses": "943422.16",
+  "fee_components": {"fee": "2434317", "consult_fee": "896082", "reimb_allow": "44569"},
+  "billing_entries": [
+    {"array_type": "I", "section": "C", "subsection": "", "category": "reimb", "amount": "919783.26"},
+    {"array_type": "I", "section": "E", "subsection": "", "category": "reimb", "amount": "22414.50"},
+    {"array_type": "I", "section": "L", "subsection": "0", "category": "fee", "amount": "2238663.95"},
+    {"array_type": "I", "section": "Lim", "subsection": "L", "category": "fee", "amount": "-5.67"}
+  ],
+  "jtd_total_billed": "3180856.04"
+}

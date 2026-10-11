@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Condensed:wght@400;700&display=swap">
+<style>
+/* ==========================================================================
+   Arch Nexus design tokens (Toolbox)
+   Source: Arch Nexus Brand Elements Guide (2019), pages 5, 10, 11.
+   Brand values are kept exact. Where a brand value fails WCAG AA for small text,
+   a darker brand shade (or a darkened derivative, marked "derived") is used for
+   text only; the brand value stays in graphics. See docs/DESIGN-SYSTEM.md.
+   ========================================================================== */
+:root {
+  /* brand: primary */
+  --nx-blue: #0099D8;            /* Pantone Process Blue C. The dominant accent. */
+  /* brand: shades of Nexus Blue (page 11) */
+  --nx-t20: #BEDAEC; --nx-t40: #87BEDE; --nx-t70: #6FAFE0;
+  --nx-d20: #0084BA; --nx-d40: #006B97; --nx-d60: #005175;
+  /* brand: secondary */
+  --nx-bluegray: #778390; --nx-lightgray: #EDEDEE; --nx-darkgray: #504F51;
+  /* brand: grey shades (page 11) */
+  --nx-g1: #CDD1D2; --nx-g2: #85939E; --nx-g3: #50585E;
+  /* brand: tertiary (infographic support, small accents only) */
+  --nx-orange: #F18A00; --nx-green: #93D500; --nx-lightblue: #99D6EF;
+
+  /* surfaces */
+  --bg: #FFFFFF;                 /* working canvas */
+  --surface: #FFFFFF;
+  --surface-2: #F7F7F8;          /* quiet bands, side bar */
+  --surface-3: #EDEDEE;          /* brand light gray: headers, hover on quiet */
+  --scrim: rgba(36, 40, 46, .44);
+
+  /* lines */
+  --line: #DFE2E5;               /* hairline divider (blue-gray at ~22%) */
+  --line-2: #ECEEF0;             /* row rule */
+  --line-strong: #C3C9CF;        /* input borders */
+
+  /* text */
+  --text: #504F51;               /* brand dark gray, 8.1:1 on white */
+  --text-strong: #3A393B;        /* titles */
+  --text-2: #66707B;             /* derived from Blue Gray, 5.0:1 (brand #778390 is 3.9:1) */
+  --text-3: #8C959E;             /* placeholders, disabled */
+  --on-accent: #FFFFFF;
+
+  /* interaction */
+  --accent: var(--nx-blue);      /* indicators, focus, selected marks, bars */
+  --accent-text: var(--nx-d40);  /* links and primary buttons: 5.9:1 */
+  --accent-hover: var(--nx-d60);
+  --accent-soft: #E5F5FB;        /* selected rows (Nexus Blue 10%) */
+  --accent-softer: #F2FAFD;      /* hover tint */
+  --focus: 0 0 0 3px rgba(0, 153, 216, .28);
+  --primary-bg: var(--nx-d40); --primary-hover: var(--nx-d60); --primary-fg: #FFFFFF;
+
+  /* semantic states (one meaning each) */
+  --info: var(--nx-d40);   --info-bg: #EAF5FB;
+  --warn: #A65F00;         --warn-fill: var(--nx-orange); --warn-bg: #FEF4E6;   /* derived text value, 4.9:1 */
+  --ok: #4D7A00;           --ok-fill: var(--nx-green);    --ok-bg: #F2F9E6;     /* derived text value, 5.1:1 */
+  --crit: #C4312B;         --crit-bg: #FCECEB;   /* not in the brand palette: used only for errors and conflicts */
+  --today: var(--nx-orange);
+
+  /* schedule graphics */
+  --bar: var(--nx-blue);
+  --bar-ms: var(--nx-d60);
+  --bar-hold: var(--nx-t40);
+  --wknd: #F4F5F6;
+  --hol: #E9EBED;
+  --ghost: #9AA4AD;
+
+  /* audience colors (overridden per schedule at runtime) */
+  --lv-client: var(--nx-blue); --lv-design: var(--nx-d40); --lv-internal: var(--nx-bluegray);
+
+  /* legacy preset colors used by older schedules */
+  --p-blue: #3B79C3; --p-teal: #1F8A8A; --p-green: #4C8F3F; --p-violet: #7653B5; --p-slate: #5F7285; --p-brown: #8A5A3A; --p-amber: #C98A1B; --p-red: #B94A48; --p-rose: #B5527E; --p-olive: #7F8A2E; --p-navy: #2B4C7E; --p-sky: #3C9BD1; --p-mint: #2FA77A; --p-coral: #E0663F; --p-plum: #7A3E6E; --p-indigo: #4B4FB5; --p-sand: #B49A6B; --p-charcoal: #3A4550;
+  /* brand presets */
+  --p-nexus: #0099D8; --p-nexus-t20: #BEDAEC; --p-nexus-t40: #87BEDE; --p-nexus-t70: #6FAFE0; --p-nexus-d20: #0084BA; --p-nexus-d40: #006B97; --p-nexus-d60: #005175;
+  --p-nexus-light: #99D6EF; --p-bluegray: #778390; --p-darkgray: #504F51; --p-brand-orange: #F18A00; --p-brand-green: #93D500;
+
+  /* type */
+  --f-ui: 'Lato', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-cond: 'Roboto Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --fs-xs: 11px; --fs-sm: 12.5px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 28px;
+
+  /* space (4px grid) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --r1: 3px; --r2: 4px; --r3: 6px; --r4: 8px;
+  --shadow-1: 0 1px 2px rgba(40, 46, 52, .08);
+  --shadow-2: 0 8px 24px rgba(40, 46, 52, .14), 0 1px 3px rgba(40, 46, 52, .08);
+
+  /* layout */
+  --side-w: 232px;
+  --row-h: 32px;                 /* table and timeline row height (density) */
+  --ctl-h: 32px;
+  color-scheme: light;
+}
+body.dense { --row-h: 27px; }
+
+/* dark theme: same roles, values chosen for contrast on dark surfaces */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+    --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+    --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+    --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+    --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+    --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+    --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+    --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181B; --surface: #1B1F23; --surface-2: #1F2429; --surface-3: #272D33; --scrim: rgba(0, 0, 0, .55);
+  --line: #2E353C; --line-2: #262C32; --line-strong: #3E464E;
+  --text: #E2E5E8; --text-strong: #F4F6F7; --text-2: #A5AEB7; --text-3: #7C8690; --on-accent: #06202C;
+  --accent-text: #4DB8E6; --accent-hover: #7FCBEE; --primary-bg: #0099D8; --primary-hover: #33ADE0; --primary-fg: #04161F; --accent-soft: #10334A; --accent-softer: #142836;
+  --info: #4DB8E6; --info-bg: #11293A; --warn: #F5A33A; --warn-bg: #33270F; --ok: #A8DB4D; --ok-bg: #1E2C0F; --crit: #EF6F68; --crit-bg: #3A1D1C;
+  --wknd: #1A1E22; --hol: #232930; --ghost: #6F7A84; --bar-ms: #7FCBEE; --bar-hold: #2D5F7E;
+  --shadow-2: 0 10px 28px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .4);
+  --p-nexus-d60: #3F8FBF; --p-nexus-d40: #2C9AD0; --p-darkgray: #9A99A0; --p-charcoal: #A9B4BF; --p-navy: #7DA2D6;
+  color-scheme: dark;
+}
+/* ==========================================================================
+   Toolbox UI components: shared by every module.
+   Rules of thumb: hairlines over boxes, one accent, no heavy shadows,
+   4px grid, 32px controls, condensed type for labels and numbers.
+   ========================================================================== */
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 var(--fs-md)/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+::selection { background: rgba(0, 153, 216, .22); }
+h1, h2, h3, h4 { font-family: var(--f-cond); color: var(--text-strong); margin: 0; font-weight: 700; letter-spacing: .005em; }
+h2 { font-size: var(--fs-xl); line-height: 1.2; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--text-2); }
+.num, .mono { font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pad { padding: var(--s5); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ico-svg { display: block; flex: none; }
+.lbl, .eyebrow { font-family: var(--f-cond); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+
+/* ----- buttons ----- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl-h); padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13.5px; white-space: nowrap; line-height: 1; transition: background-color .12s, border-color .12s, color .12s; }
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--text-3); }
+.btn:active:not(:disabled) { background: var(--surface-3); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+.btn.lg { height: 38px; padding: 0 16px; font-size: 14.5px; }
+.btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.quiet, .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.quiet:hover:not(:disabled), .btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--text); }
+.btn.danger { background: var(--crit); border-color: var(--crit); color: #fff; font-weight: 700; }
+.btn.danger:hover:not(:disabled) { filter: brightness(.92); background: var(--crit); }
+.btn.icon { width: var(--ctl-h); padding: 0; }
+.btn.icon.sm { width: 28px; }
+.btn[aria-pressed="true"]:not(.primary) { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
+.btn.pulse { box-shadow: 0 0 0 3px rgba(0, 107, 151, .18); }
+.btn .kbd { font-family: var(--f-cond); font-size: 11px; color: var(--text-3); margin-left: 2px; }
+.btn.primary .kbd { color: rgba(255, 255, 255, .7); }
+.ib { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: var(--r2); background: transparent; color: var(--text-2); cursor: pointer; }
+.ib:hover:not(:disabled) { background: var(--surface-3); color: var(--text-strong); }
+.ib:disabled { opacity: .35; cursor: default; }
+.ib.del:hover:not(:disabled) { color: var(--crit); background: var(--crit-bg); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); cursor: pointer; text-align: left; font: inherit; }
+.linkbtn:hover { text-decoration: underline; }
+.vsep { width: 1px; height: 20px; background: var(--line); margin: 0 var(--s1); flex: none; }
+
+/* segmented control: a quiet track with one raised choice */
+.seg { display: inline-flex; align-items: center; gap: 2px; padding: 2px; height: var(--ctl-h); border-radius: var(--r3); background: var(--surface-3); flex: none; }
+.seg > button, .seg > .btn { height: 28px; border: 0; border-radius: var(--r2); background: transparent; padding: 0 12px; color: var(--text-2); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.seg > button:hover:not(:disabled), .seg > .btn:hover:not(:disabled) { color: var(--text-strong); background: transparent; }
+.seg > button.on, .seg > button[aria-pressed="true"], .seg > .btn[aria-pressed="true"] { background: var(--surface); color: var(--text-strong); box-shadow: var(--shadow-1), inset 0 -2px 0 var(--accent); font-weight: 700; border: 0; }
+.seg > button:disabled { opacity: .5; cursor: default; }
+
+/* ----- form controls ----- */
+.txt { height: var(--ctl-h); padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); width: 100%; min-width: 0; transition: border-color .12s, box-shadow .12s; }
+textarea.txt { height: auto; padding: 8px 10px; }
+.txt.sm { height: 28px; width: auto; }
+.txt:hover:not(:disabled) { border-color: var(--text-3); }
+.txt:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+.txt:disabled { background: var(--surface-2); color: var(--text-2); }
+.txt::placeholder, td input::placeholder { color: var(--text-3); }
+select.txt { padding-right: 28px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366707B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+input[type=checkbox], input[type=radio] { accent-color: var(--nx-blue); width: 15px; height: 15px; margin: 0; flex: none; }
+label.chk { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; cursor: pointer; }
+label.chk.top { align-items: flex-start; }
+label.chk.top input { margin-top: 3px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > label, .field > .lbl { font-family: var(--f-cond); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.field .hint { font-size: var(--fs-sm); color: var(--text-2); }
+.form { display: flex; flex-direction: column; gap: var(--s3); }
+.searchbox { position: relative; display: flex; align-items: center; }
+.searchbox .ico-svg { position: absolute; left: 10px; color: var(--text-3); pointer-events: none; }
+.searchbox .txt { padding-left: 34px; }
+
+/* switch: an on/off setting that takes effect immediately */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text); user-select: none; height: var(--ctl-h); padding: 0 6px; border-radius: var(--r2); border: 0; background: transparent; }
+.switch:hover:not(:disabled) { background: var(--surface-2); }
+.switch .track { width: 28px; height: 16px; border-radius: 8px; background: var(--line-strong); position: relative; transition: background-color .15s; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .15s; }
+.switch[aria-pressed="true"] .track, .switch[aria-checked="true"] .track { background: var(--nx-blue); }
+.switch[aria-pressed="true"] .track::after, .switch[aria-checked="true"] .track::after { transform: translateX(12px); }
+.switch:disabled { opacity: .45; cursor: default; }
+
+/* ----- chips and counts ----- */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 11px; background: var(--surface-3); color: var(--text-2); font: 700 11.5px/1 var(--f-cond); letter-spacing: .02em; white-space: nowrap; }
+.chip.blue { background: var(--accent-soft); color: var(--accent-text); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.crit { background: var(--crit-bg); color: var(--crit); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.editing { background: var(--warn-bg); color: var(--warn); }
+.chip.away { background: transparent; color: var(--text-3); }
+.cnt { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font: 700 11px/1 var(--f-cond); }
+.cnt.err { background: var(--crit); color: #fff; }
+.cnt.warn { background: var(--warn-fill); color: #2A1A00; }
+.cnt.ok { color: var(--text-3); font-weight: 400; padding: 0; }
+.avatar { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); color: var(--text-strong); font: 700 11px/1 var(--f-cond); border: 2px solid var(--surface); }
+.avatar.editing { box-shadow: 0 0 0 2px var(--warn-fill); }
+.avatar + .avatar { margin-left: -6px; }
+
+/* ----- menus ----- */
+.menu-wrap { position: relative; display: inline-flex; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 240px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-2); padding: 6px; display: flex; flex-direction: column; }
+.menu.left { left: 0; right: auto; }
+.menu > button, .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; background: transparent; border: 0; border-radius: var(--r2); cursor: pointer; color: var(--text); font-size: 13.5px; }
+.menu > button:hover:not(:disabled), .menu-item:hover { background: var(--surface-2); }
+.menu > button:disabled { opacity: .45; cursor: default; }
+.menu > button .ico-svg { color: var(--text-2); }
+.menu > button > span:first-child:not(.tick) { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; }
+.menu small { color: var(--text-2); font-size: 12px; }
+.menu .danger { color: var(--crit); }
+.menu .danger .ico-svg { color: var(--crit); }
+.menu-head { font-family: var(--f-cond); font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); padding: 6px 10px 4px; }
+.menu-foot { font-size: 12px; color: var(--text-2); padding: 8px 10px 4px; border-top: 1px solid var(--line-2); margin-top: 4px; }
+.menu-sep { height: 1px; background: var(--line-2); margin: 4px 2px; }
+.menu .tick { visibility: hidden; color: var(--accent); margin-left: auto; }
+.menu button[aria-checked="true"] .tick { visibility: visible; }
+.menu button[aria-checked="true"] strong { color: var(--accent-text); }
+
+/* ----- banners: one line, a colored rule, an icon ----- */
+.banner { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; padding: 7px 12px 7px 14px; background: var(--info-bg); box-shadow: inset 3px 0 var(--info); font-size: 13px; }
+.banner.warn { background: var(--warn-bg); box-shadow: inset 3px 0 var(--warn-fill); }
+.banner.err { background: var(--crit-bg); box-shadow: inset 3px 0 var(--crit); }
+.banner .bmsg { flex: 1 1 320px; min-width: 0; display: flex; gap: 8px; align-items: baseline; }
+.banner .bmsg > .ico-svg { align-self: center; color: var(--info); }
+.banner.warn .bmsg > .ico-svg { color: var(--warn); }
+.banner.err .bmsg > .ico-svg { color: var(--crit); }
+.banner .bact { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.banner .btn { height: 26px; font-size: 12.5px; background: transparent; }
+.banner .btn:hover:not(:disabled) { background: var(--surface); }
+.shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+body.side-collapsed { --side-w: 60px; }
+
+/* side navigation */
+.side { display: flex; flex-direction: column; min-height: 0; background: var(--surface-2); border-right: 1px solid var(--line); overflow: hidden; }
+.side-brand { padding: 20px 20px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+/* the logo is never below 1in (96 CSS px) wide and keeps clear space equal to "ARC" (~20% of its width) */
+.side-logo { width: 96px; height: auto; display: block; margin: 19px 0 0 0; }
+.side-product { display: flex; align-items: baseline; gap: 8px; width: 100%; padding-top: 12px; border-top: 1px solid var(--nx-blue); }
+.side-product strong { font: 700 15px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--text-strong); }
+.side-product span { font-size: 12px; color: var(--text-2); }
+.side-nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; flex: 1 1 auto; overflow: auto; }
+.side-nav .navh { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 10px 10px 6px; }
+.nav-item { position: relative; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--r2); color: var(--text); text-decoration: none; font-size: 14px; }
+.nav-item:hover { background: var(--surface-3); text-decoration: none; }
+.nav-item.on { background: var(--accent-soft); color: var(--text-strong); font-weight: 700; }
+.nav-item.on::before { content: ""; position: absolute; left: -10px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 2px 2px 0; background: var(--nx-blue); }
+.nav-item .ico-svg { color: var(--text-2); }
+.nav-item.on .ico-svg { color: var(--accent); }
+.side-foot { display: flex; align-items: center; gap: 4px; padding: 10px; border-top: 1px solid var(--line); }
+.side-user { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--text); }
+.side-user .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.side-collapsed .side-brand, body.side-collapsed .side-user .nm, body.side-collapsed .nav-item span, body.side-collapsed .side-nav .navh { display: none; }
+body.side-collapsed .side-nav { padding: 12px 8px; }
+body.side-collapsed .nav-item { justify-content: center; padding: 0; }
+body.side-collapsed .nav-item.on::before { left: -8px; }
+body.side-collapsed .side-foot { flex-direction: column; }
+body.side-collapsed .side-user { justify-content: center; }
+
+.mainwrap { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.mtop { display: none; }
+.page { min-height: 0; flex: 1 1 auto; overflow: auto; }
+
+/* page header: a Nexus Blue rule, a condensed title (the brand guide's page heading, quieter) */
+.phead { padding: 22px 32px 0; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); margin-bottom: 10px; }
+.crumbs a { color: var(--text-2); }
+.crumbs a:hover { color: var(--accent-text); }
+.crumbs .ico-svg { color: var(--text-3); }
+.ptitle { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.ptitle h1 { font-size: var(--fs-2xl); line-height: 1.05; letter-spacing: .01em; }
+.ptitle h1.brand { color: var(--nx-blue); text-transform: uppercase; letter-spacing: .02em; }
+.ptitle .sub { color: var(--text-2); font-size: 14px; padding-bottom: 2px; }
+.ptitle .grow { flex: 1 1 auto; }
+.pbody { padding: 18px 32px 48px; }
+
+/* Scheduler home */
+.home-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.home-tools .searchbox { flex: 1 1 320px; max-width: 520px; }
+.home-tools .grow { flex: 1 1 auto; }
+.section-h { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 8px; }
+.section-h h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.section-h .muted { font-size: 12.5px; }
+.recent { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.rcard { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); text-align: left; cursor: pointer; min-width: 0; color: inherit; }
+.rcard:hover { border-color: var(--nx-blue); text-decoration: none; }
+.rcard .pn { font: 700 12px/1 var(--f-cond); letter-spacing: .04em; color: var(--accent-text); }
+.rcard .pt { font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rcard .pm { font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the project list: a dense, sortable list rather than a card grid (it has to work with hundreds) */
+.plist { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.plist th { position: sticky; top: 0; z-index: 1; background: var(--bg); text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.plist th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.plist th button:hover { color: var(--text-strong); }
+.plist th[aria-sort] button { color: var(--text-strong); }
+.plist td { padding: 0 12px; height: 46px; border-bottom: 1px solid var(--line-2); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist tbody tr { cursor: pointer; }
+.plist tbody tr:hover td { background: var(--accent-softer); }
+.plist tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.plist .pn { font: 700 13px/1 var(--f-cond); letter-spacing: .02em; color: var(--text-2); }
+.plist .pt { font-weight: 700; color: var(--text-strong); }
+.plist .nosched { color: var(--text-3); font-style: italic; }
+.plist .when { color: var(--text-2); font-size: 13px; }
+.plist .acts { text-align: right; }
+.plist .acts .btn { visibility: hidden; }
+.plist tr:hover .acts .btn, .plist tr:focus-within .acts .btn { visibility: visible; }
+.plist col.c-num { width: 120px; } .plist col.c-client { width: 22%; } .plist col.c-sch { width: 22%; } .plist col.c-upd { width: 190px; } .plist col.c-act { width: 150px; }
+
+:root { --c-prev:#CDD1D2; --c-bar:#50585E; --c-now:var(--nx-blue); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-prev:#39414A; --c-bar:#9AA6B1; } }
+:root[data-theme="dark"] { --c-prev:#39414A; --c-bar:#9AA6B1; }
+html, body { height: auto; }
+.shell { height: auto; min-height: 100vh; }
+.side { min-height: 100vh; }
+.page { overflow: visible; }
+.mainwrap { background: var(--bg); }
+.phead { padding-top: 24px; }
+.ptitle h1.plain { color: var(--text-strong); }
+.ptitle .sub { max-width: 62ch; }
+.chip.out { background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.chip.pn { background: transparent; color: var(--text-2); padding: 0; font-size: 13px; }
+.sm { font-size: 12.5px; }
+.banner .btn.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-fg); }
+.banner .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.nav-item .cnt { margin-left: auto; }
+.nav-item.nav-sub { height: 32px; padding-left: 36px; font-size: 13.5px; }
+.nav-item.nav-sub .ico-svg { width: 15px; height: 15px; }
+.side-foot .nm { font-size: 13px; }
+
+/* KPI strip: hairline cells, condensed figures */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); margin-bottom: 16px; }
+.kpi { padding: 14px 18px 14px; border-left: 1px solid var(--line); min-width: 0; }
+.kpi:first-child { border-left: 0; }
+.kpi .v { font: 700 28px/1.1 var(--f-cond); color: var(--text-strong); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.kpi .s { font-size: 12.5px; color: var(--text-2); }
+@media (max-width: 760px) { .kpi { border-left: 0; border-top: 1px solid var(--line); } .kpi:first-child { border-top: 0; } }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.cc { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 14px 18px 8px; min-width: 0; }
+.cc .ch { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.cc h3 { font-size: 16px; }
+.cc .cs { font-size: 12.5px; color: var(--text-2); }
+.cc .big { font: 700 26px/1 var(--f-cond); color: var(--text-strong); text-align: right; font-variant-numeric: tabular-nums; }
+.cc .dlt { font-size: 12.5px; color: var(--text-2); text-align: right; margin-top: 2px; }
+.cc svg { display: block; width: 100%; height: auto; max-height: 230px; }
+
+/* PIC groups */
+.grp { margin-top: 26px; }
+.grp > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 0 10px; border-bottom: 1px solid var(--line-strong); }
+.grp > summary::-webkit-details-marker { display: none; }
+.grp .gname { font: 700 18px/1 var(--f-cond); color: var(--text-strong); letter-spacing: .01em; }
+.grp .gamt { font: 700 16px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .gmeta { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; font-size: 12.5px; color: var(--text-2); }
+.grp .gmeta b { font-family: var(--f-cond); font-size: 14px; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.grp .chev { color: var(--text-3); transition: transform .15s; flex: none; }
+.grp[open] > summary .chev { transform: rotate(90deg); }
+.meter { display: inline-block; width: 56px; height: 4px; border-radius: 2px; background: var(--surface-3); vertical-align: middle; margin: 0 6px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--nx-blue); }
+.tt { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+.tt th { text-align: left; font: 700 11.5px/1 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tt th.r, .tt td.r { text-align: right; }
+.tt td { padding: 12px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.tt tbody tr:hover td { background: var(--accent-softer); }
+.tt tbody tr:last-child td { border-bottom: 0; }
+.tt .pt { font-weight: 700; color: var(--text-strong); display: block; }
+.tt a.pt:hover { color: var(--accent-text); }
+.tt .pm { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.tt .pm .pnum { font-family: var(--f-cond); font-weight: 700; letter-spacing: .02em; }
+.tt .amt { font: 700 16px/1.2 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.tt .when { font: 700 12.5px/1.3 var(--f-cond); letter-spacing: .02em; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt .tx { font-size: 13.5px; color: var(--text); margin-top: 2px; }
+.tt .warnline { font-size: 12.5px; color: var(--warn); margin-top: 4px; }
+.tt .nothing { color: var(--text-3); font-style: italic; font-size: 13px; }
+.tt .row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.tblwrap { overflow-x: auto; }
+.tblwrap .tt { min-width: 860px; }
+
+/* plan page */
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 14px 0 18px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+@media (max-width: 1100px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sec { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; min-width: 0; }
+.sec > h2 { font-size: 18px; }
+.sec > .hint { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.sec .form { margin-top: 12px; }
+.pick { display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); color: var(--text); font-size: 13px; }
+.pick:hover { border-color: var(--text-3); }
+.pick.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); font-weight: 700; }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lever-group + .lever-group { margin-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.log { list-style: none; margin: 10px 0 0; padding: 0; }
+.ent { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 0 14px; padding: 12px 0; border-top: 1px solid var(--line-2); }
+.ent:first-child { border-top: 0; }
+.ent .d { font: 700 13px/1.2 var(--f-cond); color: var(--text-strong); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.ent .t { font: 400 12px/1.3 var(--f-cond); color: var(--text-3); }
+.ent .eh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 4px; }
+.ent .eh .by { font-size: 13px; color: var(--text-2); }
+.ent p { font-size: 14px; }
+.ent.admin { box-shadow: inset 3px 0 var(--nx-bluegray); padding-left: 12px; margin-left: -12px; background: var(--surface-2); }
+.ent.fresh .d::after { content: ""; }
+.cm { padding: 12px 0; border-top: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 6px; }
+.cm:first-child { border-top: 0; padding-top: 4px; }
+.cm .ct { font-weight: 700; color: var(--text-strong); }
+.cm .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin: 12px 0 0; }
+.facts dt { font: 700 11px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 4px; }
+.facts dd { margin: 0; font: 700 20px/1.1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.keys { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.keys > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; color: var(--text); }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font: 700 13px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary .ico-svg { transition: transform .15s; }
+details.fold[open] > summary .ico-svg { transform: rotate(90deg); }
+
+/* check-in drafts */
+.draft { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.draft .dh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.draft .dh .who2 { flex: 1 1 260px; min-width: 0; }
+.draft .dh .nm { font-weight: 700; color: var(--text-strong); }
+.done-row { border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface-2); padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.done-row .grow { flex: 1 1 280px; min-width: 0; font-size: 13.5px; }
+.dlist { display: flex; flex-direction: column; gap: 14px; }
+.qn { font: 700 28px/1 var(--f-cond); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+
+/* ported pages (Home, BD, Pipeline, Admin) */
+.pbody.col { display: flex; flex-direction: column; gap: 20px; }
+.metaline { font-size: 12.5px; color: var(--text-2); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.seg.wrap { height: auto; flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
+.sec.flush { padding: 0; overflow: hidden; }
+.sec.flush > h2 { font-size: 18px; }
+.sec.flush h2 { font-size: 18px; }
+.sec ul { list-style: none; margin: 0; padding: 0; }
+.sec.flush li { border-top: 1px solid var(--line-2); }
+.sec.flush li:first-child { border-top: 0; }
+a.btn.primary, a.btn.primary:hover { color: var(--primary-fg); text-decoration: none; }
+a.btn { text-decoration: none; }
+a.btn:hover { text-decoration: none; }
+table.dt, table.bd { width: 100%; border-collapse: separate; border-spacing: 0; }
+table.dt th, table.bd th { text-align: left; font: 700 11.5px/1.25 var(--f-cond); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong); background: var(--surface); vertical-align: bottom; }
+table.dt td, table.bd td { padding: 9px 12px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+table.dt th.r, table.dt td.r, table.bd th, table.bd td { text-align: right; }
+table.bd th:first-child, table.bd td:first-child { text-align: left; }
+table.bd th:last-child, table.bd td:last-child { text-align: left; }
+table.dt td.num, table.bd td, table.dt td .num { font-variant-numeric: tabular-nums; }
+table.pt th, table.pt td { padding: 9px 5px; white-space: nowrap; font-size: 12.5px; }
+table.pt th:first-child, table.pt td:first-child { padding-left: 10px; }
+table.pt th { white-space: normal; }
+table.dt tr.tot td, table.bd tr.tf td { font-weight: 700; color: var(--text-strong); background: var(--surface-2); }
+table.dt tbody tr:hover td, table.bd tbody tr:hover td { background: var(--accent-softer); }
+table.dt tr.sel td { background: var(--accent-soft); }
+table.dt tbody tr[onclick] { cursor: pointer; }
+table.bd td.pb { color: var(--accent-text); }
+table.bd td.pg { color: var(--ok); }
+.neg { color: var(--crit); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+.pos { color: var(--ok); font-weight: 700; font-family: var(--f-cond); font-variant-numeric: tabular-nums; }
+svg text { font-family: var(--f-cond); }
+label { font-size: 13.5px; }
+input[type=checkbox] { width: 16px; height: 16px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { display: none; }
+  .phead, .pbody { padding-left: 16px; padding-right: 16px; }
+}
+
+</style>
+</helmet>
+<div class="shell"><aside class="side" aria-label="Compass navigation"><div class="side-brand"><img class="side-logo" src="data:image/png;base64,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" alt="Arch Nexus" width="96" height="119"><div class="side-product"><strong>Compass</strong></div></div><nav class="side-nav" aria-label="Modules"><div class="navh">Modules</div><a class="nav-item" href="Main.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a class="nav-item" href="Turnaround.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Project Turnaround</span></a><a class="nav-item nav-sub" href="TurnaroundCheckins.dc.html"><svg class="ico-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Check-in drafts</span><span class="cnt warn">4</span></a><a class="nav-item" href="BD.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>BD report</span></a><a class="nav-item" href="Pipeline.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>Pipeline watch</span><span class="cnt warn">2</span></a><a class="nav-item on" href="Admin.dc.html"><svg class="ico-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span>Admin</span></a></nav><div class="side-foot"><div class="side-user"><span class="avatar">JW</span><span class="nm">Josh Workman</span></div><span class="chip warn" title="Every figure on these screens is made up">Sample data</span></div></aside><div class="mainwrap"><main class="page"><div class="phead"><nav class="crumbs" aria-label="Breadcrumb"><span>Compass</span><svg class="ico-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Admin</span></nav><div class="ptitle"><h1 class="brand">Admin</h1><span class="grow"></span></div></div><div class="pbody col"><div class="metaline">Settings apply to the next run</div>
+
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<span class="lbl">Who sees this</span>
+<span class="chip out"><b>Admin</b> edit</span>
+<span class="chip out"><b>System admin</b> view</span>
+<span class="chip out"><b>Everyone else</b> no access</span>
+</div>
+
+<div class="seg wrap" role="tablist" aria-label="Admin sections">
+<button type="button" role="tab" class="{{ tPi }}" onClick="{{ goPi }}">Project Turnaround</button>
+<button type="button" role="tab" class="{{ tAcct }}" onClick="{{ goAcct }}">Reminders and standing</button>
+<button type="button" role="tab" class="{{ tBd }}" onClick="{{ goBd }}">BD reports</button>
+<button type="button" role="tab" class="{{ tPipe }}" onClick="{{ goPipe }}">Pipeline alerts</button>
+<button type="button" role="tab" class="{{ tPpl }}" onClick="{{ goPpl }}">People</button>
+<button type="button" role="tab" class="{{ tRuns }}" onClick="{{ goRuns }}">Report runs</button>
+<button type="button" role="tab" class="{{ tCp }}" onClick="{{ goCp }}">Commitment patterns</button>
+<button type="button" role="tab" class="{{ tAud }}" onClick="{{ goAud }}">Audit log</button>
+</div>
+
+<sc-if value="{{ isPi }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Monthly run</h2><p class="muted" style="font-size:14px">When the system builds the draft and who hears about it.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f1" style="font-weight:600">Run day</label><div class="muted" style="font-size:13.5px">It pulls from Vantagepoint, builds the draft and stops. Nothing is visible to PICs.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f1" class="txt" style="max-width:300px;width:100%"><option>First business day of the month</option></select><span class="muted">at</span><select id="f2" class="txt" style="max-width:130px;width:100%"><option>6:00 a.m.</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f3" style="font-weight:600">When the draft is ready</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f3" type="checkbox" checked style="width:18px;height:18px">Email Josh that the draft is ready</label><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f4" type="checkbox" checked style="width:18px;height:18px">Show it in "Needs your attention" on Home</label></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f5" style="font-weight:600">After you publish</label><div class="muted" style="font-size:13.5px">Reminders are drafts for Josh to send. The system never emails a PIC pretending to be Josh.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f5" type="checkbox" checked style="width:18px;height:18px">Create check-in drafts for overdue and missing plans</label><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f6" type="checkbox"  style="width:18px;height:18px">Notify PICs that the new run is up</label></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Which projects are included</h2><p class="muted" style="font-size:14px">The rule that decides who lands on the Project Turnaround page.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f7" style="font-weight:600">Project status</label><div class="muted" style="font-size:13.5px">Status comes from Vantagepoint. Inactive projects are left out because nobody can fix them.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f7" class="txt" style="max-width:300px;width:100%"><option>Active only</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f8" style="font-weight:600">YTD profit is below</label><div class="muted" style="font-size:13.5px">Year to date, in dollars.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f8" class="txt" type="text" value="$0" style="width:120px"></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f9" style="font-weight:600">Ignore projects billed under</label><div class="muted" style="font-size:13.5px">Leave at $0 to include everything. Raise it to hide tiny jobs.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f9" class="txt" type="text" value="$0" style="width:120px"></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f10" style="font-weight:600">Projects with no PIC</label><div class="muted" style="font-size:13.5px">Currently 2 active projects have no PIC in Vantagepoint.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f10" class="txt" style="max-width:300px;width:100%"><option>Leave out and warn me on Home</option><option>Group under "Unassigned"</option></select></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Plan due dates</h2><p class="muted" style="font-size:14px">The dates the accountability ladder counts from.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f11" style="font-weight:600">A new turnaround project needs a plan within</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f11" class="txt" type="text" value="14" style="width:70px"><span class="muted">days of first appearing</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f12" style="font-weight:600">After any entry, the next update is due in</label><div class="muted" style="font-size:13.5px">Every update, explanation or commitment resets the clock for that project.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f12" class="txt" type="text" value="30" style="width:70px"><span class="muted">days</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f13" style="font-weight:600">January grace period</label><div class="muted" style="font-size:13.5px">On January 1 every project starts clean. Plans opened last year stay readable.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f13" class="txt" type="text" value="Feb 1" style="width:90px"><span class="muted">no plans are due until this date each year</span></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isAcct }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Reminder ladder</h2><p class="muted" style="font-size:14px">Days are counted from each project's update due date.</p></div><div class="tblwrap"><div class="tblwrap"><table class="dt" style="min-width:640px"><thead><tr><th>Step</th><th>Starts</th><th>What happens</th></tr></thead><tbody>
+<tr><td style="font-weight:600">Overdue flag</td><td>Due date</td><td>Project shows Overdue everywhere. Automatic.</td></tr>
+<tr><td style="font-weight:600">Reminder 1</td><td><input class="txt" type="text" value="3" style="width:64px" aria-label="Reminder 1 days after due"> days after due</td><td>Draft created for Josh, casual tone, one per PIC.</td></tr>
+<tr><td style="font-weight:600">Reminder 2</td><td><input class="txt" type="text" value="10" style="width:64px" aria-label="Reminder 2 days after due"> days after due</td><td>Second draft, more direct. Josh gets one email saying it is waiting.</td></tr>
+<tr><td style="font-weight:600">Escalate</td><td><input class="txt" type="text" value="21" style="width:64px" aria-label="Escalate days after due"> days after due</td><td>Listed in the monthly summary. Task for Josh to talk in person.</td></tr>
+<tr><td style="font-weight:600">Repeat</td><td>Next monthly run</td><td>Still nothing: marked Repeat and listed first in the summary.</td></tr>
+</tbody></table></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Drafts and notifications</h2><p class="muted" style="font-size:14px">Everything here ends with Josh pressing send himself.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f14" style="font-weight:600">Draft tone</label><div class="muted" style="font-size:13.5px">Drafts use each PIC's preferred name and list their projects with the one thing that is missing.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f14" class="txt" style="max-width:300px;width:100%"><option>Casual, short, from Josh</option><option>Direct</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f15" style="font-weight:600">Email Josh when drafts are waiting</label><div class="muted" style="font-size:13.5px">You get a single email. It contains no PIC data, only a link and a count.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f15" type="checkbox" checked style="width:18px;height:18px">Weekdays at 7:00 a.m., only if something is waiting</label></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f16" style="font-weight:600">Do not create a draft if</label><div class="muted" style="font-size:13.5px">Stops drafts piling up for someone who just responded.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f16" type="checkbox" checked style="width:18px;height:18px">The PIC added an entry in the last 2 days</label><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f17" type="checkbox" checked style="width:18px;height:18px">The PIC was sent a reminder in the last 5 days</label></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Standing thresholds</h2><p class="muted" style="font-size:14px">These decide the standing label shown next to each PIC.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f18" style="font-weight:600">Good standing needs</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f18" class="txt" type="text" value="85" style="width:64px"><span class="muted">% of updates on time and</span><input id="f19" class="txt" type="text" value="80" style="width:64px"><span class="muted">% of commitments kept</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f20" style="font-weight:600">Escalated is below</label><div class="muted" style="font-size:13.5px">Anything between the two is Needs attention.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><input id="f20" class="txt" type="text" value="60" style="width:64px"><span class="muted">% on time or</span><input id="f21" class="txt" type="text" value="50" style="width:64px"><span class="muted">% kept</span></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Who sees PIC records</h2><p class="muted" style="font-size:14px">PICs can see each other's plans. The on-time and kept figures beside each name are a separate choice, so they have their own switch.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f22" style="font-weight:600">PIC records (updates and commitments)</label><div class="muted" style="font-size:13.5px">Each PIC always sees their own.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f22" class="txt" style="max-width:300px;width:100%"><option>Everyone who is signed in</option><option>Admin and principals only</option><option>Admin only</option></select></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isBd }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">MWIP weighting factor</h2><p class="muted" style="font-size:14px">Effective-dated, so last year's reports never move when the factor changes.</p></div><div class="tblwrap"><table class="dt" style="min-width:560px"><thead><tr><th>MWIP factor</th><th>Effective from</th><th>Until</th><th>Used by</th></tr></thead><tbody>
+<tr><td class="num" style="font-weight:600">0.67</td><td>Jan 1, 2026</td><td><span class="chip ok">Current</span></td><td>BD reports from Jan 2026 on</td></tr>
+<tr><td class="num" style="font-weight:600">0.65</td><td>Jan 1, 2025</td><td>Dec 31, 2025</td><td>BD reports for 2025</td></tr>
+</tbody></table>
+<div style="padding:14px 22px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border-top:1px solid var(--line-strong)"><label for="newf" class="lbl">New factor</label><input id="newf" class="txt" type="text" value="0.67" style="width:80px"><label for="newd" class="lbl">effective</label><input id="newd" class="txt" type="text" value="Jan 1, 2027" style="width:130px"><button class="btn" type="button">Add</button><span class="muted" style="font-size:14px">Old reports keep the factor they were built with.</span></div></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Annual goals by PIC</h2><p class="muted" style="font-size:14px">Architectural revenue, net of consultants. Pace is the goal times months elapsed over twelve.</p></div><div class="tblwrap"><table class="dt" style="min-width:420px"><thead><tr><th>PIC</th><th class="r">2026 goal</th><th class="r">Pace at Sep</th></tr></thead><tbody>
+<tr><td>Dana Whitfield</td><td class="r"><input class="txt num" type="text" value="$2,400K" style="width:110px;text-align:right" aria-label="Dana goal"></td><td class="r num muted">$1,800K</td></tr>
+<tr><td>Marcus Oyelaran</td><td class="r"><input class="txt num" type="text" value="$2,100K" style="width:110px;text-align:right" aria-label="Marcus goal"></td><td class="r num muted">$1,575K</td></tr>
+<tr><td>Priya Raman</td><td class="r"><input class="txt num" type="text" value="$3,000K" style="width:110px;text-align:right" aria-label="Priya goal"></td><td class="r num muted">$2,250K</td></tr>
+<tr><td>Tom Lindqvist</td><td class="r"><input class="txt num" type="text" value="$1,800K" style="width:110px;text-align:right" aria-label="Tom goal"></td><td class="r num muted">$1,350K</td></tr>
+<tr><td>Elena Castellanos</td><td class="r"><input class="txt num" type="text" value="$1,500K" style="width:110px;text-align:right" aria-label="Elena goal"></td><td class="r num muted">$1,125K</td></tr>
+<tr><td>Ben Okafor</td><td class="r"><input class="txt num" type="text" value="$1,200K" style="width:110px;text-align:right" aria-label="Ben goal"></td><td class="r num muted">$900K</td></tr>
+<tr class="tot"><td>Firm</td><td class="r num">$12,000K</td><td class="r num">$9,000K</td></tr>
+</tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Market sectors</h2><p class="muted" style="font-size:14px">Maps each project to a sector. Labs is rolled into Healthcare through 2026.</p></div><div class="tblwrap"><table class="dt" style="min-width:520px"><thead><tr><th>Market sector</th><th class="r">2026 goal</th><th>Includes</th></tr></thead><tbody>
+<tr><td style="font-weight:600">Healthcare</td><td class="r num">$3,200K</td><td>Labs, through Dec 31, 2026</td></tr>
+<tr><td style="font-weight:600">Civic</td><td class="r num">$2,600K</td><td></td></tr>
+<tr><td style="font-weight:600">Federal and industrial</td><td class="r num">$2,400K</td><td></td></tr>
+<tr><td style="font-weight:600">Commercial</td><td class="r num">$1,900K</td><td></td></tr>
+<tr><td style="font-weight:600">Education</td><td class="r num">$1,200K</td><td></td></tr>
+<tr><td style="font-weight:600">Other</td><td class="r num">$700K</td><td></td></tr>
+<tr class="tot"><td>Firm</td><td class="r num">$12,000K</td><td></td></tr>
+<tr><td style="font-weight:600">Labs</td><td class="r num muted">Own sector</td><td>From Jan 1, 2027. Goals for 2027 are set in January.</td></tr>
+</tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Report rules</h2><p class="muted" style="font-size:14px">Fixed for every run so numbers can be compared month to month.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f23" style="font-weight:600">Billing cutoff</label><div class="muted" style="font-size:13.5px">Revenue billed through the cutoff counts as YTD.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f23" class="txt" style="max-width:300px;width:100%"><option>Last day of the previous month</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f24" style="font-weight:600">Revenue is shown</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f24" class="txt" style="max-width:300px;width:100%"><option>Net of consultants</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f25" style="font-weight:600">Revenue with no market sector</label><div class="muted" style="font-size:13.5px">This month, $3,420 had no sector and went to Civic after you chose it.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f25" class="txt" style="max-width:300px;width:100%"><option>Stop and ask me before I publish</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">Status labels</label><div class="muted" style="font-size:13.5px">On Track: YTD plus forecast plus MWIP reaches the goal. On Pace: YTD is at least 99% of pace. Otherwise Behind Pace.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="chip ok">On Track</span><span class="chip blue">On Pace</span><span class="chip crit">Behind Pace</span></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isPipe }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Alert rules</h2><p class="muted" style="font-size:14px">Alerts count toward the badge on the menu. Watch items show on the page but do not.</p></div><div class="tblwrap"><table class="dt" style="min-width:820px"><thead><tr><th>Alert</th><th>Threshold</th><th>Kind</th></tr></thead><tbody>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="MWIP drops fast on"><span style="font-weight:600">MWIP drops fast</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">One PIC's MWIP falls by more than the amount inside the window.</div></td><td><input class="txt" type="text" value="$75K" style="width:90px" aria-label="MWIP drop amount"> in <input class="txt" type="text" value="7" style="width:56px" aria-label="MWIP drop days"> days</td><td><span class="chip crit">Alert</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="Forecast drops fast on"><span style="font-weight:600">Forecast drops fast</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">One PIC's forecast falls by more than the amount inside the window.</div></td><td><input class="txt" type="text" value="$150K" style="width:90px" aria-label="Forecast drop amount"> in <input class="txt" type="text" value="7" style="width:56px" aria-label="Forecast drop days"> days</td><td><span class="chip crit">Alert</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="MWIP slides week after week on"><span style="font-weight:600">MWIP slides week after week</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">MWIP falls every week with no matching conversion. Catches pursuits being pushed without a word.</div></td><td><input class="txt" type="text" value="4" style="width:56px" aria-label="Slide weeks"> weeks in a row</td><td><span class="chip warn">Watch</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="Pursuit removed, no matching project on"><span style="font-weight:600">Pursuit removed, no matching project</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">It left MWIP and no new project was opened for it.</div></td><td>after <input class="txt" type="text" value="3" style="width:56px" aria-label="Unmatched days"> days</td><td><span class="chip crit">Alert</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="Conversion not matched on"><span style="font-weight:600">Conversion not matched</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">A pursuit is marked converted but no project number is linked.</div></td><td>after <input class="txt" type="text" value="14" style="width:56px" aria-label="Conversion days"> days</td><td><span class="chip crit">Alert</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="Win probability falls on"><span style="font-weight:600">Win probability falls</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">A pursuit's probability drops in one week.</div></td><td><input class="txt" type="text" value="25" style="width:56px" aria-label="Probability points"> points</td><td><span class="chip crit">Alert</span></td></tr>
+<tr><td><label style="display:inline-flex;align-items:center;gap:10px"><input type="checkbox" checked style="width:18px;height:18px" aria-label="No new pursuits on"><span style="font-weight:600">No new pursuits</span></label><div class="muted" style="font-size:13.5px;padding-left:28px">A PIC has added nothing to MWIP.</div></td><td>in <input class="txt" type="text" value="30" style="width:56px" aria-label="No new pursuits days"> days</td><td><span class="chip warn">Watch</span></td></tr>
+</tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Snapshots and delivery</h2><p class="muted" style="font-size:14px">MWIP and forecast are saved separately so you can see which one moved.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f26" style="font-weight:600">Snapshot</label><div class="muted" style="font-size:13.5px">The page shows the last 8 weeks. Older snapshots are kept.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f26" class="txt" style="max-width:300px;width:100%"><option>Every Monday at 5:00 a.m.</option></select></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f27" style="font-weight:600">Alert email</label><div class="muted" style="font-size:13.5px">Alerts are about the numbers, not the person, so the copy is off by default.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f27" type="checkbox" checked style="width:18px;height:18px">Email Josh Mondays at 7:30 a.m. after the snapshot</label><label style="display:inline-flex;align-items:center;gap:8px;min-height:32px"><input id="f28" type="checkbox"  style="width:18px;height:18px">Copy the PIC</label></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f29" style="font-weight:600">Keep snapshots for</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f29" class="txt" style="max-width:300px;width:100%"><option>Forever</option></select></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to the next run. Published runs never change.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isPpl }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">People and roles</h2><p class="muted" style="font-size:14px">Logins come from the company sign-in. Roles decide who can edit and who can only look.</p></div><div class="tblwrap"><table class="dt" style="min-width:860px"><thead><tr><th>Name</th><th>Login</th><th>Role</th><th>Name used in drafts</th><th>Status</th><th class="r">Project Turnaround</th></tr></thead><tbody>
+<tr><td style="font-weight:600">Josh Workman</td><td class="muted">josh.workman@example.com</td><td>Admin</td><td><input class="txt" type="text" value="Josh" style="width:110px" aria-label="Preferred name for Josh Workman"></td><td><span class="chip ok">Active</span></td><td class="r num">-</td></tr>
+<tr><td style="font-weight:600">Dana Whitfield</td><td class="muted">dana.whitfield@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Dana" style="width:110px" aria-label="Preferred name for Dana Whitfield"></td><td><span class="chip ok">Active</span></td><td class="r num">4</td></tr>
+<tr><td style="font-weight:600">Marcus Oyelaran</td><td class="muted">marcus.oyelaran@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Marcus" style="width:110px" aria-label="Preferred name for Marcus Oyelaran"></td><td><span class="chip ok">Active</span></td><td class="r num">3</td></tr>
+<tr><td style="font-weight:600">Priya Raman</td><td class="muted">priya.raman@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Priya" style="width:110px" aria-label="Preferred name for Priya Raman"></td><td><span class="chip ok">Active</span></td><td class="r num">3</td></tr>
+<tr><td style="font-weight:600">Tom Lindqvist</td><td class="muted">tom.lindqvist@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Tom" style="width:110px" aria-label="Preferred name for Tom Lindqvist"></td><td><span class="chip ok">Active</span></td><td class="r num">2</td></tr>
+<tr><td style="font-weight:600">Elena Castellanos</td><td class="muted">elena.castellanos@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Elena" style="width:110px" aria-label="Preferred name for Elena Castellanos"></td><td><span class="chip ok">Active</span></td><td class="r num">2</td></tr>
+<tr><td style="font-weight:600">Ben Okafor</td><td class="muted">ben.okafor@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Ben" style="width:110px" aria-label="Preferred name for Ben Okafor"></td><td><span class="chip ok">Active</span></td><td class="r num">2</td></tr>
+<tr><td style="font-weight:600">Morgan Hale</td><td class="muted">morgan.hale@example.com</td><td>Finance, view only</td><td><input class="txt" type="text" value="Morgan" style="width:110px" aria-label="Preferred name for Morgan Hale"></td><td><span class="chip ok">Active</span></td><td class="r num">-</td></tr>
+<tr><td style="font-weight:600">Casey Brandt</td><td class="muted">casey.brandt@example.com</td><td>Marketing director, view only</td><td><input class="txt" type="text" value="Casey" style="width:110px" aria-label="Preferred name for Casey Brandt"></td><td><span class="chip ok">Active</span></td><td class="r num">-</td></tr>
+<tr><td style="font-weight:600">Kent</td><td class="muted">kent@example.com</td><td>System admin</td><td><input class="txt" type="text" value="Kent" style="width:110px" aria-label="Preferred name for Kent"></td><td><span class="chip ok">Active</span></td><td class="r num">-</td></tr>
+<tr><td style="font-weight:600">Jordan Ames</td><td class="muted">jordan.ames@example.com</td><td>PIC</td><td><input class="txt" type="text" value="Jordan" style="width:110px" aria-label="Preferred name for Jordan Ames"></td><td><span class="chip out">Inactive</span></td><td class="r num">0</td></tr>
+</tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">Roles</h2></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">Admin</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="muted">Runs and publishes reports, edits every setting, adds admin notes. Cannot write in a PIC's plan voice.</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">PIC</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="muted">Writes entries on projects they lead. Reads everyone else's.</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">Finance and Marketing director</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="muted">Read everything they have been given. Marketing director sees both Project Turnaround and BD.</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">System admin</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="muted">Keeps the site running. Reads data checks and the audit log.</span></div></div>
+</div></section>
+</div></sc-if>
+<sc-if value="{{ isRuns }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Report runs</h2><p class="muted" style="font-size:14px">Every run the system has built. A published run is locked.</p></div><div class="tblwrap"><table class="dt" style="min-width:980px"><thead><tr><th>Report</th><th>Period</th><th>Version</th><th>Status</th><th>Created</th><th>Published</th><th>By</th><th></th></tr></thead><tbody>
+<tr><td style="font-weight:600">Project Turnaround</td><td>Sep 2026</td><td class="num">v1</td><td><span class="chip warn">Draft</span></td><td>Oct 1, 6:00 a.m.</td><td>-</td><td>-</td><td><a href="Turnaround.dc.html">Review</a></td></tr>
+<tr><td style="font-weight:600">BD report</td><td>Sep 2026</td><td class="num">v1</td><td><span class="chip ok">Published, locked</span></td><td>Oct 1, 6:00 a.m.</td><td>Oct 2, 4:15 p.m.</td><td>Josh</td><td><a href="BD.dc.html">View</a></td></tr>
+<tr><td style="font-weight:600">Project Turnaround</td><td>Aug 2026</td><td class="num">v1</td><td><span class="chip ok">Published, locked</span></td><td>Sep 1, 6:00 a.m.</td><td>Sep 2, 3:30 p.m.</td><td>Josh</td><td><a href="Turnaround.dc.html">View</a></td></tr>
+<tr><td style="font-weight:600">BD report</td><td>Aug 2026</td><td class="num">v1</td><td><span class="chip ok">Published, locked</span></td><td>Sep 1, 6:00 a.m.</td><td>Sep 3, 10:05 a.m.</td><td>Josh</td><td><a href="BD.dc.html">View</a></td></tr>
+<tr><td style="font-weight:600">BD report</td><td>Jul 2026</td><td class="num">v2</td><td><span class="chip ok">Published, locked</span></td><td>Aug 4, 9:12 a.m.</td><td>Aug 4, 11:40 a.m.</td><td>Josh</td><td><a href="BD.dc.html">View</a></td></tr>
+<tr><td style="font-weight:600">BD report</td><td>Jul 2026</td><td class="num">v1</td><td><span class="chip out">Archived</span></td><td>Aug 3, 6:00 a.m.</td><td>Aug 3, 2:10 p.m.</td><td>Josh</td><td><span class="muted" style="white-space:normal">Reason: billing cutoff was set to Jul 15 by mistake</span></td></tr>
+<tr><td style="font-weight:600">Project Turnaround</td><td>Jul 2026</td><td class="num">v1</td><td><span class="chip ok">Published, locked</span></td><td>Aug 3, 6:00 a.m.</td><td>Aug 4, 8:20 a.m.</td><td>Josh</td><td><a href="Turnaround.dc.html">View</a></td></tr>
+</tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">If a published run is wrong</h2></div><div style="padding:0 22px 8px"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px;max-width:84ch"><p>The only way to change a published run is to archive it and build a new version. The system makes you give a reason and type <b>RERUN</b> first, because PICs and Finance have already seen it. The archived version stays on file, clearly marked, so nobody wonders why a number moved.</p><p class="muted" style="font-size:14px">Archiving a Project Turnaround run does not touch any plan logs. Those are never edited or deleted.</p></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isCp }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section style="background:var(--warn-bg);border:1px solid var(--warn);border-radius:8px;padding:10px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px"><span class="chip warn">Admin only</span><div style="flex:1 1 360px;min-width:0;font-size:14px">PICs never see this tab, and no tally of their commitments appears anywhere they look. They pick a lever and an amount when they write a commitment, and that is all they see of it.</div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Which levers PICs are pulling</h2><p class="muted" style="font-size:14px">Every commitment this year, January through September. Kept rate counts only commitments that have been decided. Reported result is what the PIC entered when marking it done.</p></div><div class="tblwrap"><table class="dt" style="min-width:900px"><thead><tr><th>Lever</th><th>Side</th><th class="r">Commitments</th><th class="r">Kept</th><th class="r">Missed</th><th class="r">Open</th><th class="r">Kept rate</th><th class="r">Expected, kept ones</th><th class="r">Reported result</th></tr></thead><tbody>
+<tr><td style="font-weight:600">Request additional services fee</td><td>Revenue</td><td class="r num">12</td><td class="r num">5</td><td class="r num">3</td><td class="r num">4</td><td class="r num" style="font-weight:600">63%</td><td class="r num">$61,000</td><td class="r num">$38,400</td></tr>
+<tr><td style="font-weight:600">Submit a change order</td><td>Revenue</td><td class="r num">6</td><td class="r num">3</td><td class="r num">1</td><td class="r num">2</td><td class="r num" style="font-weight:600">75%</td><td class="r num">$44,500</td><td class="r num">$41,200</td></tr>
+<tr><td style="font-weight:600">Renegotiate the fee</td><td>Revenue</td><td class="r num">3</td><td class="r num">1</td><td class="r num">1</td><td class="r num">1</td><td class="r num" style="font-weight:600">50%</td><td class="r num">$18,000</td><td class="r num">$9,000</td></tr>
+<tr><td style="font-weight:600">Speed up billing or collection</td><td>Revenue</td><td class="r num">3</td><td class="r num">3</td><td class="r num">0</td><td class="r num">0</td><td class="r num" style="font-weight:600">100%</td><td class="r num">$52,000</td><td class="r num">$52,000</td></tr>
+<tr><td style="font-weight:600">Reduce staffing hours</td><td>Cost</td><td class="r num">9</td><td class="r num">5</td><td class="r num">2</td><td class="r num">2</td><td class="r num" style="font-weight:600">71%</td><td class="r num">640 hours</td><td class="r num">512 hours</td></tr>
+<tr><td style="font-weight:600">Move work to lower-cost staff</td><td>Cost</td><td class="r num">2</td><td class="r num">1</td><td class="r num">0</td><td class="r num">1</td><td class="r num" style="font-weight:600">100%</td><td class="r num">$9,200</td><td class="r num">$9,200</td></tr>
+<tr><td style="font-weight:600">Reduce consultant cost</td><td>Cost</td><td class="r num">4</td><td class="r num">2</td><td class="r num">1</td><td class="r num">1</td><td class="r num" style="font-weight:600">67%</td><td class="r num">$14,800</td><td class="r num">$11,300</td></tr>
+<tr><td style="font-weight:600">Shorten the schedule</td><td>Cost</td><td class="r num">5</td><td class="r num">0</td><td class="r num">2</td><td class="r num">3</td><td class="r num" style="font-weight:600">0%</td><td class="r num">None kept</td><td class="r num">None kept</td></tr>
+<tr class="tot"><td>All levers</td><td></td><td class="r num">44</td><td class="r num">20</td><td class="r num">10</td><td class="r num">14</td><td class="r num">67%</td><td class="r"></td><td class="r"></td></tr></tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 8px"><h2 class="" style="font-size:19px;font-weight:600">Mix by PIC</h2><p class="muted" style="font-size:14px">44 commitments: 24 on the revenue side, 20 on the cost side.</p></div><div style="display:flex;flex-wrap:wrap;gap:8px 20px;padding:0 22px 14px;font-size:13.5px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;background:#2F6F9F;display:inline-block"></span>Revenue side: money to bring in</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;background:#C9A24A;display:inline-block"></span>Cost side: spending to cut</span></div><div class="tblwrap"><table class="dt" style="min-width:760px"><thead><tr><th>PIC</th><th style="width:34%">Revenue side and cost side</th><th class="r">Revenue side</th><th class="r">Cost side</th><th class="r">Kept</th></tr></thead><tbody>
+<tr><td style="font-weight:600">Dana Whitfield</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:64%;background:#2F6F9F"></div><div style="width:36%;background:#C9A24A"></div></div></td><td class="r num">7</td><td class="r num">4</td><td class="r num">5 of 7</td></tr>
+<tr><td style="font-weight:600">Marcus Oyelaran</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:71%;background:#2F6F9F"></div><div style="width:29%;background:#C9A24A"></div></div></td><td class="r num">5</td><td class="r num">2</td><td class="r num">2 of 5</td></tr>
+<tr><td style="font-weight:600">Priya Raman</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:30%;background:#2F6F9F"></div><div style="width:70%;background:#C9A24A"></div></div></td><td class="r num">3</td><td class="r num">7</td><td class="r num">6 of 7</td></tr>
+<tr><td style="font-weight:600">Tom Lindqvist</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:67%;background:#2F6F9F"></div><div style="width:33%;background:#C9A24A"></div></div></td><td class="r num">4</td><td class="r num">2</td><td class="r num">1 of 4</td></tr>
+<tr><td style="font-weight:600">Elena Castellanos</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:50%;background:#2F6F9F"></div><div style="width:50%;background:#C9A24A"></div></div></td><td class="r num">3</td><td class="r num">3</td><td class="r num">4 of 4</td></tr>
+<tr><td style="font-weight:600">Ben Okafor</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:50%;background:#2F6F9F"></div><div style="width:50%;background:#C9A24A"></div></div></td><td class="r num">2</td><td class="r num">2</td><td class="r num">2 of 3</td></tr>
+<tr class="tot"><td>Firm</td><td><div style="display:flex;height:14px;width:100%;min-width:120px;border-radius:3px;overflow:hidden"><div style="width:55%;background:#2F6F9F"></div><div style="width:45%;background:#C9A24A"></div></div></td><td class="r num">24</td><td class="r num">20</td><td class="r num">20 of 30</td></tr></tbody></table></div></section>
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px 4px;display:flex;flex-direction:column;gap:2px"><h2 class="" style="font-size:19px;font-weight:600">The lever list</h2><p class="muted" style="font-size:14px">What PICs choose from when they write a commitment. One lever per commitment. A PIC who wants two logs two commitments.</p></div><div style="padding:0 22px 8px"><div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">Revenue side</label></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="chip out">Request additional services fee, dollars</span><span class="chip out">Submit a change order, dollars</span><span class="chip out">Renegotiate the fee, dollars</span><span class="chip out">Speed up billing or collection, dollars</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="" style="font-weight:600">Cost side</label><div class="muted" style="font-size:13.5px">Each lever has one unit, and that unit decides what the amount box asks for.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><span class="chip out">Reduce staffing hours, hours</span><span class="chip out">Move work to lower-cost staff, dollars</span><span class="chip out">Reduce consultant cost, dollars</span><span class="chip out">Shorten the schedule, weeks</span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 28px;padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1 1 260px;min-width:0"><label for="f30" style="font-weight:600">A plan counts as current when</label><div class="muted" style="font-size:13.5px">An explanation alone leaves the project without a plan.</div></div><div style="flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px"><select id="f30" class="txt" style="max-width:300px;width:100%"><option>It has an open commitment and an entry in the last 30 days</option></select></div></div>
+</div><div style="padding:14px 22px;border-top:1px solid var(--line-strong);background:var(--surface-2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px"><span class="muted" style="font-size:14px">Changes apply to new commitments. Past ones keep the lever they were written with.</span><div style="display:flex;gap:8px"><button class="btn quiet" type="button">Discard</button><button class="btn primary" type="button">Save changes</button></div></div></section>
+</div></sc-if>
+<sc-if value="{{ isAud }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:24px;max-width:1100px">
+<section class="sec flush" style="overflow:hidden"><div style="padding:16px 22px;border-bottom:1px solid var(--line-strong)"><h2 class="" style="font-size:19px;font-weight:600">Audit log</h2><p class="muted" style="font-size:14px">Settings changes, publishes, archives and anything the system did on its own. It cannot be edited.</p></div><div class="tblwrap"><table class="dt" style="min-width:760px"><thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead><tbody>
+<tr><td class="num muted" style="white-space:nowrap">Oct 7, 6:10 a.m.</td><td style="font-weight:600;white-space:nowrap">System</td><td>Created 4 check-in drafts and emailed Josh that they are waiting</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 7, 5:02 a.m.</td><td style="font-weight:600;white-space:nowrap">System</td><td>Vantagepoint pull finished. 2 active projects have no PIC.</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 5, 7:30 a.m.</td><td style="font-weight:600;white-space:nowrap">System</td><td>Emailed Josh 2 pipeline alerts</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 5, 5:00 a.m.</td><td style="font-weight:600;white-space:nowrap">System</td><td>Saved the MWIP and forecast snapshot</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 2, 4:15 p.m.</td><td style="font-weight:600;white-space:nowrap">Josh Workman</td><td>Published BD report, Sep 2026 v1</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 2, 4:02 p.m.</td><td style="font-weight:600;white-space:nowrap">Josh Workman</td><td>Assigned $3,420 of revenue with no market sector to Civic</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Oct 1, 6:00 a.m.</td><td style="font-weight:600;white-space:nowrap">System</td><td>Built the Project Turnaround draft for Sep 2026, 16 projects</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Sep 29, 4:12 p.m.</td><td style="font-weight:600;white-space:nowrap">Dana Whitfield</td><td>Added an update to Wasatch Valley Clinic TI</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Sep 22, 9:40 a.m.</td><td style="font-weight:600;white-space:nowrap">Josh Workman</td><td>Added an admin note to Wasatch Valley Clinic TI</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Sep 10, 2:20 p.m.</td><td style="font-weight:600;white-space:nowrap">Josh Workman</td><td>Changed Reminder 1 from 5 days to 3 days after due</td></tr>
+<tr><td class="num muted" style="white-space:nowrap">Aug 4, 8:05 a.m.</td><td style="font-weight:600;white-space:nowrap">Josh Workman</td><td>Archived BD report Jul 2026 v1 and built v2</td></tr>
+</tbody></table></div></section>
+</div></sc-if>
+
+</div></main></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2400}}'>
+
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { tab: 'pi' };
+  }
+  renderVals() {
+    const t = this.state.tab;
+    return {
+      tPi: t === 'pi' ? 'on' : '',
+      isPi: t === 'pi',
+      goPi: () => this.setState({ tab: 'pi' }),
+      tAcct: t === 'acct' ? 'on' : '',
+      isAcct: t === 'acct',
+      goAcct: () => this.setState({ tab: 'acct' }),
+      tBd: t === 'bd' ? 'on' : '',
+      isBd: t === 'bd',
+      goBd: () => this.setState({ tab: 'bd' }),
+      tPipe: t === 'pipe' ? 'on' : '',
+      isPipe: t === 'pipe',
+      goPipe: () => this.setState({ tab: 'pipe' }),
+      tPpl: t === 'ppl' ? 'on' : '',
+      isPpl: t === 'ppl',
+      goPpl: () => this.setState({ tab: 'ppl' }),
+      tRuns: t === 'runs' ? 'on' : '',
+      isRuns: t === 'runs',
+      goRuns: () => this.setState({ tab: 'runs' }),
+      tCp: t === 'cp' ? 'on' : '',
+      isCp: t === 'cp',
+      goCp: () => this.setState({ tab: 'cp' }),
+      tAud: t === 'aud' ? 'on' : '',
+      isAud: t === 'aud',
+      goAud: () => this.setState({ tab: 'aud' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

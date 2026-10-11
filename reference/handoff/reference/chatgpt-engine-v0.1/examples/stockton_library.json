@@ -1,0 +1,55 @@
+{
+  "project_number": "0018118.00",
+  "project_name": "Stockton Library",
+  "as_of_period": "202609",
+  "recognized_revenue": "2280709.01",
+  "posted_labor": "578690.23",
+  "include_unposted_labor": false,
+  "overhead_rate_source": "Vantagepoint_Project_Summary_reference_rate_not_yet_verified",
+  "project_expenses": "717799.63",
+  "fee_components": {
+    "fee": "1824081.00",
+    "consult_fee": "601346.50",
+    "reimb_allow": "186220.00"
+  },
+  "billing_entries": [
+    {
+      "array_type": "I",
+      "section": "C",
+      "subsection": "",
+      "category": "reimb",
+      "amount": "124153.34"
+    },
+    {
+      "array_type": "I",
+      "section": "E",
+      "subsection": "",
+      "category": "reimb",
+      "amount": "31373.57"
+    },
+    {
+      "array_type": "I",
+      "section": "F",
+      "subsection": "0",
+      "category": "fee",
+      "amount": "1445225.85"
+    },
+    {
+      "array_type": "I",
+      "section": "L",
+      "subsection": "0",
+      "category": "fee",
+      "amount": "681562.50"
+    },
+    {
+      "array_type": "I",
+      "section": "Lim",
+      "subsection": "~",
+      "category": "fee",
+      "amount": "-1606.25"
+    }
+  ],
+  "jtd_total_billed": "2280709.01",
+  "estimated_overhead_override": "1077211.55",
+  "revenue_source": "Vantagepoint_Project_Summary_reference_not_LedgerAR_verified"
+}

@@ -1,0 +1,1 @@
+The Arch Nexus logo, `arch-nexus-logo.png`: a transparent PNG (243 x 300) of the Nexus Blue X mark with dark "ARCH | NEXUS" lettering. Use it in the side bar at 96px wide with clear space of about 20% of its width. Its lettering is dark ink, so place it only on light surfaces (`surface`, `surface-2` in the light theme); a reversed version for dark surfaces does not exist yet.

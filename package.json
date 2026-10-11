@@ -1,0 +1,11 @@
+{
+  "name": "archnexus-compass",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Arch Nexus Compass: business intelligence and accountability portal (prototype)",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\""
+  }
+}
