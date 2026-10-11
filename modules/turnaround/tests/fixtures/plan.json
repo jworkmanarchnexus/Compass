@@ -1,0 +1,941 @@
+{
+ "_note": "Dates are YYYY-MM-DD. Settings are the Admin defaults. Hand-worked; see the names for the reasoning.",
+ "settings": {
+  "due.newProjectDays": 14,
+  "due.afterEntryDays": 30,
+  "due.soonDays": 14,
+  "due.graceUntil": "02-01",
+  "ladder.reminder1Days": 3,
+  "ladder.reminder2Days": 10,
+  "ladder.escalateDays": 21,
+  "drafts.skipIfEntryDays": 2,
+  "drafts.skipIfSentDays": 5,
+  "standing.goodOnTime": 85,
+  "standing.goodKept": 80,
+  "standing.escalatedOnTime": 60,
+  "standing.escalatedKept": 50
+ },
+ "planStatus": [
+  {
+   "name": "new project, inside its 14 days",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-10-02",
+   "entries": [],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-10-16",
+    "daysOverdue": 0,
+    "hasPlan": false
+   }
+  },
+  {
+   "name": "new project, 4 days past its first-plan date",
+   "today": "2026-10-20",
+   "firstAppeared": "2026-10-02",
+   "entries": [],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-10-16",
+    "daysOverdue": 4
+   }
+  },
+  {
+   "name": "an explanation alone is not a plan",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-08-01",
+   "entries": [
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2026-09-20"
+    }
+   ],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-08-15",
+    "daysOverdue": 53,
+    "hasPlan": false,
+    "lastEntryDate": "2026-09-20"
+   }
+  },
+  {
+   "name": "January grace: nothing is due before Feb 1 even for an old project",
+   "today": "2026-01-20",
+   "firstAppeared": "2025-06-01",
+   "entries": [],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-02-01",
+    "daysOverdue": 0
+   }
+  },
+  {
+   "name": "after the grace period it is overdue (9 days)",
+   "today": "2026-02-10",
+   "firstAppeared": "2025-06-01",
+   "entries": [],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-02-01",
+    "daysOverdue": 9
+   }
+  },
+  {
+   "name": "current: open commitment far off, entry 7 days ago",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-11-14"
+     }
+    },
+    {
+     "id": "u1",
+     "kind": "update",
+     "date": "2026-09-30"
+    }
+   ],
+   "expect": {
+    "status": "current",
+    "dueDate": "2026-10-30",
+    "daysOverdue": 0,
+    "hasOpenCommitment": true
+   }
+  },
+  {
+   "name": "update due: the commitment date is 10 days away",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-10-17"
+     }
+    },
+    {
+     "id": "u1",
+     "kind": "update",
+     "date": "2026-09-29"
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-17",
+    "daysOverdue": 0
+   }
+  },
+  {
+   "name": "overdue: the commitment date passed 11 days ago",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-09-26"
+     }
+    }
+   ],
+   "expect": {
+    "status": "overdue",
+    "dueDate": "2026-09-26",
+    "daysOverdue": 11
+   }
+  },
+  {
+   "name": "a revised date moves the due date",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-10-03"
+     }
+    },
+    {
+     "id": "r1",
+     "kind": "date_revised",
+     "date": "2026-09-29",
+     "commitmentId": "c1",
+     "data": {
+      "from": "2026-10-03",
+      "to": "2026-10-17"
+     }
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-17",
+    "daysOverdue": 0
+   }
+  },
+  {
+   "name": "all commitments done and nothing new for 41 days: overdue",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-08-27",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": {
+    "status": "overdue",
+    "dueDate": "2026-09-26",
+    "daysOverdue": 11,
+    "hasOpenCommitment": false
+   }
+  },
+  {
+   "name": "nothing open but a recent entry: never current, the PIC owes a next commitment",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-08-27",
+     "commitmentId": "c1"
+    },
+    {
+     "id": "u1",
+     "kind": "update",
+     "date": "2026-09-30"
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-30",
+    "daysOverdue": 0
+   }
+  },
+  {
+   "name": "last year does not carry over: fresh start in January",
+   "today": "2026-03-01",
+   "firstAppeared": "2025-11-01",
+   "entries": [
+    {
+     "id": "c0",
+     "kind": "commitment",
+     "date": "2025-12-01",
+     "data": {
+      "promisedBy": "2026-01-15"
+     }
+    }
+   ],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-02-01",
+    "daysOverdue": 28,
+    "hasPlan": false
+   }
+  },
+  {
+   "name": "an admin note does not reset the PIC clock",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-07-01",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-11-01"
+     }
+    },
+    {
+     "id": "n1",
+     "kind": "admin_note",
+     "date": "2026-10-05"
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-15",
+    "daysOverdue": 0,
+    "lastEntryDate": "2026-09-15"
+   }
+  }
+ ],
+ "commitmentStates": [
+  {
+   "name": "open, date revised once",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-15",
+     "data": {
+      "promisedBy": "2026-10-03"
+     }
+    },
+    {
+     "id": "r1",
+     "kind": "date_revised",
+     "date": "2026-09-29",
+     "commitmentId": "c1",
+     "data": {
+      "from": "2026-10-03",
+      "to": "2026-10-17"
+     }
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "open",
+     "dueDate": "2026-10-17",
+     "promisedBy": "2026-10-03",
+     "revisions": 1,
+     "kept": null
+    }
+   ]
+  },
+  {
+   "name": "done before its date is kept",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-08-27",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "dueDate": "2026-08-29",
+     "revisions": 0,
+     "kept": true
+    }
+   ]
+  },
+  {
+   "name": "done on its date is kept",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-08-29",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "kept": true
+    }
+   ]
+  },
+  {
+   "name": "done after its date is not kept",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-09-02",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "kept": false
+    }
+   ]
+  },
+  {
+   "name": "missed by the system",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-31",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    },
+    {
+     "id": "m1",
+     "kind": "missed",
+     "date": "2026-09-14",
+     "commitmentId": "c1",
+     "data": {
+      "dueDate": "2026-09-12"
+     }
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "missed",
+     "kept": false
+    }
+   ]
+  },
+  {
+   "name": "a closed commitment is final",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-08-18",
+     "data": {
+      "promisedBy": "2026-08-29"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-08-27",
+     "commitmentId": "c1"
+    },
+    {
+     "id": "r1",
+     "kind": "date_revised",
+     "date": "2026-09-01",
+     "commitmentId": "c1",
+     "data": {
+      "from": "2026-08-29",
+      "to": "2026-10-01"
+     }
+    },
+    {
+     "id": "m1",
+     "kind": "missed",
+     "date": "2026-09-20",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "dueDate": "2026-08-29",
+     "revisions": 0,
+     "kept": true
+    }
+   ]
+  },
+  {
+   "name": "revised, then done by the new date is kept",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-01",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    },
+    {
+     "id": "r1",
+     "kind": "date_revised",
+     "date": "2026-09-14",
+     "commitmentId": "c1",
+     "data": {
+      "from": "2026-09-12",
+      "to": "2026-10-03"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-01",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "dueDate": "2026-10-03",
+     "revisions": 1,
+     "kept": true
+    }
+   ]
+  }
+ ],
+ "commitmentsToMiss": [
+  {
+   "name": "18 days past its date",
+   "today": "2026-09-30",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-01",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    }
+   ],
+   "expect": [
+    "c1"
+   ]
+  },
+  {
+   "name": "13 days past: not yet",
+   "today": "2026-09-25",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-01",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "the date was moved, so it is not past",
+   "today": "2026-09-30",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-01",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    },
+    {
+     "id": "r1",
+     "kind": "date_revised",
+     "date": "2026-09-14",
+     "commitmentId": "c1",
+     "data": {
+      "from": "2026-09-12",
+      "to": "2026-10-03"
+     }
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "already done",
+   "today": "2026-09-30",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-01",
+     "data": {
+      "promisedBy": "2026-09-12"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-09-10",
+     "commitmentId": "c1"
+    }
+   ],
+   "expect": []
+  }
+ ],
+ "onTimeStats": [
+  {
+   "name": "two on time, one late",
+   "today": "2026-10-20",
+   "firstAppeared": "2026-08-01",
+   "entries": [
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2026-08-10"
+    },
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-09",
+     "data": {
+      "promisedBy": "2026-10-30"
+     }
+    },
+    {
+     "id": "u1",
+     "kind": "update",
+     "date": "2026-10-12"
+    }
+   ],
+   "expect": {
+    "onTime": 2,
+    "total": 3
+   }
+  },
+  {
+   "name": "no entries yet",
+   "today": "2026-10-20",
+   "firstAppeared": "2026-08-01",
+   "entries": [],
+   "expect": {
+    "onTime": 0,
+    "total": 0
+   }
+  },
+  {
+   "name": "inside the January grace period counts as on time",
+   "today": "2026-03-01",
+   "firstAppeared": "2026-01-05",
+   "entries": [
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2026-01-25"
+    }
+   ],
+   "expect": {
+    "onTime": 1,
+    "total": 1
+   }
+  },
+  {
+   "name": "the first entry made after Feb 1 is late",
+   "today": "2026-03-01",
+   "firstAppeared": "2026-01-05",
+   "entries": [
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2026-02-02"
+    }
+   ],
+   "expect": {
+    "onTime": 0,
+    "total": 1
+   }
+  },
+  {
+   "name": "admin notes and the system are not the PIC entries",
+   "today": "2026-10-20",
+   "firstAppeared": "2026-08-01",
+   "entries": [
+    {
+     "id": "n1",
+     "kind": "admin_note",
+     "date": "2026-08-05"
+    },
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2026-08-10"
+    },
+    {
+     "id": "m1",
+     "kind": "missed",
+     "date": "2026-09-20",
+     "commitmentId": "x"
+    }
+   ],
+   "expect": {
+    "onTime": 1,
+    "total": 1
+   }
+  },
+  {
+   "name": "last year entries are not counted",
+   "today": "2026-10-20",
+   "firstAppeared": "2025-01-05",
+   "entries": [
+    {
+     "id": "e1",
+     "kind": "explanation",
+     "date": "2025-12-10"
+    },
+    {
+     "id": "e2",
+     "kind": "update",
+     "date": "2026-03-01"
+    }
+   ],
+   "expect": {
+    "onTime": 0,
+    "total": 1
+   }
+  }
+ ],
+ "keptStats": [
+  {
+   "name": "one kept, two not, one still open",
+   "states": [
+    {
+     "status": "done",
+     "kept": true
+    },
+    {
+     "status": "done",
+     "kept": false
+    },
+    {
+     "status": "missed",
+     "kept": false
+    },
+    {
+     "status": "open",
+     "kept": null
+    }
+   ],
+   "expect": {
+    "kept": 1,
+    "resolved": 3
+   }
+  },
+  {
+   "name": "nothing resolved",
+   "states": [
+    {
+     "status": "open",
+     "kept": null
+    }
+   ],
+   "expect": {
+    "kept": 0,
+    "resolved": 0
+   }
+  }
+ ],
+ "standing": [
+  {
+   "name": "11 of 14 on time, 5 of 7 kept",
+   "onTime": {
+    "onTime": 11,
+    "total": 14
+   },
+   "kept": {
+    "kept": 5,
+    "resolved": 7
+   },
+   "expect": "needs_attention"
+  },
+  {
+   "name": "exactly at the good cutoffs",
+   "onTime": {
+    "onTime": 17,
+    "total": 20
+   },
+   "kept": {
+    "kept": 4,
+    "resolved": 5
+   },
+   "expect": "good"
+  },
+  {
+   "name": "on time well below the escalated cutoff",
+   "onTime": {
+    "onTime": 3,
+    "total": 8
+   },
+   "kept": {
+    "kept": 4,
+    "resolved": 5
+   },
+   "expect": "escalated"
+  },
+  {
+   "name": "kept below the escalated cutoff",
+   "onTime": {
+    "onTime": 9,
+    "total": 10
+   },
+   "kept": {
+    "kept": 1,
+    "resolved": 4
+   },
+   "expect": "escalated"
+  },
+  {
+   "name": "exactly at an escalated cutoff is not below it",
+   "onTime": {
+    "onTime": 60,
+    "total": 100
+   },
+   "kept": {
+    "kept": 4,
+    "resolved": 5
+   },
+   "expect": "needs_attention"
+  },
+  {
+   "name": "kept exactly 50 percent with good timing",
+   "onTime": {
+    "onTime": 9,
+    "total": 10
+   },
+   "kept": {
+    "kept": 1,
+    "resolved": 2
+   },
+   "expect": "needs_attention"
+  },
+  {
+   "name": "nothing to measure on time: judged on kept alone",
+   "onTime": {
+    "onTime": 0,
+    "total": 0
+   },
+   "kept": {
+    "kept": 4,
+    "resolved": 5
+   },
+   "expect": "good"
+  },
+  {
+   "name": "nothing to measure at all",
+   "onTime": {
+    "onTime": 0,
+    "total": 0
+   },
+   "kept": {
+    "kept": 0,
+    "resolved": 0
+   },
+   "expect": "no_record"
+  }
+ ],
+ "canWrite": [
+  {
+   "role": "admin",
+   "kind": "admin_note",
+   "isPic": false,
+   "expect": true
+  },
+  {
+   "role": "admin",
+   "kind": "update",
+   "isPic": false,
+   "expect": false
+  },
+  {
+   "role": "admin",
+   "kind": "commitment",
+   "isPic": true,
+   "expect": false
+  },
+  {
+   "role": "pic",
+   "kind": "update",
+   "isPic": true,
+   "expect": true
+  },
+  {
+   "role": "pic",
+   "kind": "commitment",
+   "isPic": true,
+   "expect": true
+  },
+  {
+   "role": "pic",
+   "kind": "correction",
+   "isPic": true,
+   "expect": true
+  },
+  {
+   "role": "pic",
+   "kind": "done",
+   "isPic": true,
+   "expect": true
+  },
+  {
+   "role": "pic",
+   "kind": "date_revised",
+   "isPic": true,
+   "expect": true
+  },
+  {
+   "role": "pic",
+   "kind": "update",
+   "isPic": false,
+   "expect": false
+  },
+  {
+   "role": "pic",
+   "kind": "admin_note",
+   "isPic": true,
+   "expect": false
+  },
+  {
+   "role": "pic",
+   "kind": "missed",
+   "isPic": true,
+   "expect": false
+  },
+  {
+   "role": "finance",
+   "kind": "update",
+   "isPic": false,
+   "expect": false
+  },
+  {
+   "role": "marketing",
+   "kind": "update",
+   "isPic": false,
+   "expect": false
+  },
+  {
+   "role": "sysadmin",
+   "kind": "admin_note",
+   "isPic": false,
+   "expect": false
+  }
+ ]
+}

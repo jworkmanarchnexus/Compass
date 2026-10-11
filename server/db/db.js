@@ -10,16 +10,19 @@ const SCHEMA_VERSION = 1;
 function open(file) {
   const target = file || process.env.COMPASS_DB || DEFAULT_FILE;
   const raw = new DatabaseSync(target);
-  // phase 1 created run_warnings without ytd_billed and nothing wrote to it; recreate it so older local files keep working
-  const old = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run_warnings'").get();
-  if (old && !raw.prepare('PRAGMA table_info(run_warnings)').all().some(c => c.name === 'ytd_billed')) raw.exec('DROP TABLE run_warnings');
-  raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+  const applySchema = () => {
+    // phase 1 created run_warnings without ytd_billed and nothing wrote to it; recreate it so older local files keep working
+    const old = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run_warnings'").get();
+    if (old && !raw.prepare('PRAGMA table_info(run_warnings)').all().some(c => c.name === 'ytd_billed')) raw.exec('DROP TABLE run_warnings');
+    raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+  };
+  applySchema();
   if (!raw.prepare('SELECT version FROM schema_info').get()) {
     raw.prepare('INSERT INTO schema_info (version) VALUES (?)').run(SCHEMA_VERSION);
   }
   let lastStamp = 0;
   return {
-    raw,
+    raw, applySchema,
     /* strictly increasing millisecond clock: two writes in one millisecond never share a time */
     now() { lastStamp = Math.max(Date.now(), lastStamp + 1); return lastStamp; },
     get(sql, ...p) { return raw.prepare(sql).get(...p); },

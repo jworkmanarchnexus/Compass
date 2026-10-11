@@ -33,14 +33,17 @@ const months2025 = [202501, 202502, 202503, 202504, 202505, 202506, 202507, 2025
 const cents = d => Math.round(d * 100);
 const money = c => (c / 100).toFixed(2);
 
-/* split an integer total into n parts with random weights; the last part takes the remainder */
-function split(total, n, step) {
-  const w = Array.from({ length: n }, () => 0.5 + rnd());
-  const sum = w.reduce((a, b) => a + b, 0);
-  const parts = w.map(x => Math.floor((total * x / sum) / step) * step);
-  parts[n - 1] += total - parts.reduce((a, b) => a + b, 0);
+/* split an integer total across months by the given weights; the last part takes the remainder.
+   Billed, labor and expenses share one set of weights, so a project keeps about the same margin every month
+   (a project that is in the red at September is also in the red at August, as the mockup's story needs). */
+function split(total, weights, step) {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const parts = weights.map(x => Math.floor((total * x / sum) / step) * step);
+  parts[parts.length - 1] += total - parts.reduce((a, b) => a + b, 0);
   return parts;
 }
+// two projects first fall below break-even in September (the mockup's "2 new"): profitable through August, then a bad month
+const LATE_TURN = new Set(['2025-0230', '2024-0399']);
 
 const rows = []; const overhead = [];
 for (const [wbs1, profit, lossPct, oh] of TARGETS) {
@@ -51,7 +54,18 @@ for (const [wbs1, profit, lossPct, oh] of TARGETS) {
   const laborC = cents(L);
   const laborWithOh = laborC * (100 + oh) / 100;                                 // exact: laborC is a multiple of 100
   const E = cents(billed) - laborWithOh - cents(profit);                         // cents, exact remainder
-  const b = split(cents(billed), 9, 1), l = split(laborC, 9, 100), e = split(E, 9, 1);
+  const w = Array.from({ length: 9 }, () => 0.5 + rnd());
+  let b, l, e;
+  if (LATE_TURN.has(wbs1)) {
+    const B8 = Math.round(cents(billed) * 0.82), E8 = Math.round(B8 * 0.10);
+    const L8 = Math.round((B8 - E8 - B8 * 0.03) / (1 + oh / 100) / 100) * 100; // a 3% profit through August
+    const w8 = w.slice(0, 8);
+    b = split(B8, w8, 1).concat([cents(billed) - B8]);
+    l = split(L8, w8, 100).concat([laborC - L8]);
+    e = split(E8, w8, 1).concat([E - E8]);
+  } else {
+    b = split(cents(billed), w, 1); l = split(laborC, w, 100); e = split(E, w, 1);
+  }
   months2026.forEach((p, i) => rows.push([wbs1, p, b[i], l[i], e[i]]));
   // 2025 filler: about a year of similar activity, a bit better than 2026
   months2025.forEach(p => {

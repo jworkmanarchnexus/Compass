@@ -16,6 +16,19 @@ const DEFAULTS = {
   'due.newProjectDays': 14,
   'due.afterEntryDays': 30,
   'due.graceUntil': '02-01',
+  'due.soonDays': 14,            // a plan shows "Update due" when its next update falls within this many days
+  'due.missedAfterDays': 14,     // an open commitment is recorded as Missed this many days after its date
+  'ladder.reminder1Days': 3,     // reminder ladder, counted from each project's due date
+  'ladder.reminder2Days': 10,
+  'ladder.escalateDays': 21,
+  'drafts.emailAdmin': true,     // the admin's one email when drafts are waiting
+  'drafts.skipIfEntryDays': 2,   // no draft for a PIC who added an entry in the last N days (0 = never skip)
+  'drafts.skipIfSentDays': 5,    // no draft for a PIC who was sent a reminder in the last N days (0 = never skip)
+  'standing.goodOnTime': 85,     // Good standing needs at least this % of updates on time ...
+  'standing.goodKept': 80,       // ... and this % of commitments kept
+  'standing.escalatedOnTime': 60, // Escalated is below this % on time ...
+  'standing.escalatedKept': 50,   // ... or below this % kept
+  'visibility.picRecords': 'everyone', // who sees each PIC's on-time and kept figures: everyone | principals | admin
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
 };
@@ -23,6 +36,7 @@ const DEFAULTS = {
 const days = v => Number.isInteger(v) && v >= 0 && v <= 365;
 const money = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1e9;
 const oneOf = list => v => list.includes(v);
+const pct = v => Number.isInteger(v) && v >= 0 && v <= 100;
 const VALIDATORS = {
   'run.day': oneOf(['first-business-day']),
   'run.time': v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
@@ -37,6 +51,19 @@ const VALIDATORS = {
   'due.newProjectDays': days,
   'due.afterEntryDays': days,
   'due.graceUntil': v => typeof v === 'string' && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
+  'due.soonDays': days,
+  'due.missedAfterDays': days,
+  'ladder.reminder1Days': days,
+  'ladder.reminder2Days': days,
+  'ladder.escalateDays': days,
+  'drafts.emailAdmin': v => typeof v === 'boolean',
+  'drafts.skipIfEntryDays': days,
+  'drafts.skipIfSentDays': days,
+  'standing.goodOnTime': pct,
+  'standing.goodKept': pct,
+  'standing.escalatedOnTime': pct,
+  'standing.escalatedKept': pct,
+  'visibility.picRecords': oneOf(['everyone', 'principals', 'admin']),
   'access': v => !!v && typeof v === 'object' && Object.keys(DEFAULTS.access).every(k => typeof v[k] === 'boolean') && Object.keys(v).length === Object.keys(DEFAULTS.access).length,
 };
 
@@ -55,6 +82,13 @@ function allAt(rows, at) {
   return Object.fromEntries(Object.keys(DEFAULTS).map(k => [k, settingAt(rows, k, at)]));
 }
 
-const settingsApi = { DEFAULTS, isKnown, isValid, settingAt, allAt };
+/* rules that span several settings; `values` is the full set after a change. Returns a plain message, or null when fine. */
+function crossCheck(values) {
+  if (!(values['ladder.reminder1Days'] < values['ladder.reminder2Days'] && values['ladder.reminder2Days'] < values['ladder.escalateDays'])) return 'The reminder ladder must go in order: reminder 1, then reminder 2, then escalate, each a later day.';
+  if (values['standing.escalatedOnTime'] > values['standing.goodOnTime'] || values['standing.escalatedKept'] > values['standing.goodKept']) return 'The Escalated cutoffs cannot be higher than the Good standing cutoffs.';
+  return null;
+}
+
+const settingsApi = { DEFAULTS, isKnown, isValid, settingAt, allAt, crossCheck };
 if (typeof module !== 'undefined' && module.exports) module.exports = settingsApi;
 else if (typeof window !== 'undefined') window.CompassRules = Object.assign(window.CompassRules || {}, settingsApi);

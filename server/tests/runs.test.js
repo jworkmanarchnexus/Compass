@@ -154,7 +154,7 @@ test('archive and rerun: needs a reason AND the word RERUN; the old run is kept,
 
 test('PICs and others see the last PUBLISHED run: never a draft, and an archived run is not shown', () => withApp(async ({ api }) => {
   const josh = api('j.workman'); const dana = api('d.whitfield');
-  assert.deepStrictEqual((await dana.get('/api/turnaround/current')).body, { run: null, projects: [] }, 'nothing published yet');
+  assert.deepStrictEqual((await dana.get('/api/turnaround/current')).body, { run: null }, 'nothing published yet');
 
   const aug = (await josh.post('/api/admin/runs', { period: 202608 })).body.run.id;
   await josh.post(`/api/admin/runs/${aug}/publish`);

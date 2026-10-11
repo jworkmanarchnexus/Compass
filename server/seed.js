@@ -9,7 +9,9 @@ const { parseCsv } = require('./csv');
 
 const SEED = path.join(__dirname, 'db', 'seed');
 const read = f => parseCsv(fs.readFileSync(path.join(SEED, f), 'utf8'));
-const TABLES = ['run_warnings', 'runs', 'settings', 'users', 'projects', 'employees'];
+// children first. Everything is cleared, including the append-only and locked tables: a reset is a developer action,
+// not something the app can do, so it drops the guard triggers, empties the tables, and recreates the triggers.
+const TABLES = ['run_project_history', 'run_history', 'run_projects', 'run_warnings', 'runs', 'plan_entries', 'checkin_drafts', 'system_state', 'audit_log', 'settings', 'users', 'projects', 'employees'];
 
 /* the VP copy: replaces both tables, like a nightly copy would */
 function loadVantagepointCopy(db) {
@@ -25,11 +27,13 @@ function loadVantagepointCopy(db) {
   });
 }
 
-function seed(db) {
+function seed(db, opts) {
+  const triggers = db.all("SELECT name FROM sqlite_master WHERE type = 'trigger'").map(t => t.name);
   db.tx(() => {
-    // the audit log is append-only by design (trigger), so a reset leaves it alone
+    for (const t of triggers) db.run(`DROP TRIGGER ${t}`);
     for (const t of TABLES) db.run(`DELETE FROM ${t}`);
   });
+  db.applySchema();
   loadVantagepointCopy(db);
   db.tx(() => {
     for (const u of read('users.csv')) {
@@ -37,6 +41,7 @@ function seed(db) {
         crypto.randomUUID(), u.Username, u.DisplayName, u.Email, u.Role, u.DraftName, u.Employee || null, Number(u.Active));
     }
   });
+  if (!opts || opts.demo !== false) require('./seed-demo').seedDemo(db);
 }
 
 module.exports = { seed, loadVantagepointCopy };
@@ -45,6 +50,6 @@ if (require.main === module) {
   const db = dbmod.open();
   seed(db);
   const n = t => db.get(`SELECT COUNT(*) AS n FROM ${t}`).n;
-  console.log(`Seeded: ${n('users')} people, ${n('employees')} employees, ${n('projects')} projects.`);
+  console.log(`Seeded: ${n('users')} people, ${n('employees')} employees, ${n('projects')} projects, ${n('runs')} published runs, ${n('plan_entries')} plan entries.`);
   db.close();
 }
