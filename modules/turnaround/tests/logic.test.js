@@ -55,6 +55,8 @@ test('schedule: last closed month, first business day, labels', () => {
   for (const c of schedFx.lastClosedPeriod) assert.strictEqual(sched.lastClosedPeriod(c.date), c.expect, c.date);
   for (const c of schedFx.isFirstBusinessDay) assert.strictEqual(sched.isFirstBusinessDay(c.date), c.expect, c.date + ' ' + (c.why || ''));
   for (const c of schedFx.periodLabel) assert.strictEqual(sched.periodLabel(c.period), c.expect);
+  for (const c of schedFx.nextFirstBusinessDay) assert.strictEqual(sched.nextFirstBusinessDay(c.date, c.includeToday), c.expect, c.date);
+  for (const c of schedFx.lastDayOfPeriod) assert.strictEqual(sched.lastDayOfPeriod(c.period), c.expect, String(c.period));
 });
 
 /* ---- phase 3: the plan log, plan status, standing, drafts ---- */

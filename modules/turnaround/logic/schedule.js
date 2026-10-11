@@ -22,10 +22,28 @@ function isFirstBusinessDay(date) {
   return (d === 2 || d === 3) && wd === 1; // the 1st fell on a weekend, so Monday is the first weekday
 }
 
+/* the next first business day after `date` (or on it, when includeToday). Used to say when the monthly job runs next. */
+function nextFirstBusinessDay(date, includeToday) {
+  const [y, m, d] = date.split('-').map(Number);
+  let ms = Date.UTC(y, m - 1, d) + (includeToday ? 0 : 86400000);
+  for (let i = 0; i < 70; i++, ms += 86400000) {
+    const t = new Date(ms);
+    const s = `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+    if (isFirstBusinessDay(s)) return s;
+  }
+  return null;
+}
+
+/* 202609 -> '2026-09-30': the day a period's data runs to */
+function lastDayOfPeriod(period) {
+  const y = Math.floor(period / 100), m = period % 100;
+  return `${y}-${String(m).padStart(2, '0')}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`;
+}
+
 /* 202609 -> 'September 2026' */
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function periodLabel(period) { return `${MONTHS[(period % 100) - 1]} ${Math.floor(period / 100)}`; }
 
-const scheduleApi = { lastClosedPeriod, isFirstBusinessDay, periodLabel };
+const scheduleApi = { lastClosedPeriod, isFirstBusinessDay, periodLabel, nextFirstBusinessDay, lastDayOfPeriod };
 if (typeof module !== 'undefined' && module.exports) module.exports = scheduleApi;
 else if (typeof window !== 'undefined') window.CompassTurnaround = Object.assign(window.CompassTurnaround || {}, scheduleApi);

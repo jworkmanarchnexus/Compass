@@ -28,5 +28,15 @@ export const fmtClock = ms => {
   const d = new Date(ms); const h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0');
   return `${((h + 11) % 12) + 1}:${m} ${h < 12 ? 'a.m.' : 'p.m.'}`;
 };
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const wdOf = d => new Date(Date.UTC(Number(d.slice(0, 4)), Number(d.slice(5, 7)) - 1, Number(d.slice(8, 10)))).getUTCDay();
+/* '2026-10-07' -> 'Wednesday, October 7' and 'Wed Oct 7' */
+export const fmtWeekdayLong = d => `${WEEKDAYS[wdOf(d)]}, ${MONTHS_LONG[Number(d.slice(5, 7)) - 1]} ${Number(d.slice(8, 10))}`;
+export const fmtDayWd = d => `${WEEKDAYS[wdOf(d)].slice(0, 3)} ${fmtDay(d)}`;
+/* '2026-09-30' -> 'Sep 30, 2026' */
+export const fmtDayYear = d => `${fmtDay(d)}, ${d.slice(0, 4)}`;
+/* ms -> 'Oct 1 at 6:00 a.m.' (the browser's own time zone) */
+const msToDay = ms => { const t = new Date(ms); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+export const fmtWhen = ms => `${fmtDay(msToDay(ms))} at ${fmtClock(ms)}`;
 export const initials = name => name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;

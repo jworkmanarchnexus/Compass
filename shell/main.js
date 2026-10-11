@@ -2,12 +2,13 @@
    It reaches the server only through shared/platform. The server enforces who may do what; this file only hides controls. */
 import * as platform from '/shared/platform/index.js';
 
+import { renderHome, homeSubtitle } from '/shell/home.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCard } from '/modules/turnaround/ui/admin.js';
 
-const { configure, Session, Admin, Turnaround, Checkins, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -101,17 +102,19 @@ const sep = () => icon('chevron-right', 14);
 const banner = (iconName, text, kind) => h('div', { class: 'banner' + (kind ? ' ' + kind : '') }, h('span', { class: 'bmsg' }, icon(iconName), h('span', { text })));
 
 /* ---------- pages ---------- */
-function pageHome() {
+async function pageHome() {
   const me = Session.me();
-  const body = frame('home', [crumb('Compass'), sep(), crumb('Home')], 'Home', `Hello, ${me.name.split(' ')[0]}`);
-  const mine = flatNav.filter(n => n.area && me.areas[n.area]);
-  if (me.role === 'admin') {
-    body.append(h('div', { class: 'section-h' }, h('h2', { text: 'Needs your attention' })),
-      h('div', { class: 'empty-note', text: 'Nothing yet. Drafts to review, check-in drafts and pipeline alerts will appear here once the monthly run exists.' }));
+  const data = await Home.get();
+  const body = frame('home', [crumb('Compass'), sep(), crumb('Home')], 'Home', homeSubtitle(data));
+  renderHome(ctx, body, data);
+  // a small "your pages" list for roles whose Home has little else on it
+  if (me.role !== 'admin' && me.role !== 'sysadmin') {
+    const mine = flatNav.filter(n => n.area && me.areas[n.area]);
+    body.append(h('div', { class: 'section-h' }, h('h2', { text: 'Your pages' }), h('span', { class: 'muted', text: R.ROLE_LABEL[me.role] })),
+      h('div', { class: 'recent' }, ...mine.map(n => h('a', { class: 'rcard', href: n.href },
+        h('span', { class: 'pn', text: n.phase ? `Arrives in phase ${n.phase}` : 'Ready' }), h('span', { class: 'pt', text: n.label }), h('span', { class: 'pm', text: n.blurb })))));
   }
-  body.append(h('div', { class: 'section-h' }, h('h2', { text: 'Your pages' }), h('span', { class: 'muted', text: R.ROLE_LABEL[me.role] })),
-    h('div', { class: 'recent' }, ...mine.map(n => h('a', { class: 'rcard', href: n.href },
-      h('span', { class: 'pn', text: n.phase ? `Arrives in phase ${n.phase}` : 'Ready' }), h('span', { class: 'pt', text: n.label }), h('span', { class: 'pm', text: n.blurb })))));
+  T.hydrateIcons(body);
 }
 
 function pagePlaceholder(n) {
