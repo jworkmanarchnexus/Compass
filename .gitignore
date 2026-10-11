@@ -5,3 +5,4 @@ backups/
 Thumbs.db
 *.log
 server/db/compass.sqlite*
+outbox/

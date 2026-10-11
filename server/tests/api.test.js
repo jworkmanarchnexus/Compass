@@ -13,7 +13,7 @@ test('static files: the shell and design system are served, nothing else is', ()
 
 test('seed: made-up people and a Vantagepoint-shaped project copy', () => withApp(async ({ db }) => {
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM users').n, 11);
-  assert.strictEqual(db.get("SELECT COUNT(*) n FROM projects WHERE status = 'A'").n, 18);
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM projects WHERE status = 'A'").n, 20);
   assert.strictEqual(db.get("SELECT COUNT(*) n FROM projects WHERE status = 'A' AND principal = ''").n, 2, 'two active projects with no PIC, as in the mockup');
 }));
 

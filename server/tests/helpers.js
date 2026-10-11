@@ -4,10 +4,10 @@ const { seed } = require('../seed');
 const { createServer } = require('../app');
 
 /* a fresh in-memory database (seeded) with a real server on a random local port */
-async function start() {
+async function start(opts) {
   const db = dbmod.open(':memory:');
   seed(db);
-  const server = createServer(db);
+  const server = createServer(db, Object.assign({ today: () => '2026-10-11', mailer: { sent: [], sendToAdmin(m) { this.sent.push(m); } } }, opts));
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   server.unref(); // a test that fails before close() must not keep the process alive
   const base = `http://127.0.0.1:${server.address().port}`;

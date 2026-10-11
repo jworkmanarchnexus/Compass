@@ -1,0 +1,44 @@
+{
+  "canBuild": [
+    { "name": "nothing yet", "runs": [], "kind": "turnaround", "period": 202609, "ok": true },
+    { "name": "a draft already exists", "runs": [{ "kind": "turnaround", "period": 202609, "status": "draft", "version": 1 }], "kind": "turnaround", "period": 202609, "ok": false },
+    { "name": "a published run already exists", "runs": [{ "kind": "turnaround", "period": 202609, "status": "published", "version": 1 }], "kind": "turnaround", "period": 202609, "ok": false },
+    { "name": "only an archived one: a new version may be built", "runs": [{ "kind": "turnaround", "period": 202609, "status": "archived", "version": 1 }], "kind": "turnaround", "period": 202609, "ok": true },
+    { "name": "another month does not matter", "runs": [{ "kind": "turnaround", "period": 202608, "status": "published", "version": 1 }], "kind": "turnaround", "period": 202609, "ok": true },
+    { "name": "another kind does not matter", "runs": [{ "kind": "bd", "period": 202609, "status": "published", "version": 1 }], "kind": "turnaround", "period": 202609, "ok": true }
+  ],
+  "nextVersion": [
+    { "runs": [], "kind": "turnaround", "period": 202609, "expect": 1 },
+    { "runs": [{ "kind": "turnaround", "period": 202609, "status": "archived", "version": 1 }, { "kind": "turnaround", "period": 202609, "status": "archived", "version": 2 }], "kind": "turnaround", "period": 202609, "expect": 3 },
+    { "runs": [{ "kind": "turnaround", "period": 202608, "status": "published", "version": 4 }], "kind": "turnaround", "period": 202609, "expect": 1 }
+  ],
+  "canPublish": [
+    { "status": "draft", "ok": true },
+    { "status": "published", "ok": false },
+    { "status": "archived", "ok": false }
+  ],
+  "canRebuild": [
+    { "status": "draft", "ok": true },
+    { "status": "published", "ok": false },
+    { "status": "archived", "ok": false }
+  ],
+  "canArchive": [
+    { "name": "reason and RERUN", "status": "published", "reason": "Billing cutoff was wrong", "confirm": "RERUN", "ok": true },
+    { "name": "surrounding spaces are fine", "status": "published", "reason": "  Wrong cutoff  ", "confirm": " RERUN ", "ok": true },
+    { "name": "no reason", "status": "published", "reason": "", "confirm": "RERUN", "ok": false },
+    { "name": "blank reason", "status": "published", "reason": "   ", "confirm": "RERUN", "ok": false },
+    { "name": "reason missing entirely", "status": "published", "confirm": "RERUN", "ok": false },
+    { "name": "lower case is not the word", "status": "published", "reason": "x", "confirm": "rerun", "ok": false },
+    { "name": "wrong word", "status": "published", "reason": "x", "confirm": "YES", "ok": false },
+    { "name": "no confirmation", "status": "published", "reason": "x", "ok": false },
+    { "name": "a draft is not archived", "status": "draft", "reason": "x", "confirm": "RERUN", "ok": false },
+    { "name": "already archived", "status": "archived", "reason": "x", "confirm": "RERUN", "ok": false }
+  ],
+  "currentPublished": [
+    { "name": "no runs", "runs": [], "expect": null },
+    { "name": "a draft is never shown", "runs": [{ "id": "d", "kind": "turnaround", "period": 202609, "status": "draft", "version": 1 }], "expect": null },
+    { "name": "the newest published period wins; the draft above it is invisible", "runs": [{ "id": "aug", "kind": "turnaround", "period": 202608, "status": "published", "version": 1 }, { "id": "sepDraft", "kind": "turnaround", "period": 202609, "status": "draft", "version": 2 }, { "id": "sepOld", "kind": "turnaround", "period": 202609, "status": "archived", "version": 1 }], "expect": "aug" },
+    { "name": "published beats earlier published", "runs": [{ "id": "aug", "kind": "turnaround", "period": 202608, "status": "published", "version": 1 }, { "id": "sep", "kind": "turnaround", "period": 202609, "status": "published", "version": 2 }], "expect": "sep" },
+    { "name": "other kinds are ignored", "runs": [{ "id": "bd", "kind": "bd", "period": 202609, "status": "published", "version": 1 }], "expect": null }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "_note": "Money in cents; settings in dollars (as the Admin page shows them). Input is already-computed projects. Warnings are listed in input order.",
+  "base": [
+    {
+      "wbs1": "p1",
+      "principal": "E1",
+      "evaluable": true,
+      "billed": {
+        "ytd": 1000000
+      },
+      "profit": {
+        "ytd": -50000
+      }
+    },
+    {
+      "wbs1": "p2",
+      "principal": "E1",
+      "evaluable": true,
+      "billed": {
+        "ytd": 1000000
+      },
+      "profit": {
+        "ytd": 10000
+      }
+    },
+    {
+      "wbs1": "p3",
+      "principal": "E1",
+      "evaluable": true,
+      "billed": {
+        "ytd": 1000000
+      },
+      "profit": {
+        "ytd": 0
+      }
+    },
+    {
+      "wbs1": "p4",
+      "principal": "E1",
+      "evaluable": true,
+      "billed": {
+        "ytd": 20000
+      },
+      "profit": {
+        "ytd": -5000
+      }
+    },
+    {
+      "wbs1": "p5",
+      "principal": "",
+      "evaluable": true,
+      "billed": {
+        "ytd": 300000
+      },
+      "profit": {
+        "ytd": -30000
+      }
+    },
+    {
+      "wbs1": "p6",
+      "principal": "E2",
+      "evaluable": false,
+      "reason": "mixed-overhead-rates",
+      "billed": {
+        "ytd": 400000
+      },
+      "profit": {
+        "ytd": null
+      }
+    },
+    {
+      "wbs1": "p7",
+      "principal": "",
+      "evaluable": true,
+      "billed": {
+        "ytd": 200000
+      },
+      "profit": {
+        "ytd": 40000
+      }
+    },
+    {
+      "wbs1": "p8",
+      "principal": "E0",
+      "evaluable": true,
+      "billed": {
+        "ytd": 500000
+      },
+      "profit": {
+        "ytd": -90000
+      }
+    },
+    {
+      "wbs1": "p9",
+      "principal": "E1",
+      "evaluable": true,
+      "billed": {
+        "ytd": 600000
+      },
+      "profit": {
+        "ytd": -80000
+      }
+    },
+    {
+      "wbs1": "p10",
+      "principal": "",
+      "evaluable": false,
+      "reason": "no-overhead-plan",
+      "billed": {
+        "ytd": 100000
+      },
+      "profit": {
+        "ytd": null
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "defaults: below $0, nothing ignored, no-PIC projects left out with a warning; sorted by PIC, then worst first",
+      "settings": {
+        "include.ytdProfitBelow": 0,
+        "include.ignoreBilledUnder": 0,
+        "include.noPic": "leave-out-warn"
+      },
+      "included": [
+        "p8",
+        "p9",
+        "p1",
+        "p4"
+      ],
+      "warnings": [
+        {
+          "kind": "no_pic",
+          "wbs1": "p5"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p6"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p7"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p10"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p10"
+        }
+      ]
+    },
+    {
+      "name": "ignore projects billed under $500: p4 ($200 billed) drops out",
+      "settings": {
+        "include.ytdProfitBelow": 0,
+        "include.ignoreBilledUnder": 500,
+        "include.noPic": "leave-out-warn"
+      },
+      "included": [
+        "p8",
+        "p9",
+        "p1"
+      ],
+      "warnings": [
+        {
+          "kind": "no_pic",
+          "wbs1": "p5"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p6"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p7"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p10"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p10"
+        }
+      ]
+    },
+    {
+      "name": "threshold raised to $1,000: a $100 profit and a $0 profit now count as below it",
+      "settings": {
+        "include.ytdProfitBelow": 1000,
+        "include.ignoreBilledUnder": 0,
+        "include.noPic": "leave-out-warn"
+      },
+      "included": [
+        "p8",
+        "p9",
+        "p1",
+        "p4",
+        "p3",
+        "p2"
+      ],
+      "warnings": [
+        {
+          "kind": "no_pic",
+          "wbs1": "p5"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p6"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p7"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p10"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p10"
+        }
+      ]
+    },
+    {
+      "name": "no-PIC setting 'unassigned': the losing no-PIC project is kept, listed first, and still warned about",
+      "settings": {
+        "include.ytdProfitBelow": 0,
+        "include.ignoreBilledUnder": 0,
+        "include.noPic": "unassigned"
+      },
+      "included": [
+        "p5",
+        "p8",
+        "p9",
+        "p1",
+        "p4"
+      ],
+      "warnings": [
+        {
+          "kind": "no_pic",
+          "wbs1": "p5"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p6"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p7"
+        },
+        {
+          "kind": "no_pic",
+          "wbs1": "p10"
+        },
+        {
+          "kind": "cant_evaluate",
+          "wbs1": "p10"
+        }
+      ]
+    }
+  ]
+}

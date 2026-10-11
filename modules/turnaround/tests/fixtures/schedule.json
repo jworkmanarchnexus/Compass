@@ -1,0 +1,26 @@
+{
+  "lastClosedPeriod": [
+    { "date": "2026-10-11", "expect": 202609 },
+    { "date": "2026-10-01", "expect": 202609 },
+    { "date": "2026-12-31", "expect": 202611 },
+    { "date": "2027-01-05", "expect": 202612 },
+    { "date": "2026-03-02", "expect": 202602 }
+  ],
+  "isFirstBusinessDay": [
+    { "date": "2026-10-01", "expect": true, "why": "Thursday the 1st" },
+    { "date": "2026-10-02", "expect": false },
+    { "date": "2026-11-01", "expect": false, "why": "Sunday" },
+    { "date": "2026-11-02", "expect": true, "why": "the 1st was a Sunday, so Monday the 2nd" },
+    { "date": "2026-11-03", "expect": false },
+    { "date": "2026-08-01", "expect": false, "why": "Saturday" },
+    { "date": "2026-08-03", "expect": true, "why": "the 1st was a Saturday, so Monday the 3rd" },
+    { "date": "2026-08-04", "expect": false },
+    { "date": "2026-09-01", "expect": true, "why": "Tuesday the 1st" },
+    { "date": "2026-09-07", "expect": false, "why": "a Monday, but not near the start of the month" }
+  ],
+  "periodLabel": [
+    { "period": 202609, "expect": "September 2026" },
+    { "period": 202601, "expect": "January 2026" },
+    { "period": 202512, "expect": "December 2025" }
+  ]
+}

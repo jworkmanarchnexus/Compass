@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS run_warnings (
   run_id  TEXT NOT NULL REFERENCES runs(id),
   kind    TEXT NOT NULL,                  -- cant_evaluate | no_pic | no_sector
   wbs1    TEXT NOT NULL DEFAULT '',
-  detail  TEXT NOT NULL DEFAULT ''
+  detail  TEXT NOT NULL DEFAULT '',
+  ytd_billed INTEGER                      -- cents, for the warning list
 );
 
 -- Invariant: the audit log is append-only. No path exists to change or remove an entry.
@@ -77,3 +78,55 @@ CREATE TRIGGER IF NOT EXISTS audit_log_no_update BEFORE UPDATE ON audit_log
 BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS audit_log_no_delete BEFORE DELETE ON audit_log
 BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;
+
+-- ---- Phase 2: what a run holds, and the lock ----
+-- Money is whole cents. Percentages are not stored; they are worked out from these (profit / billed).
+CREATE TABLE IF NOT EXISTS run_projects (
+  run_id            TEXT NOT NULL REFERENCES runs(id),
+  wbs1              TEXT NOT NULL,
+  name              TEXT NOT NULL,
+  pic_code          TEXT NOT NULL DEFAULT '',   -- '' = no PIC (only present when the run is set to keep "Unassigned")
+  pm_code           TEXT NOT NULL DEFAULT '',
+  billed_cur        INTEGER NOT NULL,
+  billed_ytd        INTEGER NOT NULL,
+  billed_jtd        INTEGER NOT NULL,
+  profit_cur        INTEGER NOT NULL,
+  profit_ytd        INTEGER NOT NULL,
+  profit_jtd        INTEGER NOT NULL,
+  first_seen_period INTEGER NOT NULL,           -- the first run this project appeared in (starts its plan clock)
+  PRIMARY KEY (run_id, wbs1)
+);
+-- Invariant: a published run is locked. Only a draft may have rows added, changed or removed, and a run's own row
+-- changes only draft -> published, or published -> archived (with a reason). Archived runs never change.
+CREATE TRIGGER IF NOT EXISTS run_projects_locked_insert BEFORE INSERT ON run_projects
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_projects_locked_update BEFORE UPDATE ON run_projects
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_projects_locked_delete BEFORE DELETE ON run_projects
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+CREATE TRIGGER IF NOT EXISTS run_warnings_locked_insert BEFORE INSERT ON run_warnings
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_warnings_locked_update BEFORE UPDATE ON run_warnings
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_warnings_locked_delete BEFORE DELETE ON run_warnings
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+CREATE TRIGGER IF NOT EXISTS runs_locked BEFORE UPDATE ON runs
+WHEN OLD.status = 'archived'
+  OR (OLD.status = 'draft' AND NEW.status = 'archived')
+  OR (OLD.status = 'published' AND NOT (
+        NEW.status = 'archived' AND NEW.archive_reason IS NOT NULL AND length(trim(NEW.archive_reason)) > 0
+        AND NEW.id = OLD.id AND NEW.kind = OLD.kind AND NEW.period = OLD.period AND NEW.version = OLD.version
+        AND NEW.created_at = OLD.created_at AND NEW.published_at IS OLD.published_at AND NEW.published_by IS OLD.published_by
+        AND NEW.settings_json = OLD.settings_json))
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS runs_no_delete BEFORE DELETE ON runs
+WHEN OLD.status <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;

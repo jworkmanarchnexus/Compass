@@ -56,3 +56,7 @@ table.dt select.txt { width: 210px; }
 .side-brand .side-tag { margin: 0; align-self: flex-start; }
 table.dt td.strong, table.dt td.nowrap { white-space: nowrap; }
 table.dt select.txt { width: 250px; }
+/* the shared stylesheet shows the menu overlay whenever the window is narrow; it should only show while the menu is open */
+.side-scrim { display: none; }
+body.side-open .side-scrim { display: block; }
+.run-acts { display: flex; flex-wrap: wrap; gap: var(--s2); }
