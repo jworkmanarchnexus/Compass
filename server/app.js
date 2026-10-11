@@ -5,6 +5,10 @@ const path = require('node:path');
 const { HttpError } = require('./errors');
 const roles = require('../shared/rules/roles');
 const settingsRules = require('../shared/rules/settings');
+const runsDb = require('./runs');
+const schedule = require('../modules/turnaround/logic/schedule');
+const { createLocalSource } = require('./vp-local');
+const { createFileMailer } = require('./mail');
 
 const ROOT = path.resolve(__dirname, '..');
 const STATIC_DIRS = ['shell', 'shared', 'modules'];
@@ -50,7 +54,14 @@ function readJson(req) {
 
 const userOut = u => ({ id: u.id, username: u.username, name: u.display_name, email: u.email, role: u.role, draftName: u.draft_name, employeeCode: u.employee_code, active: !!u.active });
 
-function createServer(db) {
+/* opts (all optional, for tests and for Kent): source = the Vantagepoint pull, mailer = the one automatic email,
+   today = () => 'YYYY-MM-DD', baseUrl = the address put in that email */
+function createServer(db, opts) {
+  const o = opts || {};
+  const source = o.source || createLocalSource();
+  const mailer = o.mailer || createFileMailer();
+  const today = o.today || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+  const baseUrl = o.baseUrl || 'http://localhost:5281';
   /* ---- settings (effective-dated rows, only ever added) ---- */
   const settingRows = () => db.all('SELECT key, value_json, effective_from, set_by FROM settings').map(r => ({ key: r.key, value: JSON.parse(r.value_json), effectiveFrom: r.effective_from, setBy: r.set_by }));
   const currentSettings = () => settingsRules.allAt(settingRows(), db.now());
@@ -58,6 +69,8 @@ function createServer(db) {
   function audit(user, action, object, detail) {
     db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), user.id, action, object || '', JSON.stringify(detail || {}));
   }
+
+  const runLabel = id => { const r = runsDb.getRun(db, id); return `Project Turnaround ${schedule.periodLabel(r.period)} v${r.version}`; };
 
   function currentUser(req) {
     const id = req.headers[USER_HEADER];
@@ -162,13 +175,57 @@ function createServer(db) {
       const limit = Math.min(Number(url.searchParams.get('limit')) || 100, 500);
       const names = Object.fromEntries(db.all('SELECT id, display_name FROM users').map(u => [u.id, u.display_name]));
       return sendJson(res, 200, db.all('SELECT * FROM audit_log ORDER BY id DESC LIMIT ?', limit).map(r => ({
-        id: r.id, at: r.at, by: names[r.user_id] || 'Unknown', action: r.action, object: r.object, detail: JSON.parse(r.detail_json),
+        id: r.id, at: r.at, by: names[r.user_id] || (r.user_id === 'system' ? 'Scheduled job' : 'Unknown'), action: r.action, object: r.object, detail: JSON.parse(r.detail_json),
       })));
     }
 
+    /* ---- report runs ---- */
     if (p === '/api/admin/runs' && method === 'GET') {
-      requireTab(user, 'runs', 'view');
-      return sendJson(res, 200, db.all('SELECT id, kind, period, version, status, created_at, published_at, published_by, archive_reason FROM runs ORDER BY period DESC, version DESC'));
+      requireTab(user, 'runs', 'view'); // the list (status, version, counts) only; run contents need 'edit'
+      return sendJson(res, 200, runsDb.listRuns(db));
+    }
+    if (p === '/api/admin/runs' && method === 'POST') {
+      requireTab(user, 'runs', 'edit');
+      const body = await readJson(req);
+      const latest = schedule.lastClosedPeriod(today());
+      const period = body.period === undefined ? latest : body.period;
+      if (!Number.isInteger(period) || period < 200001 || period % 100 < 1 || period % 100 > 12) throw new HttpError(400, 'That is not a valid month.');
+      if (period > latest) throw new HttpError(400, 'That month has not closed yet.');
+      const out = runsDb.runMonthly(db, {
+        source, settings: currentSettings(), period, mailer, baseUrl,
+        adminEmails: db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email),
+      });
+      if (!out.created) throw new HttpError(409, 'There is already a draft or published run for that month.', { id: out.id });
+      audit(user, 'run.build', runLabel(out.id), { runId: out.id });
+      return sendJson(res, 201, runsDb.runDetail(db, out.id, { withWarnings: true }));
+    }
+    const rm = /^\/api\/admin\/runs\/([^/]+)(?:\/(rebuild|publish|archive))?$/.exec(p);
+    if (rm) {
+      requireTab(user, 'runs', 'edit'); // run contents are the admin's alone; the system admin sees the list only
+      const id = rm[1]; const action = rm[2];
+      if (!action && method === 'GET') return sendJson(res, 200, runsDb.runDetail(db, id, { withWarnings: true }));
+      if (action && method === 'POST') {
+        const body = await readJson(req);
+        if (action === 'rebuild') {
+          runsDb.rebuildDraft(db, id, { source, settings: currentSettings() });
+          audit(user, 'run.rebuild', runLabel(id), { runId: id });
+        } else if (action === 'publish') {
+          runsDb.publish(db, id, user);
+          audit(user, 'run.publish', runLabel(id), { runId: id });
+        } else {
+          const label = runLabel(id);
+          const newId = runsDb.archiveAndRerun(db, id, { reason: body.reason, confirm: body.confirm }, { source, settings: currentSettings() });
+          audit(user, 'run.archive', label, { runId: id, reason: body.reason.trim(), newRunId: newId });
+          return sendJson(res, 200, runsDb.runDetail(db, newId, { withWarnings: true }));
+        }
+        return sendJson(res, 200, runsDb.runDetail(db, id, { withWarnings: true }));
+      }
+    }
+
+    /* what PICs, Finance and others may see: the last published run, never a draft */
+    if (p === '/api/turnaround/current' && method === 'GET') {
+      if (!roles.canView(user.role, 'turnaround', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, runsDb.currentPublished(db) || { run: null, projects: [] });
     }
 
     throw new HttpError(404, 'Not found.');

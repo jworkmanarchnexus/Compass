@@ -167,7 +167,7 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
-      slot.append(runsCard(runs), h('section', { class: 'sec' },
+      slot.append(runsCard(runs, canEdit, rerender, fail), h('section', { class: 'sec' },
         h('div', { class: 'sec-head' }, h('h2', { text: 'If a published run is wrong' })),
         h('div', { class: 'sec-body' }, h('div', { class: 'stack', style: 'padding:12px 0;max-width:84ch' },
           h('p', {}, 'The only way to change a published run is to archive it and build a new version. The system makes you give a reason and type ', h('b', { text: 'RERUN' }), ' first, because PICs and Finance have already seen it. The archived version stays on file, clearly marked, so nobody wonders why a number moved.'),
@@ -326,13 +326,129 @@ function rolesCard() {
     h('div', { class: 'sec-body' }, ...rows.map(([a, b]) => row(a, null, h('span', { class: 'muted', text: b })))));
 }
 
-function runsCard(runs) {
+/* ---- report runs ---- */
+const STATUS_CHIP = { draft: ['warn', 'Draft'], published: ['ok', 'Published, locked'], archived: ['out', 'Archived'] };
+const statusChip = s => h('span', { class: 'chip ' + STATUS_CHIP[s][0], text: STATUS_CHIP[s][1] });
+const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'BD report' };
+const fmtCents = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US'); // whole dollars; the minus sign carries the meaning, not only the colour
+const fmtPct = (profit, billed) => billed ? (profit < 0 ? '-' : '') + Math.abs(100 * profit / billed).toFixed(1) + '%' : '-';
+
+/* the last 12 closed months, newest first, for the "Build a run" picker */
+function closedPeriods() {
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  let p = window.CompassTurnaround.lastClosedPeriod(today);
+  const out = [];
+  for (let i = 0; i < 12; i++) { out.push(p); p = p % 100 === 1 ? (Math.floor(p / 100) - 1) * 100 + 12 : p - 1; }
+  return out;
+}
+
+function runsCard(runs, canEdit, onBuilt, onError) {
+  const live = new Set(runs.filter(r => r.status !== 'archived').map(r => r.period));
+  const periods = closedPeriods();
+  const sel = h('select', { class: 'txt', style: 'width:200px', 'aria-label': 'Month to build' },
+    ...periods.map(p => h('option', { value: String(p), text: window.CompassTurnaround.periodLabel(p) + (live.has(p) ? ' (already built)' : ''), disabled: live.has(p) })));
+  const first = periods.find(p => !live.has(p));
+  if (first) sel.value = String(first);
+  const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', disabled: !first, onclick: async () => {
+    try { const r = await Admin.buildRun(Number(sel.value)); location.hash = '#/admin/runs/' + r.run.id; } catch (e) { onError(e); }
+  } });
   return h('section', { class: 'sec' },
     h('div', { class: 'sec-head' }, h('h2', { text: 'Report runs' }), h('p', { text: 'Every run the system has built. A published run is locked.' })),
+    canEdit ? h('div', { class: 'set-row', style: 'padding:12px 20px;align-items:center' },
+      h('div', { class: 'what' }, h('div', { class: 'lab', text: 'Build a run now' }), h('div', { class: 'help', text: 'The scheduled job does this on the first business day. Use this to build one by hand. It builds a draft only; nothing is visible to PICs.' })),
+      h('div', { class: 'ctl' }, sel, build)) : null,
     runs.length ? h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
-      h('thead', {}, h('tr', {}, ...['Report', 'Period', 'Version', 'Status', 'Created', 'Published'].map(x => h('th', { text: x })))),
-      h('tbody', {}, ...runs.map(r => h('tr', {}, h('td', { class: 'strong', text: r.kind }), h('td', { text: String(r.period) }), h('td', { text: 'v' + r.version }), h('td', { text: r.status }), h('td', { text: fmtTime(r.created_at) }), h('td', { text: r.published_at ? fmtTime(r.published_at) : '-' }))))))
-      : h('div', { class: 'empty-row', text: 'No runs yet. The first monthly run arrives in phase 2.' }));
+      h('thead', {}, h('tr', {}, ...['Report', 'Period', 'Version', 'Status', 'Projects', 'Created', 'Published', ''].map(x => h('th', { text: x })))),
+      h('tbody', {}, ...runs.map(r => h('tr', {},
+        h('td', { class: 'strong', text: KIND_LABEL[r.kind] || r.kind }), h('td', { text: r.label }), h('td', { text: 'v' + r.version }), h('td', {}, statusChip(r.status)),
+        h('td', { class: 'r', text: String(r.projectCount) }), h('td', { class: 'muted', text: fmtTime(r.createdAt) }),
+        h('td', { class: 'muted', text: r.publishedAt ? `${fmtTime(r.publishedAt)}${r.publishedByName ? ' by ' + r.publishedByName.split(' ')[0] : ''}` : '-' }),
+        h('td', {}, r.status === 'archived' ? h('span', { class: 'muted', text: 'Reason: ' + r.archiveReason }) : canEdit ? h('a', { href: '#/admin/runs/' + r.id, text: r.status === 'draft' ? 'Review' : 'View' }) : null))))))
+      : h('div', { class: 'empty-row', text: 'No runs yet.' }));
+}
+
+/* one run: review, publish, rebuild, archive and rerun. The plain table here is the review; phase 3 gives it the mockup's look. */
+async function pageRun(id) {
+  const me = Session.me();
+  if (me.adminTabs.runs !== 'edit') return pageNoAccess();
+  let data;
+  try { data = await Admin.run(id); } catch (e) {
+    const body = frame('admin', [crumb('Compass', '#/'), sep(), crumb('Admin', '#/admin/runs'), sep(), crumb('Report runs')], 'Report run');
+    body.append(banner('circle-alert', e.status === 404 ? 'That run does not exist.' : e.message, 'err'));
+    return;
+  }
+  const { run, projects, warnings, summary } = data;
+  const body = frame('admin', [crumb('Compass', '#/'), sep(), crumb('Admin', '#/admin/runs'), sep(), crumb('Report runs', '#/admin/runs'), sep(), crumb(`${run.label}, version ${run.version}`)],
+    KIND_LABEL[run.kind], `${run.label}, version ${run.version}`);
+  const slot = h('div', { class: 'stack' });
+  const reload = () => { body.textContent = ''; return pageRun(id); };
+  const act = async (fn) => { try { const r = await fn(); if (r && r.run && r.run.id !== id) location.hash = '#/admin/runs/' + r.run.id; else { slot.textContent = ''; await pageRun(id); } } catch (e) { slot.prepend(banner('circle-alert', e.message, 'err')); } };
+
+  const note = run.status === 'draft'
+    ? `Draft. PICs still see the previous published run until you publish. A published run is locked.`
+    : run.status === 'published'
+      ? `Published ${fmtTime(run.publishedAt)}. This run is locked: it can never be edited. If a number is wrong, archive it and build a new version.`
+      : `Archived ${fmtTime(run.archivedAt)}. Reason: ${run.archiveReason}`;
+  const buttons = [];
+  if (run.status === 'draft') {
+    buttons.push(h('button', { class: 'btn', type: 'button', text: 'Rebuild draft', onclick: () => act(() => Admin.rebuildRun(id)) }));
+    buttons.push(h('button', { class: 'btn primary', type: 'button', text: 'Publish for viewing', onclick: () => act(() => Admin.publishRun(id)) }));
+  } else if (run.status === 'published') {
+    buttons.push(h('button', { class: 'btn danger', type: 'button', text: 'Archive and rerun…', onclick: () => { slot.prepend(archivePanel(run, act)); T.hydrateIcons(slot); } }));
+  }
+  body.append(h('div', { class: 'banner' + (run.status === 'draft' ? ' warn' : '') }, h('span', { class: 'bmsg' }, icon(run.status === 'draft' ? 'info' : run.status === 'published' ? 'lock' : 'archive'), h('span', { text: note }))),
+    buttons.length ? h('div', { class: 'run-acts' }, ...buttons) : null, slot);
+
+  slot.append(h('dl', { class: 'facts' },
+    h('dt', { text: 'Projects below break-even' }), h('dd', { text: String(summary.projectCount) }),
+    h('dt', { text: 'Total negative YTD profit' }), h('dd', { text: `${fmtCents(summary.negativeYtd)} (${fmtPct(summary.negativeYtd, summary.billedYtd)} of ${fmtCents(summary.billedYtd)} billed)` }),
+    h('dt', { text: 'Built with settings from' }), h('dd', { text: fmtTime(run.createdAt) })));
+
+  if (warnings.length) {
+    const label = { cant_evaluate: 'Could not be evaluated', no_pic: 'No PIC' };
+    slot.append(h('section', { class: 'sec' },
+      h('div', { class: 'sec-head' }, h('h2', { text: `Warnings (${warnings.length})` }), h('p', { text: 'Left off the run, with the reason. Fix them in Vantagepoint; the next run picks them up.' })),
+      h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
+        h('thead', {}, h('tr', {}, ...['Project', 'Problem', 'Detail'].map(x => h('th', { text: x })), h('th', { class: 'r', text: 'YTD billed' }))),
+        h('tbody', {}, ...warnings.map(w => h('tr', {}, h('td', { class: 'strong', text: `${w.wbs1} ${w.name}` }), h('td', { text: label[w.kind] || w.kind }), h('td', { class: 'muted', text: w.detail }), h('td', { class: 'r', text: w.ytdBilled === null ? '-' : fmtCents(w.ytdBilled) }))))))));
+  }
+
+  const groups = new Map();
+  for (const p of projects) { if (!groups.has(p.pic.code)) groups.set(p.pic.code, { pic: p.pic, rows: [] }); groups.get(p.pic.code).rows.push(p); }
+  for (const g of groups.values()) {
+    const total = g.rows.reduce((s, p) => s + p.profit.ytd, 0), billed = g.rows.reduce((s, p) => s + p.billed.ytd, 0);
+    slot.append(h('section', { class: 'sec' },
+      h('div', { class: 'sec-head' }, h('h2', { text: g.pic.name }), h('p', { text: `${g.rows.length} project${g.rows.length === 1 ? '' : 's'} · ${fmtCents(total)} YTD profit · ${fmtPct(total, billed)} of ${fmtCents(billed)} billed` })),
+      h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: 'min-width:700px' },
+        h('thead', {}, h('tr', {}, h('th', { text: 'Project' }), h('th', { text: 'PM' }), h('th', { class: 'r', text: 'Billed YTD' }), h('th', { class: 'r', text: 'Profit YTD' }), h('th', { class: 'r', text: '%' }), h('th', { text: 'First on a run' }))),
+        h('tbody', {}, ...g.rows.map(p => h('tr', {},
+          h('td', {}, h('span', { class: 'strong', text: p.name }), h('div', { class: 'muted', text: p.wbs1 })), h('td', { text: p.pm.name }),
+          h('td', { class: 'r', text: fmtCents(p.billed.ytd) }), h('td', { class: 'r strong', text: fmtCents(p.profit.ytd) }), h('td', { class: 'r', text: fmtPct(p.profit.ytd, p.billed.ytd) }),
+          h('td', { class: 'muted', text: window.CompassTurnaround.periodLabel(p.firstSeenPeriod) }))))))));
+  }
+  if (!projects.length) slot.append(h('div', { class: 'empty-note', text: 'No projects are below break-even under the current settings.' }));
+  T.hydrateIcons(body);
+  void reload;
+}
+
+/* typing RERUN is deliberate friction: PICs and Finance have already seen a published run */
+function archivePanel(run, act) {
+  const reason = h('textarea', { class: 'txt', rows: '2', style: 'height:auto;padding:8px 10px', 'aria-label': 'Reason for archiving', placeholder: 'For example: the billing cutoff was set to the wrong date' });
+  const word = h('input', { class: 'txt', type: 'text', style: 'width:120px', 'aria-label': 'Type RERUN to confirm', placeholder: 'RERUN', autocomplete: 'off' });
+  const go = h('button', { class: 'btn danger', type: 'button', text: 'Archive and build a new draft', disabled: true });
+  const ready = () => { go.disabled = !(reason.value.trim() && word.value.trim() === 'RERUN'); };
+  reason.addEventListener('input', ready); word.addEventListener('input', ready);
+  const panel = h('section', { class: 'sec', style: 'border-color:var(--crit)' },
+    h('div', { class: 'sec-head' }, h('h2', { text: 'Archive and rerun' }),
+      h('p', { text: 'The archived version stays on file, clearly marked. PICs go on seeing the last published run until you publish the new one. Plan logs are not touched.' })),
+    h('div', { class: 'sec-body' },
+      row('Reason', 'Required. It stays with the archived run.', reason),
+      row('Type RERUN to confirm', 'PICs and Finance have already seen this run.', word)),
+    h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: `${run.label}, version ${run.version} will be archived.` }),
+      h('div', { class: 'acts' }, h('button', { class: 'btn quiet', type: 'button', text: 'Cancel', onclick: () => panel.remove() }), go)));
+  go.addEventListener('click', () => act(() => Admin.archiveRun(run.id, reason.value, word.value)));
+  return panel;
 }
 
 function auditText(e) {
@@ -342,6 +458,8 @@ function auditText(e) {
       .map(k => `${{ role: 'role', active: 'status', draftName: 'name in drafts' }[k] || k}: ${k === 'active' ? (e.detail.from[k] ? 'active' : 'inactive') : showValue(e.detail.from[k])} to ${k === 'active' ? (e.detail.to[k] ? 'active' : 'inactive') : showValue(e.detail.to[k])}`);
     return [`Changed person: ${e.object}`, parts.join('; ')];
   }
+  const runVerb = { 'run.build': 'Built', 'run.rebuild': 'Rebuilt the draft of', 'run.publish': 'Published', 'run.archive': 'Archived' }[e.action];
+  if (runVerb) return [`${runVerb}: ${e.object}`, e.action === 'run.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   return [e.action, e.object];
 }
 function auditCard(entries) {
@@ -359,6 +477,7 @@ function route() {
   const hash = location.hash || '#/';
   let m;
   if (/^#\/?$/.test(hash)) return pageHome();
+  if ((m = /^#\/admin\/runs\/([0-9a-f-]+)$/.exec(hash))) return me.areas.admin ? pageRun(m[1]) : pageNoAccess();
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);
   if (n) return me.areas[n.area] ? pagePlaceholder(n) : pageNoAccess();

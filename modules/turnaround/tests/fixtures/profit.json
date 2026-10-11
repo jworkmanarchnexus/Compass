@@ -1,0 +1,62 @@
+{
+  "_note": "All money is whole cents. Hand-worked from the SQL's formula: Billed - Labor*(1+overhead%) - Expenses. Overhead 150% means labor x 2.5.",
+  "cases": [
+    {
+      "name": "three windows, a later period is ignored, prior-year rows count only toward job-to-date",
+      "runPeriod": 202608,
+      "projects": [{ "wbs1": "A", "name": "Alpha", "principal": "E1", "projMgr": "E9", "status": "A" }],
+      "overhead": [{ "wbs1": "A", "min": 150, "max": 150 }],
+      "ledger": [
+        { "wbs1": "A", "period": 202512, "billed": 1000000, "labor": 400000, "expenses": 50000 },
+        { "wbs1": "A", "period": 202601, "billed": 2000000, "labor": 1000000, "expenses": 100000 },
+        { "wbs1": "A", "period": 202607, "billed": 1000000, "labor": 500000, "expenses": 50000 },
+        { "wbs1": "A", "period": 202608, "billed": 500000, "labor": 300000, "expenses": 20000 },
+        { "wbs1": "A", "period": 202609, "billed": 99999999, "labor": 99999999, "expenses": 99999999 }
+      ],
+      "expect": [{ "wbs1": "A", "evaluable": true, "billed": { "cur": 500000, "ytd": 3500000, "jtd": 4500000 }, "profit": { "cur": -270000, "ytd": -1170000, "jtd": -1220000 }, "pctYtd1dp": -33.4 }]
+    },
+    {
+      "name": "a run in January: December belongs to last year, so YTD is January alone",
+      "runPeriod": 202601,
+      "projects": [{ "wbs1": "A", "name": "Alpha", "principal": "E1", "projMgr": "E9", "status": "A" }],
+      "overhead": [{ "wbs1": "A", "min": 150, "max": 150 }],
+      "ledger": [
+        { "wbs1": "A", "period": 202512, "billed": 1000000, "labor": 400000, "expenses": 50000 },
+        { "wbs1": "A", "period": 202601, "billed": 2000000, "labor": 1000000, "expenses": 100000 }
+      ],
+      "expect": [{ "wbs1": "A", "evaluable": true, "billed": { "cur": 2000000, "ytd": 2000000, "jtd": 3000000 }, "profit": { "cur": -600000, "ytd": -600000, "jtd": -650000 }, "pctYtd1dp": -30.0 }]
+    },
+    {
+      "name": "a fractional overhead rate rounds once, to the cent (333 x 2.875 = 957.375)",
+      "runPeriod": 202608,
+      "projects": [{ "wbs1": "B", "name": "Bravo", "principal": "E1", "projMgr": "", "status": "A" }],
+      "overhead": [{ "wbs1": "B", "min": 187.5, "max": 187.5 }],
+      "ledger": [{ "wbs1": "B", "period": 202608, "billed": 100000, "labor": 333, "expenses": 0 }],
+      "expect": [{ "wbs1": "B", "evaluable": true, "billed": { "cur": 100000, "ytd": 100000, "jtd": 100000 }, "profit": { "cur": 99043, "ytd": 99043, "jtd": 99043 }, "pctYtd1dp": 99.0 }]
+    },
+    {
+      "name": "two different overhead rates on one project: not evaluated, no profit invented",
+      "runPeriod": 202608,
+      "projects": [{ "wbs1": "C", "name": "Charlie", "principal": "E1", "projMgr": "", "status": "A" }],
+      "overhead": [{ "wbs1": "C", "min": 150, "max": 200 }],
+      "ledger": [{ "wbs1": "C", "period": 202608, "billed": 100000, "labor": 50000, "expenses": 0 }],
+      "expect": [{ "wbs1": "C", "evaluable": false, "reason": "mixed-overhead-rates", "billed": { "cur": 100000, "ytd": 100000, "jtd": 100000 }, "profit": { "cur": null, "ytd": null, "jtd": null }, "pctYtd1dp": null }]
+    },
+    {
+      "name": "no overhead plan at all: not evaluated, and the current company default is NOT substituted",
+      "runPeriod": 202608,
+      "projects": [{ "wbs1": "D", "name": "Delta", "principal": "", "projMgr": "", "status": "A" }],
+      "overhead": [],
+      "ledger": [{ "wbs1": "D", "period": 202608, "billed": 100000, "labor": 50000, "expenses": 0 }],
+      "expect": [{ "wbs1": "D", "evaluable": false, "reason": "no-overhead-plan", "billed": { "cur": 100000, "ytd": 100000, "jtd": 100000 }, "profit": { "cur": null, "ytd": null, "jtd": null }, "pctYtd1dp": null }]
+    },
+    {
+      "name": "a project with nothing posted has zero everywhere and no percentage",
+      "runPeriod": 202608,
+      "projects": [{ "wbs1": "E", "name": "Echo", "principal": "E2", "projMgr": "", "status": "A" }],
+      "overhead": [{ "wbs1": "E", "min": 150, "max": 150 }],
+      "ledger": [],
+      "expect": [{ "wbs1": "E", "evaluable": true, "billed": { "cur": 0, "ytd": 0, "jtd": 0 }, "profit": { "cur": 0, "ytd": 0, "jtd": 0 }, "pctYtd1dp": null }]
+    }
+  ]
+}
