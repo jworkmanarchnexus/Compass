@@ -70,7 +70,7 @@ body.side-open .side-scrim { display: block; }
 .strong { font-weight: 700; }
 .warn-text { color: var(--warn); font-size: 13px; margin-top: 2px; }
 
-.ov-head { display: flex; gap: var(--s3); align-items: center; justify-content: flex-end; }
+.ov-head { display: flex; gap: var(--s3); align-items: center; justify-content: flex-start; }
 .ov-head:empty { display: none; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); overflow: hidden; }
 .kpi { padding: var(--s4) var(--s5); border-right: 1px solid var(--line); min-width: 0; }
