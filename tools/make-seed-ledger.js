@@ -67,10 +67,12 @@ for (const [wbs1, profit, lossPct, oh] of TARGETS) {
     b = split(cents(billed), w, 1); l = split(laborC, w, 100); e = split(E, w, 1);
   }
   months2026.forEach((p, i) => rows.push([wbs1, p, b[i], l[i], e[i]]));
-  // 2025 filler: about a year of similar activity, a bit better than 2026
+  // 2025 filler: a year of similar activity. Each project keeps one margin all year, between a 25% loss and an 8% profit,
+  // so last year's grey bars on the charts have something to show (most projects lost money in 2025 too)
+  const margin = -0.25 + 0.33 * rnd();
   months2025.forEach(p => {
     const bb = Math.round(cents(billed) / 9 * (0.7 + 0.6 * rnd()));
-    const ll = Math.round(bb * 0.30 / 100) * 100;
+    const ll = Math.round(bb * ((1 - 0.08 - margin) / (1 + oh / 100)) / 100) * 100;
     rows.push([wbs1, p, bb, ll, Math.round(bb * 0.08)]);
   });
   overhead.push([wbs1, oh, oh]);

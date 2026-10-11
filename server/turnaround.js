@@ -196,7 +196,8 @@ function accountableItems(db, { today, settings }) {
     const all = entries.get(r.wbs1);
     const st = plan.planStatus({ today, firstAppeared: appeared.get(r.wbs1) || today, entries: all, settings });
     const nextText = st.nextCommitment ? (all.find(e => e.id === st.nextCommitment.id) || {}).body || '' : '';
-    items.push({ wbs1: r.wbs1, name: r.name, picUserId: user.id, status: st.status, daysOverdue: st.daysOverdue, dueDate: st.dueDate, ytdProfit: r.profit_ytd, nextCommitmentText: nextText });
+    items.push({ wbs1: r.wbs1, name: r.name, picUserId: user.id, status: st.status, daysOverdue: st.daysOverdue, dueDate: st.dueDate, ytdProfit: r.profit_ytd, nextCommitmentText: nextText,
+      commitmentDue: st.nextCommitment ? st.nextCommitment.dueDate : null, commitmentPastDue: !!st.nextCommitment && st.nextCommitment.dueDate < today });
   }
   const lastEntryByPic = {};
   for (const e of db.all("SELECT author_id, MAX(entry_date) AS d FROM plan_entries WHERE author_id IS NOT NULL AND kind IN ('explanation','commitment','update','correction','done','date_revised') GROUP BY author_id")) lastEntryByPic[e.author_id] = e.d;

@@ -850,6 +850,51 @@
     "resolved": 0
    },
    "expect": "no_record"
+  },
+  {
+   "name": "one missed commitment is not a pattern: kept is left out until there are 3",
+   "settings": {
+    "standing.minSample": 3
+   },
+   "onTime": {
+    "onTime": 9,
+    "total": 10
+   },
+   "kept": {
+    "kept": 0,
+    "resolved": 1
+   },
+   "expect": "good"
+  },
+  {
+   "name": "too little behind either measure: no standing yet",
+   "settings": {
+    "standing.minSample": 3
+   },
+   "onTime": {
+    "onTime": 1,
+    "total": 2
+   },
+   "kept": {
+    "kept": 0,
+    "resolved": 1
+   },
+   "expect": "no_record"
+  },
+  {
+   "name": "three commitments is enough to count",
+   "settings": {
+    "standing.minSample": 3
+   },
+   "onTime": {
+    "onTime": 9,
+    "total": 10
+   },
+   "kept": {
+    "kept": 1,
+    "resolved": 3
+   },
+   "expect": "escalated"
   }
  ],
  "canWrite": [

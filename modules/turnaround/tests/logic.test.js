@@ -82,7 +82,7 @@ test('on time and kept', () => {
   for (const c of planFx.keptStats) assert.deepStrictEqual(plan.keptStats(c.states), c.expect, c.name);
 });
 test('standing labels', () => {
-  for (const c of planFx.standing) assert.strictEqual(plan.standing({ onTime: c.onTime, kept: c.kept }, planFx.settings).label, c.expect, c.name);
+  for (const c of planFx.standing) assert.strictEqual(plan.standing({ onTime: c.onTime, kept: c.kept }, Object.assign({}, planFx.settings, c.settings)).label, c.expect, c.name);
 });
 test('who may write what in the plan log', () => {
   for (const c of planFx.canWrite) assert.strictEqual(plan.canWrite(c.role, c.kind, c.isPic), c.expect, `${c.role} ${c.kind} pic=${c.isPic}`);

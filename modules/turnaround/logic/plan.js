@@ -98,10 +98,12 @@ function keptStats(commitments) {
 
 /* ---- a PIC's standing ----
    Good standing needs BOTH % on time and % kept at or above the good cutoffs. Escalated is below EITHER bad cutoff.
-   Anything between is needs_attention. A measure with nothing to measure yet is left out; with neither, there is no standing. */
+   Anything between is needs_attention. A measure without enough behind it yet (standing.minSample) is left out; with neither, there is no standing. */
 function standing({ onTime, kept }, s) {
-  const pctOn = onTime.total ? 100 * onTime.onTime / onTime.total : null;
-  const pctKept = kept.resolved ? 100 * kept.kept / kept.resolved : null;
+  // a measure counts only once there are enough items behind it: one missed commitment is not a pattern
+  const min = s['standing.minSample'] || 1;
+  const pctOn = onTime.total >= min ? 100 * onTime.onTime / onTime.total : null;
+  const pctKept = kept.resolved >= min ? 100 * kept.kept / kept.resolved : null;
   if (pctOn === null && pctKept === null) return { label: 'no_record', pctOnTime: null, pctKept: null };
   const below = (v, cut) => v !== null && v < cut;
   const atLeast = (v, cut) => v === null || v >= cut;

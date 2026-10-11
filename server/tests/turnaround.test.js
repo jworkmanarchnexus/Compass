@@ -190,9 +190,10 @@ test('the daily job records a commitment as missed once its date is long past, a
 
 test('the daily job prepares check-in drafts, never emails a PIC, and emails the admin one count', () => withDemo(async ({ api, mailer }) => {
   const josh = api('j.workman');
-  assert.deepStrictEqual((await josh.get('/api/admin/checkins')).body.waiting, []);
+  // the demo seed already ran the daily job once on the demo day, so the queue starts with these two
+  assert.strictEqual((await josh.get('/api/admin/checkins')).body.waiting.length, 2);
   const out = (await josh.post('/api/admin/daily')).body;
-  assert.deepStrictEqual([out.created, out.emailed], [2, true]);
+  assert.deepStrictEqual([out.created, out.emailed], [0, true], 'nothing new, but the admin has not yet been told today');
 
   const q = (await josh.get('/api/admin/checkins')).body;
   assert.deepStrictEqual(q.waiting.map(d => [d.pic.name, d.situation, d.step, d.tone, d.items.map(i => i.wbs1)]).sort(), [['Dana Whitfield', 'overdue', 1, 'casual', ['2025-0173']], ['Tom Lindqvist', 'overdue', 1, 'casual', ['2024-0207']]]);
@@ -222,7 +223,9 @@ test('the daily job prepares check-in drafts, never emails a PIC, and emails the
 
 test('no email on a weekend', () => withDemo(async ({ api, mailer }) => {
   const out = (await api('j.workman').post('/api/admin/daily')).body;
-  assert.deepStrictEqual([out.created, out.emailed], [2, false]);
+  // by Oct 10 Airfield's Sep 26 commitment is 14 days past and is recorded as missed; the old draft is withdrawn and a new one,
+  // about the next thing owed, takes its place. It is Saturday, so no email.
+  assert.deepStrictEqual([out.missed, out.withdrawn, out.created, out.emailed], [1, 1, 1, false]);
   assert.strictEqual(mailer.sent.length, 0);
 }, { today: () => '2026-10-10' })); // a Saturday
 
@@ -265,16 +268,15 @@ test('when the PIC deals with it, the waiting draft is withdrawn rather than sen
 
 test('a PIC who just wrote something is left alone, and a project with no plan is reminded once its first-plan date passes', () => withDemo(async ({ api }) => {
   const josh = api('j.workman');
-  await api('d.whitfield').post('/api/projects/2025-0173/plan/entries', { kind: 'update', body: 'Supplier call is Thursday.' });
-  await josh.post('/api/admin/daily');
-  assert.deepStrictEqual((await josh.get('/api/admin/checkins')).body.waiting.map(d => d.pic.name), ['Tom Lindqvist'], 'Dana wrote today');
-  // the first-plan window is a setting: shorten it and Tooele and Draper are now overdue for a plan
+  // Tooele (Marcus) and Draper (Ben) have no plan. The first-plan window is a setting: shorten it and both are overdue for one.
   await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 1 } });
+  // Marcus writes on another project today, so he is left alone for now; Ben is not
+  await api('m.oyelaran').post('/api/projects/2024-0356/plan/entries', { kind: 'update', body: 'Met the owner this morning.' });
   const out = (await josh.post('/api/admin/daily')).body;
-  assert.strictEqual(out.created, 2);
-  const waiting = (await josh.get('/api/admin/checkins')).body.waiting;
-  assert.deepStrictEqual(waiting.filter(d => d.situation === 'no_plan').map(d => d.pic.name).sort(), ['Ben Okafor', 'Marcus Oyelaran']);
-  assert.match(waiting.find(d => d.pic.name === 'Marcus Oyelaran').body, /landed on the Project Turnaround list at -\$4,310 YTD/);
+  assert.strictEqual(out.created, 1);
+  const waiting = (await josh.get('/api/admin/checkins')).body.waiting.filter(d => d.situation === 'no_plan');
+  assert.deepStrictEqual(waiting.map(d => d.pic.name), ['Ben Okafor']);
+  assert.match(waiting[0].body, /Draper Community Center is still without a plan|Draper Community Center landed on the Project Turnaround list at -\$12,780 YTD/);
 }));
 
 test('who sees each PIC\'s on-time and kept figures is an Admin switch; everyone always sees their own', () => withDemo(async ({ api }) => {

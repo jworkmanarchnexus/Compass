@@ -57,3 +57,7 @@ modules/<id>/  logic/ (pure rules, no DOM, no network, tested, fixtures as JSON)
 On Windows PowerShell type `npm.cmd` instead of `npm`.
 - `npm start`: http://localhost:5281
 - `npm test`: all tests
+- `npm run seed`: reset the local database to the made-up data (two published runs, plan logs)
+- `npm run run-month`: build the last closed month's draft (the monthly job)
+- `npm run daily`: record Missed, prepare check-in drafts, email the admin (the daily job)
+- `COMPASS_TODAY=2026-10-07`: pin "today" for the demo (PowerShell: `$env:COMPASS_TODAY='2026-10-07'` before `npm.cmd start`)

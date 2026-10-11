@@ -48,7 +48,7 @@ function planDrafts({ today, items, existing, lastEntryByPic, settings }) {
   const add = (step, c) => {
     const k = `${c.picUserId}|${c.situation}|${step}`;
     if (!groups.has(k)) groups.set(k, { picUserId: c.picUserId, situation: c.situation, step, tone: step === 1 ? 'casual' : 'direct', items: [] });
-    groups.get(k).items.push({ wbs1: c.wbs1, name: c.name, dueDate: c.dueDate, daysOverdue: c.daysOverdue, ytdProfit: c.ytdProfit, nextCommitmentText: c.nextCommitmentText || '' });
+    groups.get(k).items.push({ wbs1: c.wbs1, name: c.name, dueDate: c.dueDate, daysOverdue: c.daysOverdue, ytdProfit: c.ytdProfit, nextCommitmentText: c.nextCommitmentText || '', commitmentDue: c.commitmentDue || null, commitmentPastDue: !!c.commitmentPastDue });
   };
   for (const c of candidates) {
     if (dismissed.has(c.key) || quiet(c.picUserId)) continue; // a dismissed draft never comes back for that item
@@ -65,11 +65,14 @@ function planDrafts({ today, items, existing, lastEntryByPic, settings }) {
   return { create: [...groups.values()], withdraw, escalate };
 }
 
+/* what is actually late: the commitment, if its own date has passed; otherwise the next update */
+const whatIsLate = i => (i.commitmentPastDue && i.nextCommitmentText ? `"${i.nextCommitmentText}" was due ${niceDate(i.commitmentDue)}` : `The next update was due ${niceDate(i.dueDate)}`);
+
 /* the words of a draft. Uses the PIC's preferred name. Tone: 'casual' (reminder 1) or 'direct' (reminder 2). */
 function draftText({ tone, situation, picName, items }) {
   const many = items.length > 1;
   const line = i => situation === 'overdue'
-    ? `- ${i.name}: ${i.nextCommitmentText ? `"${i.nextCommitmentText}" ` : ''}was due ${niceDate(i.dueDate)}`
+    ? `- ${i.name}: ${whatIsLate(i)}`
     : `- ${i.name}: ${money(i.ytdProfit)} YTD, nothing in the portal yet`;
   const list = items.map(line).join('\n');
   const one = items[0];
@@ -79,10 +82,10 @@ function draftText({ tone, situation, picName, items }) {
     body = tone === 'casual'
       ? (many
         ? `Hey ${picName}, quick check on a few projects. Nothing new has gone into the portal since these came due:\n\n${list}\n\nAdd a line on each when you get a minute and I'll leave it alone after that.`
-        : `Hey ${picName}, quick check on ${one.name}. ${one.nextCommitmentText ? `"${one.nextCommitmentText}"` : 'The next step'} was due ${niceDate(one.dueDate)} and I don't see an update in the portal. Is it done, or did something get in the way? Add a line when you get a minute and I'll leave it alone after that.`)
+        : `Hey ${picName}, quick check on ${one.name}. ${whatIsLate(one)} and I don't see ${one.commitmentPastDue && one.nextCommitmentText ? 'an update' : 'it'} in the portal. Is it done, or did something get in the way? Add a line when you get a minute and I'll leave it alone after that.`)
       : (many
         ? `${picName}, these are still without an update:\n\n${list}\n\nPlease update the portal today. If something is blocking you, tell me and I'll help you move it.`
-        : `${picName}, ${one.name} is still without an update. ${one.nextCommitmentText ? `"${one.nextCommitmentText}"` : 'The next step'} was due ${niceDate(one.dueDate)}. Please update the portal today. If something is blocking you, tell me and I'll help you move it.`);
+        : `${picName}, ${one.name} is still without an update. ${whatIsLate(one)}. Please update the portal today. If something is blocking you, tell me and I'll help you move it.`);
   } else {
     subject = many ? 'What is behind these projects?' : `${one.name}, what's driving it`;
     body = tone === 'casual'

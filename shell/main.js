@@ -2,7 +2,12 @@
    It reaches the server only through shared/platform. The server enforces who may do what; this file only hides controls. */
 import * as platform from '/shared/platform/index.js';
 
-const { configure, Session, Admin, ApiError } = platform;
+import { renderOverview } from '/modules/turnaround/ui/overview.js';
+import { renderPlan } from '/modules/turnaround/ui/plan.js';
+import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
+import { remindersCards, patternsCard } from '/modules/turnaround/ui/admin.js';
+
+const { configure, Session, Admin, Turnaround, Checkins, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -16,8 +21,8 @@ const displayChanged = () => window.dispatchEvent(new Event('compass:display'));
 /* ---------- side bar. `phase` says when the page gets real content. ---------- */
 const NAV = [
   { id: 'home', href: '#/', icon: 'house', label: 'Home' },
-  { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', phase: 3, blurb: 'Projects below break-even this year, and what is being done about each one.',
-    sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', phase: 3, blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
+  { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
+    sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'BD report', phase: 5, blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', phase: 5, blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
@@ -45,8 +50,9 @@ async function showSignIn(message) {
 }
 
 /* ---------- frame ---------- */
-function navItem(n, on, sub) {
-  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null }, icon(n.icon, sub ? 16 : 18), h('span', { text: n.label }));
+function navItem(n, on, sub, badge) {
+  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null }, icon(n.icon, sub ? 16 : 18), h('span', { text: n.label }),
+    badge === undefined ? null : h('span', { class: 'cnt warn nav-cnt', 'data-badge': n.id, hidden: badge === 0, text: String(badge) }));
 }
 
 /* routeId: which nav item is highlighted. Returns the page body to fill. */
@@ -63,7 +69,7 @@ function frame(routeId, crumbs, titleText, sub) {
   for (const n of NAV) {
     if (n.area && !me.areas[n.area]) continue;
     nav.push(navItem(n, routeId === n.id));
-    for (const s of n.sub || []) if (me.areas[s.area]) nav.push(navItem(s, routeId === s.id, true));
+    for (const s of n.sub || []) if (me.areas[s.area]) nav.push(navItem(s, routeId === s.id, true, s.id === 'checkins' && me.badges ? me.badges.checkins : undefined));
   }
   const side = h('aside', { class: 'side', 'aria-label': 'Compass navigation' },
     h('div', { class: 'side-brand' },
@@ -83,7 +89,7 @@ function frame(routeId, crumbs, titleText, sub) {
   const page = h('div', { class: 'page' },
     h('div', { class: 'phead' },
       h('div', { class: 'crumbs' }, ...crumbs),
-      h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: titleText }), sub ? h('span', { class: 'sub', text: sub }) : null)),
+      titleText ? h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: titleText }), sub ? h('span', { class: 'sub', text: sub }) : null) : null),
     body);
   mount(h('div', { class: 'shell' }, side, h('div', { class: 'mainwrap' }, mtop, page)), scrim);
   T.applyTheme(themeBtn); T.applyCollapse(collapseBtn); T.applyDensity(densityBtn);
@@ -114,6 +120,30 @@ function pagePlaceholder(n) {
   body.append(banner('info', `${n.label} arrives in phase ${n.phase}. ${n.blurb}`));
 }
 
+async function pageTurnaround() {
+  const me = Session.me();
+  const body = frame('turnaround', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround')], 'Project Turnaround', 'Projects below break-even this year, and what is being done about each one.');
+  const data = await Turnaround.current();
+  if (!data.run) {
+    body.append(h('div', { class: 'empty-note', text: me.role === 'admin' ? 'No run has been published yet. Build one in Admin > Report runs.' : 'Nothing has been published yet. The first monthly run will show up here.' }));
+    return;
+  }
+  body.append(h('p', { class: 'muted', style: 'margin:0', text: `${data.run.label} run, published ${fmtTime(data.run.publishedAt)}. Plan status is as of today.` }));
+  renderOverview(ctx, body, data);
+}
+
+async function pageCheckins() {
+  const body = frame('checkins', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround', '#/turnaround'), sep(), crumb('Check-in drafts')], 'Check-in drafts', 'Short drafts for PICs who are overdue or have no plan. Nothing sends itself. You read each one, change it if you like, and send it from your own mailbox.');
+  await renderCheckins(ctx, body);
+}
+
+async function pagePlan(wbs1, cycle) {
+  const body = frame('turnaround', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround', '#/turnaround'), sep(), crumb(wbs1)], null);
+  try { await renderPlan(ctx, body, wbs1, cycle); } catch (e) {
+    body.append(e.status === 404 ? h('div', { class: 'empty-note', text: 'That project does not exist.' }) : banner('circle-alert', e.message, 'err'));
+  }
+}
+
 function pageNoAccess() {
   const body = frame('', [crumb('Compass', '#/')], 'No access');
   body.append(h('div', { class: 'empty-note', text: 'You do not have access to this page. If you think you should, ask the Admin.' }));
@@ -121,12 +151,12 @@ function pageNoAccess() {
 
 /* ---- Admin ---- */
 const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'BD reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
-const TAB_PHASE = { reminders: 3, bd: 5, pipeline: 5, patterns: 3 };
+const TAB_PHASE = { bd: 5, pipeline: 5 };
 const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'run.notifyPics': 'Notify PICs of a new run', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
-  'due.newProjectDays': 'Days to a first plan', 'due.afterEntryDays': 'Days to the next update', 'due.graceUntil': 'January grace period ends', 'access': 'What narrower roles can see',
+  'due.newProjectDays': 'Days to a first plan', 'due.afterEntryDays': 'Days to the next update', 'due.graceUntil': 'January grace period ends', 'due.soonDays': 'Update-due window', 'due.missedAfterDays': 'Days until a commitment is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see',
 };
 
 const fmtTime = ms => {
@@ -164,6 +194,13 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const [people, s] = await Promise.all([Admin.people(), Admin.settings()]);
       slot.textContent = '';
       slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), accessCard(s, canEdit, rerender), rolesCard());
+    } else if (tab === 'reminders') {
+      const s = await Admin.settings();
+      slot.textContent = '';
+      slot.append(...remindersCards(ctx, s, canEdit, rerender));
+    } else if (tab === 'patterns') {
+      slot.textContent = '';
+      slot.append(patternsCard(ctx, await Checkins.patterns()));
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
@@ -279,9 +316,11 @@ function turnaroundCards(s, canEdit, rerender) {
       row('Ignore projects billed under', 'Leave at $0 to include everything. Raise it to hide tiny jobs.', ed.num('include.ignoreBilledUnder', { money: true, narrow: true })),
       row('Projects with no PIC', 'Projects whose Vantagepoint record has no principal in charge.', ed.select('include.noPic', [['leave-out-warn', 'Leave out and warn me on Home'], ['unassigned', 'Show them as "Unassigned"']])),
     ]),
-    settingsCard('Plan due dates', 'The dates the accountability ladder counts from.', s, ['due.newProjectDays', 'due.afterEntryDays', 'due.graceUntil'], canEdit, rerender, ed => [
+    settingsCard('Plan due dates', 'The dates the accountability ladder counts from.', s, ['due.newProjectDays', 'due.afterEntryDays', 'due.soonDays', 'due.missedAfterDays', 'due.graceUntil'], canEdit, rerender, ed => [
       row('A new turnaround project needs a plan within', null, ed.num('due.newProjectDays', { narrow: true }), h('span', { class: 'muted', text: 'days of first appearing' })),
       row('After any entry, the next update is due in', 'Every update, explanation or commitment resets the clock for that project.', ed.num('due.afterEntryDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
+      row('Show "Update due" when the next update is within', 'The yellow label on a plan. Past the date, it turns to Overdue.', ed.num('due.soonDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
+      row('Record a commitment as missed', 'When its date has passed by this many days and nobody pressed Done or moved the date. The system writes it in the log.', ed.num('due.missedAfterDays', { narrow: true }), h('span', { class: 'muted', text: 'days after its date' })),
       row('January grace period', 'On January 1 every project starts clean. Plans opened last year stay readable.', ed.monthDay('due.graceUntil'), h('span', { class: 'muted', text: 'no plans are due until this date each year' })),
     ]),
   ];
@@ -368,7 +407,7 @@ function runsCard(runs, canEdit, onBuilt, onError) {
       : h('div', { class: 'empty-row', text: 'No runs yet.' }));
 }
 
-/* one run: review, publish, rebuild, archive and rerun. The plain table here is the review; phase 3 gives it the mockup's look. */
+/* one run: review it exactly as the page will look, then publish, rebuild, or archive and rerun */
 async function pageRun(id) {
   const me = Session.me();
   if (me.adminTabs.runs !== 'edit') return pageNoAccess();
@@ -378,7 +417,7 @@ async function pageRun(id) {
     body.append(banner('circle-alert', e.status === 404 ? 'That run does not exist.' : e.message, 'err'));
     return;
   }
-  const { run, projects, warnings, summary } = data;
+  const { run, warnings } = data;
   const body = frame('admin', [crumb('Compass', '#/'), sep(), crumb('Admin', '#/admin/runs'), sep(), crumb('Report runs', '#/admin/runs'), sep(), crumb(`${run.label}, version ${run.version}`)],
     KIND_LABEL[run.kind], `${run.label}, version ${run.version}`);
   const slot = h('div', { class: 'stack' });
@@ -398,12 +437,7 @@ async function pageRun(id) {
     buttons.push(h('button', { class: 'btn danger', type: 'button', text: 'Archive and rerun…', onclick: () => { slot.prepend(archivePanel(run, act)); T.hydrateIcons(slot); } }));
   }
   body.append(h('div', { class: 'banner' + (run.status === 'draft' ? ' warn' : '') }, h('span', { class: 'bmsg' }, icon(run.status === 'draft' ? 'info' : run.status === 'published' ? 'lock' : 'archive'), h('span', { text: note }))),
-    buttons.length ? h('div', { class: 'run-acts' }, ...buttons) : null, slot);
-
-  slot.append(h('dl', { class: 'facts' },
-    h('dt', { text: 'Projects below break-even' }), h('dd', { text: String(summary.projectCount) }),
-    h('dt', { text: 'Total negative YTD profit' }), h('dd', { text: `${fmtCents(summary.negativeYtd)} (${fmtPct(summary.negativeYtd, summary.billedYtd)} of ${fmtCents(summary.billedYtd)} billed)` }),
-    h('dt', { text: 'Built with settings from' }), h('dd', { text: fmtTime(run.createdAt) })));
+    ...(buttons.length ? [h('div', { class: 'run-acts' }, ...buttons)] : []), slot);
 
   if (warnings.length) {
     const label = { cant_evaluate: 'Could not be evaluated', no_pic: 'No PIC' };
@@ -414,20 +448,7 @@ async function pageRun(id) {
         h('tbody', {}, ...warnings.map(w => h('tr', {}, h('td', { class: 'strong', text: `${w.wbs1} ${w.name}` }), h('td', { text: label[w.kind] || w.kind }), h('td', { class: 'muted', text: w.detail }), h('td', { class: 'r', text: w.ytdBilled === null ? '-' : fmtCents(w.ytdBilled) }))))))));
   }
 
-  const groups = new Map();
-  for (const p of projects) { if (!groups.has(p.pic.code)) groups.set(p.pic.code, { pic: p.pic, rows: [] }); groups.get(p.pic.code).rows.push(p); }
-  for (const g of groups.values()) {
-    const total = g.rows.reduce((s, p) => s + p.profit.ytd, 0), billed = g.rows.reduce((s, p) => s + p.billed.ytd, 0);
-    slot.append(h('section', { class: 'sec' },
-      h('div', { class: 'sec-head' }, h('h2', { text: g.pic.name }), h('p', { text: `${g.rows.length} project${g.rows.length === 1 ? '' : 's'} · ${fmtCents(total)} YTD profit · ${fmtPct(total, billed)} of ${fmtCents(billed)} billed` })),
-      h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: 'min-width:700px' },
-        h('thead', {}, h('tr', {}, h('th', { text: 'Project' }), h('th', { text: 'PM' }), h('th', { class: 'r', text: 'Billed YTD' }), h('th', { class: 'r', text: 'Profit YTD' }), h('th', { class: 'r', text: '%' }), h('th', { text: 'First on a run' }))),
-        h('tbody', {}, ...g.rows.map(p => h('tr', {},
-          h('td', {}, h('span', { class: 'strong', text: p.name }), h('div', { class: 'muted', text: p.wbs1 })), h('td', { text: p.pm.name }),
-          h('td', { class: 'r', text: fmtCents(p.billed.ytd) }), h('td', { class: 'r strong', text: fmtCents(p.profit.ytd) }), h('td', { class: 'r', text: fmtPct(p.profit.ytd, p.billed.ytd) }),
-          h('td', { class: 'muted', text: window.CompassTurnaround.periodLabel(p.firstSeenPeriod) }))))))));
-  }
-  if (!projects.length) slot.append(h('div', { class: 'empty-note', text: 'No projects are below break-even under the current settings.' }));
+  renderOverview(ctx, slot, await Turnaround.runOverview(id));
   T.hydrateIcons(body);
   void reload;
 }
@@ -458,6 +479,10 @@ function auditText(e) {
       .map(k => `${{ role: 'role', active: 'status', draftName: 'name in drafts' }[k] || k}: ${k === 'active' ? (e.detail.from[k] ? 'active' : 'inactive') : showValue(e.detail.from[k])} to ${k === 'active' ? (e.detail.to[k] ? 'active' : 'inactive') : showValue(e.detail.to[k])}`);
     return [`Changed person: ${e.object}`, parts.join('; ')];
   }
+  if (e.action === 'checkin.send') return ['Marked a check-in draft as sent', ''];
+  if (e.action === 'checkin.dismiss') return ['Dismissed a check-in draft', ''];
+  if (e.action === 'checkin.undo') return ['Put a check-in draft back in the queue', ''];
+  if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} commitments recorded as missed`];
   const runVerb = { 'run.build': 'Built', 'run.rebuild': 'Rebuilt the draft of', 'run.publish': 'Published', 'run.archive': 'Archived' }[e.action];
   if (runVerb) return [`${runVerb}: ${e.object}`, e.action === 'run.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   return [e.action, e.object];
@@ -471,6 +496,9 @@ function auditCard(entries) {
       : h('div', { class: 'empty-row', text: 'Nothing has been changed yet.' }));
 }
 
+/* what the Turnaround screens (modules/turnaround/ui) borrow from the shell */
+const ctx = { h, T, icon, frame, crumb, sep, banner, row, settingsCard, Session, ApiError };
+
 /* ---------- routing ---------- */
 function route() {
   const me = Session.me();
@@ -479,6 +507,9 @@ function route() {
   if (/^#\/?$/.test(hash)) return pageHome();
   if ((m = /^#\/admin\/runs\/([0-9a-f-]+)$/.exec(hash))) return me.areas.admin ? pageRun(m[1]) : pageNoAccess();
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
+  if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
+  if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
+  if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);
   if (n) return me.areas[n.area] ? pagePlaceholder(n) : pageNoAccess();
   location.hash = '#/';

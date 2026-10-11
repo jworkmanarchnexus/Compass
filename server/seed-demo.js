@@ -42,6 +42,8 @@ function seedDemo(db) {
       if (e.l) ids[e.l] = id;
     }
   }
+  // the daily job's first look, on the demo day, so the check-in queue starts with what it would hold
+  require('./turnaround').dailyChecks(db, { today: '2026-10-07', settings, mailer: null, baseUrl: '', adminEmails: [] });
 }
 
 /* the commitment's current due date as the log stands, for the entries that refer to it */

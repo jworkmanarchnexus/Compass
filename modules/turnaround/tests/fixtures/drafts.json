@@ -28,7 +28,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     },
     {
      "wbs1": "a",
@@ -38,7 +40,9 @@
      "daysOverdue": 11,
      "dueDate": "2026-09-26",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     },
     {
      "wbs1": "t",
@@ -118,7 +122,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     },
     {
      "wbs1": "f",
@@ -128,7 +134,9 @@
      "daysOverdue": 6,
      "dueDate": "2026-10-01",
      "ytdProfit": -431000,
-     "nextCommitmentText": "Roof report"
+     "nextCommitmentText": "Roof report",
+     "commitmentDue": "2026-10-01",
+     "commitmentPastDue": true
     }
    ],
    "existing": [],
@@ -161,7 +169,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     }
    ],
    "existing": [],
@@ -185,7 +195,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     }
    ],
    "existing": [],
@@ -219,7 +231,9 @@
      "daysOverdue": 11,
      "dueDate": "2026-09-26",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -256,7 +270,9 @@
      "daysOverdue": 11,
      "dueDate": "2026-09-26",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -293,7 +309,9 @@
      "daysOverdue": 11,
      "dueDate": "2026-09-26",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -340,7 +358,9 @@
      "daysOverdue": 9,
      "dueDate": "2026-09-28",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -377,7 +397,9 @@
      "daysOverdue": 11,
      "dueDate": "2026-09-26",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -414,7 +436,9 @@
      "daysOverdue": 5,
      "dueDate": "2026-10-02",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -461,7 +485,9 @@
      "daysOverdue": 0,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -500,7 +526,9 @@
      "daysOverdue": 21,
      "dueDate": "2026-09-16",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [],
@@ -539,7 +567,9 @@
      "daysOverdue": 21,
      "dueDate": "2026-09-16",
      "ytdProfit": -9680000,
-     "nextCommitmentText": "Revised budget to owner"
+     "nextCommitmentText": "Revised budget to owner",
+     "commitmentDue": "2026-09-26",
+     "commitmentPastDue": true
     }
    ],
    "existing": [
@@ -576,7 +606,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     }
    ],
    "existing": [],
@@ -618,7 +650,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     }
    ],
    "subject": "Hangar 7 Door Replacement update",
@@ -658,7 +692,9 @@
      "daysOverdue": 4,
      "dueDate": "2026-10-03",
      "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package"
+     "nextCommitmentText": "Send change order package",
+     "commitmentDue": "2026-10-03",
+     "commitmentPastDue": true
     },
     {
      "wbs1": "f",
@@ -668,7 +704,9 @@
      "daysOverdue": 6,
      "dueDate": "2026-10-01",
      "ytdProfit": -431000,
-     "nextCommitmentText": "Roof report"
+     "nextCommitmentText": "Roof report",
+     "commitmentDue": "2026-10-01",
+     "commitmentPastDue": true
     }
    ],
    "subject": "A few updates when you get a minute",
@@ -678,6 +716,28 @@
     "- Fire Station Roof: \"Roof report\" was due Oct 1",
     "Please update the portal today."
    ]
+  },
+  {
+   "name": "overdue because the 30-day update clock ran out, not the commitment: says an update was due",
+   "tone": "casual",
+   "situation": "overdue",
+   "picName": "Dana",
+   "items": [
+    {
+     "wbs1": "w",
+     "name": "Wasatch Valley Clinic TI",
+     "picUserId": "u5",
+     "status": "overdue",
+     "daysOverdue": 8,
+     "dueDate": "2026-09-29",
+     "ytdProfit": -431000,
+     "nextCommitmentText": "Fee amendment",
+     "commitmentDue": "2026-10-17",
+     "commitmentPastDue": false
+    }
+   ],
+   "subject": "Wasatch Valley Clinic TI update",
+   "body": "Hey Dana, quick check on Wasatch Valley Clinic TI. The next update was due Sep 29 and I don't see it in the portal. Is it done, or did something get in the way? Add a line when you get a minute and I'll leave it alone after that."
   },
   {
    "name": "direct, one project with no plan",
