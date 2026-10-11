@@ -10,6 +10,7 @@ const schedule = require('../modules/turnaround/logic/schedule');
 const { createLocalSource } = require('./vp-local');
 const { createFileMailer } = require('./mail');
 const planDb = require('./plan');
+const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
@@ -100,6 +101,8 @@ function createServer(db, opts) {
     }
 
     const user = currentUser(req);
+
+    if (p === '/api/home' && method === 'GET') return sendJson(res, 200, buildHome(db, user, { today: today(), settings: currentSettings() }));
 
     if (p === '/api/me' && method === 'GET') {
       const access = currentSettings().access;

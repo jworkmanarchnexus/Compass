@@ -1,26 +1,132 @@
 {
   "lastClosedPeriod": [
-    { "date": "2026-10-11", "expect": 202609 },
-    { "date": "2026-10-01", "expect": 202609 },
-    { "date": "2026-12-31", "expect": 202611 },
-    { "date": "2027-01-05", "expect": 202612 },
-    { "date": "2026-03-02", "expect": 202602 }
+    {
+      "date": "2026-10-11",
+      "expect": 202609
+    },
+    {
+      "date": "2026-10-01",
+      "expect": 202609
+    },
+    {
+      "date": "2026-12-31",
+      "expect": 202611
+    },
+    {
+      "date": "2027-01-05",
+      "expect": 202612
+    },
+    {
+      "date": "2026-03-02",
+      "expect": 202602
+    }
   ],
   "isFirstBusinessDay": [
-    { "date": "2026-10-01", "expect": true, "why": "Thursday the 1st" },
-    { "date": "2026-10-02", "expect": false },
-    { "date": "2026-11-01", "expect": false, "why": "Sunday" },
-    { "date": "2026-11-02", "expect": true, "why": "the 1st was a Sunday, so Monday the 2nd" },
-    { "date": "2026-11-03", "expect": false },
-    { "date": "2026-08-01", "expect": false, "why": "Saturday" },
-    { "date": "2026-08-03", "expect": true, "why": "the 1st was a Saturday, so Monday the 3rd" },
-    { "date": "2026-08-04", "expect": false },
-    { "date": "2026-09-01", "expect": true, "why": "Tuesday the 1st" },
-    { "date": "2026-09-07", "expect": false, "why": "a Monday, but not near the start of the month" }
+    {
+      "date": "2026-10-01",
+      "expect": true,
+      "why": "Thursday the 1st"
+    },
+    {
+      "date": "2026-10-02",
+      "expect": false
+    },
+    {
+      "date": "2026-11-01",
+      "expect": false,
+      "why": "Sunday"
+    },
+    {
+      "date": "2026-11-02",
+      "expect": true,
+      "why": "the 1st was a Sunday, so Monday the 2nd"
+    },
+    {
+      "date": "2026-11-03",
+      "expect": false
+    },
+    {
+      "date": "2026-08-01",
+      "expect": false,
+      "why": "Saturday"
+    },
+    {
+      "date": "2026-08-03",
+      "expect": true,
+      "why": "the 1st was a Saturday, so Monday the 3rd"
+    },
+    {
+      "date": "2026-08-04",
+      "expect": false
+    },
+    {
+      "date": "2026-09-01",
+      "expect": true,
+      "why": "Tuesday the 1st"
+    },
+    {
+      "date": "2026-09-07",
+      "expect": false,
+      "why": "a Monday, but not near the start of the month"
+    }
   ],
   "periodLabel": [
-    { "period": 202609, "expect": "September 2026" },
-    { "period": 202601, "expect": "January 2026" },
-    { "period": 202512, "expect": "December 2025" }
+    {
+      "period": 202609,
+      "expect": "September 2026"
+    },
+    {
+      "period": 202601,
+      "expect": "January 2026"
+    },
+    {
+      "period": 202512,
+      "expect": "December 2025"
+    }
+  ],
+  "nextFirstBusinessDay": [
+    {
+      "date": "2026-10-07",
+      "includeToday": false,
+      "expect": "2026-11-02"
+    },
+    {
+      "date": "2026-10-01",
+      "includeToday": true,
+      "expect": "2026-10-01"
+    },
+    {
+      "date": "2026-10-01",
+      "includeToday": false,
+      "expect": "2026-11-02"
+    },
+    {
+      "date": "2026-12-30",
+      "includeToday": false,
+      "expect": "2027-01-01"
+    },
+    {
+      "date": "2026-07-31",
+      "includeToday": false,
+      "expect": "2026-08-03"
+    }
+  ],
+  "lastDayOfPeriod": [
+    {
+      "period": 202609,
+      "expect": "2026-09-30"
+    },
+    {
+      "period": 202602,
+      "expect": "2026-02-28"
+    },
+    {
+      "period": 202402,
+      "expect": "2024-02-29"
+    },
+    {
+      "period": 202612,
+      "expect": "2026-12-31"
+    }
   ]
 }

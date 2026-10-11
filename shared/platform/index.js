@@ -3,3 +3,4 @@ export { configure, pref, ApiError } from './http.js';
 export { Session } from './session.js';
 export { Admin } from './admin.js';
 export { Turnaround, Plan, Checkins } from './turnaround.js';
+export { Home } from './home.js';
