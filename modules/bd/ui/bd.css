@@ -1,0 +1,81 @@
+/* BD report: the page and the export workspace. Tokens only: no hex colors (the report colors are in tokens.css). */
+
+/* ---- the page ---- */
+.bd-tools { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s3); }
+.ok-banner { background: var(--ok-bg); box-shadow: inset 3px 0 var(--ok); }
+.bd-box { background: var(--surface); border: 1.5px solid var(--text-strong); border-radius: 2px; overflow: hidden; }
+.bd-sum { text-align: center; font: 700 15px/1.3 var(--f-ui); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-strong); }
+.bd-table table { width: 100%; border-collapse: collapse; min-width: 980px; }
+.bd-table thead th { background: var(--bd-navy); color: var(--bd-navy-ink); font: 700 12.5px/1.25 var(--f-ui); text-align: center; vertical-align: middle; padding: 8px 8px; border: 0; white-space: nowrap; }
+.bd-table thead th:first-child { text-align: center; min-width: 150px; }
+.bd-table td { padding: 5px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.bd-table td.r { text-align: right; }
+.bd-table tr.firm-row td { font-weight: 700; border-bottom: 1.5px solid var(--text-strong); background: var(--surface); }
+.bd-table .bd-goal { color: var(--bd-ink-goal); font-weight: 700; }
+.bd-table .bd-pace { color: var(--bd-ink-pace); font-weight: 700; }
+.bd-table .bd-pct-pace { color: var(--bd-ink-pace); }
+.bd-table .bd-pct-goal { color: var(--bd-ink-goal); }
+.bd-table td.bd-status { text-align: center; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.bd-table td.bd-st-on_track { background: var(--bd-on-track-bg); color: var(--bd-on-track-ink); }
+.bd-table td.bd-st-on_pace { background: var(--bd-on-pace-bg); color: var(--bd-on-pace-ink); }
+.bd-table td.bd-st-behind { background: var(--bd-behind-bg); color: var(--bd-behind-ink); }
+.bd-legend { padding: var(--s3) var(--s5); text-align: center; color: var(--text-2); font-size: 13px; border-top: 1px solid var(--line); }
+.bd-chart svg { display: block; }
+.sb-ytd { fill: var(--bd-ytd); } .sb-forecast { fill: var(--bd-forecast); } .sb-mwip { fill: var(--bd-mwip); } .sb-pace { fill: var(--bd-pace); } .sb-rest { fill: var(--bd-rest); }
+.sb-label { font: 13px var(--f-ui); fill: var(--text-strong); }
+.sb-in { font: 700 11px var(--f-cond); fill: var(--bd-bar-ink); }
+.sb-end { font: 700 12px var(--f-cond); fill: var(--text-strong); }
+.sb-mark-pace { stroke: var(--bd-pace); stroke-width: 3; }
+.sb-mark-goal { stroke: var(--bd-navy); stroke-width: 2; stroke-dasharray: 2 3; }
+.bd-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s2) var(--s5); padding: var(--s2) var(--s5) var(--s3); font-size: 13px; color: var(--text-2); }
+.bd-key { display: inline-flex; align-items: center; gap: var(--s2); }
+.bd-key .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.bd-key .sw.sb-ytd { background: var(--bd-ytd); } .bd-key .sw.sb-forecast { background: var(--bd-forecast); box-shadow: inset 0 0 0 1px var(--line-strong); } .bd-key .sw.sb-mwip { background: var(--bd-mwip); }
+.bd-key .sw.sb-pace { background: var(--bd-pace); } .bd-key .sw.sb-rest { background: var(--bd-rest); }
+.bd-key .sw.sb-markpace { width: 3px; height: 14px; background: var(--bd-pace); } .bd-key .sw.sb-markgoal { width: 2px; height: 14px; background: repeating-linear-gradient(var(--bd-navy) 0 3px, transparent 3px 6px); }
+
+/* ---- the export workspace: settings on the left, the real page on the right (same pattern as the Scheduler's) ---- */
+.xw { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; background: var(--surface); }
+.xw-top { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.xw-top h2 { font: 700 19px/1.2 var(--f-cond); margin: 0 6px 0 0; }
+.xw-top .grow, .xw-foot .grow { flex: 1 1 auto; }
+.xw-main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 340px minmax(0, 1fr); }
+.xw-opts { overflow: auto; border-right: 1px solid var(--line); padding: 4px 18px 24px; }
+.xw-prev { overflow: auto; background: var(--surface-3); padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.xw-prev .sheet { background: var(--surface); box-shadow: var(--shadow-2); width: 100%; max-width: 760px; }
+.xw-prev canvas { display: block; width: 100%; height: auto; }
+.xw-prev .pnote { font-size: 12.5px; color: var(--text-2); text-align: center; max-width: 720px; margin: 0; }
+.xw-pnav { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font: 400 13px/1 var(--f-cond); color: var(--text-2); }
+.xw-foot { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.xw-sum { font: 400 13px/1.3 var(--f-cond); color: var(--text-2); }
+.xw-grp { display: flex; align-items: center; gap: 8px; }
+.xw-lbl, .xo-form legend { font: 700 11.5px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.xo-form { display: flex; flex-direction: column; }
+.xo-form fieldset { margin: 0; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.xo-form legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
+.xo-form legend + * { clear: both; }
+.xo-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.xo-field > label { font-size: 12.5px; color: var(--text-2); }
+.xo-note { font-size: 12.5px; color: var(--text-2); margin: 0; }
+.looks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.look { display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 8px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); cursor: pointer; font: inherit; color: var(--text-strong); }
+.look:hover { border-color: var(--text-3); }
+.look[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.look .look-sw { display: flex; height: 14px; border-radius: 2px; overflow: hidden; }
+.look .look-sw i { flex: 1; }
+.look strong { font-size: 13px; }
+.look small { font-size: 11.5px; color: var(--text-2); line-height: 1.3; }
+@media (max-width: 860px) {
+  .xw-main { display: flex; flex-direction: column; overflow: auto; }
+  .xw-prev { order: -1; overflow: visible; padding: 12px; flex: none; }
+  .xw-opts { overflow: visible; border-right: 0; border-top: 1px solid var(--line); flex: none; }
+  .xw-top .grow { display: none; }
+}
+
+/* ---- Export PDF's fallback, the browser's own print: only the report prints ---- */
+@media print {
+  .side, .mtop, .side-scrim, .bd-tools .btn, .run-acts, .seg, #toast, .xw { display: none !important; }
+  .shell { display: block; }
+  .mainwrap, .page { padding: 0 !important; max-width: none !important; }
+  .sec, .bd-box { break-inside: avoid; box-shadow: none; }
+}

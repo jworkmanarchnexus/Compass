@@ -100,3 +100,7 @@ These were deliberate decisions; each is enforced somewhere and tested.
 ## 8. Not built, and open
 
 Not built: Pipeline watch, the Firm snapshot on Home, Export Excel, the plan page's contract fee, the ladder's "Repeat" step. A real sign-in, hosting, the mailer, scheduling, and editing a person's Vantagepoint employee code from the People page are yours (or open). Everything undecided is in `docs/OPEN-QUESTIONS.md`.
+
+## BD report PDF export
+
+Browser-side only (no server part). `shared/vendor/jspdf.umd.min.js` and `shared/export/assets.js` (embedded fonts and the Arch Nexus logo) are copies of the Toolbox Scheduler's. The page layout rule is pure (`modules/bd/logic/export-plan.js`, fixture `export-plan.json`); the drawing is `modules/bd/ui/export-draw.js`. If the front end is rebuilt, keep the plan and its fixture and redraw however suits.

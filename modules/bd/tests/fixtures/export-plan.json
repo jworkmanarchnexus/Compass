@@ -1,0 +1,26 @@
+{
+  "note": "How the BD report's sections go onto PDF pages. Input: row counts, paper, orientation, layout. Expect: the section ids on each page, in order, and (when given) whether any page had to shrink.",
+  "cases": [
+    { "name": "Letter landscape, everything: tables first, charts second", "paper": "letter", "orientation": "landscape", "layout": "auto", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"],
+      "expect": [["picTable", "sectorTable"], ["firmChart", "picChart", "sectorChart"]] },
+    { "name": "Letter portrait, everything: still two pages, text is not shrunk below readable", "paper": "letter", "orientation": "portrait", "layout": "auto", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"],
+      "expect": [["picTable", "sectorTable"], ["firmChart", "picChart", "sectorChart"]] },
+    { "name": "Tabloid portrait: all five sections fit on one sheet", "paper": "tabloid", "orientation": "portrait", "layout": "auto", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"],
+      "expect": [["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"]] },
+    { "name": "Forced one page on Letter landscape shrinks to fit", "paper": "letter", "orientation": "landscape", "layout": "one", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"],
+      "expect": [["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"]], "shrinks": true },
+    { "name": "Forced split on Tabloid portrait: two pages even though one would fit", "paper": "tabloid", "orientation": "portrait", "layout": "split", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["picTable", "sectorTable", "firmChart", "picChart", "sectorChart"],
+      "expect": [["picTable", "sectorTable"], ["firmChart", "picChart", "sectorChart"]] },
+    { "name": "Charts only, with the logo heading: the third chart moves to a second page rather than shrink", "paper": "letter", "orientation": "landscape", "layout": "auto", "pic": 8, "sector": 6, "head": "logo",
+      "include": ["firmChart", "picChart", "sectorChart"],
+      "expect": [["firmChart", "picChart"], ["sectorChart"]] },
+    { "name": "A long table flows onto more pages instead of shrinking to nothing", "paper": "letter", "orientation": "landscape", "layout": "auto", "pic": 30, "sector": 30, "head": "logo",
+      "include": ["picTable", "sectorTable"],
+      "expect": [["picTable"], ["sectorTable"]] }
+  ]
+}

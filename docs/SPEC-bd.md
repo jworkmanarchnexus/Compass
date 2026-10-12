@@ -67,5 +67,9 @@ Projects (project number, name, principal code, market sector), monthly revenue 
 
 - A report history chart, and the BD report on Home beyond "recently published" and "needs review".
 - Per-sector PIC drill-down.
-- Excel export (PDF only, via print).
+- Excel export (PDF only).
 - Pipeline watch (a separate module: weekly MWIP and forecast snapshots, alerts).
+
+## Export PDF window
+
+Opens from the report page. **Look:** Report (the Excel colors), Arch Nexus (brand palette), Quiet, Black and white. **Include:** table by PIC, table by market sector, and three charts (total firm, by PIC, by market sector). **Pages:** layout (automatic / tables then charts / everything on one page), paper (Letter, Tabloid, A4, A3), orientation. **Heading and footer:** the Arch Nexus logo top right (first page, every page or off), print date, a description under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). The rule for which sections go on which page is `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing the file on paper, and other PDF viewers than the browser's.
