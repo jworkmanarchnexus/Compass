@@ -7,7 +7,7 @@
    Heights below are in design units, so they do not depend on the paper. The heading, footer and margins are in points.
 
    Layout rule ("auto"): everything on one page if it fits without shrinking text below a readable size; otherwise the tables
-   on the first page and the charts on the next (each group shrinks a little if that saves a page); a group that still does not
+   on the first page and the charts on the next (or, with grouping 'segment', the PIC table and charts, then the market sector's) (each group shrinks a little if that saves a page); a group that still does not
    fit flows onto more pages, section by section. "one" forces one page (shrinks to fit); "split" forces tables, then charts. */
 (function () {
 'use strict';
@@ -55,15 +55,17 @@ const tableHeight = (nRows, legendN) => T.sum + T.head + (nRows + 1) * T.row + l
 const chartHeight = (nRows, firmChart) => C.sum + C.top + nRows * (firmChart ? C.firmRow : C.row) + C.axis + C.key;
 
 /* which sections the report has, in order, for the options chosen. d is the report as the server sends it. */
-function sectionsFor(d, inc) {
+function sectionsFor(d, inc, grouping) {
   const out = [];
   const lg = legendLines(d.meta, d.firm).length;
   const charted = rows => rows.filter(r => r.total > 0).length;
-  if (inc.picTable) out.push({ id: 'picTable', group: 'tables', h: tableHeight(d.pic.length, lg) });
-  if (inc.sectorTable) out.push({ id: 'sectorTable', group: 'tables', h: tableHeight(d.sector.length, lg) });
-  if (inc.firmChart) out.push({ id: 'firmChart', group: 'charts', h: chartHeight(2, true) });
-  if (inc.picChart && charted(d.pic)) out.push({ id: 'picChart', group: 'charts', h: chartHeight(charted(d.pic), false) });
-  if (inc.sectorChart && charted(d.sector)) out.push({ id: 'sectorChart', group: 'charts', h: chartHeight(charted(d.sector), false) });
+  if (inc.picTable) out.push({ id: 'picTable', seg: 'pic', group: 'tables', h: tableHeight(d.pic.length, lg) });
+  if (inc.sectorTable) out.push({ id: 'sectorTable', seg: 'sector', group: 'tables', h: tableHeight(d.sector.length, lg) });
+  if (inc.firmChart) out.push({ id: 'firmChart', seg: 'pic', group: 'charts', h: chartHeight(2, true) });
+  if (inc.picChart && charted(d.pic)) out.push({ id: 'picChart', seg: 'pic', group: 'charts', h: chartHeight(charted(d.pic), false) });
+  if (inc.sectorChart && charted(d.sector)) out.push({ id: 'sectorChart', seg: 'sector', group: 'charts', h: chartHeight(charted(d.sector), false) });
+  // by PIC then by market sector: the total-firm chart opens the PIC page; each page is its table, then its charts
+  if (grouping === 'segment') { const rank = x => (x.seg === 'pic' ? 0 : 10) + (x.group === 'tables' ? 0 : x.id === 'firmChart' ? 1 : 2); out.sort((a, b) => rank(a) - rank(b)); }
   return out;
 }
 
@@ -73,18 +75,19 @@ const stackH = list => sum(list, x => x.h) + Math.max(0, list.length - 1) * GAP;
 /* Place the sections on pages.
    plan({ sections, P: {w,h}, firstHead, laterHead, layout }) -> { z, pages: [{ s, head, avail, items: [{ id, y, h }], small }] }
    firstHead / laterHead are the heading heights in points (the first page carries the logo and the description). */
-function plan({ sections, P, firstHead, laterHead, layout }) {
+function plan({ sections, P, firstHead, laterHead, layout, grouping }) {
   const wc = P.w - 2 * MARGIN;
   const z = wc / BASE_W;
   const availOf = head => (P.h - 2 * MARGIN - head - FOOT) / z;       // design units
   const sMin = Math.min(1, MIN_READ / z);
+  const sMinGroup = sMin - 0.12;                                      // one page of a group may shrink a little more than the whole report
   const aFirst = availOf(firstHead), aLater = availOf(laterHead);
   const place = (list, head, avail) => {
     const total = stackH(list);
     const s = Math.min(1, avail / total);
     let y = 0;
     const items = list.map(x => { const it = { id: x.id, y, h: x.h }; y += x.h + GAP; return it; });
-    return { s, head, avail, items, small: s < sMin - 1e-9 };
+    return { s, head, avail, items, small: s < sMinGroup - 1e-9 };
   };
   if (!sections.length) return { z, pages: [] };
   const mode = layout === 'one' || layout === 'split' ? layout : 'auto';
@@ -92,13 +95,14 @@ function plan({ sections, P, firstHead, laterHead, layout }) {
   const all = place(sections, firstHead, aFirst, false);
   if (mode === 'auto' && all.s >= sMin - 1e-9) return { z, pages: [all] };
 
-  // tables, then charts; each group on its own page, shrinking a little before it spills over
-  const groups = ['tables', 'charts'].map(g => sections.filter(x => x.group === g)).filter(g => g.length);
+  // each group on its own page (tables, then charts; or by PIC, then by market sector), shrinking a little before it spills over
+  const key = grouping === 'segment' ? 'seg' : 'group';
+  const groups = (grouping === 'segment' ? ['pic', 'sector'] : ['tables', 'charts']).map(g => sections.filter(x => x[key] === g)).filter(g => g.length);
   const pages = [];
   groups.forEach(list => {
     const head = pages.length ? laterHead : firstHead, avail = pages.length ? aLater : aFirst;
     const one = place(list, head, avail, false);
-    if (one.s >= sMin - 1e-9) { pages.push(one); return; }
+    if (one.s >= sMinGroup - 1e-9) { pages.push(one); return; }
     // flow: fill a page, start another when the next section does not fit
     let cur = [];
     const flush = () => { if (cur.length) { const hd = pages.length ? laterHead : firstHead; pages.push(place(cur, hd, pages.length ? aLater : aFirst, true)); cur = []; } };

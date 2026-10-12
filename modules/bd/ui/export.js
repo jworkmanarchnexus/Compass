@@ -4,7 +4,7 @@ import { LOOKS, buildJob, pageCanvas, buildPdf, fontsReady, loadLogo } from './e
 
 const X = window.BdExportPlan;
 const DEFAULTS = {
-  look: 'report', layout: 'auto', paper: 'letter', orientation: 'landscape', logo: 'first', printed: true,
+  look: 'report', grouping: 'type', layout: 'auto', paper: 'letter', orientation: 'landscape', logo: 'first', printed: true,
   include: { picTable: true, sectorTable: true, firmChart: true, picChart: true, sectorChart: true },
 };
 const INCLUDE = [['picTable', 'Table by PIC'], ['sectorTable', 'Table by market sector'], ['firmChart', 'Chart: total firm'], ['picChart', 'Chart: by PIC'], ['sectorChart', 'Chart: by market sector']];
@@ -68,6 +68,8 @@ export function openExport(ctx, d) {
   const desc = h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': 'Description under the title', placeholder: 'Optional: a line or two under the title, for example who this is for', oninput: e => { O.desc = e.target.value; redraw(); } });
 
   const opts = h('div', { class: 'xw-opts' }, h('div', { class: 'xo-form' },
+    h('fieldset', {}, h('legend', { text: 'Put on each page' }), seg('grouping', [['type', 'Tables together, charts together'], ['segment', 'All PIC, all market sector']]),
+      h('p', { class: 'xo-note', text: 'The second choice gives the PIC table and charts one page and the market sector table and chart the next. The total-firm chart goes with the PIC page.' })),
     h('fieldset', {}, h('legend', { text: 'Look' }), looks, note),
     h('fieldset', {}, h('legend', { text: 'Include' }), ...INCLUDE.map(([k, t]) => check(() => O.include[k], v => { O.include[k] = v; }, t))),
     h('fieldset', {}, h('legend', { text: 'Pages' }), h('div', { class: 'xo-field' }, h('label', { text: 'Layout' }), select('layout', LAYOUTS, 'Layout')),

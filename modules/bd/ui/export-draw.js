@@ -175,7 +175,7 @@ function chartRows(sec, d) {
   }
   const src = (sec.id === 'picChart' ? d.pic : d.sector).filter(r => r.total > 0).slice().sort((a, b) => b.total - a.total);
   return {
-    title: (sec.id === 'picChart' ? 'By PIC' : 'By market sector') + ', largest total first', keys: KEYS.rows, tall: false,
+    title: sec.id === 'picChart' ? 'By PIC' : 'By market sector', keys: KEYS.rows, tall: false,
     rows: src.map(r => ({ label: r.label, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], marks: [['pace', r.ytdGoal], ['goal', r.goal]], end: K(r.mwip) })),
   };
 }
@@ -283,8 +283,8 @@ export function buildJob(d, O, today) {
   const P = X.paperSize(O.paper, O.orientation);
   const descLines = O.desc && O.desc.trim() ? Math.min(4, Math.max(1, Math.ceil(O.desc.trim().length / 70))) : 0;
   const hd = X.headingHeights({ logo: O.logo, descLines });
-  const secs = X.sectionsFor(d, O.include);
-  const pl = X.plan({ sections: secs, P, firstHead: hd.full, laterHead: hd.compact, layout: O.layout });
+  const secs = X.sectionsFor(d, O.include, O.grouping);
+  const pl = X.plan({ sections: secs, P, firstHead: hd.full, laterHead: hd.compact, layout: O.layout, grouping: O.grouping });
   const pal = (LOOKS[O.look] || LOOKS.report).pal;
   const M = X.MARGIN;
   return {

@@ -76,7 +76,7 @@ export function lineChart(points, { fmt, aria, zero, ticks, height }) {
    kinds map to CSS classes sb-<kind>. Used by the BD report (revenue, forecast and MWIP against pace and goal).
    Values are cents; fmt(v) writes an axis tick. */
 export function stackedBars(rows, { fmt, aria, max }) {
-  const W = 760, L = 150, R = 70, T = 8, B = 30, RH = rows.length > 2 ? 40 : 46;
+  const W = 1100, L = 170, R = 80, T = 8, B = 30, RH = rows.length > 2 ? 38 : 44;
   const H = T + rows.length * RH + B;
   const top = max || Math.max(...rows.map(r => r.segs.reduce((a, s) => a + s.v, 0)), ...rows.flatMap(r => (r.marks || []).map(m => m.v)));
   const step = niceStep(top, 5);

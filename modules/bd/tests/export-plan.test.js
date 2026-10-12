@@ -13,9 +13,9 @@ test('pages: which sections go on which page', () => {
   for (const c of fx.cases) {
     const d = report(c.pic, c.sector);
     const inc = Object.fromEntries(c.include.map(k => [k, true]));
-    const secs = X.sectionsFor(d, inc);
+    const secs = X.sectionsFor(d, inc, c.grouping);
     const hd = X.headingHeights({ logo: 'first', descLines: 0 });
-    const out = X.plan({ sections: secs, P: X.paperSize(c.paper, c.orientation), firstHead: hd.full, laterHead: hd.compact, layout: c.layout });
+    const out = X.plan({ sections: secs, P: X.paperSize(c.paper, c.orientation), firstHead: hd.full, laterHead: hd.compact, layout: c.layout, grouping: c.grouping });
     assert.deepStrictEqual(out.pages.map(p => p.items.map(i => i.id)), c.expect, c.name);
     if (c.shrinks) assert.ok(out.pages[0].s < 1, c.name + ': should shrink');
     for (const p of out.pages) {

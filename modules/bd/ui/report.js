@@ -7,7 +7,7 @@ import { openExport } from './export.js';
 
 const K = c => `$${Math.round(c / 100000).toLocaleString('en-US')}K`;
 const pct = (n, d) => (d ? `${(100 * n / d).toFixed(1)}%` : '-');
-const STATUS = { on_track: 'On Track', on_pace: 'On Pace', behind: 'Behind Pace' };
+const STATUS = { on_track: ['ok', 'On Track'], on_pace: ['warn', 'On Pace'], behind: ['crit', 'Behind Pace'] };
 const money = c => `$${Math.round(c / 100).toLocaleString('en-US')}`;
 
 export async function renderBd(ctx, body, wantedId) {
@@ -38,7 +38,7 @@ export async function renderBd(ctx, body, wantedId) {
       h('p', { class: 'muted', style: 'margin:0', text: sub }),
       h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Report' }), pick), h('button', { class: 'btn', type: 'button', text: 'Export PDF', onclick: () => openExport(ctx, d) })),
       banner(ctx, d, isAdmin, load, go),
-      isAdmin && d.warnings && d.warnings.length ? warningsCard(ctx, d, load) : null);
+      ...(isAdmin && d.warnings && d.warnings.length ? [warningsCard(ctx, d, load)] : []));
     holder.append(h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Report tabs' },
       ...[['pic', 'By PIC'], ['sector', 'By market sector']].map(([k, label]) => h('button', { type: 'button', role: 'tab', 'aria-pressed': String(tab === k), text: label, onclick: () => { tab = k; paint(d); } }))));
     holder.append(tableCard(ctx, d, tab), firmChart(ctx, d), rowChart(ctx, d, tab));
@@ -109,12 +109,12 @@ function tableCard(ctx, d, tab) {
     h('td', { class: firm ? 'strong' : '', text: r.label }),
     ...[r.goal, r.ytdGoal, r.ytd, r.forecast, r.mwip, r.total].map((v, i) => h('td', { class: 'r' + (i === 0 ? ' bd-goal' : i === 1 ? ' bd-pace' : i === 5 ? ' strong' : ''), text: K(v) })),
     h('td', { class: 'r bd-pct-pace', text: pct(r.ytd, r.ytdGoal) }), h('td', { class: 'r bd-pct-goal', text: pct(r.ytd + r.forecast, r.goal) }), h('td', { class: 'r bd-pct-goal strong', text: pct(r.total, r.goal) }),
-    r.status ? h('td', { class: 'bd-status bd-st-' + r.status, text: STATUS[r.status] }) : h('td', { class: 'bd-status muted', text: '-' }));
+    h('td', { class: 'bd-status' }, r.status ? h('span', { class: 'chip ' + STATUS[r.status][0], text: STATUS[r.status][1] }) : h('span', { class: 'muted', text: '-' })));
   const summary = `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)`;
   const legend = `On Track: YTD + forecast + MWIP reaches ${d.meta.onTrackPct === 100 ? 'the annual goal' : d.meta.onTrackPct + '% of the annual goal'}  |  On Pace: YTD billings are at least ${d.meta.onPacePct}% of pace, but need more planned revenue  |  Behind Pace: YTD billings are behind pace`;
   return h('section', { class: 'sec bd-box bd-table' },
     h('div', { class: 'sec-head bd-sum', text: summary }),
-    h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
+    h('div', { class: 'tblwrap' }, h('table', { class: 'dt bd-t' },
       h('thead', {}, h('tr', {}, h('th', { text: tab === 'pic' ? 'PIC' : 'Market sector' }), th('Revenue goal'), th('YTD goal<br>(pace)'), th('YTD revenue'), th('Revenue forecast'), th('MWIP backlog'), th('Total projected'), th('% of pace billed'), th('% of goal<br>YTD + forecast'), th('% of goal<br>YTD + forecast<br>+ MWIP'), th('Status', ''))),
       h('tbody', {}, row(f, true), ...rows.map(r => row(r, false))))),
     h('div', { class: 'bd-legend', text: legend }),
@@ -129,7 +129,7 @@ function firmChart(ctx, d) {
     { label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue' }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast' }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog' }], endText: K(f.mwip) },
     { label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal achieved (pace)' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
   ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal' });
-  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { style: 'padding:8px 16px' }, svg),
+  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']]));
 }
 
@@ -139,8 +139,8 @@ function rowChart(ctx, d, tab) {
   const svg = stackedBars(rows.map(r => ({
     label: r.label, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue' }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast' }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog' }],
     marks: [{ v: r.ytdGoal, kind: 'pace', title: `Pace to date: ${K(r.ytdGoal)}` }, { v: r.goal, kind: 'goal', title: `Annual goal: ${K(r.goal)}` }], endText: K(r.mwip) })),
-  { fmt: K, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}, largest total first: revenue, forecast and MWIP against pace and annual goal` });
-  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `${tab === 'pic' ? 'By PIC' : 'By market sector'}, largest total first` }), h('div', { style: 'padding:8px 16px' }, svg),
+  { fmt: K, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}: revenue, forecast and MWIP against pace and annual goal` });
+  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: tab === 'pic' ? 'By PIC' : 'By market sector' }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['markpace', 'Pace to date (goal x months / 12)'], ['markgoal', 'Annual goal']]),
     h('div', { class: 'bd-legend', text: 'Labels in thousands.' }));
 }
