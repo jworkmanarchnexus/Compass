@@ -64,7 +64,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `POST /api/admin/runs/:id/rebuild`, `/publish`, `/archive` | Admin | rebuild a draft; publish; archive (`{ reason, confirm: "RERUN" }`) and build the next draft |
 | `GET /api/admin/checkins`, `PUT /api/admin/checkins/:id`, `POST /api/admin/checkins/:id/send`, `/dismiss`, `/undo` | Admin | the queue; edit a waiting draft; mark sent; dismiss; undo |
 | `POST /api/admin/daily` | Admin | run the daily checks now |
-| `GET /api/admin/patterns` | Admin | commitment rollups by lever |
+| `GET /api/admin/patterns[?year=YYYY]` | Admin | the commitment analysis for a year |
 
 Errors: `{ "error": "plain-language message" }` with 400 (bad input), 401 (not signed in), 403 (not allowed), 404, 409 (not allowed in the current state, e.g. already published). The messages are written for the person reading them.
 

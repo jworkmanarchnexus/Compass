@@ -173,3 +173,11 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .chk:last-child { border-bottom: 0; }
 .nx { display: flex; justify-content: space-between; gap: var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .nx:last-child { border-bottom: 0; }
+
+/* a PIC with nothing below break-even */
+.great { display: flex; gap: var(--s4); align-items: center; background: var(--ok-bg); color: var(--ok); border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s5); }
+.great h2 { font: 700 20px/1.2 var(--f-cond); margin: 0 0 var(--s1); }
+.great p { margin: 0; color: var(--text-strong); }
+.great-row { padding: var(--s4) var(--s5); color: var(--text-2); }
+
+.verdict { margin: var(--s3) 0; max-width: 80ch; }

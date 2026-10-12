@@ -20,7 +20,7 @@ const TARGETS = [
   ['2025-0266', -34880, -12.6, 150], ['2025-0121', -8640, -14.0, 160], ['2025-0334', -26300, -13.5, 150],
   ['2024-0399', -12780, -8.7, 170],
   // extras: a no-PIC loser, a profitable project (filtered out), and a PIC with a profitable job
-  ['2025-0510', -7300, -9.1, 150], ['2025-0390', 22000, 7.0, 150],
+  ['2025-0510', -7300, -9.1, 150], ['2025-0390', 22000, 7.0, 150], ['2025-0611', 31000, 8.0, 150], // the last is Riley Chen's only project: profitable
 ];
 // projects with special overhead situations: 2025-0455 has two rates (cannot be evaluated), 2025-0522 has no plan at all
 const MIXED = '2025-0455', NO_PLAN = '2025-0522';

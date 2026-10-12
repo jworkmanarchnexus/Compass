@@ -42,4 +42,6 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T15 | The ladder's last step, "Repeat next monthly run", and the monthly summary email | not built | |
 | T16 | Should the Admin be able to see plan content for a project that is not on any run? | yes (any project by link) | |
 | T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |
+| T19 | "Other" in Spend less is counted in dollars (so it can be added up). If a PIC means hours or weeks, they would have to convert. Acceptable? | dollars | `plan.js` LEVERS |
+| T20 | Which measures matter most in Commitment patterns? Today: kept rate, delivered against promised, lead time, dates moved, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |

@@ -27,5 +27,5 @@ export const Checkins = {
   undo(id) { return request('POST', '/api/admin/checkins/' + enc(id) + '/undo', {}); },
   /* record missed commitments and prepare drafts now (the scheduled job does this daily) */
   runDaily() { return request('POST', '/api/admin/daily', {}); },
-  patterns() { return request('GET', '/api/admin/patterns'); },
+  patterns(year) { return request('GET', '/api/admin/patterns' + (year ? '?year=' + year : '')); },
 };

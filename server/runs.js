@@ -30,17 +30,20 @@ function compute(source, period, settings) {
   const result = selection.selectForRun(at(period), settings);
   const listed = new Set(result.included.map(p => p.wbs1));
   const yearStart = Math.floor(period / 100) * 100 + 1;
-  const aggregate = []; const series = []; const byPic = [];
-  const picCodes = [...new Set(result.included.map(p => p.principal))];
+  const aggregate = []; const series = []; const byPic = []; const monthly = [];
   const months = new Set(trailing(period, 12).concat(trailing(period, period - yearStart + 1)));
   for (const p of [...months].sort()) {
     const computed = at(p);
     if (trailing(period, 12).includes(p)) {
       const inc = selection.selectForRun(computed, settings).included;
       aggregate.push({ period: p, negativeYtd: inc.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: inc.length });
-      for (const code of picCodes) { const mine = inc.filter(x => x.principal === code); byPic.push({ pic: code, period: p, negativeYtd: mine.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: mine.length }); }
+      monthly.push({ p, inc });
     }
     if (p >= yearStart) for (const c of computed) if (listed.has(c.wbs1) && c.profit.ytd !== null) series.push({ wbs1: c.wbs1, period: p, profitYtd: c.profit.ytd });
+  }
+  // per PIC, for every PIC who was below the line in any of the 12 months (so the PICs add up to the firm each month)
+  for (const code of new Set(monthly.flatMap(m => m.inc.map(x => x.principal)))) {
+    for (const { p, inc } of monthly) { const mine = inc.filter(x => x.principal === code); byPic.push({ pic: code, period: p, negativeYtd: mine.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: mine.length }); }
   }
   return Object.assign(result, { history: { aggregate, series, byPic } });
 }

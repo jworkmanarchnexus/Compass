@@ -89,6 +89,7 @@ function addEntry(db, user, wbs1, input, today) {
     if (!isValid(input.promisedBy) || input.promisedBy < today) throw new HttpError(400, 'Pick a date that is today or later.');
     if (!plan.LEVERS[input.lever]) throw new HttpError(400, 'Pick one of the actions.');
     entry.data = { promisedBy: input.promisedBy, lever: input.lever, qty: number(input.qty, plan.LEVERS[input.lever].ask) };
+    if (plan.LEVERS[input.lever].other) entry.data.otherText = text(input.otherText, 'What the action is', 120); // "Other" needs its few words
     entry.id = crypto.randomUUID();
     entry.commitmentId = entry.id; // a commitment's id is its own entry's id
   }

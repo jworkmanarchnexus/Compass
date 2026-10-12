@@ -6,7 +6,7 @@ import { renderHome, homeSubtitle } from '/shell/home.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
-import { remindersCards, patternsCard } from '/modules/turnaround/ui/admin.js';
+import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 
 const { configure, Session, Admin, Turnaround, Checkins, Home, ApiError } = platform;
 const T = window.Toolbox;
@@ -202,8 +202,8 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       slot.textContent = '';
       slot.append(...remindersCards(ctx, s, canEdit, rerender));
     } else if (tab === 'patterns') {
-      slot.textContent = '';
-      slot.append(patternsCard(ctx, await Checkins.patterns()));
+      const draw = async year => { const d = await Checkins.patterns(year); slot.textContent = ''; slot.append(...patternsCards(ctx, d, draw)); T.hydrateIcons(slot); };
+      await draw();
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';

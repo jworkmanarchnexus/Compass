@@ -24,8 +24,8 @@ test('the page reproduces the mockup: 16 projects, -$450,040, 8 plans current, 4
   assert.strictEqual(o.kpis.updateDue, 4);
   assert.strictEqual(o.kpis.pastDue, 2);
   assert.strictEqual(o.kpis.noPlan, 2);
-  assert.strictEqual(o.pics.length, 6);
-  assert.deepStrictEqual(o.pics.map(p => [p.name, p.projects.length]).sort(), [['Ben Okafor', 2], ['Dana Whitfield', 4], ['Elena Castellanos', 2], ['Marcus Oyelaran', 3], ['Priya Raman', 3], ['Tom Lindqvist', 2]]);
+  assert.strictEqual(o.pics.length, 7, 'every active PIC, including one with nothing below break-even');
+  assert.deepStrictEqual(o.pics.map(p => [p.name, p.projects.length]).sort(), [['Ben Okafor', 2], ['Dana Whitfield', 4], ['Elena Castellanos', 2], ['Marcus Oyelaran', 3], ['Priya Raman', 3], ['Riley Chen', 0], ['Tom Lindqvist', 2]]);
   const expected = { '2024-0207': ['overdue', 11], '2025-0173': ['overdue', 7], '2025-0412': ['update_due', 0], '2024-0356': ['update_due', 0], '2025-0144': ['update_due', 0], '2025-0121': ['update_due', 0], '2025-0230': ['no_plan', 0], '2024-0399': ['no_plan', 0], '2025-0187': ['current', 0], '2025-0098': ['current', 0] };
   for (const [wbs1, [status, days]] of Object.entries(expected)) assert.deepStrictEqual([statusOf(o, wbs1).status, statusOf(o, wbs1).daysOverdue], [status, days], wbs1);
 }));
@@ -75,7 +75,7 @@ test('the lever, the number and the actual result are for the Admin only', () =>
   const overview = JSON.stringify((await api('d.whitfield').get('/api/turnaround/current')).body);
   for (const secret of ['"lever"', '"qty"', '"actual"']) assert.ok(!overview.includes(secret), secret);
   // the form's list of actions goes to the PIC who writes and the admin, not to readers
-  assert.ok((await api('d.whitfield').get('/api/projects/2025-0412/plan')).body.levers.length === 8);
+  assert.ok((await api('d.whitfield').get('/api/projects/2025-0412/plan')).body.levers.length === 10, 'eight actions and an Other in each group');
   assert.strictEqual((await api('t.lindqvist').get('/api/projects/2025-0412/plan')).body.levers.length, 0);
 }));
 
@@ -307,7 +307,7 @@ test('a PIC who just wrote something is left alone, and a project with no plan i
 
 test('who sees each PIC\'s on-time and kept figures is an Admin switch; everyone always sees their own', () => withDemo(async ({ api }) => {
   const josh = api('j.workman');
-  const rec = async who => (await api(who).get('/api/turnaround/current')).body.pics.map(p => [p.name, p.record !== null]);
+  const rec = async who => (await api(who).get('/api/turnaround/current')).body.pics.filter(p => p.projects.length).map(p => [p.name, p.record !== null]);
   assert.ok((await rec('d.whitfield')).every(([, shown]) => shown), 'everyone, by default');
   await josh.put('/api/admin/settings', { changes: { 'visibility.picRecords': 'admin' } });
   assert.deepStrictEqual((await rec('d.whitfield')).filter(([, s]) => s).map(([n]) => n), ['Dana Whitfield'], 'a PIC sees only their own');
@@ -332,14 +332,49 @@ test('the record numbers come from the log: on time, kept, and a standing label'
   assert.strictEqual(airfield.latest.text, 'Owner rejected the first revised budget. Waiting on our second version.');
 }));
 
-test('commitment patterns: the lever rollups are the Admin\'s alone', () => withDemo(async ({ api }) => {
+test('commitment patterns: the analysis on the demo year, and the Admin alone sees it', () => withDemo(async ({ api }) => {
   const r = await api('j.workman').get('/api/admin/patterns');
   assert.strictEqual(r.status, 200);
-  assert.strictEqual(r.body.length, 8);
-  const fee = r.body.find(x => x.lever === 'fee');
-  assert.ok(fee.count >= 5 && fee.promised > 0);
-  assert.strictEqual(r.body.reduce((s, x) => s + x.count, 0), r.body.reduce((s, x) => s + x.open + x.kept + x.notKept, 0));
+  const p = r.body;
+  assert.strictEqual(p.year, 2026);
+  assert.deepStrictEqual(p.years, [2026]);
+  assert.strictEqual(p.total, 19);
+  const rd = v => Math.round(v * 1000) / 1000;
+  assert.deepStrictEqual([p.groups.money.made, p.groups.spend.made], [12, 7], 'bring in money 12, spend less 7');
+  assert.deepStrictEqual([p.groups.money.resolved, p.groups.money.kept, p.groups.money.keptRate], [2, 0, 0], 'two money commitments resolved, both missed');
+  assert.deepStrictEqual([p.groups.spend.resolved, p.groups.spend.kept, rd(p.groups.spend.keptRate)], [3, 2, 0.667]);
+  const act = k => p.actions.find(a => a.lever === k);
+  assert.deepStrictEqual([act('fee').made, act('hours').made, act('hours').kept, act('hours').unit], [6, 5, 2, 'hours']);
+  assert.strictEqual(p.actions.length, 10);
+  assert.deepStrictEqual([p.responsiveness.listed, p.responsiveness.withExplanation, p.responsiveness.withCommitment], [16, 14, 14]);
+  assert.strictEqual(p.offList.cameOff, 0);
+  assert.strictEqual(p.months.length, 12);
+  assert.strictEqual(p.picNames.E101, 'Dana Whitfield');
+  assert.strictEqual((await api('j.workman').get('/api/admin/patterns?year=2025')).body.total, 0, 'another year, nothing yet');
   for (const who of ['d.whitfield', 'm.hale', 'c.brandt', 'kent']) assert.strictEqual((await api(who).get('/api/admin/patterns')).status, 403, who);
+}));
+
+test('"Other": a fill-in-the-blank action in each group, kept for the Admin and never shown to a PIC', () => withDemo(async ({ api }) => {
+  const dana = api('d.whitfield'); const josh = api('j.workman');
+  const post = body => dana.post('/api/projects/2025-0412/plan/entries', Object.assign({ kind: 'commitment', body: 'Send the amendment', promisedBy: '2026-10-30', qty: 5000 }, body));
+  assert.strictEqual((await post({ lever: 'other_money' })).status, 400, 'Other needs its few words');
+  assert.strictEqual((await post({ lever: 'other_money', otherText: '   ' })).status, 400);
+  assert.strictEqual((await post({ lever: 'other_money', otherText: 'x'.repeat(121) })).status, 400);
+  assert.strictEqual((await post({ lever: 'other_money', otherText: 'Sell the model' })).status, 201);
+  assert.strictEqual((await post({ lever: 'other_spend', otherText: 'Share a consultant with another job', qty: 1200 })).status, 201);
+  assert.strictEqual((await post({ lever: 'fee', otherText: 'ignored for a named action' })).status, 201);
+
+  const page = (await josh.get('/api/projects/2025-0412/plan')).body;
+  const labels = page.commitments.map(c => c.leverLabel);
+  assert.ok(labels.includes('Other: Sell the model') && labels.includes('Other: Share a consultant with another job'));
+  assert.ok(labels.includes('Request additional services fee'), 'a named action keeps its own name');
+  const asPic = JSON.stringify((await dana.get('/api/projects/2025-0412/plan')).body.commitments) + JSON.stringify((await dana.get('/api/projects/2025-0412/plan')).body.entries);
+  assert.ok(!asPic.includes('Sell the model') && !asPic.includes('otherText'), 'the words stay with the Admin');
+
+  const pat = (await josh.get('/api/admin/patterns')).body;
+  assert.deepStrictEqual(pat.others.map(o => [o.text, o.group]), [['Sell the model', 'money'], ['Share a consultant with another job', 'spend']]);
+  assert.strictEqual(pat.actions.find(a => a.lever === 'other_money').made, 1);
+  assert.strictEqual(pat.actions.find(a => a.lever === 'other_spend').unit, 'dollars');
 }));
 
 test('settings that must agree with each other are checked together', () => withDemo(async ({ api }) => {
@@ -373,8 +408,9 @@ test('"Just mine" has its own chart history: each PIC\'s months add up to the fi
   assert.deepStrictEqual(dana.history.filter(h => h.lastYear).map(h => h.period), [202510, 202511, 202512]);
   assert.notDeepStrictEqual(dana.history.map(h => h.negativeYtd), o.history.map(h => h.negativeYtd), 'not the firm\'s line');
   o.history.forEach((firm, i) => {
-    assert.strictEqual(o.pics.reduce((s, p) => s + p.history[i].negativeYtd, 0), firm.negativeYtd, `month ${firm.period}: the PICs add up to the firm`);
-    assert.strictEqual(o.pics.reduce((s, p) => s + p.history[i].belowCount, 0), firm.belowCount);
+    const h = p => p.history[i] || { negativeYtd: 0, belowCount: 0 }; // a PIC with nothing below break-even has no history
+    assert.strictEqual(o.pics.reduce((s, p) => s + h(p).negativeYtd, 0), firm.negativeYtd, `month ${firm.period}: the PICs add up to the firm`);
+    assert.strictEqual(o.pics.reduce((s, p) => s + h(p).belowCount, 0), firm.belowCount);
   });
   const id = db.get("SELECT id FROM runs WHERE status = 'published' ORDER BY period DESC").id;
   assert.throws(() => db.run('UPDATE run_pic_history SET negative_ytd = 0 WHERE run_id = ?', id), /locked/);
@@ -385,8 +421,21 @@ test('PICs are listed from the biggest total loss to the smallest', () => withDe
   const o = (await api('j.workman').get('/api/turnaround/current')).body;
   const totals = o.pics.map(p => p.totals.profit);
   assert.deepStrictEqual(totals, totals.slice().sort((a, b) => a - b), 'most negative first');
-  assert.deepStrictEqual(o.pics.map(p => p.name), ['Tom Lindqvist', 'Marcus Oyelaran', 'Dana Whitfield', 'Priya Raman', 'Elena Castellanos', 'Ben Okafor']);
+  assert.deepStrictEqual(o.pics.map(p => p.name), ['Tom Lindqvist', 'Marcus Oyelaran', 'Dana Whitfield', 'Priya Raman', 'Elena Castellanos', 'Ben Okafor', 'Riley Chen']);
   // everyone gets the same order, and projects inside a PIC still go worst first
   assert.deepStrictEqual((await api('d.whitfield').get('/api/turnaround/current')).body.pics.map(p => p.name), o.pics.map(p => p.name));
   for (const p of o.pics) assert.deepStrictEqual(p.projects.map(x => x.profit.ytd), p.projects.map(x => x.profit.ytd).slice().sort((a, b) => a - b));
+}));
+
+test('a PIC with nothing below break-even is on the page, with no projects and no record', () => withDemo(async ({ api }) => {
+  for (const who of ['j.workman', 'r.chen', 'd.whitfield']) {
+    const o = (await api(who).get('/api/turnaround/current')).body;
+    const riley = o.pics.find(p => p.name === 'Riley Chen');
+    assert.ok(riley, who + ' can see her');
+    assert.deepStrictEqual([riley.projects.length, riley.totals.profit, riley.record], [0, 0, null]);
+    assert.strictEqual(riley.history[11].negativeYtd, 0, 'nothing below the line this month');
+    assert.strictEqual(o.pics[o.pics.length - 1].name, 'Riley Chen', 'last, after everyone with a loss');
+  }
+  assert.strictEqual((await api('r.chen').get('/api/turnaround/current')).body.viewer.picCode, 'E108', 'so her page can say she is the one with nothing to fix');
+  assert.strictEqual((await api('r.chen').get('/api/home')).body.yours.projects.length, 0);
 }));

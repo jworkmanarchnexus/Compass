@@ -11,6 +11,7 @@ const schedule = require('../modules/turnaround/logic/schedule');
 const { daysBetween, isWeekday, year } = require('../modules/turnaround/logic/dates');
 const runsDb = require('./runs');
 const planDb = require('./plan');
+const patterns = require('../modules/turnaround/logic/patterns');
 
 const REMARK_KINDS = ["explanation", "update", "correction"]; // what "latest update" can show: the PIC's narrative, not a commitment
 
@@ -20,6 +21,9 @@ function directory(db) {
   const userById = Object.fromEntries(db.all('SELECT * FROM users').map(u => [u.id, u]));
   return { emp, userByCode, userById, name: code => (code ? emp[code] || code : 'Unassigned') };
 }
+
+/* "Other: sell the model" for an Other action; the plain label otherwise */
+const leverLabel = (lever, data) => (lever.other ? `Other: ${data.otherText || ''}`.trim() : lever.label);
 
 const cycleEntries = (entries, today) => entries.filter(e => year(e.date) === year(today));
 
@@ -75,6 +79,11 @@ function buildOverview(db, runId, viewer, { today, settings }) {
     };
   });
 
+  // a PIC with no project below break-even is still listed (the page tells them they are doing a great job)
+  for (const u of db.all("SELECT * FROM users WHERE role = 'pic' AND active = 1 AND employee_code IS NOT NULL")) {
+    if (picsByCode.has(u.employee_code)) continue;
+    pics.push({ code: u.employee_code, name: u.display_name, userId: u.id, projects: [], totals: { profit: 0, billed: 0 }, plansCurrent: { current: 0, total: 0 }, history: (picHist[u.employee_code] || []).map(h => Object.assign({}, h, { lastYear: h.period < yearStart0 })), record: null });
+  }
   // the biggest loss first: PICs are ordered by their total YTD profit (most negative at the top), then by name
   pics.sort((x, y) => x.totals.profit - y.totals.profit || x.name.localeCompare(y.name));
 
@@ -133,7 +142,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     if (isAdmin) {
       const lever = plan.LEVERS[e.data.lever] || {};
       const doneE = inCycle.find(x => x.kind === 'done' && x.commitmentId === s.id);
-      Object.assign(c, { lever: e.data.lever, leverLabel: lever.label, unit: lever.unit, qty: e.data.qty, actual: doneE ? doneE.data.actual : null });
+      Object.assign(c, { lever: e.data.lever, leverLabel: leverLabel(lever, e.data), unit: lever.unit, qty: e.data.qty, actual: doneE ? doneE.data.actual : null });
     }
     return c;
   }).sort((a, b) => (a.status === 'open' ? 0 : 1) - (b.status === 'open' ? 0 : 1) || (a.status === 'open' ? a.dueDate.localeCompare(b.dueDate) : b.closedDate.localeCompare(a.closedDate)));
@@ -152,7 +161,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     if (e.commitmentId && e.kind !== 'commitment') { const c = byId.get(e.commitmentId); out.commitmentText = c ? c.body : ''; }
     if (e.correctsEntryId) { const o = byId.get(e.correctsEntryId) || all.find(x => x.id === e.correctsEntryId); out.correctsKind = o ? o.kind : null; out.correctsDate = o ? o.date : null; }
     if (isAdmin) {
-      if (e.kind === 'commitment') { const lv = plan.LEVERS[e.data.lever] || {}; Object.assign(out, { lever: e.data.lever, leverLabel: lv.label, unit: lv.unit, qty: e.data.qty }); }
+      if (e.kind === 'commitment') { const lv = plan.LEVERS[e.data.lever] || {}; Object.assign(out, { lever: e.data.lever, leverLabel: leverLabel(lv, e.data), unit: lv.unit, qty: e.data.qty }); }
       if (e.kind === 'done') out.actual = e.data.actual;
     }
     return out;
@@ -177,7 +186,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     commitments, entries, facts, series,
     // what the PIC may add right now: only the explanation until it exists, then updates and commitments
     can: { kinds: addKinds, addEntry: addKinds.length > 0, adminNote: isAdmin },
-    levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, ask: l.ask })) : [],
+    levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, ask: l.ask, other: !!l.other })) : [],
   };
 }
 
@@ -286,23 +295,27 @@ function dailyChecks(db, { today, settings, mailer, baseUrl, adminEmails }) {
   return out;
 }
 
-/* ---- Commitment patterns (Admin only: this is where the lever and the number are visible) ---- */
-function commitmentPatterns(db, { today }) {
-  const wbs = db.all("SELECT DISTINCT wbs1 FROM plan_entries WHERE kind = 'commitment' AND entry_date >= ?", `${year(today)}-01-01`).map(r => r.wbs1);
-  const map = planDb.entriesByProject(db, wbs);
-  const rows = Object.fromEntries(Object.entries(plan.LEVERS).map(([k, l]) => [k, { lever: k, label: l.label, group: l.group, unit: l.unit, count: 0, open: 0, kept: 0, notKept: 0, promised: 0, actual: 0 }]));
-  for (const all of map.values()) {
-    const cyc = cycleEntries(all, today);
-    for (const s of plan.commitmentStates(cyc)) {
-      const e = cyc.find(x => x.id === s.id);
-      const r = rows[e.data.lever]; if (!r) continue;
-      r.count++; r.promised += e.data.qty;
-      if (s.status === 'open') r.open++; else if (s.kept) r.kept++; else r.notKept++;
-      const d = cyc.find(x => x.kind === 'done' && x.commitmentId === s.id);
-      if (d) r.actual += d.data.actual;
-    }
-  }
-  return Object.values(rows);
+/* ---- Commitment patterns (Admin only: the one place a commitment's action and amount are analysed) ----
+   Everything is worked out from the plan log and the runs, so nothing separate is recorded and nothing can be lost. */
+function commitmentPatterns(db, { today, year: wanted }) {
+  const y = wanted || year(today);
+  const entries = db.all('SELECT * FROM plan_entries WHERE entry_date >= ? AND entry_date <= ? ORDER BY created_at', `${y}-01-01`, `${y}-12-31`)
+    .map(r => Object.assign(planDb.rowToEntry(r), { wbs1: r.wbs1 }));
+  const picOf = Object.fromEntries(db.all('SELECT wbs1, principal FROM projects').map(p => [p.wbs1, p.principal]));
+  const appeared = planDb.firstAppeared(db);
+  const dir = directory(db);
+
+  // the projects that were on a published run this year, and which of them are still on the latest one
+  const runs = runsDb.allRuns(db).filter(r => r.kind === runsDb.KIND && r.status === 'published' && Math.floor(r.period / 100) === y);
+  const inRun = new Map();
+  for (const r of runs) for (const p of db.all('SELECT wbs1 FROM run_projects WHERE run_id = ?', r.id)) inRun.set(p.wbs1, true);
+  const latest = runs.slice().sort((p, q) => q.period - p.period || q.version - p.version)[0];
+  const latestSet = new Set(latest ? db.all('SELECT wbs1 FROM run_projects WHERE run_id = ?', latest.id).map(p => p.wbs1) : []);
+  const listed = [...inRun.keys()].map(wbs1 => ({ wbs1, pic: picOf[wbs1] || '', appeared: appeared.get(wbs1) || `${y}-01-01` }));
+  const out = patterns.analyze({ year: y, entries, listed, cameOff: listed.filter(p => !latestSet.has(p.wbs1)).map(p => p.wbs1), stillOn: listed.filter(p => latestSet.has(p.wbs1)).map(p => p.wbs1), picOf });
+  const years = [...new Set(db.all('SELECT DISTINCT substr(entry_date, 1, 4) AS y FROM plan_entries').map(r => Number(r.y)).concat(year(today)))].sort().reverse();
+  const names = {}; for (const p of out.pics) names[p.pic] = dir.name(p.pic);
+  return Object.assign(out, { years, picNames: names, latestRun: latest ? schedule.periodLabel(latest.period) : null });
 }
 
 module.exports = { buildOverview, buildPlanPage, listCheckins, setDraftStatus, editDraft, dailyChecks, waitingCount, commitmentPatterns, directory };

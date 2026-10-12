@@ -122,7 +122,7 @@ function canWrite(role, kind, isProjectPic) {
   return false; // 'missed' is written only by the system
 }
 
-/* the eight levers. The unit says what the commitment's one number means. Shown to the admin only. */
+/* the levers: eight named actions and an "Other" in each group. The unit says what the commitment's one number means. Shown to the admin only. */
 const LEVERS = {
   fee: { label: 'Request additional services fee', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
   co: { label: 'Submit a change order', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
@@ -132,6 +132,9 @@ const LEVERS = {
   staff: { label: 'Move work to lower-cost staff', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
   cons: { label: 'Reduce consultant cost', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
   sched: { label: 'Shorten the schedule', group: 'spend', unit: 'weeks', ask: 'Weeks you will cut' },
+  // "Other": the PIC writes in what it is. Dollars, so it can be added to the totals; the typed words are kept in the commitment.
+  other_money: { label: 'Other', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in', other: true },
+  other_spend: { label: 'Other', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save', other: true },
 };
 
 module.exports = { PIC_KINDS, LEVERS, commitmentStates, commitmentsToMiss, planStatus, onTimeStats, keptStats, standing, canWrite };

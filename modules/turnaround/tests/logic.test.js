@@ -59,6 +59,33 @@ test('schedule: last closed month, first business day, labels', () => {
   for (const c of schedFx.lastDayOfPeriod) assert.strictEqual(sched.lastDayOfPeriod(c.period), c.expect, String(c.period));
 });
 
+/* ---- commitment patterns (the Admin's analysis) ---- */
+const { analyze } = require('../logic/patterns');
+const patFx = require('./fixtures/patterns.json');
+const rd = (v, d) => (v === null || v === undefined ? v : Math.round(v * 10 ** d) / 10 ** d);
+test('commitment patterns: every number in the hand-worked case', () => {
+  const out = analyze(patFx.input);
+  const e = patFx.expect;
+  assert.strictEqual(out.total, e.total);
+  const check = (got, want, label) => {
+    for (const [k, v] of Object.entries(want)) {
+      const g = typeof v === 'number' && !Number.isInteger(v) ? rd(got[k], k.startsWith('avg') ? 1 : 3) : got[k];
+      assert.strictEqual(typeof v === 'number' && k.startsWith('avg') ? rd(got[k], 1) : g, v, `${label}: ${k}`);
+    }
+  };
+  for (const [g, want] of Object.entries(e.groups)) check(out.groups[g], want, 'group ' + g);
+  for (const [a, want] of Object.entries(e.actions)) check(out.actions.find(x => x.lever === a), want, 'action ' + a);
+  for (const [p, want] of Object.entries(e.pics)) check(out.pics.find(x => x.pic === p), want, 'pic ' + p);
+  for (const [m, want] of Object.entries(e.months)) check(out.months[Number(m) - 1], want, 'month ' + m);
+  check(out.responsiveness, e.responsiveness, 'responsiveness');
+  check(out.offList, e.offList, 'offList');
+  assert.deepStrictEqual(out.others, e.others);
+  const none = analyze(patFx.empty);
+  assert.strictEqual(none.total, 0);
+  assert.strictEqual(none.groups.money.keptRate, null, 'no rate invented from nothing');
+  assert.strictEqual(none.responsiveness.updatesPerProject, null);
+});
+
 /* ---- phase 3: the plan log, plan status, standing, drafts ---- */
 const plan = require('../logic/plan');
 const drafts = require('../logic/drafts');

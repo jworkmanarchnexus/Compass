@@ -65,6 +65,7 @@ function addForm(ctx, data, st, adminOnly) {
   const qty = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:140px', 'aria-label': 'Amount' });
   const qtyLabel = h('label', { class: 'fl', text: '' });
   const leverBox = h('div', { class: 'levers' });
+  const otherText = h('input', { class: 'txt', type: 'text', maxlength: '120', style: 'max-width:420px', 'aria-label': 'What is the other action?', placeholder: 'In a few words, what will you do?' });
   const prompt = h('label', { class: 'fl' });
   const submit = h('button', { class: 'btn primary', type: 'button', text: adminOnly ? 'Add admin note' : 'Add to log' });
 
@@ -88,8 +89,9 @@ function addForm(ctx, data, st, adminOnly) {
     leverBox.textContent = '';
     for (const [group, title] of [['money', 'Bring in money'], ['spend', 'Spend less']]) {
       leverBox.append(h('div', { class: 'lever-group' }, h('div', { class: 'muted small strong', text: title }),
-        h('div', { class: 'pills' }, ...data.levers.filter(l => l.group === group).map(l => h('button', { type: 'button', class: 'pill', 'aria-pressed': String(s.lever === l.key), text: l.label, onclick: () => { s.lever = l.key; qtyLabel.textContent = l.ask; drawLevers(); } })))));
+        h('div', { class: 'pills' }, ...data.levers.filter(l => l.group === group).map(l => h('button', { type: 'button', class: 'pill', 'aria-pressed': String(s.lever === l.key), text: l.label, onclick: () => { s.lever = l.key; s.other = !!l.other; qtyLabel.textContent = l.ask; drawLevers(); } })))));
     }
+    if (s.other) leverBox.append(h('div', {}, h('label', { class: 'fl', text: 'Other: what is it?' }), otherText));
     if (!s.lever) qtyLabel.textContent = 'Pick an action first';
   }
   submit.addEventListener('click', async () => {
@@ -99,6 +101,7 @@ function addForm(ctx, data, st, adminOnly) {
       if (!s.lever) return fail('Pick one of the actions.');
       const q = Number(String(qty.value).replace(/[$,\s]/g, ''));
       Object.assign(entry, { promisedBy: promised.value, lever: s.lever, qty: qty.value.trim() === '' ? NaN : q });
+      if (s.other) { if (!otherText.value.trim()) return fail('Fill in the line for Other: say in a few words what you will do.'); entry.otherText = otherText.value; }
       if (Number.isNaN(entry.qty)) return fail('Enter your best estimate. Zero is fine.');
     }
     submit.disabled = true;

@@ -58,7 +58,7 @@ Entries belong to the **project**, not to a run. The log is **append-only**: no 
 
 Entry kinds: `explanation`, `commitment`, `update`, `done`, `date_revised` (all written by the PIC; `correction` exists only in older entries: a PIC who got something wrong adds an update that says so); `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system).
 
-- **Commitment**: text, a "promised by" date (today or later), **one** action (lever) from eight, and **one** number ("your best estimate is fine"; zero is allowed). The eight levers: *Bring in money*: request additional services fee; submit a change order; renegotiate the fee; speed up billing or collection. *Spend less*: reduce staffing hours; move work to lower-cost staff; reduce consultant cost; shorten the schedule. The number's unit is dollars, hours or weeks by lever. Lever, number and the actual result are visible to the Admin only.
+- **Commitment**: text, a "promised by" date (today or later), **one** action (lever) from eight, and **one** number ("your best estimate is fine"; zero is allowed). The levers: *Bring in money*: request additional services fee; submit a change order; renegotiate the fee; speed up billing or collection; **Other**. *Spend less*: reduce staffing hours; move work to lower-cost staff; reduce consultant cost; shorten the schedule; **Other**. **Other** gives the PIC a fill-in line (a few words, up to 120 characters, required) and its number is in dollars (so it can be added to the totals). The words are kept with the commitment and shown to the Admin only. The number's unit is dollars, hours or weeks by lever. Lever, number and the actual result are visible to the Admin only.
 - **Mark done** asks what happened and the actual result (zero allowed). Done on or before the commitment's current date counts as **kept**; after it, **done late** (not kept).
 - **Change date** needs a reason and a new date (today or later, different from the current one). Every earlier date stays on record.
 - **Missed** is recorded by the daily job when an open commitment's current date has passed by `due.missedAfterDays` (default 14) days. (**Chosen**: the mockup's own examples disagree.)
@@ -110,9 +110,23 @@ One page for everyone (the server removes what a viewer may not see). The Admin 
 - **KPI strip:** total negative YTD profit and % of billed (with project count); plans current X of N; waiting on an update (past due + no plan, with the count of check-in drafts ready for the Admin); and since last month (projects off, new, improved, worse against the previous published run).
 - **Charts:** total negative YTD profit at each month end for 12 months (last year's months in grey) and the count of projects below break-even. Under "Just mine" both charts show that PIC's own projects (stored per run), not the firm's.
 - **A card per PIC**, ordered by the PIC's total YTD profit, biggest loss first: projects, total YTD profit and %, plans current (bar), on time %, kept x of y, standing (per visibility); a table of projects with profit YTD, plan chip, latest narrative update, next commitment (open / past due N days / date moved) and "N earlier commitments missed".
-- **PIC viewers** get a Just mine / Everyone toggle (default Just mine) and their own four numbers.
+- **PIC viewers** get a Just mine / Everyone toggle (default Just mine); "Just mine" shows their own four numbers and their own two charts.
+- **The Admin** gets Everyone, or a drop-down of the PICs; picking one shows that PIC's numbers and charts the way "Just mine" shows a PIC's own.
+- **Every active PIC is on the page.** A PIC with no project below break-even has a card that says they have none and are doing a great job; on "Just mine" they see a congratulation instead of numbers. Cards are ordered by total loss, so these come last.
 - **Plan page** (one project): add to the log (PIC: the explanation first, then updates and commitments) or an admin note (Admin); the log newest first; commitments with Mark done and Change date; the year-to-date profit by month; project facts; a legend. Past cycles are read-only.
 - **Check-in drafts** page (Admin) and a sidebar count badge.
+
+## 9a. Commitment patterns (Admin only)
+
+A background analysis of what PICs commit to and what comes of it, in Admin > Commitment patterns, with a year picker. **Nothing extra is recorded**: it is worked out from the append-only plan log and the runs, so it cannot drift and old years stay available (pure rule, `modules/turnaround/logic/patterns.js`, pinned by `fixtures/patterns.json`). It shows:
+
+- **Cutting cost or adding revenue?** Bring in money against Spend less: made, open, kept, done late, missed, kept rate (kept / finished), delivered against promised (dollars only, since hours and weeks cannot be added to dollars), typical days promised ahead, and how often the date moved. A plain sentence says which is kept more often, and warns when fewer than 10 finished commitments stand behind either side.
+- **By action** (all ten), **by PIC** (how often they commit, follow through, move dates, and their mix of money and spend-less), and **over the year** by month.
+- **How quickly projects are answered:** projects with an explanation and with a commitment, days from first appearing to the explanation, days from the explanation to the first commitment, and updates per project.
+- **Projects that came off the list:** what share of projects that left the list (against those still on it) had a kept commitment, by kind. It shows what went with a project leaving, not what caused it.
+- **What PICs typed under Other:** the words, so a recurring one can be given its own place on the list.
+
+Definitions: a commitment is *finished* when it is done or missed; *kept* is done on or before its (current) date. A rate is blank until something has finished.
 
 ## 10. Daily job
 

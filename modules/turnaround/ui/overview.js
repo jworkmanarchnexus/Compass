@@ -15,48 +15,68 @@ export function planChip({ h }, plan) {
 
 const STANDING = { good: ['ok', 'Good standing'], needs_attention: ['warn', 'Needs attention'], escalated: ['crit', 'Escalated'] };
 
-export function renderOverview(ctx, container, data, opts) {
-  const { h, icon } = ctx;
-  const o = opts || {};
+const first = name => name.split(' ')[0];
+
+export function renderOverview(ctx, container, data) {
+  const { h } = ctx;
   const me = data.viewer;
-  const isPic = me.role === 'pic';
-  const mineExists = isPic && data.pics.some(p => p.code === me.picCode);
-  let scope = mineExists ? 'mine' : 'all';
+  const isAdmin = me.role === 'admin';
+  const mineExists = me.role === 'pic' && data.pics.some(p => p.code === me.picCode);
+  let focus = mineExists ? me.picCode : null; // null = everyone; otherwise one PIC's code
   const holder = h('div', { class: 'stack' });
-  const toggle = h('div', { class: 'seg', role: 'group', 'aria-label': 'Whose projects' });
+  const controls = h('div', { class: 'ov-head' });
   const paint = () => {
     holder.textContent = '';
-    toggle.textContent = '';
+    controls.textContent = '';
     if (mineExists) {
-      for (const [k, label] of [['mine', 'Just mine'], ['all', 'Everyone']]) toggle.append(h('button', { type: 'button', 'aria-pressed': String(scope === k), text: label, onclick: () => { scope = k; paint(); } }));
+      controls.append(h('div', { class: 'seg', role: 'group', 'aria-label': 'Whose projects' },
+        ...[[me.picCode, 'Just mine'], [null, 'Everyone']].map(([code, label]) => h('button', { type: 'button', 'aria-pressed': String(focus === code), text: label, onclick: () => { focus = code; paint(); } }))));
+    } else if (isAdmin && data.pics.length) {
+      const pick = h('select', { class: 'txt', style: 'width:220px', 'aria-label': 'Show one PIC', onchange: e => { focus = e.target.value || null; paint(); } },
+        h('option', { value: '', text: 'Pick a PIC…', selected: focus === null }),
+        ...data.pics.slice().sort((x, y) => x.name.localeCompare(y.name)).map(p => h('option', { value: p.code, text: p.name, selected: p.code === focus })));
+      controls.append(h('div', { class: 'seg', role: 'group', 'aria-label': 'Whose projects' }, h('button', { type: 'button', 'aria-pressed': String(focus === null), text: 'Everyone', onclick: () => { focus = null; paint(); } })), pick);
     }
-    const pics = scope === 'mine' ? data.pics.filter(p => p.code === me.picCode) : data.pics;
-    holder.append(kpiStrip(ctx, data, scope === 'mine' ? pics[0] : null), chartRow(ctx, data, scope === 'mine' ? pics[0] : null));
-    for (const p of pics) holder.append(picCard(ctx, p, data, scope === 'mine'));
-    if (!pics.length) holder.append(h('div', { class: 'empty-note', text: 'No projects are below break-even.' }));
+    const pic = focus !== null ? data.pics.find(p => p.code === focus) : null;
+    const self = !!pic && me.role === 'pic' && pic.code === me.picCode;
+    const who = self ? 'Your' : pic ? `${first(pic.name)}'s` : null;
+    if (pic && !pic.projects.length) holder.append(greatJob(ctx, pic, self));
+    else if (pic) holder.append(kpiStrip(ctx, data, pic, who), chartRow(ctx, data, pic, who), picCard(ctx, pic));
+    else {
+      holder.append(kpiStrip(ctx, data, null), chartRow(ctx, data, null));
+      for (const p of data.pics) holder.append(picCard(ctx, p));
+    }
+    if (!data.pics.length) holder.append(h('div', { class: 'empty-note', text: 'No projects are below break-even.' }));
     ctx.T.hydrateIcons(holder);
   };
-  container.append(h('div', { class: 'ov-head' }, mineExists ? toggle : null), holder);
+  container.append(controls, holder);
   paint();
-  void icon; void o;
+}
+
+/* a PIC with nothing below break-even this year */
+function greatJob(ctx, pic, self) {
+  const { h, icon } = ctx;
+  return h('section', { class: 'great' }, icon('circle-check', 28),
+    h('div', {}, h('h2', { text: self ? 'All of your projects are profitable' : `${first(pic.name)} has no projects below break-even` }),
+      h('p', { text: self ? 'Every one of your projects is profitable year to date. Great job!' : `${pic.name} has no projects below break-even this year. Doing a great job!` })));
 }
 
 function kpi({ h }, label, big, sub, extra) {
   return h('div', { class: 'kpi' }, h('div', { class: 'k-label', text: label }), h('div', { class: 'k-big', text: big }), h('div', { class: 'k-sub' }, sub, extra || null));
 }
 
-function kpiStrip(ctx, data, mine) {
+function kpiStrip(ctx, data, mine, who) {
   const { h } = ctx;
   const k = data.kpis;
   if (mine) {
     const needs = mine.projects.filter(p => p.plan.status === 'overdue' || p.plan.status === 'no_plan').length;
     const r = mine.record;
     return h('div', { class: 'kpis' },
-      kpi(ctx, 'Your negative YTD profit', fmtCents(mine.totals.profit), `${fmtLoss(100 * mine.totals.profit / mine.totals.billed)} of ${fmtCents(mine.totals.billed)} billed, ${plural(mine.projects.length, 'project')}`),
+      kpi(ctx, `${who} negative YTD profit`, fmtCents(mine.totals.profit), `${fmtLoss(100 * mine.totals.profit / mine.totals.billed)} of ${fmtCents(mine.totals.billed)} billed, ${plural(mine.projects.length, 'project')}`),
       kpi(ctx, 'Plans current', `${mine.plansCurrent.current} of ${mine.plansCurrent.total}`, 'Open commitment, entry in the last 30 days, nothing past due'),
       kpi(ctx, 'Need action', String(needs), needs ? 'Past due or no plan yet' : 'Nothing is past due'),
-      r ? kpi(ctx, 'Your record', r.pctOnTime === null ? 'No record yet' : `${fmtWholePct(r.pctOnTime)} on time`,
-        `${r.onTime.onTime} of ${r.onTime.total} updates on time, ${r.kept.kept} of ${r.kept.resolved} commitments kept`) : kpi(ctx, 'Your record', '-', 'Not shown'));
+      r ? kpi(ctx, `${who} record`, r.pctOnTime === null ? 'No record yet' : `${fmtWholePct(r.pctOnTime)} on time`,
+        `${r.onTime.onTime} of ${r.onTime.total} updates on time, ${r.kept.kept} of ${r.kept.resolved} commitments kept`) : kpi(ctx, `${who} record`, '-', 'Not shown'));
   }
   const s = data.since;
   const waiting = k.pastDue + k.noPlan;
@@ -70,10 +90,10 @@ function kpiStrip(ctx, data, mine) {
       : kpi(ctx, 'Since last month', '-', 'This is the first run'));
 }
 
-function chartRow(ctx, data, mine) {
+function chartRow(ctx, data, mine, who) {
   const { h } = ctx;
   const hist = mine ? mine.history : data.history;
-  if (!hist.length) return mine ? h('div', { class: 'empty-note', text: 'The charts for your own projects are not available for this run. Switch to Everyone to see the firm-wide charts.' }) : h('div', {});
+  if (!hist.length) return mine ? h('div', { class: 'empty-note', text: 'The charts for this PIC\'s projects are not available for this run. Switch to Everyone to see the firm-wide charts.' }) : h('div', {});
   const years = new Set();
   const pts = hist.map((p, i) => {
     const first = i === 0 || p.period % 100 === 1;
@@ -90,17 +110,22 @@ function chartRow(ctx, data, mine) {
     { fmt: v => String(v), aria: 'Projects below break-even at each month end, last 12 months', ticks: 4 });
   return h('div', { class: 'charts' },
     h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? 'Your negative YTD profit' : 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
+      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? `${who} negative YTD profit` : 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
         h('div', { class: 'chart-num' }, h('strong', { text: fmtK(last.negativeYtd).replace('+', '') }), prev ? h('span', { class: 'muted', text: `${fmtK(Math.abs(deeper)).replace('+', '')} ${deeper <= 0 ? 'deeper' : 'shallower'} than ${prevName}` }) : null)),
       bars),
     h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? 'Your projects below break-even' : 'Projects below break-even' }), h('p', { class: 'muted', text: mine ? 'Your active projects below $0 YTD at each month end.' : 'Active projects below $0 YTD at each month end.' })),
+      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? `${who} projects below break-even` : 'Projects below break-even' }), h('p', { class: 'muted', text: mine ? 'Active projects below $0 YTD at each month end.' : 'Active projects below $0 YTD at each month end.' })),
         h('div', { class: 'chart-num' }, h('strong', { text: String(last.belowCount) }), prev ? h('span', { class: 'muted', text: fewer === 0 ? `Same as ${prevName}` : `${plural(Math.abs(fewer), 'project')} ${fewer < 0 ? 'fewer' : 'more'} than ${prevName}` }) : null)),
       line));
 }
 
-function picCard(ctx, pic, data, solo) {
+function picCard(ctx, pic) {
   const { h, icon } = ctx;
+  if (!pic.projects.length) {
+    return h('section', { class: 'pic' }, h('header', { class: 'pic-head' }, h('span', { class: 'avatar', text: initials(pic.name) }), h('h2', { text: pic.name }),
+      h('span', { class: 'muted', text: '0 projects below break-even' }), h('span', { class: 'chip ok', style: 'margin-left:auto', text: 'All projects profitable' })),
+      h('div', { class: 'great-row', text: `${first(pic.name)} has no projects below break-even this year. Doing a great job!` }));
+  }
   const body = h('div', { class: 'tblwrap' }, projectTable(ctx, pic));
   const r = pic.record;
   const chevron = h('button', { class: 'ib', type: 'button', 'aria-label': `Show or hide ${pic.name}'s projects`, 'aria-expanded': 'true' }, icon('chevron-down'));
@@ -121,7 +146,6 @@ function picCard(ctx, pic, data, solo) {
       chevron),
     body);
   chevron.addEventListener('click', () => { const open = body.hidden; body.hidden = !open; chevron.setAttribute('aria-expanded', String(open)); chevron.style.transform = open ? '' : 'rotate(-90deg)'; });
-  void solo; void data;
   return sec;
 }
 

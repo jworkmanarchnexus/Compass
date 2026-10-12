@@ -1,0 +1,335 @@
+{
+ "_note": "Hand-worked, year 2026. Rates are fractions rounded to 3 decimals; averages (days, moves) rounded to 1 decimal. Dollars in whole dollars. avgEarly: positive = early, negative = late.",
+ "input": {
+  "year": 2026,
+  "picOf": {
+   "P1": "E1",
+   "P2": "E1",
+   "P3": "E2"
+  },
+  "listed": [
+   {
+    "wbs1": "P1",
+    "pic": "E1",
+    "appeared": "2026-03-01"
+   },
+   {
+    "wbs1": "P2",
+    "pic": "E1",
+    "appeared": "2026-04-01"
+   },
+   {
+    "wbs1": "P3",
+    "pic": "E2",
+    "appeared": "2026-05-01"
+   }
+  ],
+  "cameOff": [
+   "P1"
+  ],
+  "stillOn": [
+   "P2",
+   "P3"
+  ],
+  "entries": [
+   {
+    "id": "x1",
+    "wbs1": "P1",
+    "kind": "explanation",
+    "date": "2026-03-05"
+   },
+   {
+    "id": "u1",
+    "wbs1": "P1",
+    "kind": "update",
+    "date": "2026-03-20"
+   },
+   {
+    "id": "c1",
+    "wbs1": "P1",
+    "kind": "commitment",
+    "date": "2026-03-10",
+    "commitmentId": "c1",
+    "data": {
+     "promisedBy": "2026-04-01",
+     "lever": "fee",
+     "qty": 10000
+    }
+   },
+   {
+    "id": "d1",
+    "wbs1": "P1",
+    "kind": "done",
+    "date": "2026-03-30",
+    "commitmentId": "c1",
+    "data": {
+     "actual": 8000
+    }
+   },
+   {
+    "id": "c2",
+    "wbs1": "P1",
+    "kind": "commitment",
+    "date": "2026-04-05",
+    "commitmentId": "c2",
+    "data": {
+     "promisedBy": "2026-05-01",
+     "lever": "hours",
+     "qty": 100
+    }
+   },
+   {
+    "id": "r2",
+    "wbs1": "P1",
+    "kind": "date_revised",
+    "date": "2026-04-28",
+    "commitmentId": "c2",
+    "data": {
+     "from": "2026-05-01",
+     "to": "2026-05-15"
+    }
+   },
+   {
+    "id": "m2",
+    "wbs1": "P1",
+    "kind": "missed",
+    "date": "2026-05-29",
+    "commitmentId": "c2",
+    "data": {
+     "dueDate": "2026-05-15"
+    }
+   },
+   {
+    "id": "x2",
+    "wbs1": "P2",
+    "kind": "explanation",
+    "date": "2026-04-20"
+   },
+   {
+    "id": "c3",
+    "wbs1": "P2",
+    "kind": "commitment",
+    "date": "2026-04-25",
+    "commitmentId": "c3",
+    "data": {
+     "promisedBy": "2026-06-10",
+     "lever": "other_money",
+     "qty": 5000,
+     "otherText": "Sell the model"
+    }
+   },
+   {
+    "id": "d3",
+    "wbs1": "P2",
+    "kind": "done",
+    "date": "2026-06-15",
+    "commitmentId": "c3",
+    "data": {
+     "actual": 5000
+    }
+   },
+   {
+    "id": "c4",
+    "wbs1": "P2",
+    "kind": "commitment",
+    "date": "2026-06-20",
+    "commitmentId": "c4",
+    "data": {
+     "promisedBy": "2026-08-01",
+     "lever": "cons",
+     "qty": 3000
+    }
+   },
+   {
+    "id": "x3",
+    "wbs1": "P3",
+    "kind": "explanation",
+    "date": "2026-05-02"
+   },
+   {
+    "id": "c5",
+    "wbs1": "P3",
+    "kind": "commitment",
+    "date": "2026-05-02",
+    "commitmentId": "c5",
+    "data": {
+     "promisedBy": "2026-06-01",
+     "lever": "reneg",
+     "qty": 20000
+    }
+   },
+   {
+    "id": "d5",
+    "wbs1": "P3",
+    "kind": "done",
+    "date": "2026-06-01",
+    "commitmentId": "c5",
+    "data": {
+     "actual": 0
+    }
+   }
+  ]
+ },
+ "expect": {
+  "total": 5,
+  "groups": {
+   "money": {
+    "made": 3,
+    "open": 0,
+    "kept": 2,
+    "late": 1,
+    "missed": 0,
+    "resolved": 3,
+    "keptRate": 0.667,
+    "moved": 0,
+    "avgMoves": 0,
+    "avgLead": 32.7,
+    "avgEarly": -1,
+    "promisedDone": 35000,
+    "actualDone": 13000,
+    "realization": 0.371
+   },
+   "spend": {
+    "made": 2,
+    "open": 1,
+    "kept": 0,
+    "late": 0,
+    "missed": 1,
+    "resolved": 1,
+    "keptRate": 0,
+    "moved": 1,
+    "avgMoves": 0.5,
+    "avgLead": 34,
+    "avgEarly": null,
+    "promisedDone": 0,
+    "actualDone": 0,
+    "realization": null
+   }
+  },
+  "actions": {
+   "fee": {
+    "made": 1,
+    "kept": 1,
+    "promised": 10000,
+    "promisedDone": 10000,
+    "actualDone": 8000,
+    "realization": 0.8
+   },
+   "hours": {
+    "made": 1,
+    "missed": 1,
+    "moved": 1,
+    "unit": "hours",
+    "realization": null
+   },
+   "other_money": {
+    "made": 1,
+    "late": 1,
+    "kept": 0,
+    "realization": 1
+   },
+   "cons": {
+    "made": 1,
+    "open": 1
+   },
+   "reneg": {
+    "made": 1,
+    "kept": 1,
+    "realization": 0
+   },
+   "sched": {
+    "made": 0,
+    "keptRate": null
+   }
+  },
+  "pics": {
+   "E1": {
+    "made": 4,
+    "resolved": 3,
+    "kept": 1,
+    "keptRate": 0.333,
+    "avgLead": 34,
+    "movedShare": 0.25,
+    "moneyShare": 0.5
+   },
+   "E2": {
+    "made": 1,
+    "resolved": 1,
+    "kept": 1,
+    "keptRate": 1,
+    "avgLead": 30,
+    "movedShare": 0,
+    "moneyShare": 1
+   }
+  },
+  "months": {
+   "1": {
+    "madeMoney": 0,
+    "madeSpend": 0,
+    "keptMoney": 0,
+    "keptSpend": 0
+   },
+   "3": {
+    "madeMoney": 1,
+    "madeSpend": 0,
+    "keptMoney": 1,
+    "keptSpend": 0
+   },
+   "4": {
+    "madeMoney": 1,
+    "madeSpend": 1,
+    "keptMoney": 0,
+    "keptSpend": 0
+   },
+   "5": {
+    "madeMoney": 1,
+    "madeSpend": 0,
+    "keptMoney": 0,
+    "keptSpend": 0
+   },
+   "6": {
+    "madeMoney": 0,
+    "madeSpend": 1,
+    "keptMoney": 1,
+    "keptSpend": 0
+   }
+  },
+  "responsiveness": {
+   "listed": 3,
+   "withExplanation": 3,
+   "withCommitment": 3,
+   "avgDaysToExplain": 8,
+   "avgDaysExplainToCommit": 3.3,
+   "updatesPerProject": 0.333
+  },
+  "offList": {
+   "cameOff": 1,
+   "cameOffWithKept": 1,
+   "cameOffWithKeptMoney": 1,
+   "cameOffWithKeptSpend": 0,
+   "stillOn": 2,
+   "stillOnWithKept": 1,
+   "stillOnWithKeptMoney": 1,
+   "stillOnWithKeptSpend": 0
+  },
+  "others": [
+   {
+    "text": "Sell the model",
+    "group": "money",
+    "wbs1": "P2",
+    "date": "2026-04-25",
+    "status": "done",
+    "kept": false
+   }
+  ]
+ },
+ "empty": {
+  "year": 2026,
+  "entries": [],
+  "listed": [],
+  "cameOff": [],
+  "stillOn": [],
+  "picOf": {},
+  "expectTotal": 0
+ }
+}

@@ -77,3 +77,11 @@
 
 - **Josh:** the first thing a PIC does on a project is the explanation, once; it persists as the only option until written, however late; an admin comment does not make it disappear. After it, only updates and commitments. No corrections; a correction is just an update.
 - Built as: one explanation per plan cycle (calendar year), enforced on the server; `correction` can no longer be written (old entries still display; the demo data's one correction became an update). The plan page's form shows only what is allowed.
+
+## Admin PIC picker, "great job", Other, and commitment patterns (Josh, 2026-10-11)
+
+- **Josh asked for:** on the Turnaround page the Admin can view everyone or pick a PIC from a drop-down, with all PICs included; a PIC with no projects below break-even gets a message saying so and that they are doing a great job; a PIC on Just mine with nothing below break-even gets a congratulation; an "Other" fill-in on both commitment lists; and silent background tracking of commitments, visible only to the Admin.
+- **Built as:** every active PIC with a Vantagepoint employee code is on the page (cards ordered by loss, the profitable ones last); the Admin's picker shows that PIC exactly as Just mine shows them; the two charts follow the choice (per-PIC history is stored per run; it now covers every PIC who was below the line in any of the 12 months, so the PICs add up to the firm).
+- **Other:** two new actions (one per group), a required fill-in line (up to 120 characters), stored with the commitment, never sent to a PIC. Both are counted in dollars (my choice, so they can be added up; asked in OPEN-QUESTIONS T19).
+- **"Silent tracking" needs no new recording.** Every commitment, date change and outcome is already in the append-only log, so the analysis is worked out from it on demand; nothing can be missed, and earlier years can be viewed. The metrics are my choice of what is useful (OPEN-QUESTIONS T20): kept rate, delivered against promised (dollars only), lead time, dates moved, kind against kind, by action, by PIC, by month, how quickly projects are answered, and what went with a project leaving the list (association, not cause).
+- **The demo** has a seventh PIC, Riley Chen, whose only project is profitable, to show the message. Her own history may show a loss in earlier months of last year (made-up data).

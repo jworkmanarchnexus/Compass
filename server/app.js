@@ -292,7 +292,7 @@ function createServer(db, opts) {
     }
     if (p === '/api/admin/patterns' && method === 'GET') {
       requireTab(user, 'patterns', 'edit');
-      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today() }));
+      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), year: Number(url.searchParams.get('year')) || undefined }));
     }
 
     throw new HttpError(404, 'Not found.');

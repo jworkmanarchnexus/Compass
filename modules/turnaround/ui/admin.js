@@ -29,17 +29,73 @@ export function remindersCards(ctx, s, canEdit, rerender) {
   ];
 }
 
-/* per-lever rollups: the one place a commitment's action and number are visible */
-export function patternsCard(ctx, rows) {
+/* Commitment patterns: what PICs commit to, and what comes of it. Admin only. Worked out from the plan log (nothing extra is
+   recorded). The numbers answer two questions: do they follow through, and is cutting cost or adding revenue working better. */
+const rate = r => (r === null || r === undefined ? '-' : Math.round(100 * r) + '%');
+const days = d => (d === null || d === undefined ? '-' : (Math.round(d * 10) / 10).toString());
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function patternsCards(ctx, d, onYear) {
   const { h } = ctx;
-  const val = (r, v) => (r.unit === 'dollars' ? fmtDollars(v) : `${v.toLocaleString('en-US')} ${r.unit}`);
-  const used = rows.filter(r => r.count);
-  return h('section', { class: 'sec' },
-    h('div', { class: 'sec-head' }, h('h2', { text: 'Commitment patterns' }), h('p', { text: 'This year\'s commitments, by the action the PIC picked. Only you see the action and the amount.' })),
-    used.length ? h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
-      h('thead', {}, h('tr', {}, h('th', { text: 'Action' }), h('th', { text: 'Kind' }), h('th', { class: 'r', text: 'Commitments' }), h('th', { class: 'r', text: 'Open' }), h('th', { class: 'r', text: 'Kept' }), h('th', { class: 'r', text: 'Not kept' }), h('th', { class: 'r', text: 'Promised' }), h('th', { class: 'r', text: 'Actual, where done' }))),
-      h('tbody', {}, ...used.map(r => h('tr', {}, h('td', { class: 'strong', text: r.label }), h('td', { class: 'muted', text: r.group === 'money' ? 'Bring in money' : 'Spend less' }),
-        h('td', { class: 'r', text: String(r.count) }), h('td', { class: 'r', text: String(r.open) }), h('td', { class: 'r', text: String(r.kept) }), h('td', { class: 'r', text: String(r.notKept) }),
-        h('td', { class: 'r', text: val(r, r.promised) }), h('td', { class: 'r', text: r.kept + r.notKept ? val(r, r.actual) : '-' }))))))
-      : h('div', { class: 'empty-row', text: 'No commitments have been logged this year.' }));
+  const th = (t, right) => h('th', { class: right ? 'r' : '', text: t });
+  const td = (t, cls) => h('td', { class: cls || '', text: String(t) });
+  const table = (head, rows, min) => h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: min ? `min-width:${min}px` : '' }, h('thead', {}, h('tr', {}, ...head)), h('tbody', {}, ...rows)));
+  const section = (title, sub, ...body) => h('section', { class: 'sec' }, h('div', { class: 'sec-head' }, h('h2', { text: title }), sub ? h('p', { text: sub }) : null), ...body);
+  const money = (g) => g.promisedDone ? `${fmtDollars(g.actualDone)} of ${fmtDollars(g.promisedDone)} (${rate(g.realization)})` : '-';
+
+  const yearSel = h('select', { class: 'txt', style: 'width:110px', 'aria-label': 'Year', onchange: e => onYear(Number(e.target.value)) }, ...d.years.map(y => h('option', { value: String(y), text: String(y), selected: y === d.year })));
+  const top = h('section', { class: 'sec' },
+    h('div', { class: 'sec-head home-head' }, h('div', {}, h('h2', { text: 'Commitment patterns' }), h('p', { text: 'What PICs commit to, and what comes of it. Only you see this. It is worked out from the plan log, so nothing extra is recorded and nothing can be lost.' })), yearSel));
+
+  if (!d.total) return [top, h('div', { class: 'empty-note', text: `No commitments were made in ${d.year}.` })];
+
+  const m = d.groups.money, s = d.groups.spend;
+  const rows = [['Bring in money', m], ['Spend less', s]].map(([label, g]) => h('tr', {},
+    td(label, 'strong'), td(g.made, 'r'), td(g.open, 'r'), td(g.kept, 'r'), td(g.late, 'r'), td(g.missed, 'r'), td(rate(g.keptRate), 'r strong'), h('td', { class: 'r', text: money(g) }), td(days(g.avgLead), 'r'), td(g.made ? rate(g.moved / g.made) : '-', 'r')));
+  let verdict;
+  if (m.resolved && s.resolved) {
+    const hi = m.keptRate === s.keptRate ? null : (m.keptRate > s.keptRate ? 'Bring in money' : 'Spend less');
+    verdict = (hi ? `${hi} commitments are kept more often (${rate(Math.max(m.keptRate, s.keptRate))} against ${rate(Math.min(m.keptRate, s.keptRate))}). ` : 'Both kinds are kept equally often. ')
+      + `Based on ${m.resolved} finished money commitments and ${s.resolved} finished spend-less commitments.`
+      + (Math.min(m.resolved, s.resolved) < 10 ? ' That is too few to conclude anything yet: treat it as a first look.' : '');
+  } else verdict = 'Not enough finished commitments yet to compare the two. A commitment is finished when it is done or missed.';
+  const compare = section('Cutting cost or adding revenue?', 'Kept = done on or before its date. Delivered compares the actual result with what was promised, in dollars only (hours and weeks cannot be added to dollars).',
+    table(['Kind', 'Made', 'Open', 'Kept', 'Done late', 'Missed', 'Kept rate', 'Delivered (dollars)', 'Days ahead', 'Date moved'].map((t, i) => th(t, i > 0)), rows, 900),
+    h('div', { class: 'sec-body' }, h('p', { class: 'verdict', text: verdict })));
+
+  const actions = section('By action', 'Every action PICs can choose. Hours and weeks are shown in their own units.',
+    table(['Action', 'Kind', 'Made', 'Open', 'Kept', 'Not kept', 'Kept rate', 'Promised', 'Delivered where done'].map((t, i) => th(t, i > 1)),
+      d.actions.filter(x => x.made).map(x => h('tr', {}, td(x.label, 'strong'), h('td', { class: 'muted', text: x.group === 'money' ? 'Bring in money' : 'Spend less' }), td(x.made, 'r'), td(x.open, 'r'), td(x.kept, 'r'), td(x.late + x.missed, 'r'), td(rate(x.keptRate), 'r strong'),
+        td(x.unit === 'dollars' ? fmtDollars(x.promised) : `${x.promised.toLocaleString('en-US')} ${x.unit}`, 'r'),
+        td(x.kept + x.late ? (x.unit === 'dollars' ? `${fmtDollars(x.actualDone)} (${rate(x.realization)})` : `${x.actualDone.toLocaleString('en-US')} ${x.unit}`) : '-', 'r'))), 860));
+
+  const pics = section('By PIC', 'Who commits to what, and how often they follow through.',
+    table(['PIC', 'Made', 'Finished', 'Kept', 'Kept rate', 'Days ahead', 'Date moved', 'Share that bring in money'].map((t, i) => th(t, i > 0)),
+      d.pics.slice().sort((x, y) => y.made - x.made).map(p => h('tr', {}, td(d.picNames[p.pic] || 'Unassigned', 'strong'), td(p.made, 'r'), td(p.resolved, 'r'), td(p.kept, 'r'), td(rate(p.keptRate), 'r strong'), td(days(p.avgLead), 'r'), td(rate(p.movedShare), 'r'), td(rate(p.moneyShare), 'r'))), 820));
+
+  const last = Math.max(1, ...d.months.map(x => (x.madeMoney + x.madeSpend + x.keptMoney + x.keptSpend ? x.month : 0)));
+  const months = section('Over the year', 'Commitments made, and commitments kept, by the month they were made or closed.',
+    table(['Month', 'Made: money', 'Made: spend less', 'Kept: money', 'Kept: spend less'].map((t, i) => th(t, i > 0)),
+      d.months.slice(0, last).map(x => h('tr', {}, td(MONTH[x.month - 1], 'strong'), td(x.madeMoney, 'r'), td(x.madeSpend, 'r'), td(x.keptMoney, 'r'), td(x.keptSpend, 'r'))), 620));
+
+  const r = d.responsiveness, o = d.offList;
+  const item = (label, value, help) => h('div', { class: 'set-row' }, h('div', { class: 'what' }, h('div', { class: 'lab', text: label }), help ? h('div', { class: 'help', text: help }) : null), h('div', { class: 'ctl' }, h('strong', { text: value })));
+  const engage = section('How quickly projects are answered', `Of the ${r.listed} projects that were on a published run in ${d.year}.`,
+    h('div', { class: 'sec-body' },
+      item('Have an explanation', `${r.withExplanation} of ${r.listed}`),
+      item('Have a commitment', `${r.withCommitment} of ${r.listed}`),
+      item('Days from first appearing to the explanation', days(r.avgDaysToExplain), 'Average, for projects that have one.'),
+      item('Days from the explanation to the first commitment', days(r.avgDaysExplainToCommit), 'Average, for projects that have both.'),
+      item('Updates per project', r.updatesPerProject === null ? '-' : (Math.round(r.updatesPerProject * 10) / 10).toString(), 'Written updates only; commitments and explanations are not counted.')));
+
+  const outcome = section('Projects that came off the list', d.latestRun ? `Compared with the ${d.latestRun} run. This shows what went with a project leaving the list. It does not prove what caused it.` : 'No published run this year.',
+    d.latestRun ? h('div', { class: 'sec-body' },
+      item('Came off the list', `${o.cameOff}`, o.cameOff ? `${o.cameOffWithKept} had a kept commitment (${o.cameOffWithKeptMoney} bring in money, ${o.cameOffWithKeptSpend} spend less).` : 'Nothing has left the list yet.'),
+      item('Still on the list', `${o.stillOn}`, o.stillOn ? `${o.stillOnWithKept} have a kept commitment (${o.stillOnWithKeptMoney} bring in money, ${o.stillOnWithKeptSpend} spend less).` : '')) : null);
+
+  const others = d.others.length ? section('What PICs typed under "Other"', 'Words written in the blank line. If the same thing keeps appearing, it may deserve a place on the list of actions.',
+    table(['Typed', 'Kind', 'Project', 'Made', 'Status'].map(t => th(t)),
+      d.others.map(x => h('tr', {}, td(x.text, 'strong'), td(x.group === 'money' ? 'Bring in money' : 'Spend less', 'muted'), td(x.wbs1), td(x.date, 'muted'), td({ open: 'Open', done: x.kept ? 'Kept' : 'Done late', missed: 'Missed' }[x.status]))), 640)) : null;
+
+  return [top, compare, actions, pics, months, engage, outcome, others].filter(Boolean);
 }
