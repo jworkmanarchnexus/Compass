@@ -10,7 +10,7 @@ export const Admin = {
   audit(limit) { return request('GET', '/api/admin/audit' + (limit ? '?limit=' + limit : '')); },
   runs() { return request('GET', '/api/admin/runs'); },
   run(id) { return request('GET', '/api/admin/runs/' + encodeURIComponent(id)); },
-  buildRun(period) { return request('POST', '/api/admin/runs', period ? { period } : {}); },
+  buildRun(period, kind) { return request('POST', '/api/admin/runs', Object.assign(period ? { period } : {}, kind ? { kind } : {})); },
   rebuildRun(id) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/rebuild', {}); },
   publishRun(id) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/publish', {}); },
   archiveRun(id, reason, confirm) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/archive', { reason, confirm }); },

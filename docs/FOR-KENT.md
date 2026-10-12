@@ -1,6 +1,6 @@
 # For Kent
 
-Compass is the Arch Nexus leadership accountability tool: Project Turnaround first (BD report and Pipeline watch are not built). This repo is a **working prototype that runs on one computer**. This page says how to run it, what is worth keeping, exactly what you would replace to host it, and what is still open. Josh owns how it should behave; you own where and how it runs.
+Compass is the Arch Nexus leadership accountability tool: Project Turnaround and the BD report are built (Pipeline watch is not). This repo is a **working prototype that runs on one computer**. This page says how to run it, what is worth keeping, exactly what you would replace to host it, and what is still open. Josh owns how it should behave; you own where and how it runs.
 
 Read next: `docs/SPEC-turnaround.md` and `docs/SPEC-shell-and-admin.md` (behavior), `docs/DATA-MODEL.md`, `docs/OPEN-QUESTIONS.md`, `docs/DECISIONS.md` (why things are the way they are).
 
@@ -36,7 +36,7 @@ The first `npm start` loads the made-up seed data (`server/db/seed/`). Sign in w
 Everything Compass needs from its surroundings goes through one of these. Replace them and the rest stands.
 
 1. **Sign-in.** `currentUser()` in `server/app.js` reads the `X-Compass-User` header and loads the person from `users`. Production should identify the person from the network sign-in instead and look them up by the user key (open question H7). The front end's only identity code is `shared/platform/session.js` and the header in `shared/platform/http.js`. Roles come from the `users` table, set by the Admin.
-2. **The Vantagepoint pull.** One method: `load(period)` returning `{ projects, ledger, overhead }` (shape in `docs/DATA-MODEL.md` and `server/vp-local.js`). Production runs `reference/handoff/sql/compass_negative_projects.sql` (or its monthly-bucket equivalent) with the **read-only service account**, from the scheduled job only. **Never from a browser and never on a page load.** It must also be able to serve the past 12 month-ends, because each run stores its own chart history.
+2. **The Vantagepoint pull.** One method: `load(period)` returning `{ projects, ledger, overhead }` (shape in `docs/DATA-MODEL.md` and `server/vp-local.js`). Production runs `reference/handoff/sql/compass_negative_projects.sql` (or its monthly-bucket equivalent) with the **read-only service account**, from the scheduled job only. **Never from a browser and never on a page load.** It must also be able to serve the past 12 month-ends, because each run stores its own chart history. The BD report needs a second method, `loadBd(period)` (projects with principal and market sector; monthly revenue net of consultants; contracted forecast; pursuits at face value; see `docs/SPEC-bd.md` section 7). Where that data lives is open question H3.
 3. **The mailer.** One method: `sendToAdmin({ to, subject, body })`. The only automatic email is to the Admin and carries a count and a link, never PIC or project names (a test checks this). Compass never emails a PIC.
 4. **The scheduler.** Two commands: `npm run run-month` on the first business day (or daily with `--scheduled`, which acts only on the first weekday), and `npm run daily` every day. Both are safe to run twice. The Admin settings "Run day" and "Run time" only record the intent; nothing reads them.
 5. **The database.** `server/db/db.js` is a thin wrapper (`get`, `all`, `run`, `tx`, `now`) over `node:sqlite`. SQL is plain. Money is whole cents; ids are text UUIDs; times are epoch milliseconds; dates are `YYYY-MM-DD` text. The three guards (append-only audit log and plan log; locked runs) are SQLite triggers: in another engine, express them as permissions or triggers, and keep the tests that try to break them.
@@ -65,6 +65,10 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `GET /api/admin/checkins`, `PUT /api/admin/checkins/:id`, `POST /api/admin/checkins/:id/send`, `/dismiss`, `/undo` | Admin | the queue; edit a waiting draft; mark sent; dismiss; undo |
 | `POST /api/admin/daily` | Admin | run the daily checks now |
 | `GET /api/admin/patterns[?year=YYYY]` | Admin | the commitment analysis for a year |
+| `GET /api/bd/reports`, `GET /api/bd/reports/:id` | BD viewers | the report list (published; the Admin also sees drafts) and one report, shaped by role |
+| `POST /api/admin/runs` with `{ kind: "bd", period }` | Admin | build a BD draft |
+| `POST /api/admin/bd/runs/:id/rebuild`, `/publish`, `/archive` | Admin | rebuild a draft; publish (refused while revenue has no market sector, unless the setting says otherwise); archive and rerun |
+| `GET /api/admin/bd/inputs`, `PUT /api/admin/bd/goals`, `POST /api/admin/bd/factors`, `PUT /api/admin/bd/overrides` | Admin edit; System admin read | goals, the MWIP factor history, sectors and the Admin's sector answers |
 
 Errors: `{ "error": "plain-language message" }` with 400 (bad input), 401 (not signed in), 403 (not allowed), 404, 409 (not allowed in the current state, e.g. already published). The messages are written for the person reading them.
 
@@ -95,4 +99,4 @@ These were deliberate decisions; each is enforced somewhere and tested.
 
 ## 8. Not built, and open
 
-Not built: the BD report, Pipeline watch, the Firm snapshot on Home, Export Excel, the plan page's contract fee, the ladder's "Repeat" step. A real sign-in, hosting, the mailer, scheduling, and editing a person's Vantagepoint employee code from the People page are yours (or open). Everything undecided is in `docs/OPEN-QUESTIONS.md`.
+Not built: Pipeline watch, the Firm snapshot on Home, Export Excel, the plan page's contract fee, the ladder's "Repeat" step. A real sign-in, hosting, the mailer, scheduling, and editing a person's Vantagepoint employee code from the People page are yours (or open). Everything undecided is in `docs/OPEN-QUESTIONS.md`.

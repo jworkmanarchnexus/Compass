@@ -92,3 +92,15 @@
 - **This reverses the handoff rule** that a commitment's lever and number are never shown to PICs (and my phase 3 build of it). Now the action, the amount and the actual result are shown to everyone who can read a plan (Admin, every PIC, Finance, and the Marketing director if allowed). The Mark done form can again ask for the result in the right unit.
 - **I read "the commitments" as the action and the number.** If only the action should show, hiding the amount and the actual result is a small change; say so.
 - **Unchanged:** the commitment analysis (Admin > Commitment patterns), check-in drafts and draft runs stay Admin-only; the system admin still cannot read plans.
+
+## BD report (2026-10-11)
+
+- **Built on assumptions for the two blockers**, so it could be shown and judged: where the data lives (open question H3) is a one-method local source with made-up files in the shape of a Vantagepoint pull (`loadBd`); and the MWIP column is **raw in the source, weighted by the factor at build time** (H4), which also supports a source that already weights (set the factor to 1).
+- **The mockup's September report is reproduced exactly** (every PIC and sector row, all percentages and statuses): goals, YTD, forecast and weighted MWIP by PIC and by sector, from one set of made-up projects that belong to both a PIC and a sector. Its two special cases are in the data on purpose: a project coded Labs (counted in Healthcare) and one with no sector ($3,420, assigned to Civic by the Admin).
+- **Reuses the Turnaround lifecycle** (draft, published and locked, archive and RERUN) and the same database lock, with its own tables. A BD report is a `runs` row of kind `bd`.
+- **Settings I added** (the spec says thresholds are settings): `bd.onTrackPct` 100, `bd.onPacePct` 99, `bd.noSector` `ask`. The rule for revenue with no sector follows the mockup's "Stop and ask me before I publish"; `other` is my second choice.
+- **MWIP factor is append-only**, like the plan log, so no past report can be altered by editing it. The factor in force is the latest one at or before the cutoff.
+- **PIC pages never get the factor or raw amounts** (the spec); Finance and Marketing do. PICs cannot read the report at all unless the Admin turns `access.picBd` on (my default, as before).
+- **Export PDF** is the browser's print dialog ("Save as PDF") with a print stylesheet, so there is no PDF library to maintain. A generated file would need a library (open question T24).
+- **A project's PIC** on the BD report is its Vantagepoint principal; **a pursuit's PIC** comes with the pursuit.
+- **Found while building:** a JavaScript string `replace` with a replacement containing `$'` silently duplicated part of a file once. The build scripts now use a function as the replacement.

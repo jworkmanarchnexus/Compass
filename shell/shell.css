@@ -196,3 +196,34 @@ ol.log { list-style: none; margin: 0; padding: 0; }
   body.side-collapsed .nav-item span { display: inline-flex; }
   body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt { display: none; }
 }
+
+/* ===== BD report ===== */
+.bd-tools { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s3); }
+.ok-banner { background: var(--ok-bg); box-shadow: inset 3px 0 var(--ok); }
+.bd-sum { text-align: center; font: 700 15px/1.3 var(--f-ui); }
+.bd-table .dt th { vertical-align: bottom; line-height: 1.3; }
+.bd-table tr.firm-row td { background: var(--surface-2); font-weight: 700; }
+.bd-legend { padding: var(--s3) var(--s5); text-align: center; color: var(--text-2); font-size: 13px; border-top: 1px solid var(--line); }
+.bd-chart { max-width: none; }
+.sb-ytd { fill: var(--ok); } .sb-forecast { fill: var(--ok-bg); } .sb-mwip { fill: var(--text-3); } .sb-pace { fill: var(--accent); } .sb-rest { fill: var(--accent-soft); }
+.sb-label { font: 13px var(--f-ui); fill: var(--accent-text); }
+.sb-in { font: 700 11px var(--f-cond); fill: var(--text-strong); }
+.sb-end { font: 700 12px var(--f-cond); fill: var(--text-strong); }
+.sb-mark-pace { stroke: var(--accent); stroke-width: 3; }
+.sb-mark-goal { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 3; }
+.bd-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s2) var(--s5); padding: var(--s2) var(--s5) var(--s3); font-size: 13px; color: var(--text-2); }
+.bd-key { display: inline-flex; align-items: center; gap: var(--s2); }
+.bd-key .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.bd-key .sw.sb-ytd { background: var(--ok); } .bd-key .sw.sb-forecast { background: var(--ok-bg); box-shadow: inset 0 0 0 1px var(--line-strong); } .bd-key .sw.sb-mwip { background: var(--text-3); }
+.bd-key .sw.sb-pace { background: var(--accent); } .bd-key .sw.sb-rest { background: var(--accent-soft); }
+.bd-key .sw.sb-markpace { width: 3px; height: 14px; background: var(--accent); } .bd-key .sw.sb-markgoal { width: 2px; height: 14px; background: repeating-linear-gradient(var(--accent) 0 3px, transparent 3px 6px); }
+
+/* Export PDF: the browser's Save as PDF. Only the report prints. */
+@media print {
+  .side, .mtop, .side-scrim, .bd-tools .btn, .run-acts, .seg, .banner .acts, #toast { display: none !important; }
+  .shell { display: block; }
+  .mainwrap, .page { padding: 0 !important; max-width: none !important; }
+  .sec, .chart-card { break-inside: avoid; box-shadow: none; }
+  body { background: #fff; }
+}
+.sb-in-ytd, .sb-in-pace { fill: var(--surface); }

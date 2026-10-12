@@ -23,12 +23,17 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `run_project_history` | each listed project's YTD profit at each month end this year | locked with the run |
 | `plan_entries` | the plan log: project, author (null = system), kind, text, created, entry date, the entry it corrects, the commitment it concerns, data (promised-by, lever, amount, actual, dates) | **append-only** (database triggers); belongs to the project, never to a run |
 | `checkin_drafts` | PIC, situation, step, tone, subject, text, the projects it is about, status (`waiting`, `sent`, `dismissed`, `withdrawn`), when resolved | the only plan-related table that is edited (a waiting draft's wording; its status) |
+| `bd_goals` | annual revenue goals by PIC (VP employee code) and by market sector, in cents | edited in Admin > BD reports |
+| `bd_sectors` | market sectors, with an optional roll-up (`rolls_into` until `rolls_until`: Labs into Healthcare through 2026-12-31) | |
+| `bd_mwip_factor` | the MWIP weighting factor in basis points, effective-dated | **append-only** (database triggers) |
+| `bd_sector_overrides` | the Admin's sector for a project that had none in Vantagepoint | applies to every later report |
+| `bd_run_meta`, `bd_rows` | a BD run's facts (months elapsed, cutoff, factor, thresholds) and its rows (firm, PIC, sector: goal, pace, YTD, forecast, raw and weighted MWIP, total, status) | locked with the run; a BD run is a `runs` row with kind `bd`, its notes are `run_warnings` rows |
 | `system_state` | small job state (the day the Admin was last emailed) | |
 
 ## Invariants the database enforces (so a bug in the code cannot break them)
 
-1. `audit_log` and `plan_entries`: no update, no delete.
-2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_project_history`) can be added, changed or removed only while the run is a **draft**.
+1. `audit_log`, `plan_entries` and `bd_mwip_factor`: no update, no delete.
+2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`) can be added, changed or removed only while the run is a **draft**.
 3. A run itself moves only draft → published, or published → archived with a non-empty reason and nothing else changed; an archived run never changes; only a draft may be deleted.
 
 A reset of the local database (`npm run seed`) is a developer action: it drops these guards, empties the tables and recreates the guards. The app has no such path.
@@ -39,7 +44,7 @@ A reset of the local database (`npm run seed`) is a developer action: it drops t
 - **No `pct_*` columns.** Percentages are worked out when shown.
 - **`run_projects` has no stored PIC/PM names**, only codes; names are resolved from `employees`.
 - **`run_history` and `run_project_history` are new**: the charts' history is frozen with each run so no page ever asks Vantagepoint.
-- **`goals`, `sector_map`, `bd_rows`, pipeline tables, `mwip_factor`** are not built (BD report and Pipeline watch are not built).
+- **BD tables** are `bd_goals` (the sketch's `goals`), `bd_sectors` and `bd_sector_overrides` (instead of `sector_map`), `bd_mwip_factor`, `bd_run_meta` and `bd_rows`. The pipeline tables are not built (Pipeline watch is not built).
 - **`users.employee_code`** is the handoff's `pic_employee_code`. Roles are set by the Admin in Compass (the handoff's People tab), not read from a directory.
 
 ## What a production pull must deliver
