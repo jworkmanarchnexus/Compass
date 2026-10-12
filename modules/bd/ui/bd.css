@@ -8,6 +8,7 @@
 .bd-table .tblwrap { overflow-x: auto; }
 table.bd-t { width: 100%; min-width: 0; border-collapse: collapse; }
 table.bd-t thead th { text-transform: none; letter-spacing: 0; border-bottom: 0; background: var(--bd-navy); color: var(--bd-navy-ink); font: 700 12px/1.25 var(--f-ui); text-align: center; vertical-align: middle; padding: 8px 6px; border: 0; }
+table.bd-t thead th.bd-c { text-align: center; padding-right: 10px; }
 table.bd-t thead th:first-child { text-align: left; padding-left: 14px; }
 table.bd-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bd-table td:first-child { padding-left: 14px; white-space: normal; }

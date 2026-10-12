@@ -115,7 +115,7 @@ function tableCard(ctx, d, tab) {
   return h('section', { class: 'sec bd-box bd-table' },
     h('div', { class: 'sec-head bd-sum', text: summary }),
     h('div', { class: 'tblwrap' }, h('table', { class: 'dt bd-t' },
-      h('thead', {}, h('tr', {}, h('th', { text: tab === 'pic' ? 'PIC' : 'Market sector' }), th('Revenue goal'), th('YTD goal<br>(pace)'), th('YTD<br>revenue'), th('Revenue<br>forecast'), th('MWIP<br>backlog'), th('Total<br>projected'), th('% of pace<br>billed'), th('% of goal<br>YTD + forecast'), th('% of goal<br>YTD + forecast<br>+ MWIP'), th('Status', ''))),
+      h('thead', {}, h('tr', {}, h('th', { text: tab === 'pic' ? 'PIC' : 'Market sector' }), th('Revenue goal'), th('YTD goal<br>(pace)'), th('YTD<br>revenue'), th('Revenue<br>forecast'), th('MWIP<br>backlog'), th('Total<br>projected'), th('% of pace<br>billed'), th('% of goal<br>YTD + forecast'), th('% of goal<br>YTD + forecast<br>+ MWIP'), th('Status', 'bd-c'))),
       h('tbody', {}, row(f, true), ...rows.map(r => row(r, false))))),
     h('div', { class: 'bd-legend', text: legend }));
 }
