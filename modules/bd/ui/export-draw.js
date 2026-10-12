@@ -250,17 +250,19 @@ function paintHeading(c, F, pal, o) {
   const showLogo = O.logo !== 'none' && full && logoImg;
   const rx = W - (showLogo ? hd.logoW + hd.clear : 0);
   c.textAlign = 'left';
-  c.fillStyle = pal.title; c.font = fnt(F, 'cond', full ? 19 : 12.5, true);
+  c.fillStyle = pal.title; c.font = fnt(F, 'cond', full ? 25 : 16, true);
   const period = periodName(d.run.period);
-  const title = ('BD report · ' + period).toUpperCase() + (page > 0 && !full ? '  (continued)' : '');
-  c.fillText(fitText(c, title, rx - 6), 0, full ? 18 : 13);
+  const title = ('Marketing Report · ' + period).toUpperCase() + (page > 0 && !full ? '  (continued)' : '');
+  c.fillText(fitText(c, title, rx - 6), 0, full ? 24 : 18);
   if (full) {
-    c.fillStyle = pal.text2; c.font = fnt(F, 'cond', 9.5);
-    const sub = `Billing cutoff ${longDay(d.meta.cutoff)}  ·  Version ${d.run.version}  ·  ${{ draft: 'Draft', published: 'Published', archived: 'Archived' }[d.run.status]}`;
-    c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, 32);
+    c.fillStyle = pal.text2; c.font = fnt(F, 'cond', 12.5);
+    const sub = `As of ${longDay(d.meta.cutoff)}  ·  Version ${d.run.version}  ·  ${{ draft: 'Draft', published: 'Published', archived: 'Archived' }[d.run.status]}`;
+    c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, 43);
+    c.font = fnt(F, 'ui', 9.4);
+    c.fillText(fitText(c, 'All figures presented in this report are in net architectural revenue.', rx - 6), 0, 58);
     if (O.desc && O.desc.trim()) {
-      c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 8.5);
-      wrap(c, O.desc.trim(), rx - 6, 4).forEach((t, i) => c.fillText(t, 0, 46 + i * 11));
+      c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 10.5);
+      wrap(c, O.desc.trim(), rx - 6, 4).forEach((t, i) => c.fillText(t, 0, 75 + i * 13));
     }
   }
   if (showLogo) logoAt(W - hd.logoW, 0, hd.logoW, hd.logoH);
@@ -343,7 +345,7 @@ export async function buildPdf(d, O, today) {
   const lib = await loadJsPdf();
   const job = buildJob(d, O, today);
   const doc = new lib.jsPDF({ orientation: job.P.w > job.P.h ? 'landscape' : 'portrait', unit: 'pt', format: [Math.min(job.P.w, job.P.h), Math.max(job.P.w, job.P.h)], compress: true });
-  if (doc.setProperties) doc.setProperties({ title: 'BD report ' + periodName(d.run.period), creator: 'Arch Nexus Compass' });
+  if (doc.setProperties) doc.setProperties({ title: 'Marketing Report ' + periodName(d.run.period), creator: 'Arch Nexus Compass' });
   const vector = !!(doc.context2d && doc.addFileToVFS && doc.addFont);
   if (vector) for (const f of PDF_FONTS) { doc.addFileToVFS(f.file, f.data); doc.addFont(f.file, f.family, f.style); }
   for (let k = 0; k < job.count; k++) {

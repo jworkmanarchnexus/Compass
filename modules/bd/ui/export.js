@@ -88,7 +88,7 @@ export function openExport(ctx, d) {
     try {
       const { bytes } = await buildPdf(d, O, today);
       const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-      const a = h('a', { href: url, download: `BD-report-${d.run.period}-v${d.run.version}.pdf` });
+      const a = h('a', { href: url, download: `Marketing-report-${d.run.period}-v${d.run.version}.pdf` });
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
       msg.textContent = 'Downloaded.';
     } catch (e) { msg.textContent = 'The PDF could not be built: ' + e.message; }
