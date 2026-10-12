@@ -75,6 +75,9 @@ function buildOverview(db, runId, viewer, { today, settings }) {
     };
   });
 
+  // the biggest loss first: PICs are ordered by their total YTD profit (most negative at the top), then by name
+  pics.sort((x, y) => x.totals.profit - y.totals.profit || x.name.localeCompare(y.name));
+
   const all = pics.flatMap(p => p.projects);
   const waiting = db.get("SELECT COUNT(*) AS n FROM checkin_drafts WHERE status = 'waiting'").n;
   const kpis = {

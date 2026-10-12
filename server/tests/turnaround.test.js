@@ -354,3 +354,13 @@ test('"Just mine" has its own chart history: each PIC\'s months add up to the fi
   assert.throws(() => db.run('UPDATE run_pic_history SET negative_ytd = 0 WHERE run_id = ?', id), /locked/);
   assert.throws(() => db.run('DELETE FROM run_pic_history WHERE run_id = ?', id), /locked/);
 }));
+
+test('PICs are listed from the biggest total loss to the smallest', () => withDemo(async ({ api }) => {
+  const o = (await api('j.workman').get('/api/turnaround/current')).body;
+  const totals = o.pics.map(p => p.totals.profit);
+  assert.deepStrictEqual(totals, totals.slice().sort((a, b) => a - b), 'most negative first');
+  assert.deepStrictEqual(o.pics.map(p => p.name), ['Tom Lindqvist', 'Marcus Oyelaran', 'Dana Whitfield', 'Priya Raman', 'Elena Castellanos', 'Ben Okafor']);
+  // everyone gets the same order, and projects inside a PIC still go worst first
+  assert.deepStrictEqual((await api('d.whitfield').get('/api/turnaround/current')).body.pics.map(p => p.name), o.pics.map(p => p.name));
+  for (const p of o.pics) assert.deepStrictEqual(p.projects.map(x => x.profit.ytd), p.projects.map(x => x.profit.ytd).slice().sort((a, b) => a - b));
+}));
