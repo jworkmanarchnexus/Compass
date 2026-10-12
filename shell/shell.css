@@ -181,3 +181,12 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .great-row { padding: var(--s4) var(--s5); color: var(--text-2); }
 
 .verdict { margin: var(--s3) 0; max-width: 80ch; }
+
+/* Collapsed side bar (wide windows): the Nexus logo stays, shrunk to the bar's width, and only the top-level icons remain.
+   The design system hides the logo and keeps the child links; both are overridden here. (Below 860px the side bar is a slide-out menu, unaffected.) */
+@media (min-width: 861px) {
+  body.side-collapsed .side-brand { display: flex; align-items: center; padding: 14px 0 10px; gap: 0; }
+  body.side-collapsed .side-brand .side-logo { width: 38px; margin: 0; }
+  body.side-collapsed .side-brand .side-product, body.side-collapsed .side-brand .side-tag { display: none; }
+  body.side-collapsed .nav-item.nav-sub { display: none; }
+}
