@@ -25,9 +25,9 @@ test('pages: which sections go on which page', () => {
   }
 });
 
-test('the heading keeps the logo at least one inch wide with its clear space', () => {
+test('the heading keeps the logo at 3/4 inch (the owner chose this for this report) with its clear space', () => {
   const h = X.headingHeights({ logo: 'first', descLines: 0 });
-  assert.ok(h.logoW >= 72);
+  assert.strictEqual(h.logoW, 54);
   assert.ok(h.full >= h.logoH + h.clear);
   assert.ok(X.headingHeights({ logo: 'all', descLines: 0 }).compact === h.full, 'a logo on every page needs the full heading everywhere');
   assert.ok(X.headingHeights({ logo: 'none', descLines: 0 }).full < h.full);

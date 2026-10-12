@@ -17,7 +17,7 @@ const MARGIN = 28;                        // page margin, points
 const FOOT = 20;                          // footer band, points
 const GAP = 12;                           // between sections, design units
 const MIN_READ = 0.82;                    // smallest effective text scale (z * s) the plan will choose by itself
-const LOGO_PT = 72;                       // the brand guide: never narrower than 1 inch
+const LOGO_PT = 54;                       // 3/4 inch: Josh chose this for the BD report (the brand guide's usual minimum is 1 inch)
 const LOGO_RATIO = 300 / 243;             // logo height / width
 const LOGO_CLEAR = 0.29;                  // clear space as a share of the logo width
 
