@@ -28,11 +28,17 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `bd_mwip_factor` | the MWIP weighting factor in basis points, effective-dated | **append-only** (database triggers) |
 | `bd_sector_overrides` | the Admin's sector for a project that had none in Vantagepoint | applies to every later report |
 | `bd_run_meta`, `bd_rows` | a BD run's facts (months elapsed, cutoff, factor, thresholds) and its rows (firm, PIC, sector: goal, pace, YTD, forecast, raw and weighted MWIP, total, status) | locked with the run; a BD run is a `runs` row with kind `bd`, its notes are `run_warnings` rows |
+| `pipeline_snapshots` | one row per Monday snapshot | **never changed or deleted** (triggers) |
+| `pursuit_snapshots` | each MWIP pursuit as it stood that Monday: id (its project number), name, PIC code, stage, win probability, amount | never changed or deleted |
+| `forecast_snapshots` | each contract's remaining forecast that Monday, and the part moved to next year | never changed or deleted |
+| `pipeline_projects` | project numbers that exist (copied each snapshot), to tell a converted pursuit from a vanished one | grows only |
+| `pipeline_alerts` | what the rules found each Monday (rule, Alert or Watch, PIC, plain-language message) | only the Admin clearing one changes a row; never deleted |
+| `pursuit_notes` | the Admin's notes on a pursuit | **append-only** |
 | `system_state` | small job state (the day the Admin was last emailed) | |
 
 ## Invariants the database enforces (so a bug in the code cannot break them)
 
-1. `audit_log`, `plan_entries` and `bd_mwip_factor`: no update, no delete.
+1. `audit_log`, `plan_entries`, `bd_mwip_factor`, `pursuit_notes` and the three snapshot tables: no update, no delete.
 2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`) can be added, changed or removed only while the run is a **draft**.
 3. A run itself moves only draft → published, or published → archived with a non-empty reason and nothing else changed; an archived run never changes; only a draft may be deleted.
 

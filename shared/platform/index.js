@@ -5,3 +5,4 @@ export { Admin } from './admin.js';
 export { Turnaround, Plan, Checkins } from './turnaround.js';
 export { Home } from './home.js';
 export { Bd } from './bd.js';
+export { Pipeline } from './pipeline.js';

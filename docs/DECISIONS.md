@@ -108,3 +108,16 @@
 ## Name (2026-10-12)
 
 - The BD report is shown to people as **Marketing Report** everywhere (sidebar, page, Admin tab, Home, the monthly email, the PDF). Inside the code, the database and the URLs it is still `bd` (`#/bd`, `bd_*` tables, `modules/bd`), and older docs still say "BD report". The Admin tab is "Marketing Reports".
+
+## Pipeline watch (2026-10-12)
+
+- **Built on made-up sources**, like the Marketing Report, so it could be shown and judged. One new source method, `loadPipeline(date)`; locally the seed files hold the eight Mondays of the mockup and the demo history is created by the same snapshot code the Monday job uses. The numbers are the mockup's (every PIC's weekly MWIP, Marcus's drop, Priya's conversion and forecast move).
+- **Snapshots are append-only** (triggers), like the plan log: a snapshot is what the pipeline looked like that Monday, so it must not change. Only the Admin clearing an alert, and adding a note, write after the fact.
+- **A pursuit's id is the project number it will keep** when promoted. That is how "converted, not a loss" is decided: a pursuit that left MWIP and has a project with its number. This is an assumption about Vantagepoint (open question P1).
+- **Totals are worked out, not stored.** Weekly PIC totals, changes and counts come from the snapshot rows each time, so there is one source of truth.
+- **Alert rules are one object setting** (`pipeline.rules`) with a severity per rule (Alert, Watch, Off) and its thresholds, effective-dated like every setting. Alerts are saved with the snapshot that raised them and are never re-judged.
+- **Defaults chosen where the mockup contradicts itself:** the MWIP slide rule alerts after 8 snapshots in a row, because every PIC in the mockup slides every week and a smaller number would alert on all of them (P3); "pursuit left, no project" waits 3 days so a pursuit that left this week is shown in the detail but is not yet an alert (it becomes one on the next snapshot).
+- **No PIC email.** The spec's "PIC copy" of the alert email conflicts with the rule that the system never emails a PIC, so there is no switch (P4).
+- **Export is a CSV** (opens in Excel) instead of a .xlsx, so there is no spreadsheet library to maintain (P5).
+- **Notes** (Admin, append-only) are shown only to the Admin.
+- **Found while building:** a regular expression written inside a JavaScript template literal loses its backslashes; the build scripts that write code now use the Write tool instead.

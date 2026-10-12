@@ -13,6 +13,17 @@ const config = {
 export function configure(opts) { Object.assign(config, opts); }
 export function pref(k, v) { return config.pref(k, v); }
 
+/* like request, but returns the response text (a CSV) instead of JSON */
+export async function requestText(path) {
+  const headers = {};
+  const user = config.pref('user');
+  if (user) headers['X-Compass-User'] = user;
+  const res = await fetch(config.baseUrl + path, { headers });
+  const text = await res.text();
+  if (!res.ok) { let m = text; try { m = JSON.parse(text).error; } catch (e) { /* plain text */ } throw new ApiError(res.status, m || `Request failed (${res.status})`); }
+  return text;
+}
+
 export async function request(method, path, body) {
   const headers = {};
   const user = config.pref('user');

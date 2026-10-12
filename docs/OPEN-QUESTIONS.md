@@ -47,5 +47,11 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T21 | BD report: should "Other" be the home for revenue with no market sector, or should the Admin always be asked? | ask (publishing is refused until each project has a sector) | Admin > BD reports > rules |
 | T22 | BD report: do PICs see it? Do Finance and Marketing see the MWIP factor? | PICs no (setting); Finance and Marketing yes, PICs never see the factor | `access.picBd`; `server/bd.js` |
 | T23 | BD report: status thresholds 100% (On Track) and 99% of pace (On Pace) are the spec's; confirm | as spec | Admin > BD reports > rules |
+| P1 | Where do pursuits (MWIP) and the contracted forecast live, and is a pursuit's id the project number it keeps when promoted? The "matched, not a loss" test depends on that. | made-up files in the shape of `loadPipeline`; id = project number | `docs/SPEC-pipeline.md` section 2 |
+| P2 | Normal billing lowers the contracted forecast, so "Forecast drops fast" will fire on a busy week. Alert on the whole drop, or only on the part moved into next year? | the whole drop, threshold $150,000 in 7 days | Admin > Pipeline alerts |
+| P3 | "MWIP slides week after week": the mockup's own table slides every week for every PIC, so a short run would alert on everyone. How many in a row? | 8 | Admin > Pipeline alerts |
+| P4 | The spec offers a PIC copy of the Monday alert email. The handoff rule is that the system never emails a PIC. | no PIC email, no switch | |
+| P5 | Export Excel on Pipeline watch: CSV (opens in Excel) or a real .xlsx? | CSV | |
+| P6 | Should the Admin be able to re-run the rules on an old snapshot after changing a threshold? | no; past alerts stay as they were | |
 | T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |

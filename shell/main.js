@@ -5,6 +5,8 @@ import * as platform from '/shared/platform/index.js';
 import { renderHome, homeSubtitle } from '/shell/home.js';
 import { renderBd } from '/modules/bd/ui/report.js';
 import { bdAdminCards } from '/modules/bd/ui/admin.js';
+import { renderPipeline } from '/modules/pipeline/ui/page.js';
+import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
@@ -27,7 +29,7 @@ const NAV = [
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
-  { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', phase: 5, blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
+  { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
 const flatNav = NAV.flatMap(n => [n].concat(n.sub || []));
@@ -71,7 +73,7 @@ function frame(routeId, crumbs, titleText, sub) {
   const nav = [h('div', { class: 'navh', text: 'Modules' })];
   for (const n of NAV) {
     if (n.area && !me.areas[n.area]) continue;
-    nav.push(navItem(n, routeId === n.id));
+    nav.push(navItem(n, routeId === n.id, false, n.id === 'pipeline' && me.badges ? me.badges.pipeline : undefined));
     for (const s of n.sub || []) if (me.areas[s.area]) nav.push(navItem(s, routeId === s.id, true, s.id === 'checkins' && me.badges ? me.badges.checkins : undefined));
   }
   const side = h('aside', { class: 'side', 'aria-label': 'Compass navigation' },
@@ -137,6 +139,11 @@ async function pageTurnaround() {
   renderOverview(ctx, body, data);
 }
 
+async function pagePipeline() {
+  const body = frame('pipeline', [crumb('Compass', '#/'), sep(), crumb('Pipeline watch')], 'Pipeline watch', 'Weekly snapshots of pursuits (MWIP) and contracted forecast, by PIC, with what changed and what needs a look.');
+  await renderPipeline(ctx, body);
+}
+
 async function pageBd(id) {
   const body = frame('bd', [crumb('Compass', '#/'), sep(), crumb('Marketing Report')], 'Marketing Report', 'Principal architectural revenue against goal, with forecast and MWIP backlog. Through the month shown; pace is the annual goal times months elapsed over twelve.');
   await renderBd(ctx, body, id);
@@ -161,8 +168,8 @@ function pageNoAccess() {
 
 /* ---- Admin ---- */
 const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
-const TAB_PHASE = { pipeline: 5 };
 const SETTING_LABEL = {
+  'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
@@ -215,6 +222,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const [s, inputs] = await Promise.all([Admin.settings(), Bd.inputs()]);
       slot.textContent = '';
       slot.append(...bdAdminCards(ctx, s, inputs, canEdit, rerender));
+    } else if (tab === 'pipeline') {
+      const s = await Admin.settings();
+      slot.textContent = '';
+      slot.append(...pipelineAdminCards(ctx, s, canEdit, rerender));
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
@@ -228,7 +239,7 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       slot.append(auditCard(await Admin.audit(200)));
     } else {
       slot.textContent = '';
-      slot.append(banner('info', `${TAB_LABEL[tab]} arrives in phase ${TAB_PHASE[tab]}.`));
+      slot.append(banner('info', `${TAB_LABEL[tab]} is not available yet.`));
     }
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) return boot('Your sign-in is no longer valid. Choose who to sign in as.');
@@ -507,6 +518,9 @@ function auditText(e) {
   if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
+  if (e.action === 'pipeline.snapshot') return ['Saved a pipeline snapshot', e.object];
+  if (e.action === 'pipeline.clear') return ['Cleared a pipeline alert', e.object];
+  if (e.action === 'pipeline.note') return ['Added a note on a pursuit', e.object];
   const bdVerb = { 'bd.build': 'Built', 'bd.rebuild': 'Rebuilt the draft of', 'bd.publish': 'Published', 'bd.archive': 'Archived' }[e.action];
   if (bdVerb) return [`${bdVerb}: ${e.object}`, e.action === 'bd.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   const runVerb = { 'run.build': 'Built', 'run.rebuild': 'Rebuilt the draft of', 'run.publish': 'Published', 'run.archive': 'Archived' }[e.action];
@@ -535,6 +549,7 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
+  if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);

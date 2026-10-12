@@ -59,3 +59,8 @@ test('Monday of a week', () => {
   assert.strictEqual(W.mondayOf('2026-10-05'), '2026-10-05');
   assert.strictEqual(W.mondayOf('2026-10-11'), '2026-10-05');
 });
+
+test('pipeline.css carries no hex colors (tokens only)', () => {
+  const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '../ui/pipeline.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/#[0-9a-fA-F]{3,8}\b/.test(css), 'hex color in pipeline.css');
+});

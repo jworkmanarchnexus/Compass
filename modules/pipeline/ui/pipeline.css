@@ -1,0 +1,28 @@
+/* Pipeline watch. Tokens only: no hex colors. Shares the card, table and chart looks of the Marketing Report (bd.css). */
+.pw-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s5); align-items: start; }
+@media (max-width: 1180px) { .pw-grid { grid-template-columns: 1fr; } }
+.pw-table .sec-head h2, .pw-detail .sec-head h2, .pw-week .sec-head h2 { font: 700 20px/1.2 var(--f-cond); margin: 0 0 var(--s2); }
+.pw-table .sec-head p, .pw-detail .sec-head p { margin: 0; color: var(--text-2); font-size: 13.5px; line-height: 1.45; max-width: 100ch; }
+table.pw-t td { font-size: 12.5px; padding: 9px 6px; white-space: nowrap; }
+table.pw-t td:first-child { white-space: normal; padding-left: 14px; }
+table.pw-t .pw-old { color: var(--text-2); }
+tr.pw-pick { cursor: pointer; }
+tr.pw-pick:hover td { background: var(--surface-2); }
+tr.pw-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+tr.pw-on td { background: var(--accent-soft); }
+.pw-down { color: var(--crit); }
+.pw-up { color: var(--ok); }
+.pw-warn { margin: var(--s3) var(--s4); }
+.pw-what { color: var(--text-2); font-size: 13px; white-space: normal; max-width: 38ch; }
+.pw-note { margin-top: 4px; padding: 4px 8px; border-left: 2px solid var(--line-strong); color: var(--text); font-size: 12.5px; }
+.pw-notebox { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.pw-notebox .txt { width: 100%; max-width: 360px; }
+.pw-wh { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.pw-list { display: flex; flex-direction: column; }
+.pw-item { padding: var(--s4); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start; }
+.pw-item.pw-cleared { opacity: .55; }
+.pw-t { font-weight: 700; font-size: 14.5px; line-height: 1.3; }
+.pw-m { margin: 0; color: var(--text-2); font-size: 13.5px; line-height: 1.45; }
+.pw-b { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.pw-foot { padding: var(--s3) var(--s4); background: var(--surface-2); color: var(--text-2); font-size: 13px; line-height: 1.45; }
+.pw-foot a { color: var(--accent-text); }
