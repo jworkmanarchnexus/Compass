@@ -1,0 +1,282 @@
+{
+  "note": "How the BD report's sections go onto PDF pages. Input: row counts, paper, orientation, layout. Expect: the section ids on each page, in order, and (when given) whether any page had to shrink.",
+  "cases": [
+    {
+      "name": "Letter landscape, everything: tables first, charts second",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "auto",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "sectorTable"
+        ],
+        [
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "Letter portrait, everything: still two pages, text is not shrunk below readable",
+      "paper": "letter",
+      "orientation": "portrait",
+      "layout": "auto",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "sectorTable"
+        ],
+        [
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "Tabloid portrait: all five sections fit on one sheet",
+      "paper": "tabloid",
+      "orientation": "portrait",
+      "layout": "auto",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "sectorTable",
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "Forced one page on Letter landscape shrinks to fit",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "one",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "sectorTable",
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ],
+      "shrinks": true
+    },
+    {
+      "name": "Forced split on Tabloid portrait: two pages even though one would fit",
+      "paper": "tabloid",
+      "orientation": "portrait",
+      "layout": "split",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "sectorTable"
+        ],
+        [
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "Charts only, with the logo heading: all three charts shrink a little to stay on one page",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "auto",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "firmChart",
+          "picChart",
+          "sectorChart"
+        ]
+      ],
+      "shrinks": true
+    },
+    {
+      "name": "A long table flows onto more pages instead of shrinking to nothing",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "auto",
+      "pic": 30,
+      "sector": 30,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable"
+      ],
+      "expect": [
+        [
+          "picTable"
+        ],
+        [
+          "sectorTable"
+        ]
+      ]
+    },
+    {
+      "name": "By PIC, then by market sector (Letter landscape, 6 and 6 rows): the PIC page, then the sector page",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "auto",
+      "grouping": "segment",
+      "pic": 6,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "firmChart",
+          "picChart"
+        ],
+        [
+          "sectorTable",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "By PIC, then by market sector, Tabloid portrait: still one sheet when it fits",
+      "paper": "tabloid",
+      "orientation": "portrait",
+      "layout": "auto",
+      "grouping": "segment",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "firmChart",
+          "picChart",
+          "sectorTable",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "By PIC, then by market sector, forced split on Tabloid portrait",
+      "paper": "tabloid",
+      "orientation": "portrait",
+      "layout": "split",
+      "grouping": "segment",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "picTable",
+        "sectorTable",
+        "firmChart",
+        "picChart",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "picTable",
+          "firmChart",
+          "picChart"
+        ],
+        [
+          "sectorTable",
+          "sectorChart"
+        ]
+      ]
+    },
+    {
+      "name": "Only the market sector items selected: one page",
+      "paper": "letter",
+      "orientation": "landscape",
+      "layout": "auto",
+      "grouping": "segment",
+      "pic": 6,
+      "sector": 6,
+      "head": "logo",
+      "include": [
+        "sectorTable",
+        "sectorChart"
+      ],
+      "expect": [
+        [
+          "sectorTable",
+          "sectorChart"
+        ]
+      ]
+    }
+  ]
+}

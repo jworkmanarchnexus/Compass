@@ -1,0 +1,8 @@
+Name,Sort,RollsInto,RollsUntil
+Healthcare,1,,
+Civic,2,,
+Federal and industrial,3,,
+Commercial,4,,
+Education,5,,
+Other,6,,
+Labs,7,Healthcare,2026-12-31

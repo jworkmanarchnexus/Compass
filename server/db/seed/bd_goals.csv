@@ -1,0 +1,13 @@
+Year,Scope,Key,Amount,Sort
+2026,pic,E101,2400000,1
+2026,pic,E102,2100000,2
+2026,pic,E103,3000000,3
+2026,pic,E104,1800000,4
+2026,pic,E105,1500000,5
+2026,pic,E106,1200000,6
+2026,sector,Healthcare,3200000,1
+2026,sector,Civic,2600000,2
+2026,sector,Federal and industrial,2400000,3
+2026,sector,Commercial,1900000,4
+2026,sector,Education,1200000,5
+2026,sector,Other,700000,6

@@ -28,7 +28,10 @@ const DEFAULTS = {
   'standing.escalatedOnTime': 60, // Escalated is below this % on time ...
   'standing.escalatedKept': 50,   // ... or below this % kept
   'standing.minSample': 3,       // a measure needs at least this many items before it counts toward a label
-  'visibility.picRecords': 'everyone', // who sees each PIC's on-time and kept figures: everyone | principals | admin
+  'visibility.picRecords': 'everyone',
+  'bd.onPacePct': 99,            // BD report: On Pace needs YTD revenue at least this % of pace
+  'bd.onTrackPct': 100,          // BD report: On Track needs (YTD + forecast + MWIP) at least this % of the goal
+  'bd.noSector': 'ask',          // revenue with no market sector: 'ask' (the Admin must pick before publishing) or 'other' (it goes to Other) // who sees each PIC's on-time and kept figures: everyone | principals | admin
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
 };
@@ -63,6 +66,9 @@ const VALIDATORS = {
   'standing.escalatedOnTime': pct,
   'standing.escalatedKept': pct,
   'standing.minSample': v => Number.isInteger(v) && v >= 1 && v <= 20,
+  'bd.onPacePct': pct,
+  'bd.onTrackPct': v => Number.isInteger(v) && v >= 50 && v <= 200,
+  'bd.noSector': oneOf(['ask', 'other']),
   'visibility.picRecords': oneOf(['everyone', 'principals', 'admin']),
   'access': v => !!v && typeof v === 'object' && Object.keys(DEFAULTS.access).every(k => typeof v[k] === 'boolean') && Object.keys(v).length === Object.keys(DEFAULTS.access).length,
 };

@@ -10,6 +10,7 @@
    query) and the mailer; see server/vp-local.js and server/mail.js. */
 const dbmod = require('../db/db');
 const runsDb = require('../runs');
+const bdDb = require('../bd');
 const schedule = require('../../modules/turnaround/logic/schedule');
 const settingsRules = require('../../shared/rules/settings');
 const { createLocalSource } = require('../vp-local');
@@ -36,9 +37,16 @@ function main(argv) {
       source: createLocalSource(), settings, period, mailer: createFileMailer(), baseUrl: process.env.COMPASS_URL || 'http://localhost:5281',
       adminEmails: db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email),
     });
-    if (!out.created) { console.log(`There is already a draft or published run for ${schedule.periodLabel(period)}; nothing changed.`); return; }
-    db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'run.build', `Project Turnaround ${schedule.periodLabel(period)} v1`, JSON.stringify({ runId: out.id, by: 'scheduled job' }));
-    console.log(`Built the ${schedule.periodLabel(period)} draft. Review it in Admin > Report runs.`);
+    if (!out.created) console.log(`There is already a Project Turnaround draft or published run for ${schedule.periodLabel(period)}; nothing changed there.`);
+    if (out.created) db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'run.build', `Project Turnaround ${schedule.periodLabel(period)} v1`, JSON.stringify({ runId: out.id, by: 'scheduled job' }));
+    // the BD report is built the same day, from the same pull
+    const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
+    try {
+      const bd = bdDb.runMonthly(db, { source: createLocalSource(), settings, period, mailer: createFileMailer(), baseUrl: process.env.COMPASS_URL || 'http://localhost:5281', adminEmails });
+      if (bd.created) { db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'bd.build', `Marketing Report ${schedule.periodLabel(period)}, version 1`, JSON.stringify({ runId: bd.id, by: 'scheduled job' })); console.log(`Built the ${schedule.periodLabel(period)} Marketing Report draft.`); }
+      else console.log(`There is already a Marketing Report draft or published report for ${schedule.periodLabel(period)}; nothing changed there.`);
+    } catch (e) { console.log(`The Marketing Report was not built: ${e.message}`); }
+    if (out.created) console.log(`Built the ${schedule.periodLabel(period)} Project Turnaround draft. Review it in Admin > Report runs.`);
   } finally { db.close(); }
 }
 

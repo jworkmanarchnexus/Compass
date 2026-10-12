@@ -395,7 +395,7 @@ test('the run\'s charts are locked with the run', () => withDemo(async ({ db }) 
 
 test('npm run seed works again after runs are published and plans written (the guard triggers do not block a reset)', () => withDemo(async ({ db }) => {
   assert.doesNotThrow(() => seed(db, { demo: true }));
-  assert.strictEqual(db.get('SELECT COUNT(*) n FROM runs').n, 2);
+  assert.strictEqual(db.get('SELECT COUNT(*) n FROM runs').n, 4, 'two Turnaround runs and two BD reports');
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM plan_entries').n, 55);
   assert.throws(() => db.run('DELETE FROM plan_entries'), /append-only/, 'the guards are back after the reset');
 }));

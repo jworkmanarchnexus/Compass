@@ -24,7 +24,7 @@ Three of these are **assumptions** the spec left open, each a setting (`access`)
 
 ## 3. Admin
 
-Tabs, in order: Project Turnaround, Reminders and standing, BD reports, Pipeline alerts, People, Report runs, Commitment patterns, Audit log. BD reports and Pipeline alerts arrive with those modules.
+Tabs, in order: Project Turnaround, Reminders and standing, BD reports, Pipeline alerts, People, Report runs, Commitment patterns, Audit log. Pipeline alerts arrives with Pipeline watch. **BD reports** holds the annual goals (by PIC and by sector, per year), the MWIP factor history (add a new one with the date it takes effect), the market sectors with their roll-up, and the report rules and thresholds (`docs/SPEC-bd.md`). Report runs builds, and links to, either report.
 
 - **Settings cards** (Project Turnaround, Reminders and standing, and the access card on People): every setting is stored as an effective-dated row; saving adds a row and never overwrites. Only changed values are saved, validated on the server (type, range, and rules that span settings: the reminder ladder must be in order, Escalated cutoffs not above Good). "Changes apply to the next run. Published runs never change."
 - **People:** name, login, role, the name used in drafts, status (Active/Inactive, reversible), and the count of active projects the person leads in Vantagepoint.
@@ -38,7 +38,7 @@ Everything is shaped by role on the server (`server/home.js`) and shows only wha
 
 | Section | Who | Content |
 |---|---|---|
-| Needs your attention | Admin | a draft run to review (hidden if `run.showOnHome` is off); check-in drafts waiting (counts of overdue updates and no-plan projects); projects 21+ days past due as conversations |
+| Needs your attention | Admin | a Turnaround or BD draft to review (the BD one says how many projects need a market sector) (hidden if `run.showOnHome` is off); check-in drafts waiting (counts of overdue updates and no-plan projects); projects 21+ days past due as conversations |
 | Your projects | PIC | their projects on the last published run, worst plan status first, each with a link to its plan |
 | Recently published | Admin, PIC, Finance, Marketing if allowed | the last five published runs; the Admin also sees who can see them |
 | Data checks | Admin, System admin | monthly run built for the last closed month; active projects with no PIC; active projects whose PIC has no Compass login; projects the run could not evaluate; daily checks ran within 2 days |

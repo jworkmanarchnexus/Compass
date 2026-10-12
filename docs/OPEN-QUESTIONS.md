@@ -11,7 +11,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | H1 | Language, database (PostgreSQL or SQL Server), hosting, where the jobs run, sign-in provider | Node + SQLite, one process, 127.0.0.1 only | `docs/FOR-KENT.md` lists exactly what to replace and what to keep |
 | H7 | Which sign-in attribute is the user key, and does Vantagepoint carry it? Who maps a PIC's Vantagepoint employee code to a person? | the mapping is `users.employee_code`, set from a seed file | **Gap:** the People page cannot edit the code yet; Home flags a PIC with no login |
 | H9 | How does the one daily email send (SMTP relay, Graph, company mail)? Does a `mailto:` open Outlook on the firm's setup, or does it need an Outlook web link? | writes a text file to `outbox/`; `mailto:` links | one method to implement: `sendToAdmin` |
-| H3 | Where do BD revenue, forecast and MWIP/pursuit data live (Vantagepoint, a CRM, a spreadsheet)? | nothing built | blocks the BD report and Pipeline watch |
+| H3 | Where do BD revenue (net of consultants), contracted forecast, pursuits and each project's market sector live (Vantagepoint, a CRM, a spreadsheet)? | made-up local files in the shape of `loadBd` | the BD report is built on them; Pipeline watch still needs weekly snapshots of the same |
 | T1 | Project number format (the mockup uses `2024-0207`) and the Vantagepoint project key | the mockup's | affects nothing in the logic; it is text |
 | T2 | Time zone for "today" and entry dates | the server's local time | all rules work on plain dates |
 | T3 | Public holidays for "first business day" | first weekday | one function (`schedule.js`) |
@@ -24,7 +24,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 |---|---|---|---|
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |
-| H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | n/a | blocks the BD report |
+| H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Built as raw, weighted by the factor when the report is built** (set the factor to 1 if the source already weights) | `docs/SPEC-bd.md` section 4 |
 | H5 | Where do utilization and net profit come from? | tiles not shown | Home's Firm snapshot |
 | H6 | Are earlier months' runs imported from the Excel workbook, or does history start at go-live? | the first run's "since last month" is blank | |
 | H8 | Fallback for projects with several overhead rates? | reported as a warning, no profit invented | `profit.js` |
@@ -44,4 +44,8 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |
 | T19 | "Other" in Spend less is counted in dollars (so it can be added up). If a PIC means hours or weeks, they would have to convert. Acceptable? | dollars | `plan.js` LEVERS |
 | T20 | Which measures matter most in Commitment patterns? Today: kept rate, delivered against promised, lead time, dates moved, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
+| T21 | BD report: should "Other" be the home for revenue with no market sector, or should the Admin always be asked? | ask (publishing is refused until each project has a sector) | Admin > BD reports > rules |
+| T22 | BD report: do PICs see it? Do Finance and Marketing see the MWIP factor? | PICs no (setting); Finance and Marketing yes, PICs never see the factor | `access.picBd`; `server/bd.js` |
+| T23 | BD report: status thresholds 100% (On Track) and 99% of pace (On Pace) are the spec's; confirm | as spec | Admin > BD reports > rules |
+| T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |

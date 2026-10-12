@@ -3,12 +3,14 @@
 import * as platform from '/shared/platform/index.js';
 
 import { renderHome, homeSubtitle } from '/shell/home.js';
+import { renderBd } from '/modules/bd/ui/report.js';
+import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 
-const { configure, Session, Admin, Turnaround, Checkins, Home, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -24,7 +26,7 @@ const NAV = [
   { id: 'home', href: '#/', icon: 'house', label: 'Home' },
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
-  { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'BD report', phase: 5, blurb: 'Revenue against goal, by PIC and by market sector.' },
+  { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', phase: 5, blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
@@ -135,6 +137,11 @@ async function pageTurnaround() {
   renderOverview(ctx, body, data);
 }
 
+async function pageBd(id) {
+  const body = frame('bd', [crumb('Compass', '#/'), sep(), crumb('Marketing Report')], 'Marketing Report', 'Principal architectural revenue against goal, with forecast and MWIP backlog. Through the month shown; pace is the annual goal times months elapsed over twelve.');
+  await renderBd(ctx, body, id);
+}
+
 async function pageCheckins() {
   const body = frame('checkins', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround', '#/turnaround'), sep(), crumb('Check-in drafts')], 'Check-in drafts', 'Short drafts for PICs who are overdue or have no plan. Nothing sends itself. You read each one, change it if you like, and send it from your own mailbox.');
   await renderCheckins(ctx, body);
@@ -153,8 +160,8 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'BD reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
-const TAB_PHASE = { bd: 5, pipeline: 5 };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_PHASE = { pipeline: 5 };
 const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
@@ -204,6 +211,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
     } else if (tab === 'patterns') {
       const draw = async year => { const d = await Checkins.patterns(year); slot.textContent = ''; slot.append(...patternsCards(ctx, d, draw)); T.hydrateIcons(slot); };
       await draw();
+    } else if (tab === 'bd') {
+      const [s, inputs] = await Promise.all([Admin.settings(), Bd.inputs()]);
+      slot.textContent = '';
+      slot.append(...bdAdminCards(ctx, s, inputs, canEdit, rerender));
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
@@ -331,8 +342,8 @@ function turnaroundCards(s, canEdit, rerender) {
 
 function accessCard(s, canEdit, rerender) {
   return settingsCard('What narrower roles can see', 'Not everything in the spec is settled. These start at the safest answer; turn one on to widen it.', s, ['access'], canEdit, rerender, ed => [
-    row('Marketing director', 'The decided rule is BD report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
-    row('PICs', 'PICs always see Project Turnaround. BD report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the BD report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
+    row('Marketing director', 'The decided rule is Marketing Report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
+    row('PICs', 'PICs always see Project Turnaround. Marketing Report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
   ], 'Takes effect the next time the person opens a page.');
 }
 
@@ -361,7 +372,7 @@ function rolesCard() {
   const rows = [
     ['Admin', 'Runs and publishes reports, edits every setting, adds admin notes. Cannot write in a PIC\'s plan voice.'],
     ['PIC', 'Writes entries on projects they lead. Reads everyone else\'s.'],
-    ['Finance and Marketing director', 'View only. Read what they have been given. Marketing director sees BD report and Pipeline watch.'],
+    ['Finance and Marketing director', 'View only. Read what they have been given. Marketing director sees Marketing Report and Pipeline watch.'],
     ['System admin', 'Keeps the site running. Reads settings, people, report runs and the audit log. Never sees what PICs promised.'],
   ];
   return h('section', { class: 'sec' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Roles' })),
@@ -371,7 +382,7 @@ function rolesCard() {
 /* ---- report runs ---- */
 const STATUS_CHIP = { draft: ['warn', 'Draft'], published: ['ok', 'Published, locked'], archived: ['out', 'Archived'] };
 const statusChip = s => h('span', { class: 'chip ' + STATUS_CHIP[s][0], text: STATUS_CHIP[s][1] });
-const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'BD report' };
+const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'Marketing Report' };
 const fmtCents = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US'); // whole dollars; the minus sign carries the meaning, not only the colour
 const fmtPct = (profit, billed) => billed ? (profit < 0 ? '-' : '') + Math.abs(100 * profit / billed).toFixed(1) + '%' : '-';
 
@@ -386,27 +397,34 @@ function closedPeriods() {
 }
 
 function runsCard(runs, canEdit, onBuilt, onError) {
-  const live = new Set(runs.filter(r => r.status !== 'archived').map(r => r.period));
   const periods = closedPeriods();
-  const sel = h('select', { class: 'txt', style: 'width:200px', 'aria-label': 'Month to build' },
-    ...periods.map(p => h('option', { value: String(p), text: window.CompassTurnaround.periodLabel(p) + (live.has(p) ? ' (already built)' : ''), disabled: live.has(p) })));
-  const first = periods.find(p => !live.has(p));
-  if (first) sel.value = String(first);
-  const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', disabled: !first, onclick: async () => {
-    try { const r = await Admin.buildRun(Number(sel.value)); location.hash = '#/admin/runs/' + r.run.id; } catch (e) { onError(e); }
+  const kindSel = h('select', { class: 'txt', style: 'width:180px', 'aria-label': 'Which report' }, h('option', { value: 'turnaround', text: 'Project Turnaround' }), h('option', { value: 'bd', text: 'Marketing Report' }));
+  const sel = h('select', { class: 'txt', style: 'width:200px', 'aria-label': 'Month to build' });
+  const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', onclick: async () => {
+    try { const r = await Admin.buildRun(Number(sel.value), kindSel.value); location.hash = (kindSel.value === 'bd' ? '#/bd/' : '#/admin/runs/') + r.run.id; } catch (e) { onError(e); }
   } });
+  const fillMonths = () => { // a month already built for the chosen report is greyed out
+    const live = new Set(runs.filter(r => r.kind === kindSel.value && r.status !== 'archived').map(r => r.period));
+    sel.textContent = '';
+    for (const p of periods) sel.append(h('option', { value: String(p), text: window.CompassTurnaround.periodLabel(p) + (live.has(p) ? ' (already built)' : ''), disabled: live.has(p) }));
+    const first = periods.find(p => !live.has(p));
+    if (first) sel.value = String(first);
+    build.disabled = !first;
+  };
+  kindSel.addEventListener('change', fillMonths);
+  fillMonths();
   return h('section', { class: 'sec' },
     h('div', { class: 'sec-head' }, h('h2', { text: 'Report runs' }), h('p', { text: 'Every run the system has built. A published run is locked.' })),
     canEdit ? h('div', { class: 'set-row', style: 'padding:12px 20px;align-items:center' },
       h('div', { class: 'what' }, h('div', { class: 'lab', text: 'Build a run now' }), h('div', { class: 'help', text: 'The scheduled job does this on the first business day. Use this to build one by hand. It builds a draft only; nothing is visible to PICs.' })),
-      h('div', { class: 'ctl' }, sel, build)) : null,
+      h('div', { class: 'ctl' }, kindSel, sel, build)) : null,
     runs.length ? h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
       h('thead', {}, h('tr', {}, ...['Report', 'Period', 'Version', 'Status', 'Projects', 'Created', 'Published', ''].map(x => h('th', { text: x })))),
       h('tbody', {}, ...runs.map(r => h('tr', {},
         h('td', { class: 'strong', text: KIND_LABEL[r.kind] || r.kind }), h('td', { text: r.label }), h('td', { text: 'v' + r.version }), h('td', {}, statusChip(r.status)),
         h('td', { class: 'r', text: String(r.projectCount) }), h('td', { class: 'muted', text: fmtTime(r.createdAt) }),
         h('td', { class: 'muted', text: r.publishedAt ? `${fmtTime(r.publishedAt)}${r.publishedByName ? ' by ' + r.publishedByName.split(' ')[0] : ''}` : '-' }),
-        h('td', {}, r.status === 'archived' ? h('span', { class: 'muted', text: 'Reason: ' + r.archiveReason }) : canEdit ? h('a', { href: '#/admin/runs/' + r.id, text: r.status === 'draft' ? 'Review' : 'View' }) : null))))))
+        h('td', {}, r.status === 'archived' ? h('span', { class: 'muted', text: 'Reason: ' + r.archiveReason }) : canEdit ? h('a', { href: (r.kind === 'bd' ? '#/bd/' : '#/admin/runs/') + r.id, text: r.status === 'draft' ? 'Review' : 'View' }) : null))))))
       : h('div', { class: 'empty-row', text: 'No runs yet.' }));
 }
 
@@ -486,6 +504,11 @@ function auditText(e) {
   if (e.action === 'checkin.dismiss') return ['Dismissed a check-in draft', ''];
   if (e.action === 'checkin.undo') return ['Put a check-in draft back in the queue', ''];
   if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} commitments recorded as missed`];
+  if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
+  if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
+  if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
+  const bdVerb = { 'bd.build': 'Built', 'bd.rebuild': 'Rebuilt the draft of', 'bd.publish': 'Published', 'bd.archive': 'Archived' }[e.action];
+  if (bdVerb) return [`${bdVerb}: ${e.object}`, e.action === 'bd.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   const runVerb = { 'run.build': 'Built', 'run.rebuild': 'Rebuilt the draft of', 'run.publish': 'Published', 'run.archive': 'Archived' }[e.action];
   if (runVerb) return [`${runVerb}: ${e.object}`, e.action === 'run.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   return [e.action, e.object];
@@ -511,6 +534,7 @@ function route() {
   if ((m = /^#\/admin\/runs\/([0-9a-f-]+)$/.exec(hash))) return me.areas.admin ? pageRun(m[1]) : pageNoAccess();
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
+  if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);

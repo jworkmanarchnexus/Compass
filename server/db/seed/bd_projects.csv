@@ -1,0 +1,75 @@
+WBS1,Name,Principal,Sector
+2025-1001,Murray Clinic,E101,Healthcare
+2025-1002,Park City Medical Office,E101,Healthcare
+2025-1004,Cedar City Library,E101,Civic
+2025-1005,Draper Fire Station,E101,Civic
+2025-1007,Provo Maintenance Hangar,E101,Federal and industrial
+2025-1008,Layton Distribution Warehouse,E101,Federal and industrial
+2025-1010,Logan Office Fit-Out,E101,Commercial
+2025-1011,Tooele Retail Center,E101,Commercial
+2025-1013,Vernal Elementary Addition,E101,Education
+2025-1014,Lehi Science Wing,E101,Education
+2025-1016,Ogden Chapel,E101,Other
+2025-1017,Murray Museum Annex,E101,Other
+2025-1019,Orem Clinic,E102,Healthcare
+2025-1020,Cedar City Medical Office,E102,Healthcare
+2025-1022,Moab Library,E102,Civic
+2025-1023,Provo Fire Station,E102,Civic
+2025-1025,Bountiful Maintenance Hangar,E102,Federal and industrial
+2025-1026,Logan Distribution Warehouse,E102,Federal and industrial
+2025-1028,Sandy Office Fit-Out,E102,Commercial
+2025-1029,Vernal Retail Center,E102,Commercial
+2025-1031,Heber Elementary Addition,E102,Education
+2025-1032,Ogden Science Wing,E102,Education
+2025-1034,Park City Chapel,E102,Other
+2025-1035,Orem Museum Annex,E102,Other
+2025-1037,Draper Clinic,E103,Healthcare
+2025-1038,Moab Medical Office,E103,Healthcare
+2025-1040,Layton Library,E103,Civic
+2025-1041,Bountiful Fire Station,E103,Civic
+2025-1043,Tooele Maintenance Hangar,E103,Federal and industrial
+2025-1044,Sandy Distribution Warehouse,E103,Federal and industrial
+2025-1046,Lehi Office Fit-Out,E103,Commercial
+2025-1047,Heber Retail Center,E103,Commercial
+2025-1049,Murray Elementary Addition,E103,Education
+2025-1050,Park City Science Wing,E103,Education
+2025-1052,Cedar City Chapel,E103,Other
+2025-1053,Draper Museum Annex,E103,Other
+2025-1055,Provo Clinic,E104,Healthcare
+2025-1056,Layton Medical Office,E104,Healthcare
+2025-1058,Logan Library,E104,Civic
+2025-1059,Tooele Fire Station,E104,Civic
+2025-1061,Vernal Maintenance Hangar,E104,Federal and industrial
+2025-1062,Lehi Distribution Warehouse,E104,Federal and industrial
+2025-1064,Ogden Office Fit-Out,E104,Commercial
+2025-1065,Murray Retail Center,E104,Commercial
+2025-1067,Orem Elementary Addition,E104,Education
+2025-1068,Cedar City Science Wing,E104,Education
+2025-1070,Moab Chapel,E104,Other
+2025-1071,Provo Museum Annex,E104,Other
+2025-1073,Bountiful Clinic,E105,Healthcare
+2025-1074,Logan Medical Office,E105,Healthcare
+2025-1076,Sandy Library,E105,Civic
+2025-1077,Vernal Fire Station,E105,Civic
+2025-1079,Heber Maintenance Hangar,E105,Federal and industrial
+2025-1080,Ogden Distribution Warehouse,E105,Federal and industrial
+2025-1082,Park City Office Fit-Out,E105,Commercial
+2025-1083,Orem Retail Center,E105,Commercial
+2025-1085,Draper Elementary Addition,E105,Education
+2025-1086,Moab Science Wing,E105,Education
+2025-1088,Layton Chapel,E105,Other
+2025-1089,Bountiful Museum Annex,E105,Other
+2025-1091,Tooele Clinic,E106,Healthcare
+2025-1092,Sandy Medical Office,E106,Healthcare
+2025-1094,Lehi Library,E106,Civic
+2025-1095,Heber Fire Station,E106,Civic
+2025-1097,Murray Maintenance Hangar,E106,Federal and industrial
+2025-1098,Park City Distribution Warehouse,E106,Federal and industrial
+2025-1100,Cedar City Office Fit-Out,E106,Commercial
+2025-1101,Draper Retail Center,E106,Commercial
+2025-1103,Provo Elementary Addition,E106,Education
+2025-1104,Layton Science Wing,E106,Education
+2025-1106,Logan Chapel,E106,Other
+2025-1107,Tooele Museum Annex,E106,Other
+2025-1109,Provo Research Laboratory,E101,Labs
+2025-1110,Midvale Storage Pavilion,E104,

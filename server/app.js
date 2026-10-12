@@ -10,6 +10,7 @@ const schedule = require('../modules/turnaround/logic/schedule');
 const { createLocalSource } = require('./vp-local');
 const { createFileMailer } = require('./mail');
 const planDb = require('./plan');
+const bdDb = require('./bd');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const planLogic = require('../modules/turnaround/logic/plan');
@@ -204,6 +205,13 @@ function createServer(db, opts) {
       const period = body.period === undefined ? latest : body.period;
       if (!Number.isInteger(period) || period < 200001 || period % 100 < 1 || period % 100 > 12) throw new HttpError(400, 'That is not a valid month.');
       if (period > latest) throw new HttpError(400, 'That month has not closed yet.');
+      if (body.kind === 'bd') {
+        const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
+        const made = bdDb.runMonthly(db, { source, settings: currentSettings(), period, mailer, baseUrl, adminEmails });
+        if (!made.created) throw new HttpError(409, 'There is already a draft or published Marketing Report for that month.', { id: made.id });
+        audit(user, 'bd.build', `Marketing Report ${bdDb.label(bdDb.getRun(db, made.id))}`, { runId: made.id });
+        return sendJson(res, 201, bdDb.reportDetail(db, made.id, { role: user.role }));
+      }
       const out = runsDb.runMonthly(db, {
         source, settings: currentSettings(), period, mailer, baseUrl,
         adminEmails: db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email),
@@ -216,6 +224,7 @@ function createServer(db, opts) {
     if (rm) {
       requireTab(user, 'runs', 'edit'); // run contents are the admin's alone; the system admin sees the list only
       const id = rm[1]; const action = rm[2];
+      if (runsDb.getRun(db, id).kind !== runsDb.KIND) throw new HttpError(404, 'Run not found.'); // Marketing Reports have their own endpoints
       if (!action && method === 'GET') return sendJson(res, 200, runsDb.runDetail(db, id, { withWarnings: true }));
       if (action === 'overview' && method === 'GET') return sendJson(res, 200, Object.assign(tdb.buildOverview(db, id, { role: user.role, userId: user.id, employeeCode: user.employee_code }, { today: today(), settings: currentSettings() }), { warnings: runsDb.runDetail(db, id, { withWarnings: true }).warnings }));
       if (action && method === 'POST') {
@@ -263,6 +272,54 @@ function createServer(db, opts) {
         else planDb.reviseDate(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
       }
+    }
+
+    /* ---- BD report: read (BD viewers), and the Admin's own data and runs ---- */
+    if (p === '/api/bd/reports' && method === 'GET') {
+      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, bdDb.listReports(db, { role: user.role }));
+    }
+    const bm = /^\/api\/bd\/reports\/([^/]+)$/.exec(p);
+    if (bm && method === 'GET') {
+      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, bdDb.reportDetail(db, bm[1], { role: user.role }));
+    }
+    if (p === '/api/admin/bd/inputs' && method === 'GET') { requireTab(user, 'bd', 'view'); return sendJson(res, 200, bdDb.adminInputs(db)); }
+    if (p === '/api/admin/bd/goals' && method === 'PUT') {
+      requireTab(user, 'bd', 'edit');
+      const b = await readJson(req);
+      const r = bdDb.setGoal(db, user, b);
+      audit(user, 'bd.goal', `${b.year} ${b.scope === 'pic' ? 'PIC' : 'sector'} goal: ${b.key}`, r);
+      return sendJson(res, 200, bdDb.adminInputs(db));
+    }
+    if (p === '/api/admin/bd/factors' && method === 'POST') {
+      requireTab(user, 'bd', 'edit');
+      const b = await readJson(req);
+      bdDb.addFactor(db, user, b);
+      audit(user, 'bd.factor', 'MWIP factor', { effectiveFrom: b.effectiveFrom, factorBp: b.factorBp });
+      return sendJson(res, 201, bdDb.adminInputs(db));
+    }
+    if (p === '/api/admin/bd/overrides' && method === 'PUT') {
+      requireTab(user, 'bd', 'edit');
+      const b = await readJson(req);
+      bdDb.setOverride(db, user, b);
+      audit(user, 'bd.sector', `Market sector for ${b.wbs1}`, { sector: b.sector || null });
+      return sendJson(res, 200, bdDb.adminInputs(db));
+    }
+    const bx = /^\/api\/admin\/bd\/runs\/([^/]+)\/(rebuild|publish|archive)$/.exec(p);
+    if (bx && method === 'POST') {
+      requireTab(user, 'bd', 'edit');
+      const id = bx[1]; const b = await readJson(req);
+      const lbl = () => `Marketing Report ${bdDb.label(bdDb.getRun(db, id))}`;
+      if (bx[2] === 'rebuild') { bdDb.rebuildDraft(db, id, { source, settings: currentSettings() }); audit(user, 'bd.rebuild', lbl(), { runId: id }); }
+      else if (bx[2] === 'publish') { bdDb.publish(db, id, user); audit(user, 'bd.publish', lbl(), { runId: id }); }
+      else {
+        const was = lbl();
+        const newId = bdDb.archiveAndRerun(db, id, { reason: b.reason, confirm: b.confirm }, { source, settings: currentSettings() });
+        audit(user, 'bd.archive', was, { runId: id, reason: b.reason.trim(), newRunId: newId });
+        return sendJson(res, 200, bdDb.reportDetail(db, newId, { role: user.role }));
+      }
+      return sendJson(res, 200, bdDb.reportDetail(db, id, { role: user.role }));
     }
 
     /* ---- check-in drafts and the daily job: the admin's alone ---- */
