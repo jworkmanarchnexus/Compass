@@ -95,7 +95,7 @@ export function openExport(ctx, d) {
     dl.disabled = false;
   });
 
-  const root = h('div', { class: 'xw', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Export the BD report as a PDF' },
+  const root = h('div', { class: 'xw', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Export the Marketing Report as a PDF' },
     h('div', { class: 'xw-top' }, h('h2', { text: 'Export PDF' }), h('span', { class: 'xw-sum', text: d.run.label }), h('span', { class: 'grow' }),
       h('button', { class: 'btn quiet', type: 'button', text: 'Close', onclick: close })),
     h('div', { class: 'xw-main' }, opts, prev),

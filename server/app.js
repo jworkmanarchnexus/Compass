@@ -208,8 +208,8 @@ function createServer(db, opts) {
       if (body.kind === 'bd') {
         const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
         const made = bdDb.runMonthly(db, { source, settings: currentSettings(), period, mailer, baseUrl, adminEmails });
-        if (!made.created) throw new HttpError(409, 'There is already a draft or published BD report for that month.', { id: made.id });
-        audit(user, 'bd.build', `BD report ${bdDb.label(bdDb.getRun(db, made.id))}`, { runId: made.id });
+        if (!made.created) throw new HttpError(409, 'There is already a draft or published Marketing Report for that month.', { id: made.id });
+        audit(user, 'bd.build', `Marketing Report ${bdDb.label(bdDb.getRun(db, made.id))}`, { runId: made.id });
         return sendJson(res, 201, bdDb.reportDetail(db, made.id, { role: user.role }));
       }
       const out = runsDb.runMonthly(db, {
@@ -224,7 +224,7 @@ function createServer(db, opts) {
     if (rm) {
       requireTab(user, 'runs', 'edit'); // run contents are the admin's alone; the system admin sees the list only
       const id = rm[1]; const action = rm[2];
-      if (runsDb.getRun(db, id).kind !== runsDb.KIND) throw new HttpError(404, 'Run not found.'); // BD reports have their own endpoints
+      if (runsDb.getRun(db, id).kind !== runsDb.KIND) throw new HttpError(404, 'Run not found.'); // Marketing Reports have their own endpoints
       if (!action && method === 'GET') return sendJson(res, 200, runsDb.runDetail(db, id, { withWarnings: true }));
       if (action === 'overview' && method === 'GET') return sendJson(res, 200, Object.assign(tdb.buildOverview(db, id, { role: user.role, userId: user.id, employeeCode: user.employee_code }, { today: today(), settings: currentSettings() }), { warnings: runsDb.runDetail(db, id, { withWarnings: true }).warnings }));
       if (action && method === 'POST') {
@@ -310,7 +310,7 @@ function createServer(db, opts) {
     if (bx && method === 'POST') {
       requireTab(user, 'bd', 'edit');
       const id = bx[1]; const b = await readJson(req);
-      const lbl = () => `BD report ${bdDb.label(bdDb.getRun(db, id))}`;
+      const lbl = () => `Marketing Report ${bdDb.label(bdDb.getRun(db, id))}`;
       if (bx[2] === 'rebuild') { bdDb.rebuildDraft(db, id, { source, settings: currentSettings() }); audit(user, 'bd.rebuild', lbl(), { runId: id }); }
       else if (bx[2] === 'publish') { bdDb.publish(db, id, user); audit(user, 'bd.publish', lbl(), { runId: id }); }
       else {

@@ -37,7 +37,7 @@ function buildHome(db, user, { today, settings }) {
     const bdDraft = runs.find(r => r.kind === bdDb.KIND && r.status === 'draft');
     if (bdDraft && settings['run.showOnHome']) {
       const u = bdDb.unresolvedSector(db, bdDraft.id);
-      items.push({ kind: 'bd_draft', badge: 'Draft', tone: 'warn', title: `BD report: ${schedule.periodLabel(bdDraft.period)} is ready to review`,
+      items.push({ kind: 'bd_draft', badge: 'Draft', tone: 'warn', title: `Marketing Report: ${schedule.periodLabel(bdDraft.period)} is ready to review`,
         text: u.n ? `${plural(u.n, 'project')} ${u.n === 1 ? 'needs' : 'need'} a market sector before it can be published.` : 'Nothing is holding it back. Check the numbers and publish when you are ready.', href: `#/bd/${bdDraft.id}`, action: 'Review draft', primary: !u.n });
     }
     const waiting = db.all("SELECT items_json, situation FROM checkin_drafts WHERE status = 'waiting'");
@@ -76,7 +76,7 @@ function buildHome(db, user, { today, settings }) {
         const by = names[r.published_by] ? names[r.published_by].split(' ')[0] : null;
         if (r.kind === bdDb.KIND) {
           const m = db.get('SELECT cutoff FROM bd_run_meta WHERE run_id = ?', r.id);
-          return { id: r.id, label: `BD report, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `Billing cutoff ${m ? m.cutoff : ''}.${isAdmin ? ` Visible to ${list(whoBd)}.` : ''}`, href: `#/bd/${r.id}` };
+          return { id: r.id, label: `Marketing Report, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `Billing cutoff ${m ? m.cutoff : ''}.${isAdmin ? ` Visible to ${list(whoBd)}.` : ''}`, href: `#/bd/${r.id}` };
         }
         const n = db.get('SELECT COUNT(*) AS n FROM run_projects WHERE run_id = ?', r.id).n;
         return { id: r.id, label: `Project Turnaround, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `${plural(n, 'turnaround project')}.${isAdmin ? ` Visible to ${list(whoTurn)}.` : ''}`, href: '#/turnaround' };
@@ -106,12 +106,12 @@ function buildHome(db, user, { today, settings }) {
     }
 
     const bdLive = runs.filter(r => r.kind === bdDb.KIND && r.status !== 'archived').sort((a, b) => b.period - a.period || b.version - a.version)[0];
-    if (!bdLive || bdLive.period < latestClosed) checks.push({ status: 'fix', title: `The ${schedule.periodLabel(latestClosed)} BD report has not been built`, text: 'The monthly job builds it with the Project Turnaround run. You can build it in Admin > Report runs.', href: '#/admin/runs' });
-    else checks.push({ status: 'ok', title: 'BD report', text: `${schedule.periodLabel(bdLive.period)}, version ${bdLive.version}.`, createdAt: bdLive.created_at });
+    if (!bdLive || bdLive.period < latestClosed) checks.push({ status: 'fix', title: `The ${schedule.periodLabel(latestClosed)} Marketing Report has not been built`, text: 'The monthly job builds it with the Project Turnaround run. You can build it in Admin > Report runs.', href: '#/admin/runs' });
+    else checks.push({ status: 'ok', title: 'Marketing Report', text: `${schedule.periodLabel(bdLive.period)}, version ${bdLive.version}.`, createdAt: bdLive.created_at });
     const bdDraftNow = runs.find(r => r.kind === bdDb.KIND && r.status === 'draft');
     if (bdDraftNow && isAdmin) {
       const u = bdDb.unresolvedSector(db, bdDraftNow.id);
-      if (u.n) checks.push({ status: 'fix', title: `${money(u.amount)} unassigned to a market`, text: 'Pick a sector in the BD report before you publish.', href: `#/bd/${bdDraftNow.id}` });
+      if (u.n) checks.push({ status: 'fix', title: `${money(u.amount)} unassigned to a market`, text: 'Pick a sector in the Marketing Report before you publish.', href: `#/bd/${bdDraftNow.id}` });
     }
 
     const daily = db.get("SELECT at FROM audit_log WHERE action = 'daily.run' ORDER BY id DESC LIMIT 1");
@@ -123,7 +123,7 @@ function buildHome(db, user, { today, settings }) {
 
     out.next = [
       { title: 'Project Turnaround run', text: 'First business day. Creates a draft and emails you.', date: schedule.nextFirstBusinessDay(today, !!(!last || last.period < latestClosed)) },
-      { title: 'BD report run', text: 'First business day. Creates a draft and emails you.', date: schedule.nextFirstBusinessDay(today, !!(!bdLive || bdLive.period < latestClosed)) },
+      { title: 'Marketing Report run', text: 'First business day. Creates a draft and emails you.', date: schedule.nextFirstBusinessDay(today, !!(!bdLive || bdLive.period < latestClosed)) },
       { title: 'Daily checks', text: 'Every day. Records missed commitments and prepares check-in drafts.', date: null },
     ];
     const latest = last || null;

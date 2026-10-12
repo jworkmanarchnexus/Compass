@@ -205,7 +205,7 @@ test('the monthly email for a BD draft says how many projects need a sector, and
   try {
     await t.api('j.workman').post('/api/admin/runs', { kind: 'bd', period: 202609 });
     assert.strictEqual(mailer.sent.length, 1);
-    assert.match(mailer.sent[0].subject, /BD report draft ready: September 2026/);
+    assert.match(mailer.sent[0].subject, /Marketing Report draft ready: September 2026/);
     assert.match(mailer.sent[0].body, /1 project needs a market sector/);
     assert.match(mailer.sent[0].body, /#\/bd\//);
     assert.ok(!mailer.sent[0].body.includes('Midvale'), 'no project names in the email');

@@ -16,7 +16,7 @@ export async function renderBd(ctx, body, wantedId) {
   const isAdmin = me.role === 'admin';
   const list = await Bd.reports();
   if (!list.length) {
-    body.append(h('div', { class: 'empty-note', text: isAdmin ? 'No BD report has been built yet. Build one in Admin > Report runs.' : 'No BD report has been published yet.' }));
+    body.append(h('div', { class: 'empty-note', text: isAdmin ? 'No Marketing Report has been built yet. Build one in Admin > Report runs.' : 'No Marketing Report has been published yet.' }));
     return;
   }
   let id = wantedId && list.some(r => r.id === wantedId) ? wantedId : (list.find(r => r.status === 'published') || list[0]).id;

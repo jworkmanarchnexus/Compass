@@ -26,7 +26,7 @@ const NAV = [
   { id: 'home', href: '#/', icon: 'house', label: 'Home' },
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
-  { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'BD report', blurb: 'Revenue against goal, by PIC and by market sector.' },
+  { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', phase: 5, blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
@@ -138,7 +138,7 @@ async function pageTurnaround() {
 }
 
 async function pageBd(id) {
-  const body = frame('bd', [crumb('Compass', '#/'), sep(), crumb('BD report')], 'BD report', 'Principal architectural revenue against goal, with forecast and MWIP backlog. Through the month shown; pace is the annual goal times months elapsed over twelve.');
+  const body = frame('bd', [crumb('Compass', '#/'), sep(), crumb('Marketing Report')], 'Marketing Report', 'Principal architectural revenue against goal, with forecast and MWIP backlog. Through the month shown; pace is the annual goal times months elapsed over twelve.');
   await renderBd(ctx, body, id);
 }
 
@@ -160,7 +160,7 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'BD reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const TAB_PHASE = { pipeline: 5 };
 const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
@@ -342,8 +342,8 @@ function turnaroundCards(s, canEdit, rerender) {
 
 function accessCard(s, canEdit, rerender) {
   return settingsCard('What narrower roles can see', 'Not everything in the spec is settled. These start at the safest answer; turn one on to widen it.', s, ['access'], canEdit, rerender, ed => [
-    row('Marketing director', 'The decided rule is BD report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
-    row('PICs', 'PICs always see Project Turnaround. BD report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the BD report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
+    row('Marketing director', 'The decided rule is Marketing Report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
+    row('PICs', 'PICs always see Project Turnaround. Marketing Report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
   ], 'Takes effect the next time the person opens a page.');
 }
 
@@ -372,7 +372,7 @@ function rolesCard() {
   const rows = [
     ['Admin', 'Runs and publishes reports, edits every setting, adds admin notes. Cannot write in a PIC\'s plan voice.'],
     ['PIC', 'Writes entries on projects they lead. Reads everyone else\'s.'],
-    ['Finance and Marketing director', 'View only. Read what they have been given. Marketing director sees BD report and Pipeline watch.'],
+    ['Finance and Marketing director', 'View only. Read what they have been given. Marketing director sees Marketing Report and Pipeline watch.'],
     ['System admin', 'Keeps the site running. Reads settings, people, report runs and the audit log. Never sees what PICs promised.'],
   ];
   return h('section', { class: 'sec' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Roles' })),
@@ -382,7 +382,7 @@ function rolesCard() {
 /* ---- report runs ---- */
 const STATUS_CHIP = { draft: ['warn', 'Draft'], published: ['ok', 'Published, locked'], archived: ['out', 'Archived'] };
 const statusChip = s => h('span', { class: 'chip ' + STATUS_CHIP[s][0], text: STATUS_CHIP[s][1] });
-const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'BD report' };
+const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'Marketing Report' };
 const fmtCents = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US'); // whole dollars; the minus sign carries the meaning, not only the colour
 const fmtPct = (profit, billed) => billed ? (profit < 0 ? '-' : '') + Math.abs(100 * profit / billed).toFixed(1) + '%' : '-';
 
@@ -398,7 +398,7 @@ function closedPeriods() {
 
 function runsCard(runs, canEdit, onBuilt, onError) {
   const periods = closedPeriods();
-  const kindSel = h('select', { class: 'txt', style: 'width:180px', 'aria-label': 'Which report' }, h('option', { value: 'turnaround', text: 'Project Turnaround' }), h('option', { value: 'bd', text: 'BD report' }));
+  const kindSel = h('select', { class: 'txt', style: 'width:180px', 'aria-label': 'Which report' }, h('option', { value: 'turnaround', text: 'Project Turnaround' }), h('option', { value: 'bd', text: 'Marketing Report' }));
   const sel = h('select', { class: 'txt', style: 'width:200px', 'aria-label': 'Month to build' });
   const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', onclick: async () => {
     try { const r = await Admin.buildRun(Number(sel.value), kindSel.value); location.hash = (kindSel.value === 'bd' ? '#/bd/' : '#/admin/runs/') + r.run.id; } catch (e) { onError(e); }
@@ -504,7 +504,7 @@ function auditText(e) {
   if (e.action === 'checkin.dismiss') return ['Dismissed a check-in draft', ''];
   if (e.action === 'checkin.undo') return ['Put a check-in draft back in the queue', ''];
   if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} commitments recorded as missed`];
-  if (e.action === 'bd.goal') return [`Changed a BD goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
+  if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
   const bdVerb = { 'bd.build': 'Built', 'bd.rebuild': 'Rebuilt the draft of', 'bd.publish': 'Published', 'bd.archive': 'Archived' }[e.action];

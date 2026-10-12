@@ -29,8 +29,8 @@ function ownInputs(db, period) {
   const sectors = db.all('SELECT * FROM bd_sectors ORDER BY sort, name').map(s => ({ name: s.name, rollsInto: s.rolls_into, rollsUntil: s.rolls_until }));
   const cutoff = schedule.lastDayOfPeriod(period);
   const f = db.get('SELECT factor_bp FROM bd_mwip_factor WHERE effective_from <= ? ORDER BY effective_from DESC LIMIT 1', cutoff);
-  if (!f) throw new HttpError(409, `There is no MWIP factor in force on ${cutoff}. Add one in Admin > BD reports.`);
-  if (!Object.keys(goals.pic).length) throw new HttpError(409, `There are no ${year} revenue goals yet. Add them in Admin > BD reports.`);
+  if (!f) throw new HttpError(409, `There is no MWIP factor in force on ${cutoff}. Add one in Admin > Marketing Reports.`);
+  if (!Object.keys(goals.pic).length) throw new HttpError(409, `There are no ${year} revenue goals yet. Add them in Admin > Marketing Reports.`);
   const overrides = Object.fromEntries(db.all('SELECT wbs1, sector FROM bd_sector_overrides').map(o => [o.wbs1, o.sector]));
   return { year, goals, sectors, cutoff, factorBp: f.factor_bp, overrides };
 }
@@ -192,8 +192,8 @@ function runMonthly(db, { source, settings, period, mailer, baseUrl, adminEmails
   const id = buildDraft(db, { source, period, settings });
   const unresolved = unresolvedSector(db, id);
   if (settings['run.emailAdmin'] && mailer && adminEmails.length) {
-    mailer.sendToAdmin({ to: adminEmails, subject: `BD report draft ready: ${schedule.periodLabel(period)}`,
-      body: `The ${schedule.periodLabel(period)} BD report draft is ready to review.${unresolved.n ? `\n${unresolved.n} ${unresolved.n === 1 ? 'project needs' : 'projects need'} a market sector before it can be published.` : ''}\nOpen it: ${baseUrl}/#/bd/${id}` });
+    mailer.sendToAdmin({ to: adminEmails, subject: `Marketing Report draft ready: ${schedule.periodLabel(period)}`,
+      body: `The ${schedule.periodLabel(period)} Marketing Report draft is ready to review.${unresolved.n ? `\n${unresolved.n} ${unresolved.n === 1 ? 'project needs' : 'projects need'} a market sector before it can be published.` : ''}\nOpen it: ${baseUrl}/#/bd/${id}` });
   }
   return { created: true, id };
 }

@@ -43,9 +43,9 @@ function main(argv) {
     const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
     try {
       const bd = bdDb.runMonthly(db, { source: createLocalSource(), settings, period, mailer: createFileMailer(), baseUrl: process.env.COMPASS_URL || 'http://localhost:5281', adminEmails });
-      if (bd.created) { db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'bd.build', `BD report ${schedule.periodLabel(period)}, version 1`, JSON.stringify({ runId: bd.id, by: 'scheduled job' })); console.log(`Built the ${schedule.periodLabel(period)} BD report draft.`); }
-      else console.log(`There is already a BD report draft or published report for ${schedule.periodLabel(period)}; nothing changed there.`);
-    } catch (e) { console.log(`The BD report was not built: ${e.message}`); }
+      if (bd.created) { db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'bd.build', `Marketing Report ${schedule.periodLabel(period)}, version 1`, JSON.stringify({ runId: bd.id, by: 'scheduled job' })); console.log(`Built the ${schedule.periodLabel(period)} Marketing Report draft.`); }
+      else console.log(`There is already a Marketing Report draft or published report for ${schedule.periodLabel(period)}; nothing changed there.`);
+    } catch (e) { console.log(`The Marketing Report was not built: ${e.message}`); }
     if (out.created) console.log(`Built the ${schedule.periodLabel(period)} Project Turnaround draft. Review it in Admin > Report runs.`);
   } finally { db.close(); }
 }
