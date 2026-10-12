@@ -77,7 +77,7 @@ These were deliberate decisions; each is enforced somewhere and tested.
 3. **The plan log is append-only.** Fixes are Correction entries. Entries belong to the project, not the run.
 4. **Only the PIC writes plan content.** The Admin may add labeled, public notes, never in a PIC's voice.
 5. **The system never emails a PIC.** Reminders are drafts the Admin sends from their own mailbox. The only automatic email goes to the Admin: a count and a link.
-6. **A commitment's action (lever), number and actual result are never sent to a PIC**, not even the author. Per-lever rollups are Admin-only.
+6. **A commitment's action, amount and actual result are visible to everyone who may read the plan.** (The handoff hid them from PICs; Josh reversed that on 2026-10-11.) The per-action analysis, drafts and run contents stay Admin-only.
 7. **Every threshold is an effective-dated Admin setting.** A run records the settings it was built with.
 8. **Money is exact** (whole cents). No floating point in money, no silent fallbacks (a project with no overhead plan is reported, not guessed).
 

@@ -1,5 +1,5 @@
 /* ===== Commitment patterns: what PICs commit to, and what comes of it =====
-   Pure analysis of the plan log, for the ADMIN only (a commitment's action and amount are never shown to a PIC).
+   Pure analysis of the plan log, for the ADMIN only (the analysis; each commitment's own action and amount are visible on its plan page).
    Nothing is recorded separately: the append-only log already holds every commitment, every date change and every
    outcome, so this is worked out from it on demand and can never drift or be lost.
 

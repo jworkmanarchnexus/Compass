@@ -59,24 +59,23 @@ test('a project\'s page shows its log, newest first, with the date changes', () 
   assert.strictEqual(r.status.status, 'update_due');
 }));
 
-test('the lever, the number and the actual result are for the Admin only', () => withDemo(async ({ api }) => {
-  const asAdmin = (await api('j.workman').get('/api/projects/2025-0412/plan')).body;
-  const c = asAdmin.commitments.find(x => x.promisedBy === '2026-10-03');
-  assert.deepStrictEqual([c.lever, c.qty, c.leverLabel], ['fee', 58000, 'Request additional services fee']);
-  assert.ok(asAdmin.commitments.some(x => x.actual === 412), 'the actual result of a done commitment');
-
-  for (const who of ['d.whitfield', 't.lindqvist', 'm.hale']) {
+test('every PIC, and everyone who reads the plan, sees the action, amount and actual result', () => withDemo(async ({ api }) => {
+  for (const who of ['j.workman', 'd.whitfield', 't.lindqvist', 'r.chen', 'm.hale']) {
     const res = await api(who).get('/api/projects/2025-0412/plan');
     assert.strictEqual(res.status, 200, who);
-    const text = JSON.stringify(Object.assign({}, res.body, { levers: undefined })); // the form's list of actions is not a commitment's lever
-    for (const secret of ['"lever"', '"leverLabel"', '"qty"', '"actual"', '"unit"', 'Request additional services fee']) assert.ok(!text.includes(secret), `${who} must not receive ${secret}`);
+    const c3 = res.body.commitments.find(c => c.promisedBy === '2026-10-03');
+    assert.deepStrictEqual([c3.lever, c3.leverLabel, c3.qty, c3.unit], ['fee', 'Request additional services fee', 58000, 'dollars'], who + ' sees the action and amount');
+    const done = res.body.commitments.find(c => c.status === 'done');
+    assert.strictEqual(done.actual, 412, who + ' sees the actual result');
+    const log = res.body.entries.find(e => e.kind === 'commitment' && e.promisedBy === '2026-10-03');
+    assert.deepStrictEqual([log.leverLabel, log.qty], ['Request additional services fee', 58000], who + ' sees it in the log too');
+    assert.strictEqual(res.body.entries.find(e => e.kind === 'done').actual, 412);
   }
-  // nor on the page of everyone's projects
-  const overview = JSON.stringify((await api('d.whitfield').get('/api/turnaround/current')).body);
-  for (const secret of ['"lever"', '"qty"', '"actual"']) assert.ok(!overview.includes(secret), secret);
-  // the form's list of actions goes to the PIC who writes and the admin, not to readers
+  assert.strictEqual((await api('c.brandt').get('/api/projects/2025-0412/plan')).status, 403, 'still only those who may read the plan');
+  assert.strictEqual((await api('kent').get('/api/projects/2025-0412/plan')).status, 403);
+  // the form's list of actions goes to the PIC who writes and the Admin
   assert.ok((await api('d.whitfield').get('/api/projects/2025-0412/plan')).body.levers.length === 10, 'eight actions and an Other in each group');
-  assert.strictEqual((await api('t.lindqvist').get('/api/projects/2025-0412/plan')).body.levers.length, 0);
+  assert.strictEqual((await api('t.lindqvist').get('/api/projects/2025-0412/plan')).body.levers.length, 0, 'readers do not get the form');
 }));
 
 test('only the PIC on a project writes in its plan; Admin only adds labeled notes', () => withDemo(async ({ api }) => {
@@ -354,7 +353,7 @@ test('commitment patterns: the analysis on the demo year, and the Admin alone se
   for (const who of ['d.whitfield', 'm.hale', 'c.brandt', 'kent']) assert.strictEqual((await api(who).get('/api/admin/patterns')).status, 403, who);
 }));
 
-test('"Other": a fill-in-the-blank action in each group, kept for the Admin and never shown to a PIC', () => withDemo(async ({ api }) => {
+test('"Other": a fill-in-the-blank action in each group, shown with the commitment to everyone who reads the plan', () => withDemo(async ({ api }) => {
   const dana = api('d.whitfield'); const josh = api('j.workman');
   const post = body => dana.post('/api/projects/2025-0412/plan/entries', Object.assign({ kind: 'commitment', body: 'Send the amendment', promisedBy: '2026-10-30', qty: 5000 }, body));
   assert.strictEqual((await post({ lever: 'other_money' })).status, 400, 'Other needs its few words');
@@ -368,8 +367,10 @@ test('"Other": a fill-in-the-blank action in each group, kept for the Admin and 
   const labels = page.commitments.map(c => c.leverLabel);
   assert.ok(labels.includes('Other: Sell the model') && labels.includes('Other: Share a consultant with another job'));
   assert.ok(labels.includes('Request additional services fee'), 'a named action keeps its own name');
-  const asPic = JSON.stringify((await dana.get('/api/projects/2025-0412/plan')).body.commitments) + JSON.stringify((await dana.get('/api/projects/2025-0412/plan')).body.entries);
-  assert.ok(!asPic.includes('Sell the model') && !asPic.includes('otherText'), 'the words stay with the Admin');
+  for (const who of ['d.whitfield', 't.lindqvist', 'm.hale']) {
+    const labels2 = (await api(who).get('/api/projects/2025-0412/plan')).body.commitments.map(x => x.leverLabel);
+    assert.ok(labels2.includes('Other: Sell the model') && labels2.includes('Other: Share a consultant with another job'), who + ' sees the words typed under Other');
+  }
 
   const pat = (await josh.get('/api/admin/patterns')).body;
   assert.deepStrictEqual(pat.others.map(o => [o.text, o.group]), [['Sell the model', 'money'], ['Share a consultant with another job', 'spend']]);

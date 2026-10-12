@@ -38,7 +38,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T11 | May the Admin rebuild a draft run without typing RERUN? | yes (nobody else has seen a draft) | `runs.js` |
 | T12 | "Ignore projects billed under $X": YTD billed? | yes | `selection.js` |
 | T13 | A PIC's Home shows their own projects needing action (not in the spec) | yes | `home.js` |
-| T14 | After posting, should a PIC be able to see their own commitment's action and amount? | no (never shown to any PIC) | the spec says not shown to PICs; the author is included |
+| T14 | ~~May PICs see a commitment's action and amount?~~ | **Decided (Josh, 2026-10-11): yes, every PIC and everyone who reads the plan** | `server/turnaround.js` |
 | T15 | The ladder's last step, "Repeat next monthly run", and the monthly summary email | not built | |
 | T16 | Should the Admin be able to see plan content for a project that is not on any run? | yes (any project by link) | |
 | T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |

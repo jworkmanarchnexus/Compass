@@ -85,3 +85,10 @@
 - **Other:** two new actions (one per group), a required fill-in line (up to 120 characters), stored with the commitment, never sent to a PIC. Both are counted in dollars (my choice, so they can be added up; asked in OPEN-QUESTIONS T19).
 - **"Silent tracking" needs no new recording.** Every commitment, date change and outcome is already in the append-only log, so the analysis is worked out from it on demand; nothing can be missed, and earlier years can be viewed. The metrics are my choice of what is useful (OPEN-QUESTIONS T20): kept rate, delivered against promised (dollars only), lead time, dates moved, kind against kind, by action, by PIC, by month, how quickly projects are answered, and what went with a project leaving the list (association, not cause).
 - **The demo** has a seventh PIC, Riley Chen, whose only project is profitable, to show the message. Her own history may show a loss in earlier months of last year (made-up data).
+
+## Commitments are visible to every PIC (Josh, 2026-10-11)
+
+- **Josh:** all PICs should be able to see the commitments, whichever action was chosen, including the words typed under Other. Other is counted in dollars; a PIC who means hours will figure it out.
+- **This reverses the handoff rule** that a commitment's lever and number are never shown to PICs (and my phase 3 build of it). Now the action, the amount and the actual result are shown to everyone who can read a plan (Admin, every PIC, Finance, and the Marketing director if allowed). The Mark done form can again ask for the result in the right unit.
+- **I read "the commitments" as the action and the number.** If only the action should show, hiding the amount and the actual result is a small change; say so.
+- **Unchanged:** the commitment analysis (Admin > Commitment patterns), check-in drafts and draft runs stay Admin-only; the system admin still cannot read plans.

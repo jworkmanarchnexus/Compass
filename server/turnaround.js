@@ -1,7 +1,8 @@
 'use strict';
 /* Project Turnaround, on the database: the page's numbers, a project's plan page, the check-in queue, the daily job.
    All rules come from modules/turnaround/logic (pure, tested). Role filtering happens HERE, on the server:
-   a commitment's lever and number, and the actual result, are sent to the Admin only. */
+   the Admin's drafts, run contents and the commitment analysis are the Admin's alone. A commitment's action, amount and actual
+   result are visible to everyone who may read the plan (Josh's decision, 2026-10-11; it reverses the handoff's rule). */
 const crypto = require('node:crypto');
 const { HttpError } = require('./errors');
 const plan = require('../modules/turnaround/logic/plan');
@@ -139,7 +140,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     const e = byId.get(s.id);
     const c = { id: s.id, text: e.body, promisedBy: s.promisedBy, dueDate: s.dueDate, status: s.status, closedDate: s.closedDate, kept: s.kept,
       revisions: s.revisions.map(r => ({ from: r.from, to: r.to, date: r.date, reason: (inCycle.find(x => x.kind === 'date_revised' && x.commitmentId === s.id && x.data.to === r.to && x.date === r.date) || {}).body || '' })) };
-    if (isAdmin) {
+    { // everyone who may read the plan sees the action (including the words typed under Other), the amount and the actual result
       const lever = plan.LEVERS[e.data.lever] || {};
       const doneE = inCycle.find(x => x.kind === 'done' && x.commitmentId === s.id);
       Object.assign(c, { lever: e.data.lever, leverLabel: leverLabel(lever, e.data), unit: lever.unit, qty: e.data.qty, actual: doneE ? doneE.data.actual : null });
@@ -160,7 +161,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     if (e.kind === 'done') out.daysEarly = stateById.get(e.commitmentId) ? daysBetween(e.date, stateById.get(e.commitmentId).dueDate) : null;
     if (e.commitmentId && e.kind !== 'commitment') { const c = byId.get(e.commitmentId); out.commitmentText = c ? c.body : ''; }
     if (e.correctsEntryId) { const o = byId.get(e.correctsEntryId) || all.find(x => x.id === e.correctsEntryId); out.correctsKind = o ? o.kind : null; out.correctsDate = o ? o.date : null; }
-    if (isAdmin) {
+    {
       if (e.kind === 'commitment') { const lv = plan.LEVERS[e.data.lever] || {}; Object.assign(out, { lever: e.data.lever, leverLabel: leverLabel(lv, e.data), unit: lv.unit, qty: e.data.qty }); }
       if (e.kind === 'done') out.actual = e.data.actual;
     }

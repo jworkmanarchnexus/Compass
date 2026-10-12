@@ -30,7 +30,7 @@ This repo is a working prototype on Josh's computer only (localhost) until Kent'
 - Plan logs are append-only: no edit, no delete; fixes are Correction entries. Entries belong to the project (WBS1), not the run.
 - Only the PIC writes plan content. Admin notes are labeled and public. Never post in a PIC's voice.
 - The system never emails a PIC as Josh. Reminders are admin-only check-in drafts he sends himself. The only automatic email goes to Josh and has no PIC data.
-- Commitment lever and number are never shown to PICs. MWIP factor never on PIC pages. YTD only. MWIP and forecast always separate.
+- A commitment's action (including "Other" words), amount and actual result are visible to everyone who can read the plan (Josh reversed the handoff rule on 2026-10-11); the per-action analysis stays Admin-only. MWIP factor never on PIC pages. YTD only. MWIP and forecast always separate.
 - Every threshold is an effective-dated Admin setting, not a constant.
 - Copy stays plain and non-punitive.
 

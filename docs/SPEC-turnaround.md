@@ -17,7 +17,7 @@ Each month, list the active projects that are below break-even for the year, gro
 | Build, rebuild, publish, archive a run | yes | no | no | no | no (can see the run list) |
 | Read any project's plan | yes | yes, all of them | yes | with page access | no |
 | Write plan entries | no (labeled admin notes only) | only on projects they lead | no | no | no |
-| See a commitment's action (lever), amount, actual result | **yes** | **never** (not even the author) | **never** | **never** | no |
+| See a commitment's action (including Other words), amount and actual result | yes | **yes, on every project** | yes | yes (with page access) | no |
 | See each PIC's on-time, kept and standing | yes | own always; others per setting | per setting | per setting | no |
 | Check-in drafts and queue | yes | **never** | no | no | no |
 | Commitment patterns, Reminders and standing settings | edit | no | no | no | patterns no; settings view |
@@ -58,7 +58,7 @@ Entries belong to the **project**, not to a run. The log is **append-only**: no 
 
 Entry kinds: `explanation`, `commitment`, `update`, `done`, `date_revised` (all written by the PIC; `correction` exists only in older entries: a PIC who got something wrong adds an update that says so); `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system).
 
-- **Commitment**: text, a "promised by" date (today or later), **one** action (lever) from eight, and **one** number ("your best estimate is fine"; zero is allowed). The levers: *Bring in money*: request additional services fee; submit a change order; renegotiate the fee; speed up billing or collection; **Other**. *Spend less*: reduce staffing hours; move work to lower-cost staff; reduce consultant cost; shorten the schedule; **Other**. **Other** gives the PIC a fill-in line (a few words, up to 120 characters, required) and its number is in dollars (so it can be added to the totals). The words are kept with the commitment and shown to the Admin only. The number's unit is dollars, hours or weeks by lever. Lever, number and the actual result are visible to the Admin only.
+- **Commitment**: text, a "promised by" date (today or later), **one** action (lever) from eight, and **one** number ("your best estimate is fine"; zero is allowed). The levers: *Bring in money*: request additional services fee; submit a change order; renegotiate the fee; speed up billing or collection; **Other**. *Spend less*: reduce staffing hours; move work to lower-cost staff; reduce consultant cost; shorten the schedule; **Other**. **Other** gives the PIC a fill-in line (a few words, up to 120 characters, required) and its number is in dollars (so it can be added to the totals). The words are kept with the commitment and shown with it. The number's unit is dollars, hours or weeks by lever. The action, the number and the actual result are visible to everyone who can read the plan (Josh's decision, 2026-10-11, reversing the handoff's rule). Only the analysis in section 9a is the Admin's alone.
 - **Mark done** asks what happened and the actual result (zero allowed). Done on or before the commitment's current date counts as **kept**; after it, **done late** (not kept).
 - **Change date** needs a reason and a new date (today or later, different from the current one). Every earlier date stays on record.
 - **Missed** is recorded by the daily job when an open commitment's current date has passed by `due.missedAfterDays` (default 14) days. (**Chosen**: the mockup's own examples disagree.)

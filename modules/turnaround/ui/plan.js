@@ -123,13 +123,13 @@ function logCard(ctx, data) {
   const byId = new Map(data.entries.map(e => [e.id, e]));
   const items = data.entries.map(e => {
     const chips = [];
-    if (e.kind === 'commitment') { chips.push(h('span', { class: 'chip', text: `Promised by ${fmtDay(e.promisedBy)}` })); if (e.leverLabel) chips.push(h('span', { class: 'chip', title: 'Only the Admin sees this', text: `${e.leverLabel}, ${unitText({ unit: e.unit }, e.qty)}` })); }
+    if (e.kind === 'commitment') { chips.push(h('span', { class: 'chip', text: `Promised by ${fmtDay(e.promisedBy)}` })); if (e.leverLabel) chips.push(h('span', { class: 'chip', text: `${e.leverLabel}, ${unitText({ unit: e.unit }, e.qty)}` })); }
     if (e.correctedOn) chips.push(h('span', { class: 'chip out', text: `Corrected ${fmtDay(e.correctedOn)}` }));
     if (e.planOpened) chips.push(h('span', { class: 'chip out', text: 'Plan opened' }));
     let who = e.author ? e.author.name : 'Recorded by the system';
     let text = e.body;
     if (e.kind === 'correction') who = `${e.author.name} · corrects the ${fmtDay(e.correctsDate)} ${(KIND_LABEL[e.correctsKind] || 'entry').toLowerCase()}`;
-    if (e.kind === 'done') { who = `Marked by ${e.author.name.split(' ')[0]}${e.daysEarly > 0 ? `, ${plural(e.daysEarly, 'day')} early` : e.daysEarly < 0 ? `, ${plural(-e.daysEarly, 'day')} late` : ', on the day'}`; if (e.actual !== undefined) chips.push(h('span', { class: 'chip', title: 'Only the Admin sees this', text: `Actual: ${e.actual.toLocaleString('en-US')}` })); }
+    if (e.kind === 'done') { who = `Marked by ${e.author.name.split(' ')[0]}${e.daysEarly > 0 ? `, ${plural(e.daysEarly, 'day')} early` : e.daysEarly < 0 ? `, ${plural(-e.daysEarly, 'day')} late` : ', on the day'}`; if (e.actual !== undefined) chips.push(h('span', { class: 'chip', text: `Actual: ${e.actual.toLocaleString('en-US')}` })); }
     if (e.kind === 'date_revised') { who = `${e.author.name} · ${e.commitmentText}`; text = `${fmtDay(e.from)} moved to ${fmtDay(e.to)}. Reason given: ${e.body} Earlier dates stay on record.`; }
     if (e.kind === 'missed') { const c = byId.get(e.commitmentId); text = `Commitment${c ? ` from ${fmtDay(c.date)}` : ''}, ${(e.commitmentText || '').replace(/\.$/, '')} by ${fmtDay(e.dueDate)}, passed with no update logged.`; }
     return h('li', { class: 'log-item' + (e.kind === 'admin_note' ? ' note' : '') },
@@ -165,7 +165,7 @@ function commitmentRow(ctx, c, data, st) {
     ? `Promised ${fmtDay(c.promisedBy)}, ${c.revisions.map(r => `moved to ${fmtDay(r.to)}`).join(', ')}${c.status === 'done' ? `, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? ', no update logged' : `, now ${fmtDay(c.dueDate)}`}`
     : c.status === 'done' ? `Promised ${fmtDay(c.promisedBy)}, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? `Promised ${fmtDay(c.promisedBy)}, no update logged` : `Promised ${fmtDay(c.promisedBy)}`;
   const row = h('div', { class: 'cm' }, h('div', { class: 'chips' }, ...chips), h('div', { class: 'strong', text: c.text }), h('div', { class: 'muted small', text: dates }),
-    c.leverLabel ? h('div', { class: 'muted small', title: 'Only the Admin sees this', text: `${c.leverLabel}: ${unitText(c, c.qty)}${c.actual !== null && c.actual !== undefined ? ` promised, ${unitText(c, c.actual)} actual` : ' promised'}` }) : null);
+    c.leverLabel ? h('div', { class: 'muted small', text: `${c.leverLabel}: ${unitText(c, c.qty)}${c.actual !== null && c.actual !== undefined ? ` promised, ${unitText(c, c.actual)} actual` : ' promised'}` }) : null);
   if (c.status === 'open' && data.can.addEntry) {
     const form = h('div', {});
     const actions = h('div', { class: 'cm-acts' },
@@ -188,8 +188,7 @@ function doneForm(ctx, c, data, st, cancel) {
   const { h } = ctx;
   const actual = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:150px', 'aria-label': 'Actual result' });
   const what = h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': 'What happened' });
-  // the action behind a commitment is not shown to the PIC afterwards, so the question stays neutral about the unit
-  const ask = 'What was the actual result? Use the same unit as your estimate (dollars, hours or weeks).';
+  const ask = { dollars: 'What was the actual result, in dollars?', hours: 'What was the actual result, in hours?', weeks: 'What was the actual result, in weeks?' }[c.unit] || 'What was the actual result?';
   return inlineForm(ctx, c, { save: 'Save as done' }, [
     h('label', { class: 'fl', text: ask }), actual, h('label', { class: 'fl', text: 'What happened?' }), what],
   async () => { await Plan.markDone(data.project.wbs1, c.id, { body: what.value, actual: actual.value.trim() === '' ? NaN : Number(actual.value.replace(/[$,\s]/g, '')) }); await st.reload(); }, cancel);
@@ -226,7 +225,7 @@ function legendCard(ctx) {
   const { h } = ctx;
   const rows = [
     ['Explanation', 'The PIC, once a year per project. Why it is below break-even. It comes first; updates and commitments can only follow it.'],
-    ['Commitment', 'The PIC. A promise with a date. The PIC also picks one action and an amount, which only the Admin sees.'],
+    ['Commitment', 'The PIC. A promise with a date. The PIC also picks one action and an amount; everyone who can read the plan sees them.'],
     ['Update', 'The PIC. What has happened since the last entry, including anything that needs setting right.'],
     ['Done', 'The PIC presses Mark done. On or before its date counts as kept.'],
     ['Date revised', 'The PIC presses Change date. Every earlier date stays visible.'],

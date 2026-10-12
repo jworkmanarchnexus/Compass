@@ -27,7 +27,7 @@ const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'people', 'runs
 function adminTab(role, tab) {
   if (role === 'admin') return 'edit';
   if (role === 'sysadmin') {
-    // Keeps the site running. Never sees what PICs promised or the lever behind it (no access to PIC content decisions).
+    // Keeps the site running. Never sees plan content or what PICs promised (no access to PIC content decisions), nor the commitment analysis.
     return tab === 'patterns' ? null : 'view';
   }
   return null;

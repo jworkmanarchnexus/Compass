@@ -29,7 +29,7 @@ Tabs, in order: Project Turnaround, Reminders and standing, BD reports, Pipeline
 - **Settings cards** (Project Turnaround, Reminders and standing, and the access card on People): every setting is stored as an effective-dated row; saving adds a row and never overwrites. Only changed values are saved, validated on the server (type, range, and rules that span settings: the reminder ladder must be in order, Escalated cutoffs not above Good). "Changes apply to the next run. Published runs never change."
 - **People:** name, login, role, the name used in drafts, status (Active/Inactive, reversible), and the count of active projects the person leads in Vantagepoint.
 - **Report runs:** the list of runs (everyone with Admin access) and, for the Admin, build / review / publish / rebuild / archive and rerun (`docs/SPEC-turnaround.md` section 3).
-- **Commitment patterns:** the background analysis of commitments (kind against kind, by action, by PIC, by month, responsiveness, projects that left the list, what PICs typed under Other), with a year picker. The only place a lever and its number are shown. See `docs/SPEC-turnaround.md` section 9a.
+- **Commitment patterns:** the background analysis of commitments (kind against kind, by action, by PIC, by month, responsiveness, projects that left the list, what PICs typed under Other), with a year picker. The per-action analysis is Admin-only. See `docs/SPEC-turnaround.md` section 9a.
 - **Audit log:** newest first. Records: setting changes (old and new value), role/status/draft-name changes, run build, rebuild, publish and archive (with the reason), check-in sent, dismissed and undone, daily checks run. Entries cannot be changed or removed (a database rule). The scheduled jobs write as "Scheduled job".
 
 ## 4. Home

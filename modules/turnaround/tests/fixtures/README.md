@@ -28,7 +28,7 @@ Everything is made up. Money is **whole cents** (integers). Dates are `YYYY-MM-D
 These behaviors are tested only against the running server, in `server/tests/*.test.js`. Port those tests, not just the fixtures, when the back end is rebuilt:
 
 - the published-run lock and the append-only plan log (the database refuses changes);
-- what each role is sent (a PIC must never receive a commitment's lever, number or actual result);
+- what each role is sent (for example, the Admin-only analysis, check-in drafts and draft runs);
 - the daily job end to end (missed commitments, drafts, the one email);
 - Home's data checks.
 
