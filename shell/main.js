@@ -52,7 +52,7 @@ async function showSignIn(message) {
 
 /* ---------- frame ---------- */
 function navItem(n, on, sub, badge) {
-  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null }, icon(n.icon, sub ? 16 : 18), h('span', { text: n.label }),
+  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null }, icon(n.icon, sub ? 16 : 18), h('span', { class: 'nav-label', text: n.label }),
     badge === undefined ? null : h('span', { class: 'cnt warn nav-cnt', 'data-badge': n.id, hidden: badge === 0, text: String(badge) }));
 }
 

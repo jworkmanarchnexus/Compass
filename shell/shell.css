@@ -190,3 +190,9 @@ ol.log { list-style: none; margin: 0; padding: 0; }
   body.side-collapsed .side-brand .side-product, body.side-collapsed .side-brand .side-tag { display: none; }
   body.side-collapsed .nav-item.nav-sub { display: none; }
 }
+
+/* the design system hides every span in a collapsed nav item, which also hides the icon (it sits in a span): show it again, hide only the words */
+@media (min-width: 861px) {
+  body.side-collapsed .nav-item span { display: inline-flex; }
+  body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt { display: none; }
+}
