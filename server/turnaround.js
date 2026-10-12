@@ -60,12 +60,16 @@ function buildOverview(db, runId, viewer, { today, settings }) {
     g._kept.kept += ks.kept; g._kept.resolved += ks.resolved;
   }
 
+  const picHist = {};
+  for (const r of db.all('SELECT pic_code, period, negative_ytd, below_count FROM run_pic_history WHERE run_id = ? ORDER BY period', runId)) (picHist[r.pic_code] = picHist[r.pic_code] || []).push({ period: r.period, negativeYtd: r.negative_ytd, belowCount: r.below_count });
+  const yearStart0 = Math.floor(detail.run.period / 100) * 100 + 1;
   const pics = [...picsByCode.values()].map(g => {
     const totals = g.projects.reduce((a, p) => ({ profit: a.profit + p.profit.ytd, billed: a.billed + p.billed.ytd }), { profit: 0, billed: 0 });
     const user = dir.userByCode[g.code];
     const st = plan.standing({ onTime: g._on, kept: g._kept }, settings);
     return {
       code: g.code, name: g.name, userId: user ? user.id : null, projects: g.projects,
+      history: (picHist[g.code] || []).map(h => Object.assign({}, h, { lastYear: h.period < yearStart0 })), // [] for a run built before per-PIC history existed
       totals, plansCurrent: { current: g.projects.filter(p => p.plan.status === 'current').length, total: g.projects.length },
       record: canSeeRecord(g.code) ? { onTime: g._on, kept: g._kept, pctOnTime: st.pctOnTime, pctKept: st.pctKept, standing: st.label } : null,
     };

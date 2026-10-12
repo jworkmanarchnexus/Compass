@@ -207,3 +207,23 @@ BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
 CREATE TRIGGER IF NOT EXISTS run_project_history_locked_delete BEFORE DELETE ON run_project_history
 WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
 BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+-- The same month-end figures as run_history, but for each PIC's own projects, so "Just mine" can draw its own charts.
+-- Locked with the run. Runs built before this table existed have no rows here; the page says so instead of guessing.
+CREATE TABLE IF NOT EXISTS run_pic_history (
+  run_id       TEXT NOT NULL REFERENCES runs(id),
+  pic_code     TEXT NOT NULL,
+  period       INTEGER NOT NULL,
+  negative_ytd INTEGER NOT NULL,
+  below_count  INTEGER NOT NULL,
+  PRIMARY KEY (run_id, pic_code, period)
+);
+CREATE TRIGGER IF NOT EXISTS run_pic_history_locked_insert BEFORE INSERT ON run_pic_history
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_pic_history_locked_update BEFORE UPDATE ON run_pic_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS run_pic_history_locked_delete BEFORE DELETE ON run_pic_history
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;

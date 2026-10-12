@@ -30,17 +30,19 @@ function compute(source, period, settings) {
   const result = selection.selectForRun(at(period), settings);
   const listed = new Set(result.included.map(p => p.wbs1));
   const yearStart = Math.floor(period / 100) * 100 + 1;
-  const aggregate = []; const series = [];
+  const aggregate = []; const series = []; const byPic = [];
+  const picCodes = [...new Set(result.included.map(p => p.principal))];
   const months = new Set(trailing(period, 12).concat(trailing(period, period - yearStart + 1)));
   for (const p of [...months].sort()) {
     const computed = at(p);
     if (trailing(period, 12).includes(p)) {
       const inc = selection.selectForRun(computed, settings).included;
       aggregate.push({ period: p, negativeYtd: inc.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: inc.length });
+      for (const code of picCodes) { const mine = inc.filter(x => x.principal === code); byPic.push({ pic: code, period: p, negativeYtd: mine.reduce((sum, x) => sum + x.profit.ytd, 0), belowCount: mine.length }); }
     }
     if (p >= yearStart) for (const c of computed) if (listed.has(c.wbs1) && c.profit.ytd !== null) series.push({ wbs1: c.wbs1, period: p, profitYtd: c.profit.ytd });
   }
-  return Object.assign(result, { history: { aggregate, series } });
+  return Object.assign(result, { history: { aggregate, series, byPic } });
 }
 
 function fill(db, runId, period, { included, warnings, history }) {
@@ -51,6 +53,7 @@ function fill(db, runId, period, { included, warnings, history }) {
     runId, p.wbs1, p.name, p.principal, p.projMgr, p.billed.cur, p.billed.ytd, p.billed.jtd, p.profit.cur, p.profit.ytd, p.profit.jtd, seen && seen.p ? Math.min(seen.p, period) : period);
   }
   for (const h of history.aggregate) db.run('INSERT INTO run_history (run_id, period, negative_ytd, below_count) VALUES (?, ?, ?, ?)', runId, h.period, h.negativeYtd, h.belowCount);
+  for (const h of history.byPic) db.run('INSERT INTO run_pic_history (run_id, pic_code, period, negative_ytd, below_count) VALUES (?, ?, ?, ?, ?)', runId, h.pic, h.period, h.negativeYtd, h.belowCount);
   for (const h of history.series) db.run('INSERT INTO run_project_history (run_id, wbs1, period, profit_ytd) VALUES (?, ?, ?, ?)', runId, h.wbs1, h.period, h.profitYtd);
   for (const w of warnings) db.run('INSERT INTO run_warnings (run_id, kind, wbs1, detail, ytd_billed) VALUES (?, ?, ?, ?, ?)', runId, w.kind, w.wbs1, w.detail, w.ytdBilled);
 }
@@ -78,6 +81,7 @@ function rebuildDraft(db, runId, { source, settings }) {
   db.tx(() => {
     db.run('DELETE FROM run_projects WHERE run_id = ?', runId);
     db.run('DELETE FROM run_history WHERE run_id = ?', runId);
+    db.run('DELETE FROM run_pic_history WHERE run_id = ?', runId);
     db.run('DELETE FROM run_project_history WHERE run_id = ?', runId);
     db.run('DELETE FROM run_warnings WHERE run_id = ?', runId);
     db.run('UPDATE runs SET settings_json = ? WHERE id = ?', JSON.stringify(settings), runId);

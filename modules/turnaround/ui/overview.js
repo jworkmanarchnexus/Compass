@@ -31,7 +31,7 @@ export function renderOverview(ctx, container, data, opts) {
       for (const [k, label] of [['mine', 'Just mine'], ['all', 'Everyone']]) toggle.append(h('button', { type: 'button', 'aria-pressed': String(scope === k), text: label, onclick: () => { scope = k; paint(); } }));
     }
     const pics = scope === 'mine' ? data.pics.filter(p => p.code === me.picCode) : data.pics;
-    holder.append(kpiStrip(ctx, data, scope === 'mine' ? pics[0] : null), chartRow(ctx, data));
+    holder.append(kpiStrip(ctx, data, scope === 'mine' ? pics[0] : null), chartRow(ctx, data, scope === 'mine' ? pics[0] : null));
     for (const p of pics) holder.append(picCard(ctx, p, data, scope === 'mine'));
     if (!pics.length) holder.append(h('div', { class: 'empty-note', text: 'No projects are below break-even.' }));
     ctx.T.hydrateIcons(holder);
@@ -70,10 +70,10 @@ function kpiStrip(ctx, data, mine) {
       : kpi(ctx, 'Since last month', '-', 'This is the first run'));
 }
 
-function chartRow(ctx, data) {
+function chartRow(ctx, data, mine) {
   const { h } = ctx;
-  const hist = data.history;
-  if (!hist.length) return h('div', {});
+  const hist = mine ? mine.history : data.history;
+  if (!hist.length) return mine ? h('div', { class: 'empty-note', text: 'The charts for your own projects are not available for this run. Switch to Everyone to see the firm-wide charts.' }) : h('div', {});
   const years = new Set();
   const pts = hist.map((p, i) => {
     const first = i === 0 || p.period % 100 === 1;
@@ -90,11 +90,11 @@ function chartRow(ctx, data) {
     { fmt: v => String(v), aria: 'Projects below break-even at each month end, last 12 months', ticks: 4 });
   return h('div', { class: 'charts' },
     h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
+      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? 'Your negative YTD profit' : 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
         h('div', { class: 'chart-num' }, h('strong', { text: fmtK(last.negativeYtd).replace('+', '') }), prev ? h('span', { class: 'muted', text: `${fmtK(Math.abs(deeper)).replace('+', '')} ${deeper <= 0 ? 'deeper' : 'shallower'} than ${prevName}` }) : null)),
       bars),
     h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: 'Projects below break-even' }), h('p', { class: 'muted', text: 'Active projects below $0 YTD at each month end.' })),
+      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? 'Your projects below break-even' : 'Projects below break-even' }), h('p', { class: 'muted', text: mine ? 'Your active projects below $0 YTD at each month end.' : 'Active projects below $0 YTD at each month end.' })),
         h('div', { class: 'chart-num' }, h('strong', { text: String(last.belowCount) }), prev ? h('span', { class: 'muted', text: fewer === 0 ? `Same as ${prevName}` : `${plural(Math.abs(fewer), 'project')} ${fewer < 0 ? 'fewer' : 'more'} than ${prevName}` }) : null)),
       line));
 }

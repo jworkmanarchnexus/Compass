@@ -337,3 +337,20 @@ test('npm run seed works again after runs are published and plans written (the g
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM plan_entries').n, 55);
   assert.throws(() => db.run('DELETE FROM plan_entries'), /append-only/, 'the guards are back after the reset');
 }));
+
+test('"Just mine" has its own chart history: each PIC\'s months add up to the firm\'s, and end at their own card', () => withDemo(async ({ api, db }) => {
+  const o = (await api('d.whitfield').get('/api/turnaround/current')).body;
+  const dana = o.pics.find(p => p.name === 'Dana Whitfield');
+  assert.strictEqual(dana.history.length, 12);
+  const last = dana.history[11];
+  assert.deepStrictEqual([last.period, last.negativeYtd, last.belowCount], [202609, dana.totals.profit, 4], 'the last month is exactly her card');
+  assert.deepStrictEqual(dana.history.filter(h => h.lastYear).map(h => h.period), [202510, 202511, 202512]);
+  assert.notDeepStrictEqual(dana.history.map(h => h.negativeYtd), o.history.map(h => h.negativeYtd), 'not the firm\'s line');
+  o.history.forEach((firm, i) => {
+    assert.strictEqual(o.pics.reduce((s, p) => s + p.history[i].negativeYtd, 0), firm.negativeYtd, `month ${firm.period}: the PICs add up to the firm`);
+    assert.strictEqual(o.pics.reduce((s, p) => s + p.history[i].belowCount, 0), firm.belowCount);
+  });
+  const id = db.get("SELECT id FROM runs WHERE status = 'published' ORDER BY period DESC").id;
+  assert.throws(() => db.run('UPDATE run_pic_history SET negative_ytd = 0 WHERE run_id = ?', id), /locked/);
+  assert.throws(() => db.run('DELETE FROM run_pic_history WHERE run_id = ?', id), /locked/);
+}));
