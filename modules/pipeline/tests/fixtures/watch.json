@@ -1,0 +1,462 @@
+{
+ "note": "Amounts are cents. E1 loses Bravo (no project) and Delta (became a project), Hotel is Won with no project; E2 slips Echo from 70% to 45%, has no new pursuits, and Fox moves $180K into next year.",
+ "history": [
+  {
+   "date": "2026-09-07",
+   "pursuits": [
+    {
+     "id": "2026-0101",
+     "name": "Alpha",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 10000000
+    },
+    {
+     "id": "2026-0102",
+     "name": "Bravo",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 6000000
+    },
+    {
+     "id": "2026-0103",
+     "name": "Charlie",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 4000000
+    },
+    {
+     "id": "2026-0201",
+     "name": "Echo",
+     "pic": "E2",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 8000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "2025-1",
+     "name": "Fox",
+     "pic": "E2",
+     "amount": 30000000,
+     "moved": 0
+    },
+    {
+     "wbs1": "2025-2",
+     "name": "Golf",
+     "pic": "E2",
+     "amount": 5000000,
+     "moved": 0
+    }
+   ]
+  },
+  {
+   "date": "2026-09-14",
+   "pursuits": [
+    {
+     "id": "2026-0101",
+     "name": "Alpha",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 10000000
+    },
+    {
+     "id": "2026-0102",
+     "name": "Bravo",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 6000000
+    },
+    {
+     "id": "2026-0103",
+     "name": "Charlie",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 4000000
+    },
+    {
+     "id": "2026-0201",
+     "name": "Echo",
+     "pic": "E2",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 8000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "2025-1",
+     "name": "Fox",
+     "pic": "E2",
+     "amount": 30000000,
+     "moved": 0
+    },
+    {
+     "wbs1": "2025-2",
+     "name": "Golf",
+     "pic": "E2",
+     "amount": 5000000,
+     "moved": 0
+    }
+   ]
+  },
+  {
+   "date": "2026-09-21",
+   "pursuits": [
+    {
+     "id": "2026-0101",
+     "name": "Alpha",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 9500000
+    },
+    {
+     "id": "2026-0102",
+     "name": "Bravo",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 5500000
+    },
+    {
+     "id": "2026-0103",
+     "name": "Charlie",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 4000000
+    },
+    {
+     "id": "2026-0104",
+     "name": "Delta",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 3000000
+    },
+    {
+     "id": "2026-0105",
+     "name": "Hotel",
+     "pic": "E1",
+     "stage": "Won",
+     "winProb": 50,
+     "amount": 2000000
+    },
+    {
+     "id": "2026-0201",
+     "name": "Echo",
+     "pic": "E2",
+     "stage": "Proposal sent",
+     "winProb": 70,
+     "amount": 8000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "2025-1",
+     "name": "Fox",
+     "pic": "E2",
+     "amount": 30000000,
+     "moved": 0
+    },
+    {
+     "wbs1": "2025-2",
+     "name": "Golf",
+     "pic": "E2",
+     "amount": 5000000,
+     "moved": 0
+    }
+   ]
+  },
+  {
+   "date": "2026-09-28",
+   "pursuits": [
+    {
+     "id": "2026-0101",
+     "name": "Alpha",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 9500000
+    },
+    {
+     "id": "2026-0102",
+     "name": "Bravo",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 5000000
+    },
+    {
+     "id": "2026-0103",
+     "name": "Charlie",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 4000000
+    },
+    {
+     "id": "2026-0104",
+     "name": "Delta",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 3000000
+    },
+    {
+     "id": "2026-0105",
+     "name": "Hotel",
+     "pic": "E1",
+     "stage": "Won",
+     "winProb": 50,
+     "amount": 2000000
+    },
+    {
+     "id": "2026-0201",
+     "name": "Echo",
+     "pic": "E2",
+     "stage": "Proposal sent",
+     "winProb": 70,
+     "amount": 8000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "2025-1",
+     "name": "Fox",
+     "pic": "E2",
+     "amount": 30000000,
+     "moved": 0
+    },
+    {
+     "wbs1": "2025-2",
+     "name": "Golf",
+     "pic": "E2",
+     "amount": 5000000,
+     "moved": 0
+    }
+   ]
+  },
+  {
+   "date": "2026-10-05",
+   "pursuits": [
+    {
+     "id": "2026-0101",
+     "name": "Alpha",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 9500000
+    },
+    {
+     "id": "2026-0103",
+     "name": "Charlie",
+     "pic": "E1",
+     "stage": "Proposal sent",
+     "winProb": 50,
+     "amount": 4000000
+    },
+    {
+     "id": "2026-0105",
+     "name": "Hotel",
+     "pic": "E1",
+     "stage": "Won",
+     "winProb": 50,
+     "amount": 2000000
+    },
+    {
+     "id": "2026-0201",
+     "name": "Echo",
+     "pic": "E2",
+     "stage": "Proposal sent",
+     "winProb": 45,
+     "amount": 8000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "2025-1",
+     "name": "Fox",
+     "pic": "E2",
+     "amount": 12000000,
+     "moved": 18000000
+    },
+    {
+     "wbs1": "2025-2",
+     "name": "Golf",
+     "pic": "E2",
+     "amount": 5000000,
+     "moved": 0
+    }
+   ]
+  }
+ ],
+ "projects": [
+  {
+   "wbs1": "2026-0104",
+   "name": "Delta",
+   "pic": "E1",
+   "opened": "2026-10-02"
+  }
+ ],
+ "rules": {
+  "mwipDrop": {
+   "sev": "alert",
+   "amount": 40000,
+   "days": 7
+  },
+  "forecastDrop": {
+   "sev": "alert",
+   "amount": 150000,
+   "days": 7
+  },
+  "mwipSlide": {
+   "sev": "alert",
+   "weeks": 3
+  },
+  "noMatch": {
+   "sev": "watch",
+   "days": 0
+  },
+  "unmatchedWin": {
+   "sev": "alert",
+   "days": 14
+  },
+  "winProb": {
+   "sev": "watch",
+   "points": 20
+  },
+  "noNew": {
+   "sev": "watch",
+   "days": 28
+  }
+ },
+ "names": {
+  "E1": "Ann Lee",
+  "E2": "Bo Chen"
+ },
+ "expectAlerts": [
+  {
+   "rule": "forecastDrop",
+   "severity": "alert",
+   "pic": "E2",
+   "title": "Bo C.: forecast down $180K",
+   "includes": [
+    "Fox moving into next year",
+    "Threshold is $150K in 7 days"
+   ]
+  },
+  {
+   "rule": "mwipDrop",
+   "severity": "alert",
+   "pic": "E1",
+   "title": "Ann L.: MWIP down $80K this week",
+   "includes": [
+    "Down 2 snapshots in a row, $85K since Sep 21",
+    "Bravo, no longer in MWIP and with no matching project",
+    "Threshold is $40K in 7 days"
+   ]
+  },
+  {
+   "rule": "noMatch",
+   "severity": "watch",
+   "pic": "E1",
+   "title": "Ann L.: Bravo left with no matching project",
+   "includes": [
+    "$50K in MWIP on Sep 28"
+   ]
+  },
+  {
+   "rule": "noNew",
+   "severity": "watch",
+   "pic": "E2",
+   "title": "Bo C.: no new pursuits in 28 days",
+   "includes": [
+    "Nothing added since Sep 7"
+   ]
+  },
+  {
+   "rule": "unmatchedWin",
+   "severity": "alert",
+   "pic": "E1",
+   "title": "Ann L.: Hotel won, no project yet",
+   "includes": [
+    "Marked Won since Sep 21 (14 days)"
+   ]
+  },
+  {
+   "rule": "winProb",
+   "severity": "watch",
+   "pic": "E2",
+   "title": "Bo C.: Echo win chance down 25 points",
+   "includes": [
+    "From 70% to 45%"
+   ]
+  }
+ ],
+ "expectConversions": [
+  {
+   "id": "2026-0104",
+   "pic": "E1",
+   "message": "Delta became project 2026-0104 on Oct 2. No action needed."
+  }
+ ],
+ "expectRows": {
+  "mwip": {
+   "E1": {
+    "values": [
+     20000000,
+     20000000,
+     24000000,
+     23500000,
+     15500000
+    ],
+    "thisWeek": -8000000,
+    "vs4": -4500000,
+    "newPursuits": 2,
+    "newContracts": 0
+   },
+   "E2": {
+    "values": [
+     8000000,
+     8000000,
+     8000000,
+     8000000,
+     8000000
+    ],
+    "thisWeek": 0,
+    "vs4": 0,
+    "newPursuits": 0,
+    "newContracts": 0
+   },
+   "firm": {
+    "current": 23500000,
+    "thisWeek": -8000000,
+    "vs4": -4500000,
+    "newPursuits": 2
+   }
+  },
+  "forecast": {
+   "E2": {
+    "values": [
+     35000000,
+     35000000,
+     35000000,
+     35000000,
+     17000000
+    ],
+    "thisWeek": -18000000,
+    "vs4": -18000000,
+    "moved": 18000000
+   }
+  }
+ }
+}

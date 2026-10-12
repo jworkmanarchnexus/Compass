@@ -13,6 +13,7 @@ const { daysBetween } = require('../modules/turnaround/logic/dates');
 const runsDb = require('./runs');
 const tdb = require('./turnaround');
 const bdDb = require('./bd');
+const pipeDb = require('./pipeline');
 
 const money = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
@@ -24,6 +25,7 @@ function buildHome(db, user, { today, settings }) {
   const isAdmin = user.role === 'admin';
   const sees = isAdmin || user.role === 'sysadmin';
   const dir = tdb.directory(db);
+  const pipeDates = pipeDb.snapshotDates(db);
 
   // ---- needs your attention (admin only) ----
   if (isAdmin) {
@@ -46,6 +48,11 @@ function buildHome(db, user, { today, settings }) {
       const od = count('overdue'), np = count('no_plan');
       items.push({ kind: 'checkins', badge: plural(waiting.length, 'draft'), tone: 'blue', title: 'Check-in drafts are ready for you to send',
         text: `${[od ? plural(od, 'overdue plan update') : null, np ? `${plural(np, 'project')} with no plan yet` : null].filter(Boolean).join(' and ')}. Each note goes out from your own mailbox.`, href: '#/turnaround/checkins', action: 'Open queue' });
+    }
+    const pipeAlerts = pipeDb.alertCount(db);
+    if (pipeAlerts > 0) {
+      items.push({ kind: 'pipeline', badge: plural(pipeAlerts, 'alert'), tone: 'warn', title: 'Pipeline watch: alerts crossed their thresholds',
+        text: 'MWIP or forecast moved enough to look at. Alerts are about the numbers, not the person.', href: '#/pipeline', action: 'Open Pipeline watch' });
     }
     const esc = tdb.listCheckins(db, { today, settings }).escalate;
     if (esc.length) items.push({ kind: 'escalate', badge: plural(esc.length, 'conversation'), tone: 'crit', title: `${esc.length === 1 ? 'A project is' : esc.length + ' projects are'} ${settings['ladder.escalateDays']} days or more past due`,
@@ -114,6 +121,11 @@ function buildHome(db, user, { today, settings }) {
       if (u.n) checks.push({ status: 'fix', title: `${money(u.amount)} unassigned to a market`, text: 'Pick a sector in the Marketing Report before you publish.', href: `#/bd/${bdDraftNow.id}` });
     }
 
+    const snapDue = pipeDb.mondayOf(today);
+    if (!pipeDates.length) checks.push({ status: 'fix', title: 'No pipeline snapshot has been taken yet', text: 'The Monday job takes it (npm run pipeline-snapshot). You can take one now in Admin > Pipeline alerts.', href: '#/admin/pipeline' });
+    else if (daysBetween(pipeDates[0], today) > 9) checks.push({ status: 'fix', title: `The last pipeline snapshot is ${plural(daysBetween(pipeDates[0], today), 'day')} old`, text: 'It should be taken every Monday morning (npm run pipeline-snapshot, or a scheduled task).', href: '#/admin/pipeline' });
+    else checks.push({ status: 'ok', title: 'Pipeline watch', text: `Latest snapshot ${pipeDates[0]}.` });
+
     const daily = db.get("SELECT at FROM audit_log WHERE action = 'daily.run' ORDER BY id DESC LIMIT 1");
     const ageDays = daily ? daysBetween(require('./plan').localDate(daily.at), today) : null;
     checks.push(daily && ageDays <= 2
@@ -124,6 +136,7 @@ function buildHome(db, user, { today, settings }) {
     out.next = [
       { title: 'Project Turnaround run', text: 'First business day. Creates a draft and emails you.', date: schedule.nextFirstBusinessDay(today, !!(!last || last.period < latestClosed)) },
       { title: 'Marketing Report run', text: 'First business day. Creates a draft and emails you.', date: schedule.nextFirstBusinessDay(today, !!(!bdLive || bdLive.period < latestClosed)) },
+      { title: 'Pipeline snapshot', text: 'Monday, 5:00 a.m. Saves MWIP and forecast, checks the alert rules, and emails you only if something needs a look.', date: (!pipeDates.length || pipeDates[0] < snapDue) ? snapDue : pipeDb.addDays(snapDue, 7) },
       { title: 'Daily checks', text: 'Every day. Records missed commitments and prepares check-in drafts.', date: null },
     ];
     const latest = last || null;

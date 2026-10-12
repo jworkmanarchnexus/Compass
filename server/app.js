@@ -11,6 +11,7 @@ const { createLocalSource } = require('./vp-local');
 const { createFileMailer } = require('./mail');
 const planDb = require('./plan');
 const bdDb = require('./bd');
+const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const planLogic = require('../modules/turnaround/logic/plan');
@@ -108,7 +109,7 @@ function createServer(db, opts) {
     if (p === '/api/me' && method === 'GET') {
       const access = currentSettings().access;
       const me = Object.assign(userOut(user), roles.describe(user.role, access));
-      if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db) };
+      if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
       return sendJson(res, 200, me);
     }
 
@@ -272,6 +273,45 @@ function createServer(db, opts) {
         else planDb.reviseDate(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
       }
+    }
+
+    /* ---- Pipeline watch: weekly snapshots. Everyone who may see it sees every PIC; notes and clearing alerts are the Admin's. ---- */
+    const canPipe = () => { if (!roles.canView(user.role, 'pipeline', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.'); };
+    if (p === '/api/pipeline' && method === 'GET') {
+      canPipe();
+      return sendJson(res, 200, pipeDb.view(db, { role: user.role }, { date: url.searchParams.get('date'), kind: url.searchParams.get('kind') }));
+    }
+    if (p === '/api/pipeline/detail' && method === 'GET') {
+      canPipe();
+      return sendJson(res, 200, pipeDb.detail(db, { role: user.role }, { date: url.searchParams.get('date'), kind: url.searchParams.get('kind'), pic: url.searchParams.get('pic') }));
+    }
+    if (p === '/api/pipeline/export' && method === 'GET') {
+      canPipe();
+      const kind = url.searchParams.get('kind') === 'forecast' ? 'forecast' : 'mwip';
+      const csv = pipeDb.exportCsv(db, { role: user.role }, { date: url.searchParams.get('date'), kind });
+      res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="pipeline-${kind}-${url.searchParams.get('date') || 'latest'}.csv"`, 'Cache-Control': 'no-store' });
+      return res.end('﻿' + csv);
+    }
+    const pc = /^\/api\/admin\/pipeline\/alerts\/(\d+)\/clear$/.exec(p);
+    if (pc && method === 'POST') {
+      requireTab(user, 'pipeline', 'edit');
+      const a = pipeDb.clearAlert(db, user, Number(pc[1]));
+      audit(user, 'pipeline.clear', a.title, { rule: a.rule, date: a.snapshot_date });
+      return sendJson(res, 200, { ok: true, badge: pipeDb.alertCount(db) });
+    }
+    if (p === '/api/admin/pipeline/notes' && method === 'POST') {
+      requireTab(user, 'pipeline', 'edit');
+      const b = await readJson(req);
+      pipeDb.addNote(db, user, b);
+      audit(user, 'pipeline.note', String(b.pursuitId), {});
+      return sendJson(res, 201, { ok: true });
+    }
+    if (p === '/api/admin/pipeline/snapshot' && method === 'POST') {
+      requireTab(user, 'pipeline', 'edit');
+      const date = pipeDb.mondayOf(today());
+      const out = pipeDb.runWeekly(db, { source, settings: currentSettings(), date, mailer, baseUrl, adminEmails: [] });
+      audit(user, 'pipeline.snapshot', `Snapshot ${date}`, { created: out.created });
+      return sendJson(res, out.created ? 201 : 200, { created: out.created, date, alerts: pipeDb.alertCount(db) });
     }
 
     /* ---- BD report: read (BD viewers), and the Admin's own data and runs ---- */
