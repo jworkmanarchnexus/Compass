@@ -117,8 +117,7 @@ function tableCard(ctx, d, tab) {
     h('div', { class: 'tblwrap' }, h('table', { class: 'dt bd-t' },
       h('thead', {}, h('tr', {}, h('th', { text: tab === 'pic' ? 'PIC' : 'Market sector' }), th('Revenue goal'), th('YTD goal<br>(pace)'), th('YTD<br>revenue'), th('Revenue<br>forecast'), th('MWIP<br>backlog'), th('Total<br>projected'), th('% of pace<br>billed'), th('% of goal<br>YTD + forecast'), th('% of goal<br>YTD + forecast<br>+ MWIP'), th('Status', ''))),
       h('tbody', {}, row(f, true), ...rows.map(r => row(r, false))))),
-    h('div', { class: 'bd-legend', text: legend }),
-    d.meta.factor ? h('div', { class: 'bd-legend', text: `MWIP backlog is weighted: pursuits at face value (${K(f.mwipRaw)}) times ${d.meta.factor}.` }) : null);
+    h('div', { class: 'bd-legend', text: legend }));
 }
 
 function firmChart(ctx, d) {
