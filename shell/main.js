@@ -157,7 +157,7 @@ const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and 
 const TAB_PHASE = { bd: 5, pipeline: 5 };
 const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
-  'run.createCheckinDrafts': 'Create check-in drafts', 'run.notifyPics': 'Notify PICs of a new run', 'include.status': 'Project status included',
+  'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
   'due.newProjectDays': 'Days to a first plan', 'due.afterEntryDays': 'Days to the next update', 'due.graceUntil': 'January grace period ends', 'due.soonDays': 'Update-due window', 'due.missedAfterDays': 'Days until a commitment is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see',
 };
@@ -308,10 +308,10 @@ function settingsCard(titleText, sub, settings, keys, canEdit, rerender, build, 
 
 function turnaroundCards(s, canEdit, rerender) {
   return [
-    settingsCard('Monthly run', 'When the system builds the draft and who hears about it.', s, ['run.day', 'run.time', 'run.emailAdmin', 'run.showOnHome', 'run.createCheckinDrafts', 'run.notifyPics'], canEdit, rerender, ed => [
-      row('Run day', 'It pulls from Vantagepoint, builds the draft and stops. Nothing is visible to PICs.', ed.select('run.day', [['first-business-day', 'First business day of the month']]), h('span', { text: 'at' }), ed.time('run.time')),
+    settingsCard('Monthly run', 'When the system builds the draft and who hears about it.', s, ['run.day', 'run.time', 'run.emailAdmin', 'run.showOnHome', 'run.createCheckinDrafts'], canEdit, rerender, ed => [
+      row('Run day', 'It pulls from Vantagepoint, builds the draft and stops. Nothing is visible to PICs. The schedule itself is set up on the server by Kent; these two boxes record what it should be.', ed.select('run.day', [['first-business-day', 'First business day of the month']]), h('span', { text: 'at' }), ed.time('run.time')),
       row('When the draft is ready', null, ed.check('run.emailAdmin', 'Email Josh that the draft is ready'), ed.check('run.showOnHome', 'Show it in "Needs your attention" on Home')),
-      row('After you publish', 'Reminders are drafts for Josh to send. The system never emails a PIC pretending to be Josh.', ed.check('run.createCheckinDrafts', 'Create check-in drafts for overdue and missing plans'), ed.check('run.notifyPics', 'Notify PICs that the new run is up')),
+      row('After you publish', 'Reminders are drafts for Josh to send. The system never emails a PIC; the only automatic email goes to you.', ed.check('run.createCheckinDrafts', 'Create check-in drafts for overdue and missing plans')),
     ]),
     settingsCard('Which projects are included', 'The rule that decides who lands on the Project Turnaround page.', s, ['include.status', 'include.ytdProfitBelow', 'include.ignoreBilledUnder', 'include.noPic'], canEdit, rerender, ed => [
       row('Project status', 'Status comes from Vantagepoint. Inactive projects are left out because nobody can fix them.', ed.select('include.status', [['active', 'Active only']])),

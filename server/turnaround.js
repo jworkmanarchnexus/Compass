@@ -257,7 +257,7 @@ function dailyChecks(db, { today, settings, mailer, baseUrl, adminEmails }) {
     const dir = directory(db);
     const plans = draftsLogic.planDrafts({ today, items, existing: existingDrafts(db), lastEntryByPic, settings });
     for (const id of plans.withdraw) { db.run("UPDATE checkin_drafts SET status = 'withdrawn', resolved_at = ?, resolved_date = ? WHERE id = ?", db.now(), today, id); out.withdrawn++; }
-    for (const d of plans.create) {
+    for (const d of settings['run.createCheckinDrafts'] ? plans.create : []) {
       const u = dir.userById[d.picUserId];
       const picName = (u.draft_name || u.display_name.split(' ')[0]);
       const t = draftsLogic.draftText({ tone: d.tone, situation: d.situation, picName, items: d.items });
