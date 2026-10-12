@@ -68,8 +68,8 @@ export function openExport(ctx, d) {
   const desc = h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': 'Description under the title', placeholder: 'Optional: a line or two under the title, for example who this is for', oninput: e => { O.desc = e.target.value; redraw(); } });
 
   const opts = h('div', { class: 'xw-opts' }, h('div', { class: 'xo-form' },
-    h('fieldset', {}, h('legend', { text: 'Put on each page' }), seg('grouping', [['type', 'Tables together, charts together'], ['segment', 'All PIC, all market sector']]),
-      h('p', { class: 'xo-note', text: 'The second choice gives the PIC table and charts one page and the market sector table and chart the next. The total-firm chart goes with the PIC page.' })),
+    h('fieldset', {}, h('legend', { text: 'Group pages' }), seg('grouping', [['type', 'Group by Type'], ['segment', 'Group by PIC / Market']]),
+      h('p', { class: 'xo-note', text: 'Type: the tables on one page, the charts on the next. PIC / Market: the PIC table and charts on one page, the market sector table and chart on the next (the total-firm chart goes with the PIC page).' })),
     h('fieldset', {}, h('legend', { text: 'Look' }), looks, note),
     h('fieldset', {}, h('legend', { text: 'Include' }), ...INCLUDE.map(([k, t]) => check(() => O.include[k], v => { O.include[k] = v; }, t))),
     h('fieldset', {}, h('legend', { text: 'Pages' }), h('div', { class: 'xo-field' }, h('label', { text: 'Layout' }), select('layout', LAYOUTS, 'Layout')),
