@@ -245,26 +245,25 @@ function paintChart(c, F, pal, w, y0, sec, d) {
 
 /* ---------- heading and footer (points) ---------- */
 function paintHeading(c, F, pal, o) {
-  const { W, page, hd, d, O, logoAt, head } = o;
+  const { W, page, hd, d, O, logoAt } = o;
   const full = page === 0 || O.logo === 'all';
   const showLogo = O.logo !== 'none' && full && logoImg;
   const rx = W - (showLogo ? hd.logoW + hd.clear : 0);
   c.textAlign = 'left';
-  c.fillStyle = pal.title; c.font = fnt(F, 'cond', full ? 25 : 16, true);
+  c.fillStyle = pal.title; c.font = fnt(F, 'cond', full ? 19 : 12.5, true);
   const period = periodName(d.run.period);
   const title = ('BD report · ' + period).toUpperCase() + (page > 0 && !full ? '  (continued)' : '');
-  c.fillText(fitText(c, title, rx - 6), 0, full ? 24 : 18);
+  c.fillText(fitText(c, title, rx - 6), 0, full ? 18 : 13);
   if (full) {
-    c.fillStyle = pal.text2; c.font = fnt(F, 'cond', 12.5);
+    c.fillStyle = pal.text2; c.font = fnt(F, 'cond', 9.5);
     const sub = `Billing cutoff ${longDay(d.meta.cutoff)}  ·  Version ${d.run.version}  ·  ${{ draft: 'Draft', published: 'Published', archived: 'Archived' }[d.run.status]}`;
-    c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, 43);
+    c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, 32);
     if (O.desc && O.desc.trim()) {
-      c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 10.5);
-      wrap(c, O.desc.trim(), rx - 6, 4).forEach((t, i) => c.fillText(t, 0, 60 + i * 13));
+      c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 8.5);
+      wrap(c, O.desc.trim(), rx - 6, 4).forEach((t, i) => c.fillText(t, 0, 46 + i * 11));
     }
   }
   if (showLogo) logoAt(W - hd.logoW, 0, hd.logoW, hd.logoH);
-  c.fillStyle = pal.title; c.fillRect(0, head - 4, W, 1.25);
 }
 function paintFooter(c, F, pal, o) {
   const { W, H, page, count, d, O } = o;
@@ -301,7 +300,7 @@ export function buildJob(d, O, today) {
       const head = k === 0 || O.logo === 'all' ? hd.full : hd.compact;
       paintHeading(c, F, pal, { W, page: k, hd, d, O, logoAt: (x, y, w, h0) => logoAt(M + x, M + y, w, h0), head });
       const s = pg.s * pl.z, w = W / s;
-      c.save(); c.translate(0, head + 6); c.scale(s, s);
+      c.save(); c.translate(0, head + 2); c.scale(s, s);
       for (const it of pg.items) {
         const sec = secs.find(x => x.id === it.id);
         if (/Table$/.test(it.id)) paintTable(c, F, pal, w, it.y, sec, d); else paintChart(c, F, pal, w, it.y, sec, d);

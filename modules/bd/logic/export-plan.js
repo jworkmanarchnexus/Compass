@@ -118,9 +118,9 @@ function plan({ sections, P, firstHead, laterHead, layout, grouping }) {
 function headingHeights(O) {
   const logoW = LOGO_PT;
   const logoH = Math.ceil(logoW * LOGO_RATIO), clear = Math.ceil(logoW * LOGO_CLEAR);
-  const text = 40;
-  const full = Math.max(text + (O.descLines || 0) * 13, O.logo !== 'none' ? logoH + clear : 0) + 10;
-  const compact = O.logo === 'all' ? full : 34;
+  const text = 34;
+  const full = Math.max(text + (O.descLines || 0) * 11, O.logo !== 'none' ? logoH + clear : 0) + 4;
+  const compact = O.logo === 'all' ? full : 24;
   return { full, compact, logoW, logoH, clear };
 }
 
