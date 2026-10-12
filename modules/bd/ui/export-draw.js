@@ -270,7 +270,7 @@ function paintFooter(c, F, pal, o) {
   const { W, H, page, count, d, O } = o;
   c.font = fnt(F, 'ui', 8.5); c.fillStyle = pal.muted;
   c.textAlign = 'left';
-  const left = ['Arch Nexus Compass'];
+  const left = [];
   if (O.printed) left.push('Printed ' + longDay(o.today));
   if (d.run.status === 'draft') left.push('DRAFT: not published');
   c.fillText(left.join('  ·  '), 0, H);
