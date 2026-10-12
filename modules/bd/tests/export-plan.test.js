@@ -39,12 +39,12 @@ test('money and percent text', () => {
   assert.strictEqual(X.pct(1, 0), '-');
 });
 
-test('the legend says what the thresholds are, and mentions the factor only when there is one', () => {
+test('the key is one line with the three statuses and the thresholds, and never mentions the MWIP factor', () => {
   const m = { onTrackPct: 100, onPacePct: 99, factor: 0.25 };
-  const f = { mwipRaw: 100000000 };
-  assert.strictEqual(X.legendLines(m, f).length, 4);
-  assert.ok(X.legendLines(m, f)[0].includes('the annual goal'));
-  assert.strictEqual(X.legendLines({ ...m, factor: undefined }, f).length, 3);
+  const l = X.legendLines(m);
+  assert.strictEqual(l.length, 1);
+  assert.ok(l[0].includes('the annual goal') && l[0].includes('99%') && l[0].includes('Behind Pace'));
+  assert.ok(!/weighted|factor/i.test(l[0]));
 });
 
 test('bd.css and the export code carry no hex colors (those live in tokens.css or the look palettes)', () => {

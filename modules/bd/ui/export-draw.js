@@ -148,8 +148,12 @@ function paintTable(c, F, pal, w, y0, sec, d) {
   c.strokeStyle = pal.box; c.lineWidth = 1; c.strokeRect(0.5, 0.5, w - 1, bodyH - 0.5);
   c.fillStyle = pal.box; c.fillRect(0, T.sum - 0.5, w, 0.6);
   // legend
-  c.fillStyle = pal.text2; c.font = fnt(F, 'ui', 8); c.textAlign = 'center';
-  legend.forEach((t, i) => c.fillText(fitText(c, t, w - 8), w / 2, bodyH + 10 + i * T.legendLine));
+  c.fillStyle = pal.text2; c.textAlign = 'center';
+  legend.forEach((t, i) => {
+    let size = 8.5;
+    for (c.font = fnt(F, 'ui', size); size > 5.5 && c.measureText(t).width > w - 8; size -= 0.25) c.font = fnt(F, 'ui', size);
+    c.fillText(t, w / 2, bodyH + 10 + i * T.legendLine);
+  });
   c.restore();
 }
 

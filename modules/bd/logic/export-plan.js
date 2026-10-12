@@ -40,15 +40,13 @@ const C = { sum: 24, top: 8, row: 18, firmRow: 24, axis: 18, key: 18 };
 const fmtK = cents => '$' + Math.round(cents / 100000).toLocaleString('en-US') + 'K';
 const pct = (n, d) => (d ? (100 * n / d).toFixed(1) + '%' : '-');
 
-/* the legend under a table: one short line per idea, so none needs wrapping on any paper */
-function legendLines(meta, firm) {
-  const lines = [
+/* the key under a table in the PDF: one line, the three statuses separated by a bar (the drawing shrinks the type if a narrow page needs it) */
+function legendLines(meta) {
+  return [[
     'On Track: YTD + forecast + MWIP reaches ' + (meta.onTrackPct === 100 ? 'the annual goal' : meta.onTrackPct + '% of the annual goal'),
-    'On Pace: YTD billings are at least ' + meta.onPacePct + '% of pace, but need more planned revenue',
-    'Behind Pace: YTD billings are behind pace',
-  ];
-  if (meta.factor) lines.push('MWIP backlog is weighted: pursuits at face value (' + fmtK(firm.mwipRaw) + ') times ' + meta.factor + '.');
-  return lines;
+    'On Pace: YTD billings at least ' + meta.onPacePct + '% of pace, but need more planned revenue',
+    'Behind Pace: YTD billings behind pace',
+  ].join('      |      ')];
 }
 
 const tableHeight = (nRows, legendN) => T.sum + T.head + (nRows + 1) * T.row + legendN * T.legendLine + T.legendPad;
@@ -57,7 +55,7 @@ const chartHeight = (nRows, firmChart) => C.sum + C.top + nRows * (firmChart ? C
 /* which sections the report has, in order, for the options chosen. d is the report as the server sends it. */
 function sectionsFor(d, inc, grouping) {
   const out = [];
-  const lg = legendLines(d.meta, d.firm).length;
+  const lg = legendLines(d.meta).length;
   const charted = rows => rows.filter(r => r.total > 0).length;
   if (inc.picTable) out.push({ id: 'picTable', seg: 'pic', group: 'tables', h: tableHeight(d.pic.length, lg) });
   if (inc.sectorTable) out.push({ id: 'sectorTable', seg: 'sector', group: 'tables', h: tableHeight(d.sector.length, lg) });
