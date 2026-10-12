@@ -23,6 +23,17 @@ function seedDemo(db) {
     db.run("UPDATE runs SET status = 'published', published_at = ?, published_by = ? WHERE id = ?", at(publishedAt), admin.id, id);
   }
 
+  // BD reports for August and September. The one project with no market sector was assigned to Civic by the Admin (as in the mockup).
+  const bd = require('./bd');
+  const { parseCsv } = require('./csv');
+  const noSector = parseCsv(fs.readFileSync(path.join(__dirname, 'db', 'seed', 'bd_projects.csv'), 'utf8')).find(p => !p.Sector);
+  if (noSector) db.run('INSERT INTO bd_sector_overrides (wbs1, sector, set_by, set_at) VALUES (?, ?, ?, ?)', noSector.WBS1, 'Civic', admin.id, at('2026-10-02T10:00'));
+  for (const [period, builtAt, publishedAt] of [[202608, '2026-09-01T06:05', '2026-09-03T10:05'], [202609, '2026-10-01T06:05', '2026-10-02T11:30']]) {
+    const id = bd.buildDraft(db, { source, period, settings });
+    db.run('UPDATE runs SET created_at = ? WHERE id = ?', at(builtAt), id);
+    db.run("UPDATE runs SET status = 'published', published_at = ?, published_by = ? WHERE id = ?", at(publishedAt), admin.id, id);
+  }
+
   const picByCode = Object.fromEntries(db.all("SELECT * FROM users WHERE role = 'pic'").map(u => [u.employee_code, u.id]));
   for (const story of stories()) {
     const project = db.get('SELECT * FROM projects WHERE wbs1 = ?', story.wbs1);

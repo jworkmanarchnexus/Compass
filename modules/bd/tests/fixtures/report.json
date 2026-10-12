@@ -1,0 +1,322 @@
+{
+ "_note": "All money is whole cents. Hand-worked: pace = goal x months / 12; weighted MWIP = face value x factor (6700 basis points = 0.67). Status: On Track if (ytd + forecast + mwip) >= goal x onTrack%; else On Pace if ytd >= pace x onPace%; else Behind Pace; no goal = no status.",
+ "status": [
+  {
+   "name": "total equals goal: on track whatever the pace",
+   "goal": 1000000,
+   "ytdGoal": 750000,
+   "ytd": 1,
+   "total": 1000000,
+   "expect": "on_track"
+  },
+  {
+   "name": "one cent short of goal, YTD exactly 99% of pace: on pace",
+   "goal": 1000000,
+   "ytdGoal": 750000,
+   "ytd": 742500,
+   "total": 999999,
+   "expect": "on_pace"
+  },
+  {
+   "name": "one cent below 99% of pace: behind",
+   "goal": 1000000,
+   "ytdGoal": 750000,
+   "ytd": 742499,
+   "total": 999999,
+   "expect": "behind"
+  },
+  {
+   "name": "ahead of pace but total short of goal: on pace",
+   "goal": 1000000,
+   "ytdGoal": 750000,
+   "ytd": 800000,
+   "total": 900000,
+   "expect": "on_pace"
+  },
+  {
+   "name": "no goal, no status",
+   "goal": 0,
+   "ytdGoal": 0,
+   "ytd": 500,
+   "total": 500,
+   "expect": null
+  }
+ ],
+ "pace": [
+  {
+   "goal": 240000000,
+   "months": 9,
+   "expect": 180000000
+  },
+  {
+   "goal": 1000,
+   "months": 1,
+   "expect": 83,
+   "why": "83.33 rounds to the cent"
+  },
+  {
+   "goal": 1000,
+   "months": 12,
+   "expect": 1000
+  },
+  {
+   "goal": 100000001,
+   "months": 1,
+   "expect": 8333333
+  }
+ ],
+ "report": {
+  "input": {
+   "period": 202609,
+   "goals": {
+    "pic": {
+     "E1": 240000000,
+     "E2": 150000000,
+     "E3": 100000000
+    },
+    "sector": {
+     "Healthcare": 200000000,
+     "Civic": 200000000
+    },
+    "picOrder": [
+     "E1",
+     "E2",
+     "E3"
+    ],
+    "sectorOrder": [
+     "Healthcare",
+     "Civic"
+    ]
+   },
+   "projects": {
+    "P1": {
+     "pic": "E1",
+     "sector": "Healthcare"
+    },
+    "P2": {
+     "pic": "E1",
+     "sector": "Labs"
+    },
+    "P3": {
+     "pic": "E2",
+     "sector": "Civic"
+    },
+    "P4": {
+     "pic": "E2",
+     "sector": ""
+    },
+    "P5": {
+     "pic": "E1",
+     "sector": "Civic"
+    },
+    "P6": {
+     "pic": "E3",
+     "sector": "Civic"
+    }
+   },
+   "revenue": [
+    {
+     "wbs1": "P1",
+     "period": 202601,
+     "amount": 100000000
+    },
+    {
+     "wbs1": "P1",
+     "period": 202609,
+     "amount": 50000000
+    },
+    {
+     "wbs1": "P2",
+     "period": 202603,
+     "amount": 30000000
+    },
+    {
+     "wbs1": "P3",
+     "period": 202605,
+     "amount": 90000000
+    },
+    {
+     "wbs1": "P4",
+     "period": 202607,
+     "amount": 342000
+    },
+    {
+     "wbs1": "P5",
+     "period": 202610,
+     "amount": 99999999
+    },
+    {
+     "wbs1": "P5",
+     "period": 202512,
+     "amount": 77777777
+    },
+    {
+     "wbs1": "P6",
+     "period": 202602,
+     "amount": 75000000
+    }
+   ],
+   "forecast": [
+    {
+     "wbs1": "P1",
+     "amount": 40000000
+    },
+    {
+     "wbs1": "P3",
+     "amount": 20000000
+    }
+   ],
+   "mwip": [
+    {
+     "id": "m1",
+     "pic": "E1",
+     "sector": "Healthcare",
+     "amount": 30000000
+    },
+    {
+     "id": "m2",
+     "pic": "E2",
+     "sector": "Civic",
+     "amount": 20000000
+    }
+   ],
+   "factorBp": 6700,
+   "thresholds": {
+    "onPace": 99,
+    "onTrack": 100
+   },
+   "sectors": [
+    {
+     "name": "Healthcare"
+    },
+    {
+     "name": "Civic"
+    },
+    {
+     "name": "Labs",
+     "rollsInto": "Healthcare",
+     "rollsUntil": "2026-12-31"
+    }
+   ],
+   "overrides": {}
+  },
+  "expect": {
+   "months": 9,
+   "pic": {
+    "E1": {
+     "goal": 240000000,
+     "ytdGoal": 180000000,
+     "ytd": 180000000,
+     "forecast": 40000000,
+     "mwipRaw": 30000000,
+     "mwip": 20100000,
+     "total": 240100000,
+     "status": "on_track"
+    },
+    "E2": {
+     "goal": 150000000,
+     "ytdGoal": 112500000,
+     "ytd": 90342000,
+     "forecast": 20000000,
+     "mwipRaw": 20000000,
+     "mwip": 13400000,
+     "total": 123742000,
+     "status": "behind"
+    },
+    "E3": {
+     "goal": 100000000,
+     "ytdGoal": 75000000,
+     "ytd": 75000000,
+     "forecast": 0,
+     "mwipRaw": 0,
+     "mwip": 0,
+     "total": 75000000,
+     "status": "on_pace"
+    }
+   },
+   "sector": {
+    "Healthcare": {
+     "goal": 200000000,
+     "ytdGoal": 150000000,
+     "ytd": 180000000,
+     "forecast": 40000000,
+     "mwipRaw": 30000000,
+     "mwip": 20100000,
+     "total": 240100000,
+     "status": "on_track"
+    },
+    "Civic": {
+     "goal": 200000000,
+     "ytdGoal": 150000000,
+     "ytd": 165000000,
+     "forecast": 20000000,
+     "mwipRaw": 20000000,
+     "mwip": 13400000,
+     "total": 198400000,
+     "status": "on_pace"
+    },
+    "Unassigned": {
+     "goal": 0,
+     "ytd": 342000,
+     "forecast": 0,
+     "mwipRaw": 0,
+     "mwip": 0,
+     "total": 342000,
+     "status": null
+    }
+   },
+   "firm": {
+    "goal": 490000000,
+    "ytdGoal": 367500000,
+    "ytd": 345342000,
+    "forecast": 60000000,
+    "mwipRaw": 50000000,
+    "mwip": 33500000,
+    "total": 438842000,
+    "status": "behind"
+   },
+   "picOrder": [
+    "E1",
+    "E2",
+    "E3"
+   ],
+   "sectorOrder": [
+    "Healthcare",
+    "Civic",
+    "Unassigned"
+   ],
+   "unassignedSector": [
+    {
+     "wbs1": "P4",
+     "amount": 342000
+    }
+   ],
+   "rolled": [
+    {
+     "from": "Labs",
+     "into": "Healthcare",
+     "ytd": 30000000,
+     "forecast": 0,
+     "mwip": 0
+    }
+   ]
+  }
+ },
+ "withOverride": {
+  "note": "The Admin assigns P4 to Civic: the unassigned row disappears and Civic gains its revenue; the totals do not move.",
+  "override": {
+   "P4": "Civic"
+  },
+  "expect": {
+   "civicYtd": 165342000,
+   "hasUnassigned": false,
+   "firmTotal": 438842000,
+   "unassignedSector": []
+  }
+ },
+ "afterRollupEnds": {
+  "note": "In 2027 Labs is its own sector: the same revenue no longer rolls into Healthcare, and with no Labs goal it is unassigned.",
+  "period": 202703,
+  "expect": "a project in Labs is not rolled into Healthcare after 2026-12-31 (it is unassigned unless Labs is a listed sector)"
+ }
+}

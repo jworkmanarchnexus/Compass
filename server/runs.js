@@ -124,9 +124,10 @@ function getRun(db, id) {
 /* the list on Admin > Report runs */
 function listRuns(db) {
   const counts = Object.fromEntries(db.all('SELECT run_id, COUNT(*) AS n FROM run_projects GROUP BY run_id').map(r => [r.run_id, r.n]));
+  const bdCounts = Object.fromEntries(db.all("SELECT run_id, COUNT(*) AS n FROM bd_rows WHERE scope = 'pic' GROUP BY run_id").map(r => [r.run_id, r.n]));
   const warns = Object.fromEntries(db.all('SELECT run_id, COUNT(*) AS n FROM run_warnings GROUP BY run_id').map(r => [r.run_id, r.n]));
   const names = Object.fromEntries(db.all('SELECT id, display_name FROM users').map(u => [u.id, u.display_name]));
-  return allRuns(db).map(r => Object.assign(runOut(r), { publishedByName: r.published_by ? names[r.published_by] || 'Unknown' : null, projectCount: counts[r.id] || 0, warningCount: warns[r.id] || 0 }));
+  return allRuns(db).map(r => Object.assign(runOut(r), { publishedByName: r.published_by ? names[r.published_by] || 'Unknown' : null, projectCount: counts[r.id] || bdCounts[r.id] || 0, warningCount: warns[r.id] || 0 }));
 }
 
 /* a run with its projects (names resolved from the Vantagepoint copy) and, for the admin, its warnings */

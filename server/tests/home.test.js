@@ -19,9 +19,11 @@ test('admin Home on the demo day: what needs attention, what was published, what
   assert.match(h.attention[0].text, /^2 overdue plan updates\. Each note goes out from your own mailbox\.$/);
   assert.strictEqual(h.attention[0].href, '#/turnaround/checkins');
 
-  assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'Project Turnaround, August 2026']);
+  assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'BD report, September 2026', 'BD report, August 2026', 'Project Turnaround, August 2026'], 'newest first, both kinds');
   assert.strictEqual(h.published[0].by, 'Josh');
   assert.match(h.published[0].text, /^16 turnaround projects\. Visible to PICs and Finance\.$/);
+  assert.match(h.published[1].text, /^Billing cutoff 2026-09-30\. Visible to Finance and Marketing\.$/);
+  assert.strictEqual(h.published[1].href, `#/bd/${h.published[1].id}`);
 
   const by = title => h.checks.find(c => c.title.includes(title));
   assert.strictEqual(by('Monthly Vantagepoint pull').status, 'ok');
@@ -78,7 +80,7 @@ test('a PIC\'s Home is their own projects and what was published, with nothing o
   assert.deepStrictEqual(h.yours.projects.map(p => [p.wbs1, p.plan.status]).sort(), [['2024-0388', 'current'], ['2025-0173', 'overdue'], ['2025-0291', 'current'], ['2025-0412', 'update_due']]);
   assert.strictEqual(h.yours.runLabel, 'September 2026');
   for (const key of ['attention', 'checks', 'next', 'pull']) assert.strictEqual(h[key], undefined, key);
-  assert.ok(h.published.length === 2);
+  assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'Project Turnaround, August 2026'], 'PICs see no BD reports unless the Admin allows it');
   assert.doesNotMatch(h.published[0].text, /Visible to/, 'who can see what is the admin\'s business');
 }));
 
@@ -86,9 +88,10 @@ test('Finance, Marketing and the system admin each get only their part', () => w
   const fin = (await home(t, 'm.hale')).body;
   assert.ok(fin.published.length && !fin.attention && !fin.checks && !fin.yours);
   const mkt = (await home(t, 'c.brandt')).body;
-  assert.ok(!mkt.published && !mkt.attention && !mkt.checks, 'Marketing has no Turnaround access by default, so nothing is published to it');
+  assert.deepStrictEqual(mkt.published.map(p => p.label), ['BD report, September 2026', 'BD report, August 2026'], 'Marketing sees the BD reports, not Turnaround, by default');
+  assert.ok(!mkt.attention && !mkt.checks);
   await t.api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: false, picPipeline: false } } });
-  assert.ok((await home(t, 'c.brandt')).body.published.length === 2);
+  assert.strictEqual((await home(t, 'c.brandt')).body.published.length, 4, 'and Turnaround too once allowed');
   const kent = (await home(t, 'kent')).body;
   assert.ok(kent.checks && kent.next && kent.pull && !kent.attention && !kent.published && !kent.yours, 'the system admin sees checks, never run contents');
   assert.strictEqual((await home(t, undefined)).status, 401);

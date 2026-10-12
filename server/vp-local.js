@@ -21,6 +21,15 @@ const toCents = s => Math.round(parseFloat(s) * 100);
 function createLocalSource() {
   return {
     name: 'local made-up data (server/db/seed)',
+    /* the BD report's inputs, as of a report month: projects (principal and market sector), revenue net of consultants through the
+       billing cutoff, contracted forecast through Dec 31, and pursuits not yet contracted at face value. Money in cents. */
+    loadBd(period) {
+      const projects = read('bd_projects.csv').map(p => ({ wbs1: p.WBS1, name: p.Name, principal: p.Principal, sector: p.Sector }));
+      const revenue = read('bd_revenue.csv').filter(r => Number(r.Period) <= period).map(r => ({ wbs1: r.WBS1, period: Number(r.Period), amount: toCents(r.Amount) }));
+      const forecast = read('bd_forecast.csv').filter(r => Number(r.Period) === period).map(r => ({ wbs1: r.WBS1, amount: toCents(r.Amount) }));
+      const mwip = read('bd_mwip.csv').filter(r => Number(r.Period) === period).map(r => ({ id: r.Pursuit, pic: r.Principal, sector: r.Sector, amount: toCents(r.Amount) }));
+      return { projects, revenue, forecast, mwip };
+    },
     load() {
       const projects = read('projects.csv')
         .filter(p => p.Status === 'A' && !/^[ZJ]/.test(p.WBS1)) // the SQL: Status A, WBS1 not starting Z or J

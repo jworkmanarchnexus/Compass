@@ -227,3 +227,87 @@ BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
 CREATE TRIGGER IF NOT EXISTS run_pic_history_locked_delete BEFORE DELETE ON run_pic_history
 WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
 BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+-- ---- BD report: Compass's own data (goals, sectors, the MWIP factor) and what a BD run holds ----
+
+-- annual revenue goals (architectural revenue, net of consultants), by PIC (key = VP employee code) and by market sector
+CREATE TABLE IF NOT EXISTS bd_goals (
+  year   INTEGER NOT NULL,
+  scope  TEXT NOT NULL CHECK (scope IN ('pic','sector')),
+  key    TEXT NOT NULL,
+  amount INTEGER NOT NULL,                -- cents
+  sort   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (year, scope, key)
+);
+-- market sectors; one may roll into another until a date (Labs counts in Healthcare through 2026-12-31)
+CREATE TABLE IF NOT EXISTS bd_sectors (
+  name        TEXT PRIMARY KEY,
+  sort        INTEGER NOT NULL DEFAULT 0,
+  rolls_into  TEXT,
+  rolls_until TEXT                         -- 'YYYY-MM-DD'
+);
+-- the MWIP weighting factor, effective-dated (basis points: 6700 = 0.67). Append-only: old reports keep the factor they used.
+CREATE TABLE IF NOT EXISTS bd_mwip_factor (
+  effective_from TEXT PRIMARY KEY,         -- 'YYYY-MM-DD'
+  factor_bp      INTEGER NOT NULL,
+  set_by         TEXT,
+  set_at         INTEGER
+);
+CREATE TRIGGER IF NOT EXISTS bd_mwip_factor_no_update BEFORE UPDATE ON bd_mwip_factor
+BEGIN SELECT RAISE(ABORT, 'the MWIP factor history is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS bd_mwip_factor_no_delete BEFORE DELETE ON bd_mwip_factor
+BEGIN SELECT RAISE(ABORT, 'the MWIP factor history is append-only'); END;
+-- the Admin's answer for a project whose Vantagepoint record has no market sector (applies to every later run too)
+CREATE TABLE IF NOT EXISTS bd_sector_overrides (
+  wbs1   TEXT PRIMARY KEY,
+  sector TEXT NOT NULL,
+  set_by TEXT,
+  set_at INTEGER
+);
+
+-- one row per BD run: the facts it was built with
+CREATE TABLE IF NOT EXISTS bd_run_meta (
+  run_id         TEXT PRIMARY KEY REFERENCES runs(id),
+  year           INTEGER NOT NULL,
+  months         INTEGER NOT NULL,         -- months elapsed (pace = goal x months / 12)
+  cutoff         TEXT NOT NULL,            -- billing cutoff: last day of the report month
+  factor_bp      INTEGER NOT NULL,
+  on_pace_pct    INTEGER NOT NULL,
+  on_track_pct   INTEGER NOT NULL,
+  no_sector_rule TEXT NOT NULL
+);
+-- the report's rows, frozen with the run. Percentages are not stored; they are worked out from these.
+CREATE TABLE IF NOT EXISTS bd_rows (
+  run_id   TEXT NOT NULL REFERENCES runs(id),
+  scope    TEXT NOT NULL CHECK (scope IN ('firm','pic','sector')),
+  key      TEXT NOT NULL,
+  label    TEXT NOT NULL,
+  sort     INTEGER NOT NULL DEFAULT 0,
+  goal     INTEGER NOT NULL,
+  ytd_goal INTEGER NOT NULL,
+  ytd      INTEGER NOT NULL,
+  forecast INTEGER NOT NULL,
+  mwip_raw INTEGER NOT NULL,
+  mwip     INTEGER NOT NULL,               -- weighted
+  total    INTEGER NOT NULL,
+  status   TEXT,                           -- on_track | on_pace | behind | NULL (no goal)
+  PRIMARY KEY (run_id, scope, key)
+);
+CREATE TRIGGER IF NOT EXISTS bd_rows_locked_insert BEFORE INSERT ON bd_rows
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_rows_locked_update BEFORE UPDATE ON bd_rows
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_rows_locked_delete BEFORE DELETE ON bd_rows
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_run_meta_locked_insert BEFORE INSERT ON bd_run_meta
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_run_meta_locked_update BEFORE UPDATE ON bd_run_meta
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_run_meta_locked_delete BEFORE DELETE ON bd_run_meta
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
