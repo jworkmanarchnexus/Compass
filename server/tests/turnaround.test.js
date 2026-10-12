@@ -42,14 +42,14 @@ test('since last month, and the charts\' history', () => withDemo(async ({ api }
   assert.deepStrictEqual([sep.period, sep.negativeYtd, sep.belowCount], [202609, -45004000, 16], 'the last point is the run itself');
 }));
 
-test('a project\'s page shows its log, newest first, with the corrections and the date changes', () => withDemo(async ({ api }) => {
+test('a project\'s page shows its log, newest first, with the date changes', () => withDemo(async ({ api }) => {
   const r = (await api('j.workman').get('/api/projects/2025-0412/plan')).body;
   assert.strictEqual(r.project.name, 'Wasatch Valley Clinic TI');
   assert.strictEqual(r.project.pic.name, 'Dana Whitfield');
   assert.strictEqual(r.cycle, 2026);
   assert.strictEqual(r.opened, '2026-07-14');
-  assert.deepStrictEqual(r.entries.map(e => e.kind), ['date_revised', 'update', 'admin_note', 'commitment', 'missed', 'commitment', 'done', 'commitment', 'correction', 'explanation']);
-  assert.strictEqual(r.entries[r.entries.length - 1].correctedOn, '2026-07-21', 'the original says it was corrected');
+  assert.deepStrictEqual(r.entries.map(e => e.kind), ['date_revised', 'update', 'admin_note', 'commitment', 'missed', 'commitment', 'done', 'commitment', 'update', 'explanation']);
+  assert.deepStrictEqual(r.can.kinds, [], 'the admin does not write PIC entries');
   assert.strictEqual(r.entries[r.entries.length - 1].planOpened, true);
   const c3 = r.commitments.find(c => c.promisedBy === '2026-10-03');
   assert.deepStrictEqual([c3.status, c3.dueDate, c3.revisions.length, c3.revisions[0].reason], ['open', '2026-10-17', 1, 'Owner\'s rep out until Oct 10.']);
@@ -140,19 +140,45 @@ test('Mark done asks for what happened and the result; Change date needs a reaso
   assert.strictEqual((await dana.post(base + '/revise', { newDate: '2026-11-01', reason: 'again' })).status, 409);
 }));
 
-test('a correction points back at the original, which stays; only your own entries can be corrected', () => withDemo(async ({ api }) => {
+test('a plan starts with one explanation: nothing else is possible until it is written, and it can only be written once', () => withDemo(async ({ api }) => {
+  const marcus = api('m.oyelaran'); const josh = api('j.workman');
+  const post = (who, body) => api(who).post('/api/projects/2025-0230/plan/entries', body); // Tooele: on the list, no explanation yet
+  const kinds = async () => (await marcus.get('/api/projects/2025-0230/plan')).body.can.kinds;
+
+  assert.deepStrictEqual(await kinds(), ['explanation'], 'the only option');
+  const early = await post('m.oyelaran', { kind: 'update', body: 'Quick update.' });
+  assert.strictEqual(early.status, 409);
+  assert.match(early.body.error, /Start with an explanation/);
+  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'x', promisedBy: '2026-11-01', lever: 'fee', qty: 1 })).status, 409);
+
+  // an admin note does not use up or hide the explanation
+  assert.strictEqual((await post('j.workman', { kind: 'admin_note', body: 'What is going on here?' })).status, 201);
+  assert.deepStrictEqual(await kinds(), ['explanation'], 'still the only option after an admin note');
+  // the due date passing does not remove it either (the demo day is long after this project is due its plan once the window is shortened)
+  await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 1 } });
+  await josh.post('/api/admin/daily');
+  assert.deepStrictEqual(await kinds(), ['explanation'], 'still the only option when overdue');
+
+  assert.strictEqual((await post('m.oyelaran', { kind: 'explanation', body: 'A late change in the structural scope.' })).status, 201);
+  assert.deepStrictEqual(await kinds(), ['update', 'commitment'], 'from now on: updates and commitments');
+  const again = await post('m.oyelaran', { kind: 'explanation', body: 'A second explanation.' });
+  assert.strictEqual(again.status, 409);
+  assert.match(again.body.error, /already has its explanation/);
+  assert.strictEqual((await post('m.oyelaran', { kind: 'update', body: 'Met the owner.' })).status, 201);
+  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'Request a fee amendment', promisedBy: '2026-11-01', lever: 'fee', qty: 5000 })).status, 201);
+  // someone else's project, and the explanation is not available to a reader
+  assert.deepStrictEqual((await api('t.lindqvist').get('/api/projects/2025-0230/plan')).body.can.kinds, []);
+}));
+
+test('corrections are gone: they cannot be written, and the old ones still read', () => withDemo(async ({ api }) => {
   const dana = api('d.whitfield');
-  const before = (await dana.get('/api/projects/2025-0412/plan')).body;
-  const orig = before.entries.find(e => e.kind === 'update');
-  assert.strictEqual((await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'correction', body: 'It was $4,300.', correctsEntryId: orig.id })).status, 201);
-  assert.strictEqual((await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'correction', body: 'x', correctsEntryId: 'nope' })).status, 400);
-  const adminNote = before.entries.find(e => e.kind === 'admin_note');
-  assert.strictEqual((await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'correction', body: 'x', correctsEntryId: adminNote.id })).status, 400, 'not the admin\'s note');
-  const other = (await api('t.lindqvist').get('/api/projects/2024-0207/plan')).body.entries[0];
-  assert.strictEqual((await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'correction', body: 'x', correctsEntryId: other.id })).status, 400, 'another project\'s entry');
-  const after = (await dana.get('/api/projects/2025-0412/plan')).body;
-  assert.strictEqual(after.entries.find(e => e.id === orig.id).body, orig.body, 'the original is untouched');
-  assert.strictEqual(after.entries.find(e => e.id === orig.id).correctedOn, '2026-10-07');
+  const entry = (await dana.get('/api/projects/2025-0412/plan')).body.entries.find(e => e.kind === 'update');
+  const r = await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'correction', body: 'It was $4,300.', correctsEntryId: entry.id });
+  assert.strictEqual(r.status, 400);
+  // the form offers a PIC with an explanation exactly two things
+  assert.deepStrictEqual((await dana.get('/api/projects/2025-0412/plan')).body.can.kinds, ['update', 'commitment']);
+  // one explanation per plan cycle (the calendar year): a second in the same year is refused
+  assert.strictEqual((await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'explanation', body: 'Again.' })).status, 409);
 }));
 
 test('the plan log is append-only: no API path and no database path changes or removes an entry', () => withDemo(async ({ api, db }) => {

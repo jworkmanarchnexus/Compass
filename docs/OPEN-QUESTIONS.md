@@ -41,4 +41,5 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T14 | After posting, should a PIC be able to see their own commitment's action and amount? | no (never shown to any PIC) | the spec says not shown to PICs; the author is included |
 | T15 | The ladder's last step, "Repeat next monthly run", and the monthly summary email | not built | |
 | T16 | Should the Admin be able to see plan content for a project that is not on any run? | yes (any project by link) | |
+| T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |

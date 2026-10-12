@@ -37,6 +37,12 @@ function firstAppeared(db) {
   return out;
 }
 
+/* has the PIC explained this project in the plan cycle (the calendar year of `today`)? Admin notes do not count. */
+function hasExplanation(db, wbs1, today) {
+  const y = today.slice(0, 4);
+  return !!db.get("SELECT 1 AS x FROM plan_entries WHERE wbs1 = ? AND kind = 'explanation' AND entry_date >= ? AND entry_date <= ?", wbs1, `${y}-01-01`, `${y}-12-31`);
+}
+
 const isProjectPic = (user, project) => !!user.employee_code && project.principal === user.employee_code;
 
 function projectOr404(db, wbs1) {
@@ -67,9 +73,15 @@ function insert(db, { wbs1, authorId, kind, body, date, correctsEntryId, commitm
 function addEntry(db, user, wbs1, input, today) {
   const project = projectOr404(db, wbs1);
   const kind = input.kind;
-  if (!['explanation', 'commitment', 'update', 'correction', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist.');
+  if (!['explanation', 'commitment', 'update', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist.');
   if (!plan.canWrite(user.role, kind, isProjectPic(user, project))) throw new HttpError(403, kind === 'admin_note' ? 'Only the Admin adds admin notes.' : 'Only the PIC on this project writes in its plan.');
   if (project.status !== 'A') throw new HttpError(409, 'This project is not active.');
+  // the order of a plan: one explanation first (it stays the only option until it is written, however late); after that, updates and commitments
+  if (kind !== 'admin_note') {
+    const explained = hasExplanation(db, project.wbs1, today);
+    if (kind === 'explanation' && explained) throw new HttpError(409, 'This project already has its explanation for the year. Add an update or a commitment.');
+    if (kind !== 'explanation' && !explained) throw new HttpError(409, 'Start with an explanation of what is driving the loss. Updates and commitments come after it.');
+  }
   const body = text(input.body, 'The entry');
   const entry = { wbs1: project.wbs1, authorId: user.id, kind, body, date: today };
 
@@ -79,11 +91,6 @@ function addEntry(db, user, wbs1, input, today) {
     entry.data = { promisedBy: input.promisedBy, lever: input.lever, qty: number(input.qty, plan.LEVERS[input.lever].ask) };
     entry.id = crypto.randomUUID();
     entry.commitmentId = entry.id; // a commitment's id is its own entry's id
-  }
-  if (kind === 'correction') {
-    const orig = db.get('SELECT * FROM plan_entries WHERE id = ?', String(input.correctsEntryId || ''));
-    if (!orig || orig.wbs1 !== project.wbs1 || orig.author_id !== user.id || !['explanation', 'commitment', 'update'].includes(orig.kind)) throw new HttpError(400, 'Pick one of your own earlier entries to correct.');
-    entry.correctsEntryId = orig.id;
   }
   return db.tx(() => insert(db, entry));
 }
@@ -123,4 +130,4 @@ function recordMissed(db, wbs1, state, today) {
   return insert(db, { wbs1, authorId: null, kind: 'missed', body: '', date: today, commitmentId: state.id, data: { dueDate: state.dueDate } });
 }
 
-module.exports = { localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, reviseDate, recordMissed, insert };
+module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, reviseDate, recordMissed, insert };

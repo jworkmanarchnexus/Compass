@@ -6,7 +6,7 @@
    changes anything; it only reads entries. Settings are in dollars/days as the Admin page shows them.
 
    An entry: { id, kind, date, commitmentId?, correctsEntryId?, data? }
-     kinds written by the PIC:   explanation, commitment, update, correction, done, date_revised
+     kinds written by the PIC:   explanation, commitment, update, done, date_revised (correction: older entries only)
      kind written by the admin:  admin_note   (never counts toward the PIC's record)
      kind written by the system: missed
      commitment: data = { promisedBy }                       its id is the commitment's id
@@ -117,7 +117,8 @@ function standing({ onTime, kept }, s) {
 /* ---- who may write what ---- */
 function canWrite(role, kind, isProjectPic) {
   if (kind === 'admin_note') return role === 'admin';
-  if (['explanation', 'commitment', 'update', 'correction', 'done', 'date_revised'].includes(kind)) return role === 'pic' && !!isProjectPic;
+  // 'correction' is no longer written: a PIC who got something wrong adds an update that says so (old entries stay readable)
+  if (['explanation', 'commitment', 'update', 'done', 'date_revised'].includes(kind)) return role === 'pic' && !!isProjectPic;
   return false; // 'missed' is written only by the system
 }
 

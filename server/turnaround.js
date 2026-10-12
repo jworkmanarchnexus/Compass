@@ -169,12 +169,14 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
   }
   const pic = dir.userByCode[project.principal];
   const mine = viewer.role === 'pic' && planDb.isProjectPic({ employee_code: viewer.employeeCode }, project);
+  const addKinds = mine && cyc === year(today) && project.status === 'A' ? (inCycle.some(e => e.kind === 'explanation') ? ['update', 'commitment'] : ['explanation']) : [];
   return {
     project: { wbs1: project.wbs1, name: project.name, status: project.status, pic: { code: project.principal, name: dir.name(project.principal), draftName: pic ? pic.draft_name : null }, pm: { code: project.proj_mgr, name: dir.name(project.proj_mgr) } },
     cycle: cyc, cycles: years, opened: firstMine ? firstMine.date : null,
     status: status ? { status: status.status, dueDate: status.dueDate, daysOverdue: status.daysOverdue, hasPlan: status.hasPlan } : null,
     commitments, entries, facts, series,
-    can: { addEntry: mine && cyc === year(today) && project.status === 'A', adminNote: isAdmin },
+    // what the PIC may add right now: only the explanation until it exists, then updates and commitments
+    can: { kinds: addKinds, addEntry: addKinds.length > 0, adminNote: isAdmin },
     levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, ask: l.ask })) : [],
   };
 }

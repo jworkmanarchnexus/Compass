@@ -54,14 +54,16 @@ A project is **listed** when it can be evaluated, its YTD profit is below `inclu
 
 Entries belong to the **project**, not to a run. The log is **append-only**: no edit, no delete, enforced by rules and by the database. A mistake is fixed with a **Correction** entry pointing at the original (which shows "Corrected on …"). The plan cycle is the calendar year: each January starts clean; earlier years stay readable.
 
-Entry kinds: `explanation`, `commitment`, `update`, `correction`, `done`, `date_revised` (all written by the PIC); `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system).
+**The order of a plan.** When a project first makes the list, the PIC's only option is an **explanation** (what is driving the loss). It is written **once per plan cycle** and stays the only option until it exists, however late; an admin note does not satisfy or hide it. After it, the PIC adds **updates** and **commitments**, nothing else. The server enforces this (409 with a plain message).
+
+Entry kinds: `explanation`, `commitment`, `update`, `done`, `date_revised` (all written by the PIC; `correction` exists only in older entries: a PIC who got something wrong adds an update that says so); `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system).
 
 - **Commitment**: text, a "promised by" date (today or later), **one** action (lever) from eight, and **one** number ("your best estimate is fine"; zero is allowed). The eight levers: *Bring in money*: request additional services fee; submit a change order; renegotiate the fee; speed up billing or collection. *Spend less*: reduce staffing hours; move work to lower-cost staff; reduce consultant cost; shorten the schedule. The number's unit is dollars, hours or weeks by lever. Lever, number and the actual result are visible to the Admin only.
 - **Mark done** asks what happened and the actual result (zero allowed). Done on or before the commitment's current date counts as **kept**; after it, **done late** (not kept).
 - **Change date** needs a reason and a new date (today or later, different from the current one). Every earlier date stays on record.
 - **Missed** is recorded by the daily job when an open commitment's current date has passed by `due.missedAfterDays` (default 14) days. (**Chosen**: the mockup's own examples disagree.)
 - A done or missed commitment is final: later entries about it are ignored.
-- **Correction** may only point at the author's own explanation, commitment or update on the same project.
+- **No corrections.** The log is still append-only; a mistake is set right with a later update.
 - Text is required for every entry (4,000 characters at most).
 
 ## 6. Plan status (per project, as of today)
@@ -109,7 +111,7 @@ One page for everyone (the server removes what a viewer may not see). The Admin 
 - **Charts:** total negative YTD profit at each month end for 12 months (last year's months in grey) and the count of projects below break-even. Under "Just mine" both charts show that PIC's own projects (stored per run), not the firm's.
 - **A card per PIC**, ordered by the PIC's total YTD profit, biggest loss first: projects, total YTD profit and %, plans current (bar), on time %, kept x of y, standing (per visibility); a table of projects with profit YTD, plan chip, latest narrative update, next commitment (open / past due N days / date moved) and "N earlier commitments missed".
 - **PIC viewers** get a Just mine / Everyone toggle (default Just mine) and their own four numbers.
-- **Plan page** (one project): add to the log (PIC) or an admin note (Admin); the log newest first; commitments with Mark done and Change date; the year-to-date profit by month; project facts; a legend. Past cycles are read-only.
+- **Plan page** (one project): add to the log (PIC: the explanation first, then updates and commitments) or an admin note (Admin); the log newest first; commitments with Mark done and Change date; the year-to-date profit by month; project facts; a legend. Past cycles are read-only.
 - **Check-in drafts** page (Admin) and a sidebar count badge.
 
 ## 10. Daily job

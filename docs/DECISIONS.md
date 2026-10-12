@@ -72,3 +72,8 @@
 - **Data checks:** the monthly pull (is last month's run built?), active projects with no PIC, active projects whose PIC has no Compass login (they cannot write a plan or get a reminder), projects a run could not evaluate, and whether the daily checks ran in the last 2 days. "Vantagepoint pull status" is judged from the run, since a real pull log does not exist yet. Daily checks show "have not run yet" on a fresh demo because the seed's own first run is not logged; that is accurate and goes green after the first real run.
 - **Next scheduled runs** shows the monthly run (next first business day) and the daily checks. The weekly snapshot and the BD run will be added with their modules.
 - Weekends and holidays: "first business day" is still the first weekday (holidays are not modelled).
+
+## Plan order and corrections (Josh, 2026-10-11)
+
+- **Josh:** the first thing a PIC does on a project is the explanation, once; it persists as the only option until written, however late; an admin comment does not make it disappear. After it, only updates and commitments. No corrections; a correction is just an update.
+- Built as: one explanation per plan cycle (calendar year), enforced on the server; `correction` can no longer be written (old entries still display; the demo data's one correction became an update). The plan page's form shows only what is allowed.

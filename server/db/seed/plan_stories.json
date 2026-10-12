@@ -10,9 +10,8 @@
    },
    {
     "at": "2026-07-21T08:55",
-    "kind": "correction",
-    "body": "The owner added six exam rooms, not four as I wrote last week.",
-    "corrects": "x1"
+    "kind": "update",
+    "body": "The owner added six exam rooms, not four as I wrote last week."
    },
    {
     "at": "2026-08-18T10:15",

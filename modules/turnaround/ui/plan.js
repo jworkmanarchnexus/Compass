@@ -53,7 +53,8 @@ function cycleSwitch({ h }, data) {
 /* ---- add to the log ---- */
 function addForm(ctx, data, st, adminOnly) {
   const { h } = ctx;
-  const kinds = adminOnly ? ['admin_note'] : ['explanation', 'commitment', 'update', 'correction'];
+  const kinds = adminOnly ? ['admin_note'] : data.can.kinds;
+  const first = kinds.length === 1 && kinds[0] === 'explanation'; // nothing else is possible until the explanation is written
   const s = { kind: kinds[0], lever: null };
   const card = h('section', { class: 'sec form-card' });
   const msg = h('div', { role: 'alert' });
@@ -63,23 +64,15 @@ function addForm(ctx, data, st, adminOnly) {
   const promised = h('input', { class: 'txt', type: 'date', style: 'width:170px', 'aria-label': 'Promised by' });
   const qty = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:140px', 'aria-label': 'Amount' });
   const qtyLabel = h('label', { class: 'fl', text: '' });
-  const corr = h('select', { class: 'txt', 'aria-label': 'Entry being corrected' });
   const leverBox = h('div', { class: 'levers' });
   const prompt = h('label', { class: 'fl' });
   const submit = h('button', { class: 'btn primary', type: 'button', text: adminOnly ? 'Add admin note' : 'Add to log' });
 
-  const mine = data.entries.filter(e => e.author && e.author.id === ctx.Session.me().id && ['explanation', 'commitment', 'update'].includes(e.kind));
   const refresh = () => {
     tabs.textContent = '';
-    if (!adminOnly) for (const k of kinds) tabs.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': String(s.kind === k), 'aria-selected': String(s.kind === k), text: KIND_LABEL[k], onclick: () => { s.kind = k; msg.textContent = ''; refresh(); } }));
+    if (!adminOnly && kinds.length > 1) for (const k of kinds) tabs.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': String(s.kind === k), 'aria-selected': String(s.kind === k), text: KIND_LABEL[k], onclick: () => { s.kind = k; msg.textContent = ''; refresh(); } }));
     prompt.textContent = PROMPT[s.kind];
     fields.textContent = '';
-    if (s.kind === 'correction') {
-      corr.textContent = '';
-      for (const e of mine) corr.append(h('option', { value: e.id, text: `${fmtDay(e.date)}, ${KIND_LABEL[e.kind]}: ${e.body.slice(0, 60)}${e.body.length > 60 ? '…' : ''}` }));
-      fields.append(h('label', { class: 'fl', text: 'Which entry are you correcting?' }), corr, h('div', { class: 'muted small', text: 'The original stays in the log with a note that it was corrected.' }));
-      if (!mine.length) fields.append(h('div', { class: 'muted', text: 'You have no earlier entries on this project to correct.' }));
-    }
     fields.append(prompt, text);
     if (s.kind === 'commitment') {
       promised.min = data.status ? todayIso() : '';
@@ -87,7 +80,7 @@ function addForm(ctx, data, st, adminOnly) {
         h('div', {}, h('div', { class: 'fl', text: 'What will this commitment change? Pick one.' }), leverBox), h('div', {}, qtyLabel, qty, h('div', { class: 'muted small', text: 'Your best estimate is fine.' })));
       drawLevers();
     }
-    submit.textContent = adminOnly ? 'Add admin note' : 'Add to log';
+    submit.textContent = adminOnly ? 'Add admin note' : first ? 'Save explanation' : 'Add to log';
     T_hydrate();
   };
   const T_hydrate = () => ctx.T.hydrateIcons(card);
@@ -108,14 +101,13 @@ function addForm(ctx, data, st, adminOnly) {
       Object.assign(entry, { promisedBy: promised.value, lever: s.lever, qty: qty.value.trim() === '' ? NaN : q });
       if (Number.isNaN(entry.qty)) return fail('Enter your best estimate. Zero is fine.');
     }
-    if (s.kind === 'correction') entry.correctsEntryId = corr.value;
     submit.disabled = true;
     try { await Plan.add(data.project.wbs1, entry); await st.reload(); } catch (e) { submit.disabled = false; fail(e.message); }
   });
   const fail = t => { msg.textContent = ''; msg.append(ctx.banner('circle-alert', t, 'err')); };
-  card.append(h('div', { class: 'sec-head' }, h('h2', { text: adminOnly ? 'Add an admin note' : 'Add to the log' }),
-    h('p', { text: adminOnly ? 'Admin notes are public and always labeled. They never count toward a PIC\'s record.' : 'The aim is to find what can change on this project. Entries are permanent. To fix a mistake, add a correction that points back at the original.' })),
-  h('div', { class: 'sec-body', style: 'padding:14px 20px' }, h('div', { class: 'stack' }, adminOnly ? null : tabs, fields, msg)),
+  card.append(h('div', { class: 'sec-head' }, h('h2', { text: adminOnly ? 'Add an admin note' : first ? 'Start with an explanation' : 'Add to the log' }),
+    h('p', { text: adminOnly ? 'Admin notes are public and always labeled. They never count toward a PIC\'s record.' : first ? 'Say what is driving the loss on this project. You do this once for the year; after it, you add updates and commitments. Entries are permanent.' : 'Give an update or make a commitment. Entries are permanent. If you got something wrong, add an update that says so.' })),
+  h('div', { class: 'sec-body', style: 'padding:14px 20px' }, h('div', { class: 'stack' }, adminOnly || kinds.length < 2 ? null : tabs, fields, msg)),
   h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: adminOnly ? `Posted as ${ctx.Session.me().name}, labeled Admin note.` : `Posted as ${ctx.Session.me().name}. Josh gets no email; he sees it in the next review.` }), h('div', { class: 'acts' }, submit)));
   refresh();
   return card;
@@ -230,13 +222,12 @@ function factsCard(ctx, data) {
 function legendCard(ctx) {
   const { h } = ctx;
   const rows = [
-    ['Explanation', 'The PIC. Why the project is below break-even. The first commitment opens the plan for the year.'],
+    ['Explanation', 'The PIC, once a year per project. Why it is below break-even. It comes first; updates and commitments can only follow it.'],
     ['Commitment', 'The PIC. A promise with a date. The PIC also picks one action and an amount, which only the Admin sees.'],
-    ['Update', 'The PIC. What has happened since the last entry.'],
+    ['Update', 'The PIC. What has happened since the last entry, including anything that needs setting right.'],
     ['Done', 'The PIC presses Mark done. On or before its date counts as kept.'],
     ['Date revised', 'The PIC presses Change date. Every earlier date stays visible.'],
     ['Missed', 'The system. A date passed and nobody pressed Done.'],
-    ['Correction', 'The PIC. Fixes an earlier entry without deleting it.'],
     ['Admin note', 'The Admin. A question or comment, always labeled.'],
     ['Current', 'An open commitment and an entry in the last 30 days, nothing past due.'],
     ['Update due', 'The next update comes due within 14 days.'],
