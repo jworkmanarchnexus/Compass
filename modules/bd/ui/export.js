@@ -8,12 +8,12 @@ const DEFAULTS = {
   include: { picTable: true, sectorTable: true, firmChart: true, picChart: true, sectorChart: true },
 };
 const INCLUDE = [['picTable', 'Table by PIC'], ['sectorTable', 'Table by market sector'], ['firmChart', 'Chart: total firm'], ['picChart', 'Chart: by PIC'], ['sectorChart', 'Chart: by market sector']];
-const LAYOUTS = [['auto', 'Automatic: one page if it reads well, otherwise tables, then charts'], ['split', 'Tables on one page, charts on the next'], ['one', 'Everything on one page (shrinks to fit)']];
+const LAYOUTS = [['auto', 'Automatic: one page if it stays readable, otherwise grouped as chosen above'], ['one', 'Always one page (shrinks to fit)']];
 
 function load(pref) {
   try {
     const o = JSON.parse(pref('bd.xo') || '{}');
-    return { ...DEFAULTS, ...o, include: { ...DEFAULTS.include, ...(o.include || {}) }, look: LOOKS[o.look] ? o.look : DEFAULTS.look, desc: '' };
+    return { ...DEFAULTS, ...o, include: { ...DEFAULTS.include, ...(o.include || {}) }, look: LOOKS[o.look] ? o.look : DEFAULTS.look, layout: o.layout === 'one' ? 'one' : 'auto', desc: '' };
   } catch (e) { return { ...DEFAULTS, desc: '' }; }
 }
 
