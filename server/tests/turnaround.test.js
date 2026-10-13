@@ -272,10 +272,10 @@ test('the daily job prepares check-in drafts, never emails a PIC, and emails the
   assert.deepStrictEqual([out.created, out.emailed], [0, true], 'nothing new, but the admin has not yet been told today');
 
   const q = (await josh.get('/api/admin/checkins')).body;
-  assert.deepStrictEqual(q.waiting.map(d => [d.pic.name, d.situation, d.step, d.tone, d.items.map(i => i.wbs1)]).sort(), [['Dana Whitfield', 'overdue', 1, 'casual', ['2025-0173']], ['Tom Lindqvist', 'overdue', 1, 'casual', ['2024-0207']]]);
+  assert.deepStrictEqual(q.waiting.map(d => [d.pic.name, d.step, d.items.map(i => i.wbs1)]).sort(), [['Dana Whitfield', 1, ['2025-0173']], ['Tom Lindqvist', 1, ['2024-0207']]], 'one draft per PIC');
   const tom = q.waiting.find(d => d.pic.name === 'Tom Lindqvist');
-  assert.match(tom.body, /^Hey Tom, quick check on Airfield Maintenance Facility\./);
-  assert.match(tom.body, /"Revised budget to owner" was due Sep 26/);
+  assert.strictEqual(tom.subject, 'Project Turnaround Updates');
+  assert.strictEqual(tom.body, 'Airfield Maintenance Facility', 'only the project names; Josh writes the rest in Outlook');
   assert.strictEqual(tom.pic.email, 'tom.lindqvist@example.test');
   assert.deepStrictEqual(q.escalate, [], 'nothing is 21 days overdue yet');
 
@@ -352,7 +352,8 @@ test('a PIC who just wrote something is left alone, and a project with no plan i
   assert.strictEqual(out.created, 1);
   const waiting = (await josh.get('/api/admin/checkins')).body.waiting.filter(d => d.situation === 'no_plan');
   assert.deepStrictEqual(waiting.map(d => d.pic.name), ['Ben Okafor']);
-  assert.match(waiting[0].body, /Draper Community Center is still without a plan|Draper Community Center landed on the Project Turnaround list at -\$12,780 YTD/);
+  assert.strictEqual(waiting[0].body, 'Draper Community Center');
+  assert.strictEqual(waiting[0].subject, 'Project Turnaround Updates');
 }));
 
 test('who sees each PIC\'s on-time and kept figures is an Admin switch; everyone always sees their own', () => withDemo(async ({ api }) => {
