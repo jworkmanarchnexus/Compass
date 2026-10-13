@@ -8,9 +8,10 @@
      kept       done on or before the (current) date          late  done after it          missed  recorded Missed by the system
      resolved   kept + late + missed                           open  still waiting
      keptRate   kept / resolved (blank until something resolves)
-     delivered  for done commitments in DOLLARS: the actual result against what was promised (realization = actual / promised)
+     improved   done commitments the PIC said improved the project's finances in the period (yes), and notImproved (no)
+     improvedRate  improved / (improved + notImproved); blank until a done commitment has been answered
      lead       days from writing the commitment to its promised date      moved  how often a date was changed
-   Dollars are the only unit that can be added across actions; hours and weeks are shown per action only.
+   There are no amounts: a commitment is a kind of action and some words, so the numbers count actions and outcomes.
 
    input: { year, entries, listed, cameOff, stillOn, picOf }
      entries   plan entries dated in the year: { id, wbs1, kind, date, commitmentId, data }
@@ -29,9 +30,8 @@ function metrics(list) {
   const missed = list.filter(c => c.status === 'missed').length;
   const open = list.filter(c => c.status === 'open').length;
   const resolved = kept + late + missed;
-  const doneDollars = list.filter(c => c.status === 'done' && c.unit === 'dollars');
-  const promisedDone = sum(doneDollars.map(c => c.qty)), actualDone = sum(doneDollars.map(c => c.actual || 0));
   const done = list.filter(c => c.status === 'done');
+  const improved = done.filter(c => c.improved === true).length, notImproved = done.filter(c => c.improved === false).length;
   return {
     made: list.length, open, kept, late, missed, resolved,
     keptRate: resolved ? kept / resolved : null,
@@ -39,7 +39,7 @@ function metrics(list) {
     avgMoves: list.length ? sum(list.map(c => c.moves)) / list.length : null,
     avgLead: mean(list.map(c => c.lead)),
     avgEarly: mean(done.map(c => c.early)), // positive = finished early, negative = late
-    promisedDone, actualDone, realization: promisedDone ? actualDone / promisedDone : null,
+    improved, notImproved, improvedRate: improved + notImproved ? improved / (improved + notImproved) : null,
   };
 }
 
@@ -55,17 +55,17 @@ function analyze({ year, entries, listed, cameOff, stillOn, picOf }) {
       if (!L) continue;
       const doneE = list.find(e => e.kind === 'done' && e.commitmentId === s.id);
       commits.push({
-        id: s.id, wbs1, pic: picOf[wbs1] || '', lever, group: L.group, unit: L.unit, qty: made.data.qty, otherText: made.data.otherText || null,
+        id: s.id, wbs1, pic: picOf[wbs1] || '', lever, group: L.group, otherText: made.data.otherText || null,
         madeDate: made.date, promisedBy: s.promisedBy, dueDate: s.dueDate, moves: s.revisions.length, status: s.status, kept: s.kept, closedDate: s.closedDate,
-        actual: doneE ? doneE.data.actual : null, lead: daysBetween(made.date, s.promisedBy), early: s.status === 'done' ? daysBetween(s.closedDate, s.dueDate) : null,
+        improved: doneE && typeof doneE.data.improved === 'boolean' ? doneE.data.improved : null, lead: daysBetween(made.date, s.promisedBy), early: s.status === 'done' ? daysBetween(s.closedDate, s.dueDate) : null,
       });
     }
   }
 
   const groups = { money: metrics(commits.filter(c => c.group === 'money')), spend: metrics(commits.filter(c => c.group === 'spend')) };
-  const actions = Object.entries(plan.LEVERS).map(([lever, L]) => {
+  const actions = Object.entries(plan.LEVERS).filter(([lever, L]) => !L.legacy || commits.some(c => c.lever === lever)).map(([lever, L]) => {
     const mine = commits.filter(c => c.lever === lever);
-    return Object.assign({ lever, label: L.label, group: L.group, unit: L.unit, promised: sum(mine.map(c => c.qty)) }, metrics(mine));
+    return Object.assign({ lever, label: L.label, group: L.group }, metrics(mine));
   });
   const pics = [...new Set(commits.map(c => c.pic))].map(pic => {
     const mine = commits.filter(c => c.pic === pic); const m = metrics(mine);

@@ -944,7 +944,7 @@
    "role": "pic",
    "kind": "date_revised",
    "isPic": true,
-   "expect": true
+   "expect": false
   },
   {
    "role": "pic",
@@ -981,6 +981,70 @@
    "kind": "admin_note",
    "isPic": false,
    "expect": false
+  },
+  {
+   "role": "pic",
+   "kind": "done",
+   "isPic": true,
+   "expect": true
+  }
+ ],
+ "nextDue": [
+  {
+   "name": "before the first check-in",
+   "appeared": "2026-10-02",
+   "today": "2026-10-07",
+   "cadence": 14,
+   "expect": "2026-10-16"
+  },
+  {
+   "name": "the day before a check-in",
+   "appeared": "2026-10-02",
+   "today": "2026-10-15",
+   "cadence": 14,
+   "expect": "2026-10-16"
+  },
+  {
+   "name": "on a check-in day, a new commitment is due at the next one",
+   "appeared": "2026-10-02",
+   "today": "2026-10-16",
+   "cadence": 14,
+   "expect": "2026-10-30"
+  },
+  {
+   "name": "the day the report went live",
+   "appeared": "2026-10-02",
+   "today": "2026-10-02",
+   "cadence": 14,
+   "expect": "2026-10-16"
+  },
+  {
+   "name": "a weekly cadence",
+   "appeared": "2026-10-02",
+   "today": "2026-10-20",
+   "cadence": 7,
+   "expect": "2026-10-23"
+  },
+  {
+   "name": "no report date yet counts from today",
+   "appeared": null,
+   "today": "2026-10-07",
+   "cadence": 14,
+   "expect": "2026-10-21"
+  },
+  {
+   "name": "a report date in the future still waits one cadence",
+   "appeared": "2026-10-10",
+   "today": "2026-10-07",
+   "cadence": 14,
+   "expect": "2026-10-24"
+  },
+  {
+   "name": "across a year end",
+   "appeared": "2026-12-20",
+   "today": "2027-01-02",
+   "cadence": 14,
+   "expect": "2027-01-03"
   }
  ]
 }

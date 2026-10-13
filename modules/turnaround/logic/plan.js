@@ -118,23 +118,43 @@ function standing({ onTime, kept }, s) {
 function canWrite(role, kind, isProjectPic) {
   if (kind === 'admin_note') return role === 'admin';
   // 'correction' is no longer written: a PIC who got something wrong adds an update that says so (old entries stay readable)
-  if (['explanation', 'commitment', 'update', 'done', 'date_revised'].includes(kind)) return role === 'pic' && !!isProjectPic;
+  // 'date_revised' is no longer written either: the due date is the check-in, set by the system (old entries stay readable)
+  if (['explanation', 'commitment', 'update', 'done'].includes(kind)) return role === 'pic' && !!isProjectPic;
   return false; // 'missed' is written only by the system
 }
 
-/* the levers: eight named actions and an "Other" in each group. The unit says what the commitment's one number means. Shown to the admin only. */
+/* the levers: four named actions and an "Other" in each group, each with a short explanation (shown when the PIC points at it).
+   A commitment is one action and some words; there is no amount, so the Admin can count what kinds of actions are promised and
+   which kinds improve the project. `legacy` keys are the earlier list: never offered, kept so old log entries keep their name. */
 const LEVERS = {
-  fee: { label: 'Request additional services fee', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  co: { label: 'Submit a change order', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  reneg: { label: 'Renegotiate the fee', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  speed: { label: 'Speed up billing or collection', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bill or collect sooner' },
-  hours: { label: 'Reduce staffing hours', group: 'spend', unit: 'hours', ask: 'Hours you will cut' },
-  staff: { label: 'Move work to lower-cost staff', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
-  cons: { label: 'Reduce consultant cost', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
-  sched: { label: 'Shorten the schedule', group: 'spend', unit: 'weeks', ask: 'Weeks you will cut' },
-  // "Other": the PIC writes in what it is. Dollars, so it can be added to the totals; the typed words are kept in the commitment.
-  other_money: { label: 'Other', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in', other: true },
-  other_spend: { label: 'Other', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save', other: true },
+  recover: { label: 'Recover additional services', group: 'money', help: 'Seek compensation for owner-directed changes, scope growth, redesign, additional meetings, extended CA, or work outside the agreement.' },
+  negotiate: { label: 'Negotiate a fee adjustment', group: 'money', help: 'Revisit the existing fee due to changed project conditions, duration, complexity, or assumptions that materially differ from the original agreement.' },
+  unbilled: { label: 'Capture unbilled earned revenue', group: 'money', help: 'Identify authorized work or billable expenses that have been performed but not properly invoiced or recognized.' },
+  scope: { label: 'Secure additional project scope', group: 'money', help: 'Obtain a new, separately compensated phase, service, or expanded assignment from the client.' },
+  other_money: { label: 'Other', group: 'money', help: 'Something else. You will say what it is.', other: true },
+  labor: { label: 'Reduce remaining labor hours', group: 'spend', help: 'Reassess the work remaining, eliminate unnecessary effort, and establish a realistic labor budget to complete the project.' },
+  mix: { label: 'Optimize staffing mix', group: 'spend', help: 'Reassign appropriate tasks to staff with more suitable billing costs, experience, or production efficiency.' },
+  creep: { label: 'Eliminate scope creep', group: 'spend', help: 'Stop performing work beyond the agreement without authorization, and clarify deliverable boundaries with the owner.' },
+  consult: { label: 'Reduce consultant and external costs', group: 'spend', help: 'Lower what the project pays consultants and outside vendors: renegotiate, narrow their scope, or bring work in-house.' },
+  other_spend: { label: 'Other', group: 'spend', help: 'Something else. You will say what it is.', other: true },
+  // the earlier list, not offered any more
+  fee: { label: 'Request additional services fee', group: 'money', legacy: true },
+  co: { label: 'Submit a change order', group: 'money', legacy: true },
+  reneg: { label: 'Renegotiate the fee', group: 'money', legacy: true },
+  speed: { label: 'Speed up billing or collection', group: 'money', legacy: true },
+  hours: { label: 'Reduce staffing hours', group: 'spend', legacy: true },
+  staff: { label: 'Move work to lower-cost staff', group: 'spend', legacy: true },
+  cons: { label: 'Reduce consultant cost', group: 'spend', legacy: true },
+  sched: { label: 'Shorten the schedule', group: 'spend', legacy: true },
 };
 
-module.exports = { PIC_KINDS, LEVERS, commitmentStates, commitmentsToMiss, planStatus, onTimeStats, keptStats, standing, canWrite };
+/* The next check-in date. A commitment is not given a date by the PIC: every `cadence` days from the day the project first showed on a
+   published report is a check-in (the PIC reports back on the commitment and makes a new one). The next one is the first of those
+   dates after today, so a commitment made on a check-in day is due at the following one. With no report date yet, it counts from today. */
+function nextDue(appeared, today, cadence) {
+  const start = appeared || today;
+  const k = Math.max(1, Math.floor(daysBetween(start, today) / cadence) + 1);
+  return addDays(start, k * cadence);
+}
+
+module.exports = { PIC_KINDS, LEVERS, nextDue, commitmentStates, commitmentsToMiss, planStatus, onTimeStats, keptStats, standing, canWrite };

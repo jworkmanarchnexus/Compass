@@ -44,7 +44,7 @@ function mailto(email, subject, text) {
 
 function why(d) {
   const worst = Math.max(...d.items.map(i => i.liveDaysOverdue !== undefined ? i.liveDaysOverdue : i.daysOverdue));
-  return d.situation === 'overdue' ? { cls: 'crit', text: `Overdue ${plural(worst, 'day')}` } : { cls: 'crit', text: worst > 0 ? `No plan, ${plural(worst, 'day')} late` : 'No plan yet' };
+  return { cls: 'crit', text: worst > 0 ? `${plural(worst, 'day')} past due` : 'Due now' };
 }
 
 function draftCard(ctx, d, run) {
@@ -55,11 +55,11 @@ function draftCard(ctx, d, run) {
   const dirty = () => subject.value !== d.subject || message.value !== d.body;
   const save = async () => { if (dirty()) { await Checkins.edit(d.id, { subject: subject.value, body: message.value }); d.subject = subject.value; d.body = message.value; } };
   const projects = h('div', { class: 'muted' }, ...d.items.flatMap((i, n) => [n ? ', ' : null, h('a', { href: '#/turnaround/p/' + encodeURIComponent(i.wbs1), text: i.name }),
-    d.situation === 'overdue' ? ` (${i.nextCommitmentText ? '"' + i.nextCommitmentText + '", ' : ''}due ${fmtDay(i.dueDate)})` : ` (${fmtCents(i.ytdProfit)} YTD, no plan)`]));
+    (i.situation || d.situation) === 'overdue' ? ` (${i.nextCommitmentText ? '"' + i.nextCommitmentText + '", ' : ''}due ${fmtDay(i.dueDate)})` : ` (${fmtCents(i.ytdProfit)} YTD, no plan)`]));
   const w = why(d);
   return h('section', { class: 'sec ci-card' },
     h('div', { class: 'ci-head' }, h('span', { class: 'avatar', text: initials(d.pic.name) }), h('div', {}, h('h2', { text: d.pic.name }), projects),
-      h('span', { class: 'chip ' + w.cls, text: w.text }), d.step === 2 ? h('span', { class: 'chip warn', text: 'Reminder 2' }) : null),
+      h('span', { class: 'chip ' + w.cls, text: w.text }), d.step === 2 ? h('span', { class: 'chip warn', text: 'Follow-up' }) : null),
     h('div', { class: 'sec-body', style: 'padding:10px 20px' }, h('div', { class: 'stack' },
       h('label', { class: 'fl', text: 'Subject' }), subject, h('label', { class: 'fl', text: 'Message' }), message)),
     h('div', { class: 'sec-foot' },
@@ -67,7 +67,7 @@ function draftCard(ctx, d, run) {
         h('button', { class: 'btn primary', type: 'button', onclick: async () => { try { await save(); } catch (e) { /* the mail window still opens with what is on screen */ } window.location.href = mailto(d.pic.email, subject.value, message.value); } }, ctx.icon('file-text'), ' Open in Outlook'),
         h('button', { class: 'btn', type: 'button', text: 'Mark as sent', onclick: async () => { await save(); run(() => Checkins.send(d.id)); } }),
         h('button', { class: 'btn quiet', type: 'button', text: 'Dismiss', onclick: () => run(() => Checkins.dismiss(d.id)) })),
-      h('span', { class: 'note', text: 'Opens a draft in your mailbox. You pick when it goes.' })));
+      h('span', { class: 'note', text: 'Opens a draft in your mailbox with the project names. Add your own words around the list, then send.' })));
 }
 
 function escalateCard(ctx, data) {

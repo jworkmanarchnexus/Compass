@@ -21,7 +21,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `run_history` | firm-wide month-end negative YTD profit and below-break-even count, 12 months | locked with the run; feeds the charts |
 | `run_pic_history` | the same month-end figures for each PIC's own listed projects | locked with the run; feeds "Just mine" charts. Runs built before this table existed have none, and the page says so |
 | `run_project_history` | each listed project's YTD profit at each month end this year | locked with the run |
-| `plan_entries` | the plan log: project, author (null = system), kind, text, created, entry date, the entry it corrects, the commitment it concerns, data (promised-by, lever, amount, actual, dates) | **append-only** (database triggers); belongs to the project, never to a run |
+| `plan_entries` | the plan log: project, author (null = system), kind, text, created, entry date, the entry it corrects, the commitment it concerns, data (a commitment: due date and lever, plus the words for Other; a done entry: `improved` yes or no; a date revision: from and to) | **append-only** (database triggers) |
 | `checkin_drafts` | PIC, situation, step, tone, subject, text, the projects it is about, status (`waiting`, `sent`, `dismissed`, `withdrawn`), when resolved | the only plan-related table that is edited (a waiting draft's wording; its status) |
 | `bd_goals` | annual revenue goals by PIC (VP employee code) and by market sector, in cents | edited in Admin > BD reports |
 | `bd_sectors` | market sectors, with an optional roll-up (`rolls_into` until `rolls_until`: Labs into Healthcare through 2026-12-31) | |

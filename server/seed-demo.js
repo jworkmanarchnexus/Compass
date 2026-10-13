@@ -43,10 +43,10 @@ function seedDemo(db) {
       const when = at(e.at);
       const date = planDb.localDate(when);
       const base = { wbs1: story.wbs1, authorId: picId, kind: e.kind, body: e.body, date, at: when };
-      if (e.kind === 'commitment') { base.id = crypto.randomUUID(); base.commitmentId = base.id; base.data = { promisedBy: e.promisedBy, lever: e.lever, qty: e.qty }; }
+      if (e.kind === 'commitment') { base.id = crypto.randomUUID(); base.commitmentId = base.id; base.data = { promisedBy: e.promisedBy, lever: e.lever }; }
       if (e.kind === 'admin_note') base.authorId = admin.id;
       if (e.kind === 'missed') { base.authorId = null; base.commitmentId = ids[e.c]; base.data = { dueDate: dueOf(db, ids[e.c]) }; }
-      if (e.kind === 'done') { base.commitmentId = ids[e.c]; base.data = { actual: e.actual }; }
+      if (e.kind === 'done') { base.commitmentId = ids[e.c]; base.data = { improved: e.improved }; }
       if (e.kind === 'date_revised') { base.commitmentId = ids[e.c]; base.data = { from: dueOf(db, ids[e.c]), to: e.to }; }
       if (e.kind === 'correction') base.correctsEntryId = ids[e.corrects];
       const id = planDb.insert(db, base);

@@ -2,7 +2,7 @@
    The PIC on the project writes; everyone else reads; the Admin may add a clearly labeled note.
    A commitment's action and number are in the data only when the viewer is the Admin (the server removes them otherwise). */
 import { lineChart } from '/shared/ui/charts.js';
-import { fmtCents, fmtK, fmtLoss, fmtPctNum, fmtDay, fmtClock, monthLetter, fmtPeriod, plural, fmtDollars } from '/shared/ui/format.js';
+import { fmtCents, fmtK, fmtLoss, fmtPctNum, fmtDay, fmtClock, monthLetter, fmtPeriod, plural } from '/shared/ui/format.js';
 import { Plan } from '/shared/platform/index.js';
 import { planChip } from '/modules/turnaround/ui/overview.js';
 
@@ -10,7 +10,7 @@ const KIND_LABEL = { explanation: 'Explanation', commitment: 'Commitment', updat
 const KIND_CHIP = { explanation: 'blue', commitment: 'warn', update: '', correction: 'out', admin_note: 'out', done: 'ok', date_revised: '', missed: 'crit' };
 const PROMPT = { explanation: 'What is driving the loss?', commitment: 'What specific action will you take?', update: 'What has happened since your last entry?', correction: 'What was wrong, and what is correct?', admin_note: 'A question or comment for the PIC. It is public and always labeled as yours.' };
 const REVISED = n => (n === 1 ? 'Revised once' : `Revised ${n === 2 ? 'twice' : n + ' times'}`);
-const unitText = (c, v) => (c.unit === 'dollars' ? fmtDollars(v) : `${v.toLocaleString('en-US')} ${c.unit}`);
+const yesNo = v => (v === true ? 'Yes' : v === false ? 'No' : '');
 
 export async function renderPlan(ctx, body, wbs1, cycleArg) {
   const { h } = ctx;
@@ -50,72 +50,120 @@ function cycleSwitch({ h }, data) {
   return h('div', { class: 'seg', role: 'group', 'aria-label': 'Plan cycle' }, ...data.cycles.map(y => h('button', { type: 'button', 'aria-pressed': String(y === data.cycle), text: String(y), onclick: () => { location.hash = `#/turnaround/p/${encodeURIComponent(data.project.wbs1)}${y === data.cycles[0] ? '' : '?cycle=' + y}`; } })));
 }
 
-/* ---- add to the log ---- */
+/* ---- add to the log ----
+   Kinds: explanation (first, once), then a check-in (when a commitment is open: report back on it and make the next one, in one step)
+   or a commitment (when none is open), and an update (any time between due dates). */
 function addForm(ctx, data, st, adminOnly) {
   const { h } = ctx;
-  const kinds = adminOnly ? ['admin_note'] : data.can.kinds;
+  const open = data.commitments.filter(c => c.status === 'open');
+  const base = adminOnly ? ['admin_note'] : data.can.kinds;
+  // the PIC's two ways to move forward: with something open it is a check-in, with nothing open it is a new commitment
+  const kinds = adminOnly ? base : base.map(k => (k === 'commitment' && open.length ? 'checkin' : k));
   const first = kinds.length === 1 && kinds[0] === 'explanation'; // nothing else is possible until the explanation is written
-  const s = { kind: kinds[0], lever: null };
+  const order = ['checkin', 'commitment', 'update'];
+  const tabKinds = kinds.slice().sort((x, y) => order.indexOf(x) - order.indexOf(y));
+  const s = { kind: tabKinds[0], lever: null };
   const card = h('section', { class: 'sec form-card' });
   const msg = h('div', { role: 'alert' });
   const fields = h('div', { class: 'stack' });
   const tabs = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Kind of entry' });
   const text = h('textarea', { class: 'txt', rows: '4', style: 'height:auto;padding:8px 10px', 'aria-label': 'Entry text' });
-  const promised = h('input', { class: 'txt', type: 'date', style: 'width:170px', 'aria-label': 'Promised by' });
-  const qty = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:140px', 'aria-label': 'Amount' });
-  const qtyLabel = h('label', { class: 'fl', text: '' });
   const leverBox = h('div', { class: 'levers' });
+  const leverHelp = h('div', { class: 'lever-help muted small', 'aria-live': 'polite' });
   const otherText = h('input', { class: 'txt', type: 'text', maxlength: '120', style: 'max-width:420px', 'aria-label': 'What is the other action?', placeholder: 'In a few words, what will you do?' });
   const prompt = h('label', { class: 'fl' });
   const submit = h('button', { class: 'btn primary', type: 'button', text: adminOnly ? 'Add admin note' : 'Add to log' });
+  let reports = []; // one per open commitment: { c, what, improved }
+  const TAB = { checkin: 'Check in', commitment: 'Make a commitment', update: 'Update' };
 
   const refresh = () => {
     tabs.textContent = '';
-    if (!adminOnly && kinds.length > 1) for (const k of kinds) tabs.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': String(s.kind === k), 'aria-selected': String(s.kind === k), text: KIND_LABEL[k], onclick: () => { s.kind = k; msg.textContent = ''; refresh(); } }));
-    prompt.textContent = PROMPT[s.kind];
+    if (!adminOnly && tabKinds.length > 1) for (const k of tabKinds) tabs.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': String(s.kind === k), 'aria-selected': String(s.kind === k), text: TAB[k] || KIND_LABEL[k], onclick: () => { s.kind = k; msg.textContent = ''; refresh(); } }));
+    prompt.textContent = s.kind === 'checkin' ? 'What specific action will you take next?' : PROMPT[s.kind];
     fields.textContent = '';
-    fields.append(prompt, text);
-    if (s.kind === 'commitment') {
-      promised.min = data.status ? todayIso() : '';
-      fields.append(h('div', { class: 'two' }, h('div', {}, h('label', { class: 'fl', text: 'Promised by' }), promised, h('div', { class: 'muted small', text: 'If the date moves, you log a revision. The first date stays on record.' }))),
-        h('div', {}, h('div', { class: 'fl', text: 'What will this commitment change? Pick one.' }), leverBox), h('div', {}, qtyLabel, qty, h('div', { class: 'muted small', text: 'Your best estimate is fine.' })));
+    if (s.kind === 'checkin') {
+      reports = open.map(c => ({ c, what: h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': `What happened with: ${c.text}` }), improved: null }));
+      fields.append(h('div', { class: 'fl', text: 'Report back' }), ...reports.map(r => reportBlock(ctx, r)),
+        h('div', { class: 'fl', text: 'Your next commitment' }), h('div', {}, h('div', { class: 'fl', text: 'What will it change? Pick one.' }), leverBox, leverHelp), prompt, text);
+      if (data.nextDue) fields.append(ctx.banner('info', `Next due date: ${fmtDay(data.nextDue.date)}. On that date you will give an update on this commitment and make a new one.`));
       drawLevers();
-    }
-    submit.textContent = adminOnly ? 'Add admin note' : first ? 'Save explanation' : 'Add to log';
-    T_hydrate();
+    } else if (s.kind === 'commitment') {
+      // the kind of action first, then what you will do in your own words, then when it is due (not chosen by the PIC)
+      fields.append(h('div', {}, h('div', { class: 'fl', text: 'What will this commitment change? Pick one.' }), leverBox, leverHelp), prompt, text);
+      if (data.nextDue) fields.append(ctx.banner('info', `Next due date: ${fmtDay(data.nextDue.date)}. On that date you will give an update on this commitment and make a new one.`));
+      drawLevers();
+    } else fields.append(prompt, text);
+    submit.textContent = adminOnly ? 'Add admin note' : first ? 'Save explanation' : s.kind === 'checkin' ? 'Submit check-in' : s.kind === 'commitment' ? 'Save commitment' : 'Add to log';
+    ctx.T.hydrateIcons(card);
   };
-  const T_hydrate = () => ctx.T.hydrateIcons(card);
+  st.openCheckin = () => { if (tabKinds.includes('checkin')) { s.kind = 'checkin'; msg.textContent = ''; refresh(); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
+
   function drawLevers() {
     leverBox.textContent = '';
+    const current = data.levers.find(l => l.key === s.lever);
+    const hint = () => { leverHelp.textContent = current ? current.help : 'Point at an action to see what it means.'; };
     for (const [group, title] of [['money', 'Bring in money'], ['spend', 'Spend less']]) {
       leverBox.append(h('div', { class: 'lever-group' }, h('div', { class: 'muted small strong', text: title }),
-        h('div', { class: 'pills' }, ...data.levers.filter(l => l.group === group).map(l => h('button', { type: 'button', class: 'pill', 'aria-pressed': String(s.lever === l.key), text: l.label, onclick: () => { s.lever = l.key; s.other = !!l.other; qtyLabel.textContent = l.ask; drawLevers(); } })))));
+        h('div', { class: 'pills' }, ...data.levers.filter(l => l.group === group).map(l => h('button', {
+          type: 'button', class: 'pill', title: l.help, 'aria-pressed': String(s.lever === l.key), 'aria-describedby': 'lever-help', text: l.label,
+          onmouseenter: () => { leverHelp.textContent = l.help; }, onfocus: () => { leverHelp.textContent = l.help; }, onmouseleave: hint, onblur: hint,
+          onclick: () => { s.lever = l.key; s.other = !!l.other; drawLevers(); } })))));
     }
+    leverHelp.id = 'lever-help';
+    hint();
     if (s.other) leverBox.append(h('div', {}, h('label', { class: 'fl', text: 'Other: what is it?' }), otherText));
-    if (!s.lever) qtyLabel.textContent = 'Pick an action first';
   }
+  const needLever = () => {
+    if (!s.lever) return 'Pick the kind of action.';
+    if (s.other && !otherText.value.trim()) return 'Fill in the line for Other: say in a few words what you will do.';
+    return null;
+  };
   submit.addEventListener('click', async () => {
     msg.textContent = '';
-    const entry = { kind: s.kind, body: text.value };
-    if (s.kind === 'commitment') {
-      if (!s.lever) return fail('Pick one of the actions.');
-      const q = Number(String(qty.value).replace(/[$,\s]/g, ''));
-      Object.assign(entry, { promisedBy: promised.value, lever: s.lever, qty: qty.value.trim() === '' ? NaN : q });
-      if (s.other) { if (!otherText.value.trim()) return fail('Fill in the line for Other: say in a few words what you will do.'); entry.otherText = otherText.value; }
-      if (Number.isNaN(entry.qty)) return fail('Enter your best estimate. Zero is fine.');
-    }
-    submit.disabled = true;
-    try { await Plan.add(data.project.wbs1, entry); await st.reload(); } catch (e) { submit.disabled = false; fail(e.message); }
+    try {
+      if (s.kind === 'checkin') {
+        for (const r of reports) {
+          if (!r.what.value.trim()) return fail('Say what happened on each commitment you are reporting back on.');
+          if (r.improved === null) return fail('Answer yes or no: did this action improve the financial state of the project during this period?');
+        }
+        const bad = needLever(); if (bad) return fail(bad);
+        submit.disabled = true;
+        await Plan.checkIn(data.project.wbs1, { reports: reports.map(r => ({ commitmentId: r.c.id, body: r.what.value, improved: r.improved })), lever: s.lever, otherText: s.other ? otherText.value : undefined, body: text.value });
+      } else {
+        const entry = { kind: s.kind, body: text.value };
+        if (s.kind === 'commitment') {
+          const bad = needLever(); if (bad) return fail(bad);
+          entry.lever = s.lever;
+          if (s.other) entry.otherText = otherText.value;
+        }
+        submit.disabled = true;
+        await Plan.add(data.project.wbs1, entry);
+      }
+      await st.reload();
+    } catch (e) { submit.disabled = false; fail(e.message); }
   });
   const fail = t => { msg.textContent = ''; msg.append(ctx.banner('circle-alert', t, 'err')); };
-  card.append(h('div', { class: 'sec-head' }, h('h2', { text: adminOnly ? 'Add an admin note' : first ? 'Start with an explanation' : 'Add to the log' }),
-    h('p', { text: adminOnly ? 'Admin notes are public and always labeled. They never count toward a PIC\'s record.' : first ? 'Say what is driving the loss on this project. You do this once for the year; after it, you add updates and commitments. Entries are permanent.' : 'Give an update or make a commitment. Entries are permanent. If you got something wrong, add an update that says so.' })),
-  h('div', { class: 'sec-body', style: 'padding:14px 20px' }, h('div', { class: 'stack' }, adminOnly || kinds.length < 2 ? null : tabs, fields, msg)),
-  h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: adminOnly ? `Posted as ${ctx.Session.me().name}, labeled Admin note.` : `Posted as ${ctx.Session.me().name}. Josh gets no email; he sees it in the next review.` }), h('div', { class: 'acts' }, submit)));
+  const headline = adminOnly ? 'Add an admin note' : first ? 'Start with an explanation' : tabKinds.includes('checkin') ? 'Check in' : 'Add to the log';
+  const sub = adminOnly ? 'Admin notes are public and always labeled. They never count toward a PIC\'s record.'
+    : first ? 'Say what is driving the loss on this project. You do this once for the year; after it, you check in and add updates. Entries are permanent.'
+      : tabKinds.includes('checkin') ? 'At each due date, report back on your open commitment and make the next one. An update can go in any time between. Entries are permanent.'
+        : 'Make your first commitment, or add an update. Entries are permanent.';
+  card.append(h('div', { class: 'sec-head' }, h('h2', { text: headline }), h('p', { text: sub })),
+    h('div', { class: 'sec-body', style: 'padding:14px 20px' }, h('div', { class: 'stack' }, adminOnly || tabKinds.length < 2 ? null : tabs, fields, msg)),
+    h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: adminOnly ? `Posted as ${ctx.Session.me().name}, labeled Admin note.` : `Posted as ${ctx.Session.me().name}. Josh gets no email; he sees it in the next review.` }), h('div', { class: 'acts' }, submit)));
   refresh();
   return card;
 }
-const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+/* one open commitment, and the two things asked about it when reporting back */
+function reportBlock(ctx, r) {
+  const { h } = ctx;
+  const radios = ['Yes', 'No'].map(label => h('label', { class: 'check' }, h('input', { type: 'radio', name: 'improved-' + r.c.id, value: label, onchange: () => { r.improved = label === 'Yes'; } }), h('span', { text: label })));
+  return h('div', { class: 'report stack' },
+    h('div', {}, h('span', { class: 'chip warn', text: `Due ${fmtDay(r.c.dueDate)}` }), ' ', h('span', { class: 'strong', text: r.c.text })),
+    h('label', { class: 'fl', text: 'What happened?' }), r.what,
+    h('div', { class: 'fl', text: 'Did this action improve the financial state of the project during this period?' }), h('div', { class: 'cm-acts' }, ...radios));
+}
 
 /* ---- the log ---- */
 function logCard(ctx, data) {
@@ -123,13 +171,13 @@ function logCard(ctx, data) {
   const byId = new Map(data.entries.map(e => [e.id, e]));
   const items = data.entries.map(e => {
     const chips = [];
-    if (e.kind === 'commitment') { chips.push(h('span', { class: 'chip', text: `Promised by ${fmtDay(e.promisedBy)}` })); if (e.leverLabel) chips.push(h('span', { class: 'chip', text: `${e.leverLabel}, ${unitText({ unit: e.unit }, e.qty)}` })); }
+    if (e.kind === 'commitment') { chips.push(h('span', { class: 'chip', text: `Promised by ${fmtDay(e.promisedBy)}` })); if (e.leverLabel) chips.push(h('span', { class: 'chip', text: e.leverLabel })); }
     if (e.correctedOn) chips.push(h('span', { class: 'chip out', text: `Corrected ${fmtDay(e.correctedOn)}` }));
     if (e.planOpened) chips.push(h('span', { class: 'chip out', text: 'Plan opened' }));
     let who = e.author ? e.author.name : 'Recorded by the system';
     let text = e.body;
     if (e.kind === 'correction') who = `${e.author.name} · corrects the ${fmtDay(e.correctsDate)} ${(KIND_LABEL[e.correctsKind] || 'entry').toLowerCase()}`;
-    if (e.kind === 'done') { who = `Marked by ${e.author.name.split(' ')[0]}${e.daysEarly > 0 ? `, ${plural(e.daysEarly, 'day')} early` : e.daysEarly < 0 ? `, ${plural(-e.daysEarly, 'day')} late` : ', on the day'}`; if (e.actual !== undefined) chips.push(h('span', { class: 'chip', text: `Actual: ${e.actual.toLocaleString('en-US')}` })); }
+    if (e.kind === 'done') { who = `Marked by ${e.author.name.split(' ')[0]}${e.daysEarly > 0 ? `, ${plural(e.daysEarly, 'day')} early` : e.daysEarly < 0 ? `, ${plural(-e.daysEarly, 'day')} late` : ', on the day'}`; if (e.improved !== undefined) chips.push(h('span', { class: 'chip ' + (e.improved ? 'ok' : 'out'), text: `Improved the project: ${yesNo(e.improved)}` })); }
     if (e.kind === 'date_revised') { who = `${e.author.name} · ${e.commitmentText}`; text = `${fmtDay(e.from)} moved to ${fmtDay(e.to)}. Reason given: ${e.body} Earlier dates stay on record.`; }
     if (e.kind === 'missed') { const c = byId.get(e.commitmentId); text = `Commitment${c ? ` from ${fmtDay(c.date)}` : ''}, ${(e.commitmentText || '').replace(/\.$/, '')} by ${fmtDay(e.dueDate)}, passed with no update logged.`; }
     return h('li', { class: 'log-item' + (e.kind === 'admin_note' ? ' note' : '') },
@@ -165,42 +213,11 @@ function commitmentRow(ctx, c, data, st) {
     ? `Promised ${fmtDay(c.promisedBy)}, ${c.revisions.map(r => `moved to ${fmtDay(r.to)}`).join(', ')}${c.status === 'done' ? `, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? ', no update logged' : `, now ${fmtDay(c.dueDate)}`}`
     : c.status === 'done' ? `Promised ${fmtDay(c.promisedBy)}, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? `Promised ${fmtDay(c.promisedBy)}, no update logged` : `Promised ${fmtDay(c.promisedBy)}`;
   const row = h('div', { class: 'cm' }, h('div', { class: 'chips' }, ...chips), h('div', { class: 'strong', text: c.text }), h('div', { class: 'muted small', text: dates }),
-    c.leverLabel ? h('div', { class: 'muted small', text: `${c.leverLabel}: ${unitText(c, c.qty)}${c.actual !== null && c.actual !== undefined ? ` promised, ${unitText(c, c.actual)} actual` : ' promised'}` }) : null);
+    c.leverLabel ? h('div', { class: 'muted small', text: `${c.leverLabel}${c.improved === null || c.improved === undefined ? '' : `. Improved the project: ${yesNo(c.improved).toLowerCase()}`}` }) : null);
   if (c.status === 'open' && data.can.addEntry) {
-    const form = h('div', {});
-    const actions = h('div', { class: 'cm-acts' },
-      h('button', { class: 'btn primary sm', type: 'button', text: 'Mark done', onclick: () => { form.textContent = ''; form.append(doneForm(ctx, c, data, st, () => { form.textContent = ''; })); } }),
-      h('button', { class: 'btn sm', type: 'button', text: 'Change date', onclick: () => { form.textContent = ''; form.append(reviseForm(ctx, c, data, st, () => { form.textContent = ''; })); } }));
-    row.append(actions, form);
+    row.append(h('div', { class: 'cm-acts' }, h('button', { class: 'btn primary sm', type: 'button', text: 'Check in', onclick: () => st.openCheckin && st.openCheckin() })));
   }
   return row;
-}
-
-function inlineForm(ctx, c, title, fieldsNodes, go, cancel) {
-  const { h } = ctx;
-  const msg = h('div', { role: 'alert' });
-  const save = h('button', { class: 'btn primary sm', type: 'button', text: title.save });
-  save.addEventListener('click', async () => { save.disabled = true; msg.textContent = ''; try { await go(); } catch (e) { save.disabled = false; msg.append(ctx.banner('circle-alert', e.message, 'err')); } });
-  return h('div', { class: 'cm-form stack' }, h('div', { class: 'strong', text: c.text }), ...fieldsNodes, msg, h('div', { class: 'cm-acts' }, save, h('button', { class: 'btn quiet sm', type: 'button', text: 'Cancel', onclick: cancel })));
-}
-
-function doneForm(ctx, c, data, st, cancel) {
-  const { h } = ctx;
-  const actual = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:150px', 'aria-label': 'Actual result' });
-  const what = h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': 'What happened' });
-  const ask = { dollars: 'What was the actual result, in dollars?', hours: 'What was the actual result, in hours?', weeks: 'What was the actual result, in weeks?' }[c.unit] || 'What was the actual result?';
-  return inlineForm(ctx, c, { save: 'Save as done' }, [
-    h('label', { class: 'fl', text: ask }), actual, h('label', { class: 'fl', text: 'What happened?' }), what],
-  async () => { await Plan.markDone(data.project.wbs1, c.id, { body: what.value, actual: actual.value.trim() === '' ? NaN : Number(actual.value.replace(/[$,\s]/g, '')) }); await st.reload(); }, cancel);
-}
-
-function reviseForm(ctx, c, data, st, cancel) {
-  const { h } = ctx;
-  const date = h('input', { class: 'txt', type: 'date', style: 'width:170px', 'aria-label': 'New date', min: todayIso() });
-  const why = h('textarea', { class: 'txt', rows: '2', style: 'height:auto;padding:8px 10px', 'aria-label': 'Why is it moving?' });
-  return inlineForm(ctx, c, { save: 'Save new date' }, [
-    h('label', { class: 'fl', text: 'New date' }), date, h('label', { class: 'fl', text: 'Why is it moving?' }), why, h('div', { class: 'muted small', text: 'The earlier dates stay on record.' })],
-  async () => { await Plan.changeDate(data.project.wbs1, c.id, { newDate: date.value, reason: why.value }); await st.reload(); }, cancel);
 }
 
 /* ---- right column ---- */
@@ -225,10 +242,10 @@ function legendCard(ctx) {
   const { h } = ctx;
   const rows = [
     ['Explanation', 'The PIC, once a year per project. Why it is below break-even. It comes first; updates and commitments can only follow it.'],
-    ['Commitment', 'The PIC. A promise with a date. The PIC also picks one action and an amount; everyone who can read the plan sees them.'],
+    ['Commitment', 'The PIC. One kind of action and a few words about it. The system sets the due date: the next check-in, every 14 days from the project\'s first report. Everyone who can read the plan sees the action.'],
     ['Update', 'The PIC. What has happened since the last entry, including anything that needs setting right.'],
-    ['Done', 'The PIC presses Mark done. On or before its date counts as kept.'],
-    ['Date revised', 'The PIC presses Change date. Every earlier date stays visible.'],
+    ['Check-in', 'The PIC, at each due date (or earlier): reports back on the open commitment, says whether it improved the project\'s finances, and makes the next commitment. Reporting on or before the date counts as kept.'],
+    ['Date revised', 'Older plans only. Dates are no longer changed; the system sets them.'],
     ['Missed', 'The system. A date passed and nobody pressed Done.'],
     ['Admin note', 'The Admin. A question or comment, always labeled.'],
     ['Current', 'An open commitment and an entry in the last 30 days, nothing past due.'],

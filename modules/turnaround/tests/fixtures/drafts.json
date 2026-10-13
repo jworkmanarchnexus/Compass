@@ -1,5 +1,5 @@
 {
- "_note": "today is 2026-10-07. Expected create lists are [PIC, situation, step, tone, projects in the draft].",
+ "_note": "today is 2026-10-07. Expected create lists are [PIC, step, projects in the draft]: one draft per PIC, whatever mix of situations. A draft is only a subject and the project names.",
  "settings": {
   "due.newProjectDays": 14,
   "due.afterEntryDays": 30,
@@ -18,7 +18,7 @@
  "today": "2026-10-07",
  "cases": [
   {
-   "name": "nothing drafted yet: overdue and no-plan PICs each get a casual reminder; a project still inside its first-plan window does not",
+   "name": "nothing drafted yet: each PIC with something overdue or without a plan gets one draft; a project still inside its first-plan window does not",
    "items": [
     {
      "wbs1": "h",
@@ -81,27 +81,21 @@
     "create": [
      [
       "u1",
-      "overdue",
       1,
-      "casual",
       [
        "h"
       ]
      ],
      [
       "u2",
-      "overdue",
       1,
-      "casual",
       [
        "a"
       ]
      ],
      [
       "u4",
-      "no_plan",
       1,
-      "casual",
       [
        "d"
       ]
@@ -145,9 +139,7 @@
     "create": [
      [
       "u1",
-      "overdue",
       1,
-      "casual",
       [
        "h",
        "f"
@@ -208,9 +200,7 @@
     "create": [
      [
       "u1",
-      "overdue",
       1,
-      "casual",
       [
        "h"
       ]
@@ -335,9 +325,7 @@
     "create": [
      [
       "u2",
-      "overdue",
       2,
-      "direct",
       [
        "a"
       ]
@@ -462,9 +450,7 @@
     "create": [
      [
       "u2",
-      "overdue",
       1,
-      "casual",
       [
        "a"
       ]
@@ -537,9 +523,7 @@
     "create": [
      [
       "u2",
-      "overdue",
       1,
-      "casual",
       [
        "a"
       ]
@@ -622,11 +606,111 @@
     "create": [
      [
       "u1",
-      "overdue",
       1,
-      "casual",
       [
        "h"
+      ]
+     ]
+    ],
+    "withdraw": [],
+    "escalate": []
+   }
+  },
+  {
+   "name": "one PIC with an overdue check-in and a project with no plan gets ONE draft naming both",
+   "items": [
+    {
+     "wbs1": "h",
+     "name": "Hangar 7",
+     "picUserId": "u1",
+     "status": "overdue",
+     "daysOverdue": 4,
+     "dueDate": "2026-10-03",
+     "ytdProfit": -100000,
+     "nextCommitmentText": ""
+    },
+    {
+     "wbs1": "d",
+     "name": "Draper",
+     "picUserId": "u1",
+     "status": "no_plan",
+     "daysOverdue": 5,
+     "dueDate": "2026-10-02",
+     "ytdProfit": -100000,
+     "nextCommitmentText": ""
+    }
+   ],
+   "existing": [],
+   "lastEntryByPic": {},
+   "expect": {
+    "create": [
+     [
+      "u1",
+      1,
+      [
+       "h",
+       "d"
+      ]
+     ]
+    ],
+    "withdraw": [],
+    "escalate": []
+   }
+  },
+  {
+   "name": "a follow-up for one project and a first draft for another go in one email, marked as the follow-up",
+   "items": [
+    {
+     "wbs1": "a",
+     "name": "Airfield",
+     "picUserId": "u2",
+     "status": "overdue",
+     "daysOverdue": 11,
+     "dueDate": "2026-09-26",
+     "ytdProfit": -100000,
+     "nextCommitmentText": ""
+    },
+    {
+     "wbs1": "b",
+     "name": "Bridge",
+     "picUserId": "u2",
+     "status": "overdue",
+     "daysOverdue": 4,
+     "dueDate": "2026-10-03",
+     "ytdProfit": -100000,
+     "nextCommitmentText": ""
+    }
+   ],
+   "existing": [
+    {
+     "id": "d1",
+     "picUserId": "u2",
+     "situation": "overdue",
+     "step": 1,
+     "status": "sent",
+     "resolvedDate": "2026-09-30",
+     "items": [
+      {
+       "wbs1": "a",
+       "situation": "overdue",
+       "step": 1,
+       "dueDate": "2026-09-26"
+      }
+     ]
+    }
+   ],
+   "lastEntryByPic": {},
+   "settings": {
+    "drafts.skipIfSentDays": 0
+   },
+   "expect": {
+    "create": [
+     [
+      "u2",
+      2,
+      [
+       "a",
+       "b"
       ]
      ]
     ],
@@ -637,129 +721,72 @@
  ],
  "text": [
   {
-   "name": "casual, one overdue project",
-   "tone": "casual",
-   "situation": "overdue",
-   "picName": "Dana",
+   "name": "one project",
    "items": [
     {
-     "wbs1": "h",
-     "name": "Hangar 7 Door Replacement",
-     "picUserId": "u1",
-     "status": "overdue",
-     "daysOverdue": 4,
-     "dueDate": "2026-10-03",
-     "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package",
-     "commitmentDue": "2026-10-03",
-     "commitmentPastDue": true
+     "wbs1": "p0",
+     "name": "Hangar 7 Door Replacement"
     }
    ],
-   "subject": "Hangar 7 Door Replacement update",
-   "body": "Hey Dana, quick check on Hangar 7 Door Replacement. \"Send change order package\" was due Oct 3 and I don't see an update in the portal. Is it done, or did something get in the way? Add a line when you get a minute and I'll leave it alone after that."
+   "subject": "Project Turnaround Updates",
+   "body": "Hangar 7 Door Replacement"
   },
   {
-   "name": "casual, one project with no plan",
-   "tone": "casual",
-   "situation": "no_plan",
-   "picName": "Marcus",
+   "name": "two projects: an \"and\" between them",
    "items": [
     {
-     "wbs1": "t",
-     "name": "Tooele Transit Hub",
-     "picUserId": "u3",
-     "status": "no_plan",
-     "daysOverdue": 0,
-     "dueDate": "2026-10-16",
-     "ytdProfit": -431000,
-     "nextCommitmentText": ""
-    }
-   ],
-   "subject": "Tooele Transit Hub, what's driving it",
-   "body": "Marcus, Tooele Transit Hub landed on the Project Turnaround list at -$4,310 YTD and there's nothing in the portal on it yet. Could you add what's driving it and one thing you'll do about it? Two sentences is plenty. Thanks."
-  },
-  {
-   "name": "direct, two overdue projects",
-   "tone": "direct",
-   "situation": "overdue",
-   "picName": "Dana",
-   "items": [
-    {
-     "wbs1": "h",
-     "name": "Hangar 7 Door Replacement",
-     "picUserId": "u1",
-     "status": "overdue",
-     "daysOverdue": 4,
-     "dueDate": "2026-10-03",
-     "ytdProfit": -986000,
-     "nextCommitmentText": "Send change order package",
-     "commitmentDue": "2026-10-03",
-     "commitmentPastDue": true
+     "wbs1": "p0",
+     "name": "Hangar 7 Door Replacement"
     },
     {
-     "wbs1": "f",
-     "name": "Fire Station Roof",
-     "picUserId": "u1",
-     "status": "overdue",
-     "daysOverdue": 6,
-     "dueDate": "2026-10-01",
-     "ytdProfit": -431000,
-     "nextCommitmentText": "Roof report",
-     "commitmentDue": "2026-10-01",
-     "commitmentPastDue": true
+     "wbs1": "p1",
+     "name": "Airfield Maintenance Facility"
     }
    ],
-   "subject": "A few updates when you get a minute",
-   "contains": [
-    "Dana, these are still without an update:",
-    "- Hangar 7 Door Replacement: \"Send change order package\" was due Oct 3",
-    "- Fire Station Roof: \"Roof report\" was due Oct 1",
-    "Please update the portal today."
-   ]
+   "subject": "Project Turnaround Updates",
+   "body": "Hangar 7 Door Replacement and Airfield Maintenance Facility"
   },
   {
-   "name": "overdue because the 30-day update clock ran out, not the commitment: says an update was due",
-   "tone": "casual",
-   "situation": "overdue",
-   "picName": "Dana",
+   "name": "three projects: commas, then \"and\" before the last",
    "items": [
     {
-     "wbs1": "w",
-     "name": "Wasatch Valley Clinic TI",
-     "picUserId": "u5",
-     "status": "overdue",
-     "daysOverdue": 8,
-     "dueDate": "2026-09-29",
-     "ytdProfit": -431000,
-     "nextCommitmentText": "Fee amendment",
-     "commitmentDue": "2026-10-17",
-     "commitmentPastDue": false
+     "wbs1": "p0",
+     "name": "Hangar 7"
+    },
+    {
+     "wbs1": "p1",
+     "name": "Airfield"
+    },
+    {
+     "wbs1": "p2",
+     "name": "Draper Community Center"
     }
    ],
-   "subject": "Wasatch Valley Clinic TI update",
-   "body": "Hey Dana, quick check on Wasatch Valley Clinic TI. The next update was due Sep 29 and I don't see it in the portal. Is it done, or did something get in the way? Add a line when you get a minute and I'll leave it alone after that."
+   "subject": "Project Turnaround Updates",
+   "body": "Hangar 7, Airfield and Draper Community Center"
   },
   {
-   "name": "direct, one project with no plan",
-   "tone": "direct",
-   "situation": "no_plan",
-   "picName": "Ben",
+   "name": "four projects",
    "items": [
     {
-     "wbs1": "d",
-     "name": "Draper Community Center",
-     "picUserId": "u4",
-     "status": "no_plan",
-     "daysOverdue": 5,
-     "dueDate": "2026-10-02",
-     "ytdProfit": -1278000,
-     "nextCommitmentText": ""
+     "wbs1": "p0",
+     "name": "A"
+    },
+    {
+     "wbs1": "p1",
+     "name": "B"
+    },
+    {
+     "wbs1": "p2",
+     "name": "C"
+    },
+    {
+     "wbs1": "p3",
+     "name": "D"
     }
    ],
-   "subject": "Draper Community Center, what's driving it",
-   "contains": [
-    "Ben, Draper Community Center is still without a plan at -$12,780 YTD."
-   ]
+   "subject": "Project Turnaround Updates",
+   "body": "A, B, C and D"
   }
  ]
 }

@@ -54,7 +54,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `GET /api/turnaround/current` | Turnaround viewers | the page for the last published run (`{ run: null }` until one exists) |
 | `GET /api/projects/:wbs1/plan[?cycle=YYYY]` | Turnaround viewers | a project's plan, log, commitments, figures |
 | `POST /api/projects/:wbs1/plan/entries` | the project's PIC; Admin for `admin_note` | add an entry |
-| `POST /api/projects/:wbs1/plan/commitments/:id/done` and `/revise` | the project's PIC | mark done (what happened, actual result) / change date (new date, reason) |
+| `POST /api/projects/:wbs1/plan/checkin` | the project's PIC | report back on every open commitment (`reports`: `[{ commitmentId, body, improved }]`) and make the next (`lever`, `otherText`, `body`); all or nothing. `POST .../commitments/:id/done` is kept as a building block (what happened, `improved`) |
 | `GET /api/admin/settings`, `PUT /api/admin/settings` | Admin edit; System admin read | settings; save `{ changes: { key: value } }` |
 | `GET /api/admin/people`, `PUT /api/admin/people/:id` | Admin edit; System admin read | people; change role, active, draft name |
 | `GET /api/admin/audit` | Admin, System admin | the audit log |
@@ -81,7 +81,7 @@ These were deliberate decisions; each is enforced somewhere and tested.
 3. **The plan log is append-only.** Fixes are Correction entries. Entries belong to the project, not the run.
 4. **Only the PIC writes plan content.** The Admin may add labeled, public notes, never in a PIC's voice.
 5. **The system never emails a PIC.** Reminders are drafts the Admin sends from their own mailbox. The only automatic email goes to the Admin: a count and a link.
-6. **A commitment's action, amount and actual result are visible to everyone who may read the plan.** (The handoff hid them from PICs; Josh reversed that on 2026-10-11.) The per-action analysis, drafts and run contents stay Admin-only.
+6. **A commitment's action and whether it improved the project are visible to everyone who may read the plan.** (The handoff hid them from PICs; Josh reversed that on 2026-10-11, and on 2026-10-12 removed the dollar amounts: a commitment is now a kind of action, some words, and a system-set due date.) The per-action analysis, drafts and run contents stay Admin-only.
 7. **Every threshold is an effective-dated Admin setting.** A run records the settings it was built with.
 8. **Money is exact** (whole cents). No floating point in money, no silent fallbacks (a project with no overhead plan is reported, not guessed).
 

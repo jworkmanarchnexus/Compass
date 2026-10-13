@@ -130,6 +130,8 @@ td.latest .clamp { max-width: 40ch; }
 .levers { display: grid; gap: var(--s3); }
 .pills { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .pill { border: 1px solid var(--line-strong); background: var(--surface); color: var(--text-strong); border-radius: 16px; padding: 5px 12px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.lever-help { min-height: 2.6em; margin-top: var(--s2); line-height: 1.4; }
+.report { padding: var(--s3) var(--s4); border: 1px solid var(--line); border-radius: var(--r2); background: var(--surface-2); }
 .pill:hover { border-color: var(--text-3); }
 .pill[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 700; }
 ol.log { list-style: none; margin: 0; padding: 0; }

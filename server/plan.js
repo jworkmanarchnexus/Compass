@@ -70,7 +70,7 @@ function insert(db, { wbs1, authorId, kind, body, date, correctsEntryId, commitm
 }
 
 /* A new entry in the log. Who may write what is plan.canWrite; this checks the content. */
-function addEntry(db, user, wbs1, input, today) {
+function addEntry(db, user, wbs1, input, today, settings) {
   const project = projectOr404(db, wbs1);
   const kind = input.kind;
   if (!['explanation', 'commitment', 'update', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist.');
@@ -86,9 +86,9 @@ function addEntry(db, user, wbs1, input, today) {
   const entry = { wbs1: project.wbs1, authorId: user.id, kind, body, date: today };
 
   if (kind === 'commitment') {
-    if (!isValid(input.promisedBy) || input.promisedBy < today) throw new HttpError(400, 'Pick a date that is today or later.');
-    if (!plan.LEVERS[input.lever]) throw new HttpError(400, 'Pick one of the actions.');
-    entry.data = { promisedBy: input.promisedBy, lever: input.lever, qty: number(input.qty, plan.LEVERS[input.lever].ask) };
+    if (!plan.LEVERS[input.lever] || plan.LEVERS[input.lever].legacy) throw new HttpError(400, 'Pick one of the actions.');
+    // the PIC does not pick a date: the next check-in is every cadence days from the project's first report
+    entry.data = { promisedBy: nextDueFor(db, project.wbs1, today, settings), lever: input.lever };
     if (plan.LEVERS[input.lever].other) entry.data.otherText = text(input.otherText, 'What the action is', 120); // "Other" needs its few words
     entry.id = crypto.randomUUID();
     entry.commitmentId = entry.id; // a commitment's id is its own entry's id
@@ -102,28 +102,53 @@ function commitmentOr404(db, wbs1, id) {
   return state;
 }
 
-/* "Mark done": asks what happened and the actual result (zero is fine). On or before its date counts as kept. */
+/* the next check-in date for a project: the first of the report-anchored check-in dates after today */
+function nextDueFor(db, wbs1, today, settings) {
+  const cadence = (settings && settings['due.cadenceDays']) || 14;
+  return plan.nextDue(firstAppeared(db).get(wbs1) || null, today, cadence);
+}
+
+/* "Mark done": asks what happened, and yes or no: did this action improve the financial state of the project in the period? On or before its date counts as kept. */
 function markDone(db, user, wbs1, commitmentId, input, today) {
   const project = projectOr404(db, wbs1);
   if (!plan.canWrite(user.role, 'done', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
   const c = commitmentOr404(db, project.wbs1, commitmentId);
   if (c.status !== 'open') throw new HttpError(409, c.status === 'done' ? 'This commitment is already done.' : 'This commitment was recorded as missed and is closed.');
   const body = text(input.body, 'What happened');
-  const actual = number(input.actual, 'The actual result');
-  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body, date: today, commitmentId, data: { actual } }));
+  if (typeof input.improved !== 'boolean') throw new HttpError(400, 'Answer yes or no: did this action improve the financial state of the project during this period?');
+  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body, date: today, commitmentId, data: { improved: input.improved } }));
 }
 
-/* "Change date": a reason is required. Every earlier date stays on record. */
-function reviseDate(db, user, wbs1, commitmentId, input, today) {
+/* The check-in: on (or before) a due date the PIC reports back on every open commitment and makes the next one, in one step.
+   input: { reports: [{ commitmentId, body, improved }], lever, otherText?, body }
+   Each open commitment needs its own report (what happened, and yes or no: did the action improve the project's finances in the period).
+   It closes them as done (on or before the date counts as kept) and writes the new commitment, due at the next check-in. All or nothing. */
+function checkIn(db, user, wbs1, input, today, settings) {
   const project = projectOr404(db, wbs1);
-  if (!plan.canWrite(user.role, 'date_revised', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
-  const c = commitmentOr404(db, project.wbs1, commitmentId);
-  if (c.status !== 'open') throw new HttpError(409, 'Only an open commitment can change date.');
-  if (!isValid(input.newDate)) throw new HttpError(400, 'Pick the new date.');
-  if (input.newDate === c.dueDate) throw new HttpError(400, 'That is the date it already has.');
-  if (input.newDate < today) throw new HttpError(400, 'Pick a date that is today or later.');
-  const body = text(input.reason, 'The reason');
-  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'date_revised', body, date: today, commitmentId, data: { from: c.dueDate, to: input.newDate } }));
+  if (!plan.canWrite(user.role, 'commitment', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
+  if (project.status !== 'A') throw new HttpError(409, 'This project is not active.');
+  if (!hasExplanation(db, project.wbs1, today)) throw new HttpError(409, 'Start with an explanation of what is driving the loss. Updates and commitments come after it.');
+  const thisYear = e => e.date >= `${today.slice(0, 4)}-01-01`;
+  const open = plan.commitmentStates(entriesFor(db, project.wbs1).filter(thisYear)).filter(c => c.status === 'open');
+  const reports = Array.isArray(input.reports) ? input.reports : [];
+  for (const r of reports) if (!open.some(c => c.id === r.commitmentId)) throw new HttpError(409, 'One of those commitments is no longer open. Reload the page.');
+  const done = open.map(c => {
+    const r = reports.find(x => x.commitmentId === c.id);
+    if (!r) throw new HttpError(400, 'Report back on every open commitment first.');
+    const body = text(r.body, 'What happened');
+    if (typeof r.improved !== 'boolean') throw new HttpError(400, 'Answer yes or no: did this action improve the financial state of the project during this period?');
+    return { commitmentId: c.id, body, improved: r.improved };
+  });
+  if (!plan.LEVERS[input.lever] || plan.LEVERS[input.lever].legacy) throw new HttpError(400, 'Pick the kind of action your next commitment will be.');
+  const body = text(input.body, 'Your next commitment');
+  const data = { promisedBy: nextDueFor(db, project.wbs1, today, settings), lever: input.lever };
+  if (plan.LEVERS[input.lever].other) data.otherText = text(input.otherText, 'What the action is', 120);
+  return db.tx(() => {
+    for (const d of done) insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body: d.body, date: today, commitmentId: d.commitmentId, data: { improved: d.improved } });
+    const id = crypto.randomUUID();
+    insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'commitment', body, date: today, id, commitmentId: id, data });
+    return id;
+  });
 }
 
 /* the system's own entry: an open commitment whose date has passed by the Admin's "missed after" days */
@@ -131,4 +156,4 @@ function recordMissed(db, wbs1, state, today) {
   return insert(db, { wbs1, authorId: null, kind: 'missed', body: '', date: today, commitmentId: state.id, data: { dueDate: state.dueDate } });
 }
 
-module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, reviseDate, recordMissed, insert };
+module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, checkIn, recordMissed, insert, nextDueFor };

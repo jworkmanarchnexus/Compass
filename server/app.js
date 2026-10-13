@@ -256,7 +256,7 @@ function createServer(db, opts) {
     }
 
     /* a project's plan page and its log. Reading: anyone who may see Turnaround. Writing: the PIC on that project, or an admin note. */
-    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries)|\/commitments\/([^/]+)\/(done|revise))?$/.exec(p);
+    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries|checkin)|\/commitments\/([^/]+)\/(done))?$/.exec(p);
     if (pp) {
       if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
       const wbs1 = decodeURIComponent(pp[1]);
@@ -267,9 +267,9 @@ function createServer(db, opts) {
       if (method === 'POST') {
         const body = await readJson(req);
         const settings = currentSettings();
-        if (pp[2]) planDb.addEntry(db, user, wbs1, body, today());
-        else if (pp[4] === 'done') planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
-        else planDb.reviseDate(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
+        if (pp[2] === 'entries') planDb.addEntry(db, user, wbs1, body, today(), settings);
+        else if (pp[2] === 'checkin') planDb.checkIn(db, user, wbs1, body, today(), settings);
+        else planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
       }
     }

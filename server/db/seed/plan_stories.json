@@ -1,433 +1,414 @@
 [
- {
-  "wbs1": "2025-0412",
-  "entries": [
-   {
-    "at": "2026-07-14T13:30",
-    "kind": "explanation",
-    "body": "The owner requested four more exam rooms after the permit set went out. That work is outside our base scope and has not been invoiced, which is why hours are running ahead of billings.",
-    "l": "x1"
-   },
-   {
-    "at": "2026-07-21T08:55",
-    "kind": "update",
-    "body": "The owner added six exam rooms, not four as I wrote last week."
-   },
-   {
-    "at": "2026-08-18T10:15",
-    "kind": "commitment",
-    "body": "Run an hours report on the added exam rooms so we can put a number on the extra work.",
-    "l": "c1",
-    "promisedBy": "2026-08-29",
-    "lever": "hours",
-    "qty": 412
-   },
-   {
-    "at": "2026-08-27T15:48",
-    "kind": "done",
-    "body": "Hours report to price the added scope: 412 hours on the six added rooms so far, about $58,000 at standard rates.",
-    "c": "c1",
-    "actual": 412
-   },
-   {
-    "at": "2026-08-31T11:20",
-    "kind": "commitment",
-    "body": "Meet the owner's rep on site to walk through the added exam rooms and agree on how they get paid for.",
-    "l": "c2",
-    "promisedBy": "2026-09-12",
-    "lever": "fee",
-    "qty": 58000
-   },
-   {
-    "at": "2026-09-14T06:00",
-    "kind": "missed",
-    "body": "",
-    "c": "c2"
-   },
-   {
-    "at": "2026-09-15T14:05",
-    "kind": "commitment",
-    "body": "Submit a fee amendment to the owner covering the six added exam rooms, using the hours report as backup.",
-    "l": "c3",
-    "promisedBy": "2026-10-03",
-    "lever": "fee",
-    "qty": 58000
-   },
-   {
-    "at": "2026-09-22T09:40",
-    "kind": "admin_note",
-    "body": "Third straight month in the red on this one. What does the owner need to sign to pay for the added exam rooms, and when can we expect it?"
-   },
-   {
-    "at": "2026-09-29T16:12",
-    "kind": "update",
-    "body": "Reissued the consultant scope. Mechanical engineer agreed to credit back $4,200. Still waiting on the owner about the six added exam rooms."
-   },
-   {
-    "at": "2026-09-29T16:14",
-    "kind": "date_revised",
-    "body": "Owner's rep out until Oct 10.",
-    "c": "c3",
-    "to": "2026-10-17"
-   }
-  ]
- },
- {
-  "wbs1": "2024-0207",
-  "entries": [
-   {
-    "at": "2026-07-08T09:10",
-    "kind": "explanation",
-    "body": "Construction bids came in 12% over the owner's budget and we absorbed the redesign. The base fee does not cover it."
-   },
-   {
-    "at": "2026-07-10T14:00",
-    "kind": "commitment",
-    "body": "Revised budget to owner",
-    "l": "a1",
-    "promisedBy": "2026-08-14",
-    "lever": "reneg",
-    "qty": 40000
-   },
-   {
-    "at": "2026-08-28T06:00",
-    "kind": "missed",
-    "body": "",
-    "c": "a1"
-   },
-   {
-    "at": "2026-08-29T11:45",
-    "kind": "update",
-    "body": "Owner rejected the first revised budget. Waiting on our second version."
-   },
-   {
-    "at": "2026-09-05T10:30",
-    "kind": "commitment",
-    "body": "Revised budget to owner",
-    "l": "a2",
-    "promisedBy": "2026-09-26",
-    "lever": "reneg",
-    "qty": 40000
-   }
-  ]
- },
- {
-  "wbs1": "2025-0187",
-  "entries": [
-   {
-    "at": "2026-08-12T10:00",
-    "kind": "explanation",
-    "body": "The roofing sub's price came in over our estimate."
-   },
-   {
-    "at": "2026-09-16T13:20",
-    "kind": "commitment",
-    "body": "Request additional services fee",
-    "l": "s1",
-    "promisedBy": "2026-11-14",
-    "lever": "fee",
-    "qty": 15000
-   },
-   {
-    "at": "2026-09-30T15:05",
-    "kind": "update",
-    "body": "Roofing sub confirmed its price. Requesting an additional services fee."
-   }
-  ]
- },
- {
-  "wbs1": "2024-0356",
-  "entries": [
-   {
-    "at": "2026-06-20T10:00",
-    "kind": "explanation",
-    "body": "Construction administration is running heavier than we priced."
-   },
-   {
-    "at": "2026-07-02T09:30",
-    "kind": "commitment",
-    "body": "Move CA work to a lower-cost team member",
-    "l": "g1",
-    "promisedBy": "2026-07-31",
-    "lever": "staff",
-    "qty": 20000
-   },
-   {
-    "at": "2026-08-14T06:00",
-    "kind": "missed",
-    "body": "",
-    "c": "g1"
-   },
-   {
-    "at": "2026-09-20T11:00",
-    "kind": "commitment",
-    "body": "Meet owner on CA scope",
-    "l": "g2",
-    "promisedBy": "2026-10-17",
-    "lever": "hours",
-    "qty": 300
-   },
-   {
-    "at": "2026-09-29T14:30",
-    "kind": "update",
-    "body": "Owner wants construction administration staffing cut by a third. I disagree; the scope has not changed."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0098",
-  "entries": [
-   {
-    "at": "2026-08-05T09:00",
-    "kind": "explanation",
-    "body": "The client approved extra programming and the fee has not been amended yet."
-   },
-   {
-    "at": "2026-09-10T10:15",
-    "kind": "commitment",
-    "body": "Request fee amendment",
-    "l": "b1",
-    "promisedBy": "2026-11-07",
-    "lever": "fee",
-    "qty": 19000
-   },
-   {
-    "at": "2026-10-01T16:00",
-    "kind": "update",
-    "body": "Client approved the extra programming review. Drafting a fee amendment."
-   }
-  ]
- },
- {
-  "wbs1": "2024-0388",
-  "entries": [
-   {
-    "at": "2026-08-20T13:00",
-    "kind": "explanation",
-    "body": "The punch list ran long and hours kept accruing."
-   },
-   {
-    "at": "2026-09-18T09:45",
-    "kind": "commitment",
-    "body": "Closeout billing review",
-    "l": "o1",
-    "promisedBy": "2026-11-14",
-    "lever": "speed",
-    "qty": 28000
-   },
-   {
-    "at": "2026-10-02T11:10",
-    "kind": "update",
-    "body": "Punch list is down to three items. Billing review with Sam is set for mid-November."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0173",
-  "entries": [
-   {
-    "at": "2026-08-25T15:20",
-    "kind": "explanation",
-    "body": "The door supplier raised its price."
-   },
-   {
-    "at": "2026-08-31T10:00",
-    "kind": "update",
-    "body": "Door supplier raised its price 11%. Preparing a change order package for the owner."
-   },
-   {
-    "at": "2026-08-31T10:05",
-    "kind": "commitment",
-    "body": "Send change order package",
-    "l": "h1",
-    "promisedBy": "2026-10-03",
-    "lever": "co",
-    "qty": 9860
-   }
-  ]
- },
- {
-  "wbs1": "2025-0291",
-  "entries": [
-   {
-    "at": "2026-09-01T09:00",
-    "kind": "explanation",
-    "body": "Inspection delays pushed hours past the budget."
-   },
-   {
-    "at": "2026-09-12T14:40",
-    "kind": "commitment",
-    "body": "Final invoice",
-    "l": "r1",
-    "promisedBy": "2026-12-05",
-    "lever": "speed",
-    "qty": 6120
-   },
-   {
-    "at": "2026-09-30T10:30",
-    "kind": "update",
-    "body": "Final inspection passed. The last invoice goes out after the retainage release."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0301",
-  "entries": [
-   {
-    "at": "2026-08-08T10:00",
-    "kind": "explanation",
-    "body": "Staffing ran above plan through design development."
-   },
-   {
-    "at": "2026-08-20T09:00",
-    "kind": "commitment",
-    "body": "First staffing reduction",
-    "l": "p1",
-    "promisedBy": "2026-09-15",
-    "lever": "hours",
-    "qty": 200
-   },
-   {
-    "at": "2026-09-12T16:30",
-    "kind": "done",
-    "body": "Cut site staff to two. Hours are tracking close to budget.",
-    "c": "p1",
-    "actual": 180
-   },
-   {
-    "at": "2026-09-28T10:00",
-    "kind": "commitment",
-    "body": "Second staffing reduction after Phase 2",
-    "l": "p2",
-    "promisedBy": "2026-10-30",
-    "lever": "hours",
-    "qty": 150
-   },
-   {
-    "at": "2026-09-28T10:05",
-    "kind": "update",
-    "body": "Cut site staff to two on Sep 15. Hours are now tracking close to budget."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0144",
-  "entries": [
-   {
-    "at": "2026-08-30T11:00",
-    "kind": "explanation",
-    "body": "The client added scope in conversation and nothing was written down."
-   },
-   {
-    "at": "2026-09-05T15:00",
-    "kind": "commitment",
-    "body": "Client call on added services",
-    "l": "q1",
-    "promisedBy": "2026-10-17",
-    "lever": "fee",
-    "qty": 11420
-   },
-   {
-    "at": "2026-09-12T13:15",
-    "kind": "update",
-    "body": "Client asked for added services. No fee discussion yet."
-   }
-  ]
- },
- {
-  "wbs1": "2024-0420",
-  "entries": [
-   {
-    "at": "2026-09-10T09:30",
-    "kind": "explanation",
-    "body": "Final billing is waiting on the punch list."
-   },
-   {
-    "at": "2026-09-18T11:00",
-    "kind": "commitment",
-    "body": "Submit final invoice",
-    "l": "m1",
-    "promisedBy": "2026-11-20",
-    "lever": "speed",
-    "qty": 2950
-   },
-   {
-    "at": "2026-10-03T14:00",
-    "kind": "update",
-    "body": "Final invoice is drafted, waiting on punch list sign-off."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0266",
-  "entries": [
-   {
-    "at": "2026-08-14T10:00",
-    "kind": "explanation",
-    "body": "Drafting hours on phase 2 ran over the budget."
-   },
-   {
-    "at": "2026-09-02T13:00",
-    "kind": "commitment",
-    "body": "Reduce drafting hours in Phase 3",
-    "l": "l1",
-    "promisedBy": "2026-11-07",
-    "lever": "hours",
-    "qty": 120
-   },
-   {
-    "at": "2026-10-02T09:20",
-    "kind": "update",
-    "body": "Phase 2 drafting hours cut. Hours are back near budget."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0121",
-  "entries": [
-   {
-    "at": "2026-08-22T10:30",
-    "kind": "explanation",
-    "body": "The client keeps asking for another round of revisions."
-   },
-   {
-    "at": "2026-09-05T11:30",
-    "kind": "commitment",
-    "body": "Fee request to client",
-    "l": "k1",
-    "promisedBy": "2026-10-17",
-    "lever": "fee",
-    "qty": 8640
-   },
-   {
-    "at": "2026-09-20T15:00",
-    "kind": "update",
-    "body": "Client added a second round of revisions. Preparing a fee request."
-   }
-  ]
- },
- {
-  "wbs1": "2025-0334",
-  "entries": [
-   {
-    "at": "2026-08-28T09:00",
-    "kind": "explanation",
-    "body": "Consultant costs are above our estimate."
-   },
-   {
-    "at": "2026-09-15T10:00",
-    "kind": "commitment",
-    "body": "Value engineering workshop",
-    "l": "v1",
-    "promisedBy": "2026-11-14",
-    "lever": "cons",
-    "qty": 5000
-   },
-   {
-    "at": "2026-10-01T13:40",
-    "kind": "update",
-    "body": "Value engineering workshop is scheduled with the owner."
-   }
-  ]
- }
+  {
+    "wbs1": "2025-0412",
+    "entries": [
+      {
+        "at": "2026-07-14T13:30",
+        "kind": "explanation",
+        "body": "The owner requested four more exam rooms after the permit set went out. That work is outside our base scope and has not been invoiced, which is why hours are running ahead of billings.",
+        "l": "x1"
+      },
+      {
+        "at": "2026-07-21T08:55",
+        "kind": "update",
+        "body": "The owner added six exam rooms, not four as I wrote last week."
+      },
+      {
+        "at": "2026-08-18T10:15",
+        "kind": "commitment",
+        "body": "Run an hours report on the added exam rooms so we can put a number on the extra work.",
+        "l": "c1",
+        "promisedBy": "2026-08-29",
+        "lever": "labor"
+      },
+      {
+        "at": "2026-08-27T15:48",
+        "kind": "done",
+        "body": "Hours report to price the added scope: 412 hours on the six added rooms so far, about $58,000 at standard rates.",
+        "c": "c1",
+        "improved": true
+      },
+      {
+        "at": "2026-08-31T11:20",
+        "kind": "commitment",
+        "body": "Meet the owner's rep on site to walk through the added exam rooms and agree on how they get paid for.",
+        "l": "c2",
+        "promisedBy": "2026-09-12",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-09-14T06:00",
+        "kind": "missed",
+        "body": "",
+        "c": "c2"
+      },
+      {
+        "at": "2026-09-15T14:05",
+        "kind": "commitment",
+        "body": "Submit a fee amendment to the owner covering the six added exam rooms, using the hours report as backup.",
+        "l": "c3",
+        "promisedBy": "2026-10-03",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-09-22T09:40",
+        "kind": "admin_note",
+        "body": "Third straight month in the red on this one. What does the owner need to sign to pay for the added exam rooms, and when can we expect it?"
+      },
+      {
+        "at": "2026-09-29T16:12",
+        "kind": "update",
+        "body": "Reissued the consultant scope. Mechanical engineer agreed to credit back $4,200. Still waiting on the owner about the six added exam rooms."
+      },
+      {
+        "at": "2026-09-29T16:14",
+        "kind": "date_revised",
+        "body": "Owner's rep out until Oct 10.",
+        "c": "c3",
+        "to": "2026-10-17"
+      }
+    ]
+  },
+  {
+    "wbs1": "2024-0207",
+    "entries": [
+      {
+        "at": "2026-07-08T09:10",
+        "kind": "explanation",
+        "body": "Construction bids came in 12% over the owner's budget and we absorbed the redesign. The base fee does not cover it."
+      },
+      {
+        "at": "2026-07-10T14:00",
+        "kind": "commitment",
+        "body": "Revised budget to owner",
+        "l": "a1",
+        "promisedBy": "2026-08-14",
+        "lever": "negotiate"
+      },
+      {
+        "at": "2026-08-28T06:00",
+        "kind": "missed",
+        "body": "",
+        "c": "a1"
+      },
+      {
+        "at": "2026-08-29T11:45",
+        "kind": "update",
+        "body": "Owner rejected the first revised budget. Waiting on our second version."
+      },
+      {
+        "at": "2026-09-05T10:30",
+        "kind": "commitment",
+        "body": "Revised budget to owner",
+        "l": "a2",
+        "promisedBy": "2026-09-26",
+        "lever": "negotiate"
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0187",
+    "entries": [
+      {
+        "at": "2026-08-12T10:00",
+        "kind": "explanation",
+        "body": "The roofing sub's price came in over our estimate."
+      },
+      {
+        "at": "2026-09-16T13:20",
+        "kind": "commitment",
+        "body": "Request additional services fee",
+        "l": "s1",
+        "promisedBy": "2026-11-14",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-09-30T15:05",
+        "kind": "update",
+        "body": "Roofing sub confirmed its price. Requesting an additional services fee."
+      }
+    ]
+  },
+  {
+    "wbs1": "2024-0356",
+    "entries": [
+      {
+        "at": "2026-06-20T10:00",
+        "kind": "explanation",
+        "body": "Construction administration is running heavier than we priced."
+      },
+      {
+        "at": "2026-07-02T09:30",
+        "kind": "commitment",
+        "body": "Move CA work to a lower-cost team member",
+        "l": "g1",
+        "promisedBy": "2026-07-31",
+        "lever": "mix"
+      },
+      {
+        "at": "2026-08-14T06:00",
+        "kind": "missed",
+        "body": "",
+        "c": "g1"
+      },
+      {
+        "at": "2026-09-20T11:00",
+        "kind": "commitment",
+        "body": "Meet owner on CA scope",
+        "l": "g2",
+        "promisedBy": "2026-10-17",
+        "lever": "labor"
+      },
+      {
+        "at": "2026-09-29T14:30",
+        "kind": "update",
+        "body": "Owner wants construction administration staffing cut by a third. I disagree; the scope has not changed."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0098",
+    "entries": [
+      {
+        "at": "2026-08-05T09:00",
+        "kind": "explanation",
+        "body": "The client approved extra programming and the fee has not been amended yet."
+      },
+      {
+        "at": "2026-09-10T10:15",
+        "kind": "commitment",
+        "body": "Request fee amendment",
+        "l": "b1",
+        "promisedBy": "2026-11-07",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-10-01T16:00",
+        "kind": "update",
+        "body": "Client approved the extra programming review. Drafting a fee amendment."
+      }
+    ]
+  },
+  {
+    "wbs1": "2024-0388",
+    "entries": [
+      {
+        "at": "2026-08-20T13:00",
+        "kind": "explanation",
+        "body": "The punch list ran long and hours kept accruing."
+      },
+      {
+        "at": "2026-09-18T09:45",
+        "kind": "commitment",
+        "body": "Closeout billing review",
+        "l": "o1",
+        "promisedBy": "2026-11-14",
+        "lever": "unbilled"
+      },
+      {
+        "at": "2026-10-02T11:10",
+        "kind": "update",
+        "body": "Punch list is down to three items. Billing review with Sam is set for mid-November."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0173",
+    "entries": [
+      {
+        "at": "2026-08-25T15:20",
+        "kind": "explanation",
+        "body": "The door supplier raised its price."
+      },
+      {
+        "at": "2026-08-31T10:00",
+        "kind": "update",
+        "body": "Door supplier raised its price 11%. Preparing a change order package for the owner."
+      },
+      {
+        "at": "2026-08-31T10:05",
+        "kind": "commitment",
+        "body": "Send change order package",
+        "l": "h1",
+        "promisedBy": "2026-10-03",
+        "lever": "recover"
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0291",
+    "entries": [
+      {
+        "at": "2026-09-01T09:00",
+        "kind": "explanation",
+        "body": "Inspection delays pushed hours past the budget."
+      },
+      {
+        "at": "2026-09-12T14:40",
+        "kind": "commitment",
+        "body": "Final invoice",
+        "l": "r1",
+        "promisedBy": "2026-12-05",
+        "lever": "unbilled"
+      },
+      {
+        "at": "2026-09-30T10:30",
+        "kind": "update",
+        "body": "Final inspection passed. The last invoice goes out after the retainage release."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0301",
+    "entries": [
+      {
+        "at": "2026-08-08T10:00",
+        "kind": "explanation",
+        "body": "Staffing ran above plan through design development."
+      },
+      {
+        "at": "2026-08-20T09:00",
+        "kind": "commitment",
+        "body": "First staffing reduction",
+        "l": "p1",
+        "promisedBy": "2026-09-15",
+        "lever": "labor"
+      },
+      {
+        "at": "2026-09-12T16:30",
+        "kind": "done",
+        "body": "Cut site staff to two. Hours are tracking close to budget.",
+        "c": "p1",
+        "improved": true
+      },
+      {
+        "at": "2026-09-28T10:00",
+        "kind": "commitment",
+        "body": "Second staffing reduction after Phase 2",
+        "l": "p2",
+        "promisedBy": "2026-10-30",
+        "lever": "labor"
+      },
+      {
+        "at": "2026-09-28T10:05",
+        "kind": "update",
+        "body": "Cut site staff to two on Sep 15. Hours are now tracking close to budget."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0144",
+    "entries": [
+      {
+        "at": "2026-08-30T11:00",
+        "kind": "explanation",
+        "body": "The client added scope in conversation and nothing was written down."
+      },
+      {
+        "at": "2026-09-05T15:00",
+        "kind": "commitment",
+        "body": "Client call on added services",
+        "l": "q1",
+        "promisedBy": "2026-10-17",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-09-12T13:15",
+        "kind": "update",
+        "body": "Client asked for added services. No fee discussion yet."
+      }
+    ]
+  },
+  {
+    "wbs1": "2024-0420",
+    "entries": [
+      {
+        "at": "2026-09-10T09:30",
+        "kind": "explanation",
+        "body": "Final billing is waiting on the punch list."
+      },
+      {
+        "at": "2026-09-18T11:00",
+        "kind": "commitment",
+        "body": "Submit final invoice",
+        "l": "m1",
+        "promisedBy": "2026-11-20",
+        "lever": "unbilled"
+      },
+      {
+        "at": "2026-10-03T14:00",
+        "kind": "update",
+        "body": "Final invoice is drafted, waiting on punch list sign-off."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0266",
+    "entries": [
+      {
+        "at": "2026-08-14T10:00",
+        "kind": "explanation",
+        "body": "Drafting hours on phase 2 ran over the budget."
+      },
+      {
+        "at": "2026-09-02T13:00",
+        "kind": "commitment",
+        "body": "Reduce drafting hours in Phase 3",
+        "l": "l1",
+        "promisedBy": "2026-11-07",
+        "lever": "labor"
+      },
+      {
+        "at": "2026-10-02T09:20",
+        "kind": "update",
+        "body": "Phase 2 drafting hours cut. Hours are back near budget."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0121",
+    "entries": [
+      {
+        "at": "2026-08-22T10:30",
+        "kind": "explanation",
+        "body": "The client keeps asking for another round of revisions."
+      },
+      {
+        "at": "2026-09-05T11:30",
+        "kind": "commitment",
+        "body": "Fee request to client",
+        "l": "k1",
+        "promisedBy": "2026-10-17",
+        "lever": "recover"
+      },
+      {
+        "at": "2026-09-20T15:00",
+        "kind": "update",
+        "body": "Client added a second round of revisions. Preparing a fee request."
+      }
+    ]
+  },
+  {
+    "wbs1": "2025-0334",
+    "entries": [
+      {
+        "at": "2026-08-28T09:00",
+        "kind": "explanation",
+        "body": "Consultant costs are above our estimate."
+      },
+      {
+        "at": "2026-09-15T10:00",
+        "kind": "commitment",
+        "body": "Value engineering workshop",
+        "l": "v1",
+        "promisedBy": "2026-11-14",
+        "lever": "consult"
+      },
+      {
+        "at": "2026-10-01T13:40",
+        "kind": "update",
+        "body": "Value engineering workshop is scheduled with the owner."
+      }
+    ]
+  }
 ]

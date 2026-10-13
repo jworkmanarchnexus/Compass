@@ -36,7 +36,7 @@ test('switching off "Create check-in drafts" stops new drafts, and drafts that a
     const out = (await josh.post('/api/admin/daily')).body;
     assert.strictEqual(out.created, 0, 'Tooele and Draper are overdue for a plan, but drafting is off');
     const open = (await t.api('d.whitfield').get('/api/projects/2025-0173/plan')).body.commitments.find(c => c.status === 'open');
-    await t.api('d.whitfield').post(`/api/projects/2025-0173/plan/commitments/${open.id}/done`, { body: 'Sent.', actual: 1 });
+    await t.api('d.whitfield').post(`/api/projects/2025-0173/plan/commitments/${open.id}/done`, { body: 'Sent.', improved: true });
     assert.strictEqual((await josh.post('/api/admin/daily')).body.withdrawn, 1);
   } finally { await t.close(); }
 });

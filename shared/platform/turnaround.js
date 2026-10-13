@@ -15,8 +15,9 @@ export const Plan = {
   get(wbs1, cycle) { return request('GET', `/api/projects/${enc(wbs1)}/plan` + (cycle ? '?cycle=' + cycle : '')); },
   /* kind: explanation | update | commitment | correction | admin_note */
   add(wbs1, entry) { return request('POST', `/api/projects/${enc(wbs1)}/plan/entries`, entry); },
-  markDone(wbs1, commitmentId, { body, actual }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/commitments/${enc(commitmentId)}/done`, { body, actual }); },
-  changeDate(wbs1, commitmentId, { newDate, reason }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/commitments/${enc(commitmentId)}/revise`, { newDate, reason }); },
+  markDone(wbs1, commitmentId, { body, improved }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/commitments/${enc(commitmentId)}/done`, { body, improved }); },
+  /* the check-in: report back on every open commitment and make the next one, in one step */
+  checkIn(wbs1, { reports, lever, otherText, body }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/checkin`, { reports, lever, otherText, body }); },
 };
 
 export const Checkins = {

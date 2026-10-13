@@ -98,6 +98,10 @@ test('plan status: every fixture case', () => {
     for (const [k, v] of Object.entries(c.expect)) assert.strictEqual(got[k], v, `${c.name}: ${k}`);
   }
 });
+test('the next check-in date: every cadence days from the first report, always after today', () => {
+  for (const c of planFx.nextDue) assert.strictEqual(plan.nextDue(c.appeared, c.today, c.cadence), c.expect, c.name);
+});
+
 test('commitments: replayed from the log', () => {
   for (const c of planFx.commitmentStates) {
     const got = plan.commitmentStates(c.entries).map(s => ({ id: s.id, status: s.status, dueDate: s.dueDate, promisedBy: s.promisedBy, revisions: s.revisions.length, kept: s.kept }));
@@ -119,17 +123,18 @@ test('who may write what in the plan log', () => {
 test('check-in drafts: who gets one and when', () => {
   for (const c of draftFx.cases) {
     const out = drafts.planDrafts({ today: c.today || draftFx.today, items: c.items, existing: c.existing, lastEntryByPic: c.lastEntryByPic, settings: Object.assign({}, draftFx.settings, c.settings) });
-    assert.deepStrictEqual(out.create.map(d => [d.picUserId, d.situation, d.step, d.tone, d.items.map(i => i.wbs1)]), c.expect.create, c.name + ' (create)');
+    assert.deepStrictEqual(out.create.map(d => [d.picUserId, d.step, d.items.map(i => i.wbs1)]), c.expect.create, c.name + ' (create)');
     assert.deepStrictEqual(out.withdraw, c.expect.withdraw, c.name + ' (withdraw)');
     assert.deepStrictEqual(out.escalate.map(x => [x.picUserId, x.wbs1, x.situation, x.daysOverdue]), c.expect.escalate, c.name + ' (escalate)');
   }
 });
 test('check-in drafts: the words', () => {
   for (const c of draftFx.text) {
-    const out = drafts.draftText({ tone: c.tone, situation: c.situation, picName: c.picName, items: c.items });
+    const out = drafts.draftText({ items: c.items });
     assert.strictEqual(out.subject, c.subject, c.name);
     if (c.body) assert.strictEqual(out.body, c.body, c.name);
     for (const s of c.contains || []) assert.ok(out.body.includes(s), `${c.name}: ${s}`);
     assert.ok(!/undefined|NaN|null/.test(out.subject + out.body), c.name + ' has no stray values');
+    assert.strictEqual(out.body.includes('\n'), false, c.name + ': the text is only the list of names');
   }
 });
