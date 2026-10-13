@@ -108,3 +108,10 @@
 ## Name (2026-10-12)
 
 - The BD report is shown to people as **Marketing Report** everywhere (sidebar, page, Admin tab, Home, the monthly email, the PDF). Inside the code, the database and the URLs it is still `bd` (`#/bd`, `bd_*` tables, `modules/bd`), and older docs still say "BD report". The Admin tab is "Marketing Reports".
+
+## Commitments without numbers (2026-10-12)
+
+- **A commitment is a kind of action, some words, and a date the system sets.** The PIC no longer picks a date or gives a dollar, hour or week figure. The kind of action is chosen first, above the text box. The due date is the next check-in: every 14 days (setting `due.cadenceDays`) from the day the project first showed on a published report, always after today. On that date the PIC is to update the commitment and make a new one, which matches how the Excel check-in worked (set an action, report back and set a new one two weeks later, and so on).
+- **Mark done asks yes or no**, not a figure: "Did this action improve the financial state of the project during this period?" That answer is what the Admin's pattern analysis uses to say which kinds of action work (cutting cost against adding revenue), next to how often each kind is kept. The old promised-against-actual dollar comparison is gone.
+- **Old entries stay readable.** Existing log entries that hold an amount or an actual result are not touched (the log is append-only); nothing displays them.
+- **Open question for Josh:** whether the Update button is still needed. See the answer in the chat for that session; no change was made to it.

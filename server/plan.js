@@ -70,7 +70,7 @@ function insert(db, { wbs1, authorId, kind, body, date, correctsEntryId, commitm
 }
 
 /* A new entry in the log. Who may write what is plan.canWrite; this checks the content. */
-function addEntry(db, user, wbs1, input, today) {
+function addEntry(db, user, wbs1, input, today, settings) {
   const project = projectOr404(db, wbs1);
   const kind = input.kind;
   if (!['explanation', 'commitment', 'update', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist.');
@@ -86,9 +86,9 @@ function addEntry(db, user, wbs1, input, today) {
   const entry = { wbs1: project.wbs1, authorId: user.id, kind, body, date: today };
 
   if (kind === 'commitment') {
-    if (!isValid(input.promisedBy) || input.promisedBy < today) throw new HttpError(400, 'Pick a date that is today or later.');
     if (!plan.LEVERS[input.lever]) throw new HttpError(400, 'Pick one of the actions.');
-    entry.data = { promisedBy: input.promisedBy, lever: input.lever, qty: number(input.qty, plan.LEVERS[input.lever].ask) };
+    // the PIC does not pick a date: the next check-in is every cadence days from the project's first report
+    entry.data = { promisedBy: nextDueFor(db, project.wbs1, today, settings), lever: input.lever };
     if (plan.LEVERS[input.lever].other) entry.data.otherText = text(input.otherText, 'What the action is', 120); // "Other" needs its few words
     entry.id = crypto.randomUUID();
     entry.commitmentId = entry.id; // a commitment's id is its own entry's id
@@ -102,15 +102,21 @@ function commitmentOr404(db, wbs1, id) {
   return state;
 }
 
-/* "Mark done": asks what happened and the actual result (zero is fine). On or before its date counts as kept. */
+/* the next check-in date for a project: the first of the report-anchored check-in dates after today */
+function nextDueFor(db, wbs1, today, settings) {
+  const cadence = (settings && settings['due.cadenceDays']) || 14;
+  return plan.nextDue(firstAppeared(db).get(wbs1) || null, today, cadence);
+}
+
+/* "Mark done": asks what happened, and yes or no: did this action improve the financial state of the project in the period? On or before its date counts as kept. */
 function markDone(db, user, wbs1, commitmentId, input, today) {
   const project = projectOr404(db, wbs1);
   if (!plan.canWrite(user.role, 'done', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
   const c = commitmentOr404(db, project.wbs1, commitmentId);
   if (c.status !== 'open') throw new HttpError(409, c.status === 'done' ? 'This commitment is already done.' : 'This commitment was recorded as missed and is closed.');
   const body = text(input.body, 'What happened');
-  const actual = number(input.actual, 'The actual result');
-  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body, date: today, commitmentId, data: { actual } }));
+  if (typeof input.improved !== 'boolean') throw new HttpError(400, 'Answer yes or no: did this action improve the financial state of the project during this period?');
+  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body, date: today, commitmentId, data: { improved: input.improved } }));
 }
 
 /* "Change date": a reason is required. Every earlier date stays on record. */
@@ -131,4 +137,4 @@ function recordMissed(db, wbs1, state, today) {
   return insert(db, { wbs1, authorId: null, kind: 'missed', body: '', date: today, commitmentId: state.id, data: { dueDate: state.dueDate } });
 }
 
-module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, reviseDate, recordMissed, insert };
+module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, reviseDate, recordMissed, insert, nextDueFor };

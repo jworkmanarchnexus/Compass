@@ -14,6 +14,7 @@ const DEFAULTS = {
   'include.noPic': 'leave-out-warn',
   'due.newProjectDays': 14,
   'due.afterEntryDays': 30,
+  'due.cadenceDays': 14,         // check-ins: every this many days from the project's first report, the PIC reports back and makes a new commitment
   'due.graceUntil': '02-01',
   'due.soonDays': 14,            // a plan shows "Update due" when its next update falls within this many days
   'due.missedAfterDays': 14,     // an open commitment is recorded as Missed this many days after its date
@@ -52,6 +53,7 @@ const VALIDATORS = {
   'include.noPic': oneOf(['leave-out-warn', 'unassigned']),
   'due.newProjectDays': days,
   'due.afterEntryDays': days,
+  'due.cadenceDays': v => Number.isInteger(v) && v >= 1 && v <= 90,
   'due.graceUntil': v => typeof v === 'string' && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
   'due.soonDays': days,
   'due.missedAfterDays': days,

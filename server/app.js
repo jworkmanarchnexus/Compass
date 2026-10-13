@@ -267,7 +267,7 @@ function createServer(db, opts) {
       if (method === 'POST') {
         const body = await readJson(req);
         const settings = currentSettings();
-        if (pp[2]) planDb.addEntry(db, user, wbs1, body, today());
+        if (pp[2]) planDb.addEntry(db, user, wbs1, body, today(), currentSettings());
         else if (pp[4] === 'done') planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
         else planDb.reviseDate(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));

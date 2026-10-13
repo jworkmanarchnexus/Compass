@@ -122,19 +122,29 @@ function canWrite(role, kind, isProjectPic) {
   return false; // 'missed' is written only by the system
 }
 
-/* the levers: eight named actions and an "Other" in each group. The unit says what the commitment's one number means. Shown to the admin only. */
+/* the levers: eight named actions and an "Other" in each group. A commitment is one action and some words; there is no amount,
+   so the Admin can count what kinds of actions are promised and which kinds improve the project. */
 const LEVERS = {
-  fee: { label: 'Request additional services fee', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  co: { label: 'Submit a change order', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  reneg: { label: 'Renegotiate the fee', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in' },
-  speed: { label: 'Speed up billing or collection', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bill or collect sooner' },
-  hours: { label: 'Reduce staffing hours', group: 'spend', unit: 'hours', ask: 'Hours you will cut' },
-  staff: { label: 'Move work to lower-cost staff', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
-  cons: { label: 'Reduce consultant cost', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save' },
-  sched: { label: 'Shorten the schedule', group: 'spend', unit: 'weeks', ask: 'Weeks you will cut' },
-  // "Other": the PIC writes in what it is. Dollars, so it can be added to the totals; the typed words are kept in the commitment.
-  other_money: { label: 'Other', group: 'money', unit: 'dollars', ask: 'Dollars you expect to bring in', other: true },
-  other_spend: { label: 'Other', group: 'spend', unit: 'dollars', ask: 'Dollars you expect to save', other: true },
+  fee: { label: 'Request additional services fee', group: 'money' },
+  co: { label: 'Submit a change order', group: 'money' },
+  reneg: { label: 'Renegotiate the fee', group: 'money' },
+  speed: { label: 'Speed up billing or collection', group: 'money' },
+  hours: { label: 'Reduce staffing hours', group: 'spend' },
+  staff: { label: 'Move work to lower-cost staff', group: 'spend' },
+  cons: { label: 'Reduce consultant cost', group: 'spend' },
+  sched: { label: 'Shorten the schedule', group: 'spend' },
+  // "Other": the PIC writes in what it is; the typed words are kept in the commitment.
+  other_money: { label: 'Other', group: 'money', other: true },
+  other_spend: { label: 'Other', group: 'spend', other: true },
 };
 
-module.exports = { PIC_KINDS, LEVERS, commitmentStates, commitmentsToMiss, planStatus, onTimeStats, keptStats, standing, canWrite };
+/* The next check-in date. A commitment is not given a date by the PIC: every `cadence` days from the day the project first showed on a
+   published report is a check-in (the PIC reports back on the commitment and makes a new one). The next one is the first of those
+   dates after today, so a commitment made on a check-in day is due at the following one. With no report date yet, it counts from today. */
+function nextDue(appeared, today, cadence) {
+  const start = appeared || today;
+  const k = Math.max(1, Math.floor(daysBetween(start, today) / cadence) + 1);
+  return addDays(start, k * cadence);
+}
+
+module.exports = { PIC_KINDS, LEVERS, nextDue, commitmentStates, commitmentsToMiss, planStatus, onTimeStats, keptStats, standing, canWrite };

@@ -41,7 +41,7 @@ export function patternsCards(ctx, d, onYear) {
   const td = (t, cls) => h('td', { class: cls || '', text: String(t) });
   const table = (head, rows, min) => h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: min ? `min-width:${min}px` : '' }, h('thead', {}, h('tr', {}, ...head)), h('tbody', {}, ...rows)));
   const section = (title, sub, ...body) => h('section', { class: 'sec' }, h('div', { class: 'sec-head' }, h('h2', { text: title }), sub ? h('p', { text: sub }) : null), ...body);
-  const money = (g) => g.promisedDone ? `${fmtDollars(g.actualDone)} of ${fmtDollars(g.promisedDone)} (${rate(g.realization)})` : '-';
+  const improved = (g) => (g.improved + g.notImproved ? `${g.improved} of ${g.improved + g.notImproved} (${rate(g.improvedRate)})` : '-');
 
   const yearSel = h('select', { class: 'txt', style: 'width:110px', 'aria-label': 'Year', onchange: e => onYear(Number(e.target.value)) }, ...d.years.map(y => h('option', { value: String(y), text: String(y), selected: y === d.year })));
   const top = h('section', { class: 'sec' },
@@ -51,23 +51,23 @@ export function patternsCards(ctx, d, onYear) {
 
   const m = d.groups.money, s = d.groups.spend;
   const rows = [['Bring in money', m], ['Spend less', s]].map(([label, g]) => h('tr', {},
-    td(label, 'strong'), td(g.made, 'r'), td(g.open, 'r'), td(g.kept, 'r'), td(g.late, 'r'), td(g.missed, 'r'), td(rate(g.keptRate), 'r strong'), h('td', { class: 'r', text: money(g) }), td(days(g.avgLead), 'r'), td(g.made ? rate(g.moved / g.made) : '-', 'r')));
+    td(label, 'strong'), td(g.made, 'r'), td(g.open, 'r'), td(g.kept, 'r'), td(g.late, 'r'), td(g.missed, 'r'), td(rate(g.keptRate), 'r strong'), h('td', { class: 'r', text: improved(g) }), td(days(g.avgLead), 'r'), td(g.made ? rate(g.moved / g.made) : '-', 'r')));
   let verdict;
   if (m.resolved && s.resolved) {
     const hi = m.keptRate === s.keptRate ? null : (m.keptRate > s.keptRate ? 'Bring in money' : 'Spend less');
     verdict = (hi ? `${hi} commitments are kept more often (${rate(Math.max(m.keptRate, s.keptRate))} against ${rate(Math.min(m.keptRate, s.keptRate))}). ` : 'Both kinds are kept equally often. ')
       + `Based on ${m.resolved} finished money commitments and ${s.resolved} finished spend-less commitments.`
       + (Math.min(m.resolved, s.resolved) < 10 ? ' That is too few to conclude anything yet: treat it as a first look.' : '');
+    if (m.improved + m.notImproved && s.improved + s.notImproved) verdict += ` Of the ones marked done, the PIC said the project improved for ${rate(m.improvedRate)} of the money actions and ${rate(s.improvedRate)} of the spend-less actions.`;
   } else verdict = 'Not enough finished commitments yet to compare the two. A commitment is finished when it is done or missed.';
-  const compare = section('Cutting cost or adding revenue?', 'Kept = done on or before its date. Delivered compares the actual result with what was promised, in dollars only (hours and weeks cannot be added to dollars).',
-    table(['Kind', 'Made', 'Open', 'Kept', 'Done late', 'Missed', 'Kept rate', 'Delivered (dollars)', 'Days ahead', 'Date moved'].map((t, i) => th(t, i > 0)), rows, 900),
+  const compare = section('Cutting cost or adding revenue?', 'Kept = done on or before its date. Improved the project is the answer the PIC gives, yes or no, asked when a commitment is marked done: did this action improve the financial state of the project during the period?',
+    table(['Kind', 'Made', 'Open', 'Kept', 'Done late', 'Missed', 'Kept rate', 'Improved the project', 'Days ahead', 'Date moved'].map((t, i) => th(t, i > 0)), rows, 900),
     h('div', { class: 'sec-body' }, h('p', { class: 'verdict', text: verdict })));
 
-  const actions = section('By action', 'Every action PICs can choose. Hours and weeks are shown in their own units.',
-    table(['Action', 'Kind', 'Made', 'Open', 'Kept', 'Not kept', 'Kept rate', 'Promised', 'Delivered where done'].map((t, i) => th(t, i > 1)),
+  const actions = section('By action', 'Every action PICs can choose, and how often each one both got done and improved the project.',
+    table(['Action', 'Kind', 'Made', 'Open', 'Kept', 'Not kept', 'Kept rate', 'Improved the project'].map((t, i) => th(t, i > 1)),
       d.actions.filter(x => x.made).map(x => h('tr', {}, td(x.label, 'strong'), h('td', { class: 'muted', text: x.group === 'money' ? 'Bring in money' : 'Spend less' }), td(x.made, 'r'), td(x.open, 'r'), td(x.kept, 'r'), td(x.late + x.missed, 'r'), td(rate(x.keptRate), 'r strong'),
-        td(x.unit === 'dollars' ? fmtDollars(x.promised) : `${x.promised.toLocaleString('en-US')} ${x.unit}`, 'r'),
-        td(x.kept + x.late ? (x.unit === 'dollars' ? `${fmtDollars(x.actualDone)} (${rate(x.realization)})` : `${x.actualDone.toLocaleString('en-US')} ${x.unit}`) : '-', 'r'))), 860));
+        td(improved(x), 'r'))), 860));
 
   const pics = section('By PIC', 'Who commits to what, and how often they follow through.',
     table(['PIC', 'Made', 'Finished', 'Kept', 'Kept rate', 'Days ahead', 'Date moved', 'Share that bring in money'].map((t, i) => th(t, i > 0)),

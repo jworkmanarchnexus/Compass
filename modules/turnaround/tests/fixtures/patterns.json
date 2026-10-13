@@ -1,5 +1,5 @@
 {
- "_note": "Hand-worked, year 2026. Rates are fractions rounded to 3 decimals; averages (days, moves) rounded to 1 decimal. Dollars in whole dollars. avgEarly: positive = early, negative = late.",
+ "_note": "Hand-worked, year 2026. Rates are fractions rounded to 3 decimals; averages (days, moves) rounded to 1 decimal. improved = the PIC answered yes when marking it done. avgEarly: positive = early, negative = late.",
  "input": {
   "year": 2026,
   "picOf": {
@@ -52,8 +52,7 @@
     "commitmentId": "c1",
     "data": {
      "promisedBy": "2026-04-01",
-     "lever": "fee",
-     "qty": 10000
+     "lever": "fee"
     }
    },
    {
@@ -63,7 +62,7 @@
     "date": "2026-03-30",
     "commitmentId": "c1",
     "data": {
-     "actual": 8000
+     "improved": true
     }
    },
    {
@@ -74,8 +73,7 @@
     "commitmentId": "c2",
     "data": {
      "promisedBy": "2026-05-01",
-     "lever": "hours",
-     "qty": 100
+     "lever": "hours"
     }
    },
    {
@@ -114,7 +112,6 @@
     "data": {
      "promisedBy": "2026-06-10",
      "lever": "other_money",
-     "qty": 5000,
      "otherText": "Sell the model"
     }
    },
@@ -125,7 +122,7 @@
     "date": "2026-06-15",
     "commitmentId": "c3",
     "data": {
-     "actual": 5000
+     "improved": false
     }
    },
    {
@@ -136,8 +133,7 @@
     "commitmentId": "c4",
     "data": {
      "promisedBy": "2026-08-01",
-     "lever": "cons",
-     "qty": 3000
+     "lever": "cons"
     }
    },
    {
@@ -154,8 +150,7 @@
     "commitmentId": "c5",
     "data": {
      "promisedBy": "2026-06-01",
-     "lever": "reneg",
-     "qty": 20000
+     "lever": "reneg"
     }
    },
    {
@@ -165,7 +160,7 @@
     "date": "2026-06-01",
     "commitmentId": "c5",
     "data": {
-     "actual": 0
+     "improved": true
     }
    }
   ]
@@ -185,9 +180,9 @@
     "avgMoves": 0,
     "avgLead": 32.7,
     "avgEarly": -1,
-    "promisedDone": 35000,
-    "actualDone": 13000,
-    "realization": 0.371
+    "improved": 2,
+    "notImproved": 1,
+    "improvedRate": 0.667
    },
    "spend": {
     "made": 2,
@@ -201,32 +196,32 @@
     "avgMoves": 0.5,
     "avgLead": 34,
     "avgEarly": null,
-    "promisedDone": 0,
-    "actualDone": 0,
-    "realization": null
+    "improved": 0,
+    "notImproved": 0,
+    "improvedRate": null
    }
   },
   "actions": {
    "fee": {
     "made": 1,
     "kept": 1,
-    "promised": 10000,
-    "promisedDone": 10000,
-    "actualDone": 8000,
-    "realization": 0.8
+    "improved": 1,
+    "notImproved": 0,
+    "improvedRate": 1
    },
    "hours": {
     "made": 1,
     "missed": 1,
     "moved": 1,
-    "unit": "hours",
-    "realization": null
+    "improvedRate": null
    },
    "other_money": {
     "made": 1,
     "late": 1,
     "kept": 0,
-    "realization": 1
+    "improved": 0,
+    "notImproved": 1,
+    "improvedRate": 0
    },
    "cons": {
     "made": 1,
@@ -235,7 +230,8 @@
    "reneg": {
     "made": 1,
     "kept": 1,
-    "realization": 0
+    "improved": 1,
+    "improvedRate": 1
    },
    "sched": {
     "made": 0,

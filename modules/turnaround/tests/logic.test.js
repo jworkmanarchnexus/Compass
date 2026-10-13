@@ -98,6 +98,10 @@ test('plan status: every fixture case', () => {
     for (const [k, v] of Object.entries(c.expect)) assert.strictEqual(got[k], v, `${c.name}: ${k}`);
   }
 });
+test('the next check-in date: every cadence days from the first report, always after today', () => {
+  for (const c of planFx.nextDue) assert.strictEqual(plan.nextDue(c.appeared, c.today, c.cadence), c.expect, c.name);
+});
+
 test('commitments: replayed from the log', () => {
   for (const c of planFx.commitmentStates) {
     const got = plan.commitmentStates(c.entries).map(s => ({ id: s.id, status: s.status, dueDate: s.dueDate, promisedBy: s.promisedBy, revisions: s.revisions.length, kept: s.kept }));

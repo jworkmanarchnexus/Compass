@@ -1,8 +1,8 @@
 'use strict';
 /* Project Turnaround, on the database: the page's numbers, a project's plan page, the check-in queue, the daily job.
    All rules come from modules/turnaround/logic (pure, tested). Role filtering happens HERE, on the server:
-   the Admin's drafts, run contents and the commitment analysis are the Admin's alone. A commitment's action, amount and actual
-   result are visible to everyone who may read the plan (Josh's decision, 2026-10-11; it reverses the handoff's rule). */
+   the Admin's drafts, run contents and the commitment analysis are the Admin's alone. A commitment's action and whether it improved the
+   project are visible to everyone who may read the plan (Josh's decision, 2026-10-11; it reverses the handoff's rule). */
 const crypto = require('node:crypto');
 const { HttpError } = require('./errors');
 const plan = require('../modules/turnaround/logic/plan');
@@ -143,7 +143,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     { // everyone who may read the plan sees the action (including the words typed under Other), the amount and the actual result
       const lever = plan.LEVERS[e.data.lever] || {};
       const doneE = inCycle.find(x => x.kind === 'done' && x.commitmentId === s.id);
-      Object.assign(c, { lever: e.data.lever, leverLabel: leverLabel(lever, e.data), unit: lever.unit, qty: e.data.qty, actual: doneE ? doneE.data.actual : null });
+      Object.assign(c, { lever: e.data.lever, leverLabel: leverLabel(lever, e.data), improved: doneE && typeof doneE.data.improved === 'boolean' ? doneE.data.improved : null });
     }
     return c;
   }).sort((a, b) => (a.status === 'open' ? 0 : 1) - (b.status === 'open' ? 0 : 1) || (a.status === 'open' ? a.dueDate.localeCompare(b.dueDate) : b.closedDate.localeCompare(a.closedDate)));
@@ -162,8 +162,8 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     if (e.commitmentId && e.kind !== 'commitment') { const c = byId.get(e.commitmentId); out.commitmentText = c ? c.body : ''; }
     if (e.correctsEntryId) { const o = byId.get(e.correctsEntryId) || all.find(x => x.id === e.correctsEntryId); out.correctsKind = o ? o.kind : null; out.correctsDate = o ? o.date : null; }
     {
-      if (e.kind === 'commitment') { const lv = plan.LEVERS[e.data.lever] || {}; Object.assign(out, { lever: e.data.lever, leverLabel: leverLabel(lv, e.data), unit: lv.unit, qty: e.data.qty }); }
-      if (e.kind === 'done') out.actual = e.data.actual;
+      if (e.kind === 'commitment') { const lv = plan.LEVERS[e.data.lever] || {}; Object.assign(out, { lever: e.data.lever, leverLabel: leverLabel(lv, e.data) }); }
+      if (e.kind === 'done' && typeof e.data.improved === 'boolean') out.improved = e.data.improved;
     }
     return out;
   });
@@ -187,7 +187,9 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     commitments, entries, facts, series,
     // what the PIC may add right now: only the explanation until it exists, then updates and commitments
     can: { kinds: addKinds, addEntry: addKinds.length > 0, adminNote: isAdmin },
-    levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, ask: l.ask, other: !!l.other })) : [],
+    // the date a new commitment will be due: the PIC does not choose it. On that date the PIC reports back and makes a new one.
+    nextDue: addKinds.includes('commitment') ? { date: planDb.nextDueFor(db, project.wbs1, today, settings), cadenceDays: settings['due.cadenceDays'] } : null,
+    levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, other: !!l.other })) : [],
   };
 }
 
