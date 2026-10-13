@@ -23,8 +23,8 @@ Repo, handoff unpacked untouched in `reference/handoff/`, design system copied f
 ## Phase 4: Home
 Needs your attention, data checks, next runs, firm snapshot tiles (hidden until a source exists).
 
-## Phase 5+: BD report (built; see SPEC-bd), then Pipeline watch
-Blocked on open questions 3 and 4 (source queries, MWIP weighting).
+## Phase 5+: BD report (built; see SPEC-bd), then Pipeline watch (built; see SPEC-pipeline)
+Both were built on made-up local sources so they could be shown and judged; where the real data lives (open questions H3, P1) is still open.
 
 ## Phase N: Handoff quality (done: SPECs, fixtures guide, FOR-KENT, DATA-MODEL, OPEN-QUESTIONS)
 SPECs, language-neutral fixtures, a `docs/FOR-KENT.md`.

@@ -9,6 +9,7 @@
     "seed": "node server/seed.js",
     "run-month": "node server/jobs/monthly-run.js",
     "daily": "node server/jobs/daily.js",
+    "pipeline-snapshot": "node server/jobs/weekly-snapshot.js",
     "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\""
   }
 }

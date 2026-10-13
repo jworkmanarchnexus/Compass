@@ -311,3 +311,71 @@ BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
 CREATE TRIGGER IF NOT EXISTS bd_run_meta_locked_delete BEFORE DELETE ON bd_run_meta
 WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
 BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+-- ---- Pipeline watch: weekly snapshots of MWIP (pursuits) and contracted forecast, kept forever ----
+
+-- one row per Monday snapshot
+CREATE TABLE IF NOT EXISTS pipeline_snapshots (
+  date     TEXT PRIMARY KEY,               -- 'YYYY-MM-DD', a Monday
+  taken_at INTEGER NOT NULL,
+  source   TEXT
+);
+-- MWIP: each pursuit not yet contracted, as it stood that Monday (id is the project number it will keep)
+CREATE TABLE IF NOT EXISTS pursuit_snapshots (
+  snapshot_date TEXT NOT NULL REFERENCES pipeline_snapshots(date),
+  pursuit_id    TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  pic           TEXT NOT NULL,             -- VP employee code
+  stage         TEXT,
+  win_prob      INTEGER,                   -- percent
+  amount        INTEGER NOT NULL,          -- cents, architectural revenue through Dec 31
+  PRIMARY KEY (snapshot_date, pursuit_id)
+);
+-- contracted forecast: each project's remaining billing through Dec 31, and the part now scheduled for next year
+CREATE TABLE IF NOT EXISTS forecast_snapshots (
+  snapshot_date TEXT NOT NULL REFERENCES pipeline_snapshots(date),
+  wbs1          TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  pic           TEXT NOT NULL,
+  amount        INTEGER NOT NULL,
+  moved         INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (snapshot_date, wbs1)
+);
+-- project numbers that exist (copied each snapshot), so a pursuit that left MWIP can be matched to the project it became
+CREATE TABLE IF NOT EXISTS pipeline_projects (
+  wbs1       TEXT PRIMARY KEY,
+  name       TEXT,
+  pic        TEXT,
+  opened     TEXT,
+  first_seen TEXT NOT NULL
+);
+-- what the rules found each Monday. Only the Admin clearing an alert changes a row.
+CREATE TABLE IF NOT EXISTS pipeline_alerts (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  snapshot_date TEXT NOT NULL REFERENCES pipeline_snapshots(date),
+  rule          TEXT NOT NULL,
+  severity      TEXT NOT NULL CHECK (severity IN ('alert','watch')),
+  pic           TEXT,
+  title         TEXT NOT NULL,
+  message       TEXT NOT NULL,
+  detail_json   TEXT NOT NULL DEFAULT '{}',
+  cleared_at    INTEGER,
+  cleared_by    TEXT
+);
+-- the Admin's notes on a pursuit ("talked to Marcus: lost to a competitor")
+CREATE TABLE IF NOT EXISTS pursuit_notes (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  pursuit_id TEXT NOT NULL,
+  at         INTEGER NOT NULL,
+  user_id    TEXT NOT NULL,
+  body       TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS pipeline_snapshots_no_update BEFORE UPDATE ON pipeline_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS pipeline_snapshots_no_delete BEFORE DELETE ON pipeline_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS pursuit_snapshots_no_update BEFORE UPDATE ON pursuit_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS pursuit_snapshots_no_delete BEFORE DELETE ON pursuit_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS forecast_snapshots_no_update BEFORE UPDATE ON forecast_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS forecast_snapshots_no_delete BEFORE DELETE ON forecast_snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS pursuit_notes_no_update BEFORE UPDATE ON pursuit_notes BEGIN SELECT RAISE(ABORT, 'notes are append-only'); END;
+CREATE TRIGGER IF NOT EXISTS pursuit_notes_no_delete BEFORE DELETE ON pursuit_notes BEGIN SELECT RAISE(ABORT, 'notes are append-only'); END;
+CREATE TRIGGER IF NOT EXISTS pipeline_alerts_no_delete BEFORE DELETE ON pipeline_alerts BEGIN SELECT RAISE(ABORT, 'alerts are never deleted'); END;

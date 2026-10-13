@@ -11,7 +11,7 @@ const SEED = path.join(__dirname, 'db', 'seed');
 const read = f => parseCsv(fs.readFileSync(path.join(SEED, f), 'utf8'));
 // children first. Everything is cleared, including the append-only and locked tables: a reset is a developer action,
 // not something the app can do, so it drops the guard triggers, empties the tables, and recreates the triggers.
-const TABLES = ['bd_rows', 'bd_run_meta', 'bd_goals', 'bd_sectors', 'bd_mwip_factor', 'bd_sector_overrides', 'run_pic_history', 'run_project_history', 'run_history', 'run_projects', 'run_warnings', 'runs', 'plan_entries', 'checkin_drafts', 'system_state', 'audit_log', 'settings', 'users', 'projects', 'employees'];
+const TABLES = ['pursuit_notes', 'pipeline_alerts', 'forecast_snapshots', 'pursuit_snapshots', 'pipeline_projects', 'pipeline_snapshots', 'bd_rows', 'bd_run_meta', 'bd_goals', 'bd_sectors', 'bd_mwip_factor', 'bd_sector_overrides', 'run_pic_history', 'run_project_history', 'run_history', 'run_projects', 'run_warnings', 'runs', 'plan_entries', 'checkin_drafts', 'system_state', 'audit_log', 'settings', 'users', 'projects', 'employees'];
 
 /* the VP copy: replaces both tables, like a nightly copy would */
 function loadVantagepointCopy(db) {

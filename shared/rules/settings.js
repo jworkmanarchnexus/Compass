@@ -33,6 +33,17 @@ const DEFAULTS = {
   'bd.onPacePct': 99,            // BD report: On Pace needs YTD revenue at least this % of pace
   'bd.onTrackPct': 100,          // BD report: On Track needs (YTD + forecast + MWIP) at least this % of the goal
   'bd.noSector': 'ask',          // revenue with no market sector: 'ask' (the Admin must pick before publishing) or 'other' (it goes to Other) // who sees each PIC's on-time and kept figures: everyone | principals | admin
+  /* Pipeline watch alert rules. sev: 'alert' (counts toward the menu badge), 'watch' (shown only) or 'off'. Amounts are dollars. */
+  'pipeline.rules': {
+    mwipDrop: { sev: 'alert', amount: 75000, days: 7 },          // a PIC's MWIP falls by this much within this many days
+    forecastDrop: { sev: 'alert', amount: 150000, days: 7 },     // a PIC's contracted forecast falls by this much within this many days
+    mwipSlide: { sev: 'alert', weeks: 8 },                       // a PIC's MWIP falls this many snapshots in a row
+    noMatch: { sev: 'watch', days: 3 },                          // a pursuit left MWIP and no project has its number, this many days on
+    unmatchedWin: { sev: 'alert', days: 14 },                    // a pursuit has been Won this many days and still has no project
+    winProb: { sev: 'watch', points: 20 },                       // a pursuit's win probability falls this many points in a week
+    noNew: { sev: 'watch', days: 30 },                           // a PIC has added no pursuit in this many days
+  },
+  'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
 };
@@ -74,6 +85,15 @@ const VALIDATORS = {
   'visibility.picRecords': oneOf(['everyone', 'principals', 'admin']),
   'access': v => !!v && typeof v === 'object' && Object.keys(DEFAULTS.access).every(k => typeof v[k] === 'boolean') && Object.keys(v).length === Object.keys(DEFAULTS.access).length,
 };
+
+const SEVS = ['alert', 'watch', 'off'];
+const intIn = (lo, hi) => v => Number.isInteger(v) && v >= lo && v <= hi;
+const RULE_SHAPE = { mwipDrop: { amount: intIn(1, 1e9), days: intIn(1, 365) }, forecastDrop: { amount: intIn(1, 1e9), days: intIn(1, 365) }, mwipSlide: { weeks: intIn(2, 26) }, noMatch: { days: intIn(0, 365) }, unmatchedWin: { days: intIn(0, 365) }, winProb: { points: intIn(1, 100) }, noNew: { days: intIn(1, 365) } };
+VALIDATORS['pipeline.rules'] = v => !!v && typeof v === 'object' && Object.keys(RULE_SHAPE).every(r => {
+  const x = v[r], shape = RULE_SHAPE[r];
+  return !!x && typeof x === 'object' && SEVS.includes(x.sev) && Object.keys(shape).every(k => shape[k](x[k])) && Object.keys(x).length === Object.keys(shape).length + 1;
+}) && Object.keys(v).length === Object.keys(RULE_SHAPE).length;
+VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
 
 const isKnown = key => Object.prototype.hasOwnProperty.call(DEFAULTS, key);
 const isValid = (key, value) => isKnown(key) && VALIDATORS[key](value);

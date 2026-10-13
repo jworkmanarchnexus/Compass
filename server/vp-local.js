@@ -30,6 +30,17 @@ function createLocalSource() {
       const mwip = read('bd_mwip.csv').filter(r => Number(r.Period) === period).map(r => ({ id: r.Pursuit, pic: r.Principal, sector: r.Sector, amount: toCents(r.Amount) }));
       return { projects, revenue, forecast, mwip };
     },
+    /* Pipeline watch: what the pipeline looks like on a snapshot Monday. In production this is what the pull returns right now and the
+       snapshot is stamped with today's Monday; locally the seed files hold eight Mondays and the one asked for is picked out.
+         pursuits: [{ id, name, pic, stage, winProb, amount }]       MWIP: not yet contracted, through Dec 31 (id is the project number it will keep)
+         forecast: [{ wbs1, name, pic, amount, moved }]              contracted, still to bill through Dec 31; moved = the part scheduled for next year
+         projects: [{ wbs1, name, pic, opened }]                     project numbers that exist, for matching a pursuit that left MWIP */
+    loadPipeline(date) {
+      const pursuits = read('pipeline_pursuits.csv').filter(r => r.Date === date).map(r => ({ id: r.Pursuit, name: r.Name, pic: r.Principal, stage: r.Stage, winProb: Number(r.WinProb), amount: toCents(r.Amount) }));
+      const forecast = read('pipeline_forecast.csv').filter(r => r.Date === date).map(r => ({ wbs1: r.WBS1, name: r.Name, pic: r.Principal, amount: toCents(r.Amount), moved: toCents(r.Moved) }));
+      const projects = read('pipeline_projects.csv').filter(r => r.Opened <= date).map(r => ({ wbs1: r.WBS1, name: r.Name, pic: r.Principal, opened: r.Opened }));
+      return { pursuits, forecast, projects };
+    },
     load() {
       const projects = read('projects.csv')
         .filter(p => p.Status === 'A' && !/^[ZJ]/.test(p.WBS1)) // the SQL: Status A, WBS1 not starting Z or J

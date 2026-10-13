@@ -14,10 +14,12 @@ test('admin Home on the demo day: what needs attention, what was published, what
   assert.strictEqual(r.status, 200);
   const h = r.body;
   assert.strictEqual(h.today, '2026-10-07');
-  assert.deepStrictEqual(h.attention.map(a => a.kind), ['checkins'], 'both runs are published, so no draft to review; two check-in drafts wait');
+  assert.deepStrictEqual(h.attention.map(a => a.kind), ['checkins', 'pipeline'], 'both runs are published, so no draft to review; two check-in drafts wait, and the Oct 5 pipeline snapshot has alerts');
   assert.strictEqual(h.attention[0].badge, '2 drafts');
   assert.match(h.attention[0].text, /^2 overdue plan updates\. Each note goes out from your own mailbox\.$/);
   assert.strictEqual(h.attention[0].href, '#/turnaround/checkins');
+  assert.strictEqual(h.attention[1].badge, '2 alerts', 'Marcus MWIP drop and Priya forecast drop; watch items do not count');
+  assert.strictEqual(h.attention[1].href, '#/pipeline');
 
   assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'Marketing Report, September 2026', 'Marketing Report, August 2026', 'Project Turnaround, August 2026'], 'newest first, both kinds');
   assert.strictEqual(h.published[0].by, 'Josh');
@@ -43,13 +45,13 @@ test('a draft waiting for review is the first thing on the admin\'s Home, unless
   const run = await josh.post('/api/admin/runs', { period: 202607 });
   assert.strictEqual(run.status, 201);
   let a = (await home(t, 'j.workman')).body.attention;
-  assert.deepStrictEqual(a.map(x => x.kind), ['draft', 'checkins']);
+  assert.deepStrictEqual(a.map(x => x.kind), ['draft', 'checkins', 'pipeline']);
   assert.strictEqual(a[0].title, 'Project Turnaround: July 2026 run is ready to review');
   assert.match(a[0].text, /^\d+ turnaround projects across \d+ PICs\. Generated \{createdAt\}\./);
   assert.strictEqual(a[0].href, `#/admin/runs/${run.body.run.id}`);
   await josh.put('/api/admin/settings', { changes: { 'run.showOnHome': false } });
   a = (await home(t, 'j.workman')).body.attention;
-  assert.deepStrictEqual(a.map(x => x.kind), ['checkins'], 'the setting hides it');
+  assert.deepStrictEqual(a.map(x => x.kind), ['checkins', 'pipeline'], 'the setting hides it');
 }));
 
 test('with nothing built, Home says so and gives the next run date', () => withDemo(async t => {

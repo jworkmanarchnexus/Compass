@@ -34,6 +34,12 @@ function seedDemo(db) {
     db.run("UPDATE runs SET status = 'published', published_at = ?, published_by = ? WHERE id = ?", at(publishedAt), admin.id, id);
   }
 
+  // Pipeline watch: eight Monday snapshots (Aug 17 to Oct 5), taken by the same code the Monday job uses
+  const pipe = require('./pipeline');
+  for (const date of ['2026-08-17', '2026-08-24', '2026-08-31', '2026-09-07', '2026-09-14', '2026-09-21', '2026-09-28', '2026-10-05']) {
+    pipe.takeSnapshot(db, { source, date, settings, now: at(date + 'T05:00') });
+  }
+
   const picByCode = Object.fromEntries(db.all("SELECT * FROM users WHERE role = 'pic'").map(u => [u.employee_code, u.id]));
   for (const story of stories()) {
     const project = db.get('SELECT * FROM projects WHERE wbs1 = ?', story.wbs1);
