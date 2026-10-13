@@ -944,7 +944,7 @@
    "role": "pic",
    "kind": "date_revised",
    "isPic": true,
-   "expect": true
+   "expect": false
   },
   {
    "role": "pic",
@@ -981,6 +981,12 @@
    "kind": "admin_note",
    "isPic": false,
    "expect": false
+  },
+  {
+   "role": "pic",
+   "kind": "done",
+   "isPic": true,
+   "expect": true
   }
  ],
  "nextDue": [

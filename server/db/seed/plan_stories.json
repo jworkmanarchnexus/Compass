@@ -19,7 +19,7 @@
         "body": "Run an hours report on the added exam rooms so we can put a number on the extra work.",
         "l": "c1",
         "promisedBy": "2026-08-29",
-        "lever": "hours"
+        "lever": "labor"
       },
       {
         "at": "2026-08-27T15:48",
@@ -34,7 +34,7 @@
         "body": "Meet the owner's rep on site to walk through the added exam rooms and agree on how they get paid for.",
         "l": "c2",
         "promisedBy": "2026-09-12",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-09-14T06:00",
@@ -48,7 +48,7 @@
         "body": "Submit a fee amendment to the owner covering the six added exam rooms, using the hours report as backup.",
         "l": "c3",
         "promisedBy": "2026-10-03",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-09-22T09:40",
@@ -83,7 +83,7 @@
         "body": "Revised budget to owner",
         "l": "a1",
         "promisedBy": "2026-08-14",
-        "lever": "reneg"
+        "lever": "negotiate"
       },
       {
         "at": "2026-08-28T06:00",
@@ -102,7 +102,7 @@
         "body": "Revised budget to owner",
         "l": "a2",
         "promisedBy": "2026-09-26",
-        "lever": "reneg"
+        "lever": "negotiate"
       }
     ]
   },
@@ -120,7 +120,7 @@
         "body": "Request additional services fee",
         "l": "s1",
         "promisedBy": "2026-11-14",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-09-30T15:05",
@@ -143,7 +143,7 @@
         "body": "Move CA work to a lower-cost team member",
         "l": "g1",
         "promisedBy": "2026-07-31",
-        "lever": "staff"
+        "lever": "mix"
       },
       {
         "at": "2026-08-14T06:00",
@@ -157,7 +157,7 @@
         "body": "Meet owner on CA scope",
         "l": "g2",
         "promisedBy": "2026-10-17",
-        "lever": "hours"
+        "lever": "labor"
       },
       {
         "at": "2026-09-29T14:30",
@@ -180,7 +180,7 @@
         "body": "Request fee amendment",
         "l": "b1",
         "promisedBy": "2026-11-07",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-10-01T16:00",
@@ -203,7 +203,7 @@
         "body": "Closeout billing review",
         "l": "o1",
         "promisedBy": "2026-11-14",
-        "lever": "speed"
+        "lever": "unbilled"
       },
       {
         "at": "2026-10-02T11:10",
@@ -231,7 +231,7 @@
         "body": "Send change order package",
         "l": "h1",
         "promisedBy": "2026-10-03",
-        "lever": "co"
+        "lever": "recover"
       }
     ]
   },
@@ -249,7 +249,7 @@
         "body": "Final invoice",
         "l": "r1",
         "promisedBy": "2026-12-05",
-        "lever": "speed"
+        "lever": "unbilled"
       },
       {
         "at": "2026-09-30T10:30",
@@ -272,7 +272,7 @@
         "body": "First staffing reduction",
         "l": "p1",
         "promisedBy": "2026-09-15",
-        "lever": "hours"
+        "lever": "labor"
       },
       {
         "at": "2026-09-12T16:30",
@@ -287,7 +287,7 @@
         "body": "Second staffing reduction after Phase 2",
         "l": "p2",
         "promisedBy": "2026-10-30",
-        "lever": "hours"
+        "lever": "labor"
       },
       {
         "at": "2026-09-28T10:05",
@@ -310,7 +310,7 @@
         "body": "Client call on added services",
         "l": "q1",
         "promisedBy": "2026-10-17",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-09-12T13:15",
@@ -333,7 +333,7 @@
         "body": "Submit final invoice",
         "l": "m1",
         "promisedBy": "2026-11-20",
-        "lever": "speed"
+        "lever": "unbilled"
       },
       {
         "at": "2026-10-03T14:00",
@@ -356,7 +356,7 @@
         "body": "Reduce drafting hours in Phase 3",
         "l": "l1",
         "promisedBy": "2026-11-07",
-        "lever": "hours"
+        "lever": "labor"
       },
       {
         "at": "2026-10-02T09:20",
@@ -379,7 +379,7 @@
         "body": "Fee request to client",
         "l": "k1",
         "promisedBy": "2026-10-17",
-        "lever": "fee"
+        "lever": "recover"
       },
       {
         "at": "2026-09-20T15:00",
@@ -402,7 +402,7 @@
         "body": "Value engineering workshop",
         "l": "v1",
         "promisedBy": "2026-11-14",
-        "lever": "cons"
+        "lever": "consult"
       },
       {
         "at": "2026-10-01T13:40",

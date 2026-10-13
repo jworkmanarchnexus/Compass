@@ -118,24 +118,34 @@ function standing({ onTime, kept }, s) {
 function canWrite(role, kind, isProjectPic) {
   if (kind === 'admin_note') return role === 'admin';
   // 'correction' is no longer written: a PIC who got something wrong adds an update that says so (old entries stay readable)
-  if (['explanation', 'commitment', 'update', 'done', 'date_revised'].includes(kind)) return role === 'pic' && !!isProjectPic;
+  // 'date_revised' is no longer written either: the due date is the check-in, set by the system (old entries stay readable)
+  if (['explanation', 'commitment', 'update', 'done'].includes(kind)) return role === 'pic' && !!isProjectPic;
   return false; // 'missed' is written only by the system
 }
 
-/* the levers: eight named actions and an "Other" in each group. A commitment is one action and some words; there is no amount,
-   so the Admin can count what kinds of actions are promised and which kinds improve the project. */
+/* the levers: four named actions and an "Other" in each group, each with a short explanation (shown when the PIC points at it).
+   A commitment is one action and some words; there is no amount, so the Admin can count what kinds of actions are promised and
+   which kinds improve the project. `legacy` keys are the earlier list: never offered, kept so old log entries keep their name. */
 const LEVERS = {
-  fee: { label: 'Request additional services fee', group: 'money' },
-  co: { label: 'Submit a change order', group: 'money' },
-  reneg: { label: 'Renegotiate the fee', group: 'money' },
-  speed: { label: 'Speed up billing or collection', group: 'money' },
-  hours: { label: 'Reduce staffing hours', group: 'spend' },
-  staff: { label: 'Move work to lower-cost staff', group: 'spend' },
-  cons: { label: 'Reduce consultant cost', group: 'spend' },
-  sched: { label: 'Shorten the schedule', group: 'spend' },
-  // "Other": the PIC writes in what it is; the typed words are kept in the commitment.
-  other_money: { label: 'Other', group: 'money', other: true },
-  other_spend: { label: 'Other', group: 'spend', other: true },
+  recover: { label: 'Recover additional services', group: 'money', help: 'Seek compensation for owner-directed changes, scope growth, redesign, additional meetings, extended CA, or work outside the agreement.' },
+  negotiate: { label: 'Negotiate a fee adjustment', group: 'money', help: 'Revisit the existing fee due to changed project conditions, duration, complexity, or assumptions that materially differ from the original agreement.' },
+  unbilled: { label: 'Capture unbilled earned revenue', group: 'money', help: 'Identify authorized work or billable expenses that have been performed but not properly invoiced or recognized.' },
+  scope: { label: 'Secure additional project scope', group: 'money', help: 'Obtain a new, separately compensated phase, service, or expanded assignment from the client.' },
+  other_money: { label: 'Other', group: 'money', help: 'Something else. You will say what it is.', other: true },
+  labor: { label: 'Reduce remaining labor hours', group: 'spend', help: 'Reassess the work remaining, eliminate unnecessary effort, and establish a realistic labor budget to complete the project.' },
+  mix: { label: 'Optimize staffing mix', group: 'spend', help: 'Reassign appropriate tasks to staff with more suitable billing costs, experience, or production efficiency.' },
+  creep: { label: 'Eliminate scope creep', group: 'spend', help: 'Stop performing work beyond the agreement without authorization, and clarify deliverable boundaries with the owner.' },
+  consult: { label: 'Reduce consultant and external costs', group: 'spend', help: 'Lower what the project pays consultants and outside vendors: renegotiate, narrow their scope, or bring work in-house.' },
+  other_spend: { label: 'Other', group: 'spend', help: 'Something else. You will say what it is.', other: true },
+  // the earlier list, not offered any more
+  fee: { label: 'Request additional services fee', group: 'money', legacy: true },
+  co: { label: 'Submit a change order', group: 'money', legacy: true },
+  reneg: { label: 'Renegotiate the fee', group: 'money', legacy: true },
+  speed: { label: 'Speed up billing or collection', group: 'money', legacy: true },
+  hours: { label: 'Reduce staffing hours', group: 'spend', legacy: true },
+  staff: { label: 'Move work to lower-cost staff', group: 'spend', legacy: true },
+  cons: { label: 'Reduce consultant cost', group: 'spend', legacy: true },
+  sched: { label: 'Shorten the schedule', group: 'spend', legacy: true },
 };
 
 /* The next check-in date. A commitment is not given a date by the PIC: every `cadence` days from the day the project first showed on a

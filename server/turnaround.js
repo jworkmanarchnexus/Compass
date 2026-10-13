@@ -189,7 +189,7 @@ function buildPlanPage(db, wbs1, viewer, { today, settings, cycle }) {
     can: { kinds: addKinds, addEntry: addKinds.length > 0, adminNote: isAdmin },
     // the date a new commitment will be due: the PIC does not choose it. On that date the PIC reports back and makes a new one.
     nextDue: addKinds.includes('commitment') ? { date: planDb.nextDueFor(db, project.wbs1, today, settings), cadenceDays: settings['due.cadenceDays'] } : null,
-    levers: isAdmin || mine ? Object.entries(plan.LEVERS).map(([key, l]) => ({ key, label: l.label, group: l.group, other: !!l.other })) : [],
+    levers: isAdmin || mine ? Object.entries(plan.LEVERS).filter(([, l]) => !l.legacy).map(([key, l]) => ({ key, label: l.label, group: l.group, help: l.help, other: !!l.other })) : [],
   };
 }
 

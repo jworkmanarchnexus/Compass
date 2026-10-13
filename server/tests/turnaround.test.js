@@ -64,12 +64,12 @@ test('every PIC, and everyone who reads the plan, sees the action and whether it
     const res = await api(who).get('/api/projects/2025-0412/plan');
     assert.strictEqual(res.status, 200, who);
     const c3 = res.body.commitments.find(c => c.promisedBy === '2026-10-03');
-    assert.deepStrictEqual([c3.lever, c3.leverLabel], ['fee', 'Request additional services fee'], who + ' sees the action');
+    assert.deepStrictEqual([c3.lever, c3.leverLabel], ['recover', 'Recover additional services'], who + ' sees the action');
     assert.strictEqual(c3.qty, undefined, 'there is no amount any more');
     const done = res.body.commitments.find(c => c.status === 'done');
     assert.strictEqual(done.improved, true, who + ' sees whether it improved the project');
     const log = res.body.entries.find(e => e.kind === 'commitment' && e.promisedBy === '2026-10-03');
-    assert.strictEqual(log.leverLabel, 'Request additional services fee', who + ' sees it in the log too');
+    assert.strictEqual(log.leverLabel, 'Recover additional services', who + ' sees it in the log too');
     assert.strictEqual(res.body.entries.find(e => e.kind === 'done').improved, true);
   }
   assert.strictEqual((await api('c.brandt').get('/api/projects/2025-0412/plan')).status, 403, 'still only those who may read the plan');
@@ -86,7 +86,7 @@ test('only the PIC on a project writes in its plan; Admin only adds labeled note
   assert.strictEqual((await post('d.whitfield', '2025-0412', { kind: 'update', body: 'Owner signed the amendment.' })).status, 201);
   assert.strictEqual((await post('t.lindqvist', '2025-0412', { kind: 'update', body: 'I will write on Dana\'s project.' })).status, 403, 'another PIC');
   assert.strictEqual((await post('j.workman', '2025-0412', { kind: 'update', body: 'Admin cannot write in a PIC\'s voice.' })).status, 403);
-  assert.strictEqual((await post('j.workman', '2025-0412', { kind: 'commitment', body: 'x', lever: 'fee' })).status, 403);
+  assert.strictEqual((await post('j.workman', '2025-0412', { kind: 'commitment', body: 'x', lever: 'recover' })).status, 403);
   assert.strictEqual((await post('j.workman', '2025-0412', { kind: 'admin_note', body: 'Please send me the signed copy.' })).status, 201);
   assert.strictEqual((await post('d.whitfield', '2025-0412', { kind: 'admin_note', body: 'PICs cannot add admin notes.' })).status, 403);
   for (const who of ['m.hale', 'kent']) assert.strictEqual((await post(who, '2025-0412', { kind: 'update', body: 'x' })).status, who === 'kent' ? 403 : 403, who);
@@ -101,11 +101,12 @@ test('only the PIC on a project writes in its plan; Admin only adds labeled note
 
 test('a new entry is checked: blank text, an unknown action; a commitment needs an action and no date or number', () => withDemo(async ({ api }) => {
   const post = body => api('d.whitfield').post('/api/projects/2025-0412/plan/entries', body);
-  const ok = { kind: 'commitment', body: 'Send the amendment', lever: 'fee' };
+  const ok = { kind: 'commitment', body: 'Send the amendment', lever: 'recover' };
   assert.strictEqual((await post({ kind: 'update', body: '   ' })).status, 400);
   assert.strictEqual((await post({ kind: 'nonsense', body: 'x' })).status, 400);
   assert.strictEqual((await post(Object.assign({}, ok, { lever: 'magic' }))).status, 400);
   assert.strictEqual((await post({ kind: 'commitment', body: 'Send the amendment' })).status, 400, 'an action is required');
+  assert.strictEqual((await post(Object.assign({}, ok, { lever: 'fee' }))).status, 400, 'the earlier list of actions is no longer offered');
   assert.strictEqual((await post(Object.assign({}, ok, { body: ' ' }))).status, 400);
   assert.strictEqual((await post(ok)).status, 201, 'no amount and no date are needed');
 }));
@@ -115,7 +116,7 @@ test('a commitment is due at the next check-in: every 14 days from the first rep
   const before = (await dana.get('/api/projects/2025-0412/plan')).body;
   assert.strictEqual(before.nextDue.cadenceDays, 14);
   assert.match(before.nextDue.date, /^2026-10-\d\d$/);
-  const r = await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'commitment', body: 'Send the amendment', lever: 'fee', promisedBy: '2026-12-31', qty: 99999 });
+  const r = await dana.post('/api/projects/2025-0412/plan/entries', { kind: 'commitment', body: 'Send the amendment', lever: 'recover', promisedBy: '2026-12-31', qty: 99999 });
   assert.strictEqual(r.status, 201);
   const made = r.body.commitments.find(c => c.text === 'Send the amendment');
   assert.strictEqual(made.promisedBy, before.nextDue.date, 'the date the PIC sent is ignored');
@@ -132,21 +133,13 @@ test('the check-in cadence is a setting: change it and the next due date moves',
   assert.deepStrictEqual([d14, d7], ['2026-10-14', '2026-10-12'], 'the first report went live Sep 2: every 14 days gives Oct 14, every 10 days gives Oct 12');
 }));
 
-test('Mark done asks what happened and whether the action improved the project; Change date needs a reason; closed commitments are final', () => withDemo(async ({ api }) => {
+test('Mark done asks what happened and whether the action improved the project; there is no Change date; closed commitments are final', () => withDemo(async ({ api }) => {
   const dana = api('d.whitfield');
   const page = (await dana.get('/api/projects/2025-0412/plan')).body;
   const open = page.commitments.find(c => c.status === 'open');
   const base = `/api/projects/2025-0412/plan/commitments/${open.id}`;
 
-  assert.strictEqual((await dana.post(base + '/revise', { newDate: '2026-10-24', reason: '' })).status, 400, 'a reason is required');
-  assert.strictEqual((await dana.post(base + '/revise', { newDate: open.dueDate, reason: 'same' })).status, 400, 'the same date');
-  assert.strictEqual((await dana.post(base + '/revise', { newDate: '2026-10-01', reason: 'back in time' })).status, 400, 'a past date');
-  assert.strictEqual((await api('t.lindqvist').post(base + '/revise', { newDate: '2026-10-24', reason: 'x' })).status, 403);
-
-  const moved = (await dana.post(base + '/revise', { newDate: '2026-10-24', reason: 'Owner asked for another week.' })).body;
-  const c = moved.commitments.find(x => x.id === open.id);
-  assert.deepStrictEqual([c.dueDate, c.promisedBy, c.revisions.length], ['2026-10-24', '2026-10-03', 2], 'every earlier date stays on record');
-  assert.deepStrictEqual(c.revisions.map(r => r.to), ['2026-10-17', '2026-10-24']);
+  assert.strictEqual((await dana.post(base + '/revise', { newDate: '2026-10-24', reason: 'Owner asked for another week.' })).status, 404, 'there is no Change date any more');
 
   assert.strictEqual((await dana.post(base + '/done', { body: 'Amendment sent.' })).status, 400, 'yes or no is required');
   assert.strictEqual((await dana.post(base + '/done', { body: 'Amendment sent.', improved: 'yes' })).status, 400, 'it must be a yes or a no');
@@ -156,9 +149,41 @@ test('Mark done asks what happened and whether the action improved the project; 
   const after = (await dana.get('/api/projects/2025-0412/plan')).body;
   const closed = after.commitments.find(x => x.id === open.id);
   assert.deepStrictEqual([closed.status, closed.kept, closed.improved], ['done', true, false]);
-  assert.strictEqual(after.entries[0].daysEarly, 17);
+  assert.strictEqual(after.entries[0].daysEarly, 10, 'due Oct 17, done Oct 7');
   assert.strictEqual((await dana.post(base + '/done', { body: 'again', improved: true })).status, 409);
-  assert.strictEqual((await dana.post(base + '/revise', { newDate: '2026-11-01', reason: 'again' })).status, 409);
+}));
+
+test('a check-in reports back on every open commitment and makes the next one, in one step', () => withDemo(async ({ api, db }) => {
+  const dana = api('d.whitfield');
+  const url = '/api/projects/2025-0412/plan/checkin';
+  const page = (await dana.get('/api/projects/2025-0412/plan')).body;
+  const open = page.commitments.filter(c => c.status === 'open');
+  assert.strictEqual(open.length, 1);
+  const good = { reports: [{ commitmentId: open[0].id, body: 'Amendment sent; the owner signed.', improved: true }], lever: 'unbilled', body: 'Invoice the extra exam room hours.' };
+  const entriesBefore = db.get('SELECT COUNT(*) AS n FROM plan_entries').n;
+  // nothing is written unless everything is right
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { reports: [] }))).status, 400, 'report back on every open commitment');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { reports: [{ commitmentId: open[0].id, body: 'x' }] }))).status, 400, 'yes or no is required');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { reports: [{ commitmentId: open[0].id, body: ' ', improved: true }] }))).status, 400, 'what happened is required');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { reports: [{ commitmentId: 'nope', body: 'x', improved: true }] }))).status, 409, 'a commitment that is not open');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { lever: undefined }))).status, 400, 'the next action kind is required');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { lever: 'fee' }))).status, 400, 'an old action is not offered');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { lever: 'other_money' }))).status, 400, 'Other needs its words');
+  assert.strictEqual((await dana.post(url, Object.assign({}, good, { body: '  ' }))).status, 400, 'the next commitment needs words');
+  assert.strictEqual((await api('t.lindqvist').post(url, good)).status, 403, 'only the PIC on the project');
+  assert.strictEqual((await api('j.workman').post(url, good)).status, 403);
+  assert.strictEqual(db.get('SELECT COUNT(*) AS n FROM plan_entries').n, entriesBefore, 'a refused check-in writes nothing');
+
+  const r = await dana.post(url, good);
+  assert.strictEqual(r.status, 201);
+  assert.strictEqual(db.get('SELECT COUNT(*) AS n FROM plan_entries').n, entriesBefore + 2, 'one done entry and one commitment');
+  const after = r.body.commitments;
+  assert.deepStrictEqual(after.filter(c => c.id === open[0].id).map(c => [c.status, c.improved]), [['done', true]]);
+  const next = after.find(c => c.text === 'Invoice the extra exam room hours.');
+  assert.deepStrictEqual([next.status, next.leverLabel, next.promisedBy], ['open', 'Capture unbilled earned revenue', r.body.nextDue.date]);
+  // with the next one open, checking in again reports on that one
+  assert.strictEqual((await dana.post(url, { reports: [{ commitmentId: next.id, body: 'Done.', improved: false }], lever: 'other_spend', otherText: 'Share a consultant with another job', body: 'Cut it.' })).status, 201);
+  assert.deepStrictEqual((await dana.get('/api/projects/2025-0412/plan')).body.commitments.filter(c => c.status === 'open').map(c => c.leverLabel), ['Other: Share a consultant with another job']);
 }));
 
 test('a plan starts with one explanation: nothing else is possible until it is written, and it can only be written once', () => withDemo(async ({ api }) => {
@@ -170,7 +195,7 @@ test('a plan starts with one explanation: nothing else is possible until it is w
   const early = await post('m.oyelaran', { kind: 'update', body: 'Quick update.' });
   assert.strictEqual(early.status, 409);
   assert.match(early.body.error, /Start with an explanation/);
-  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'x', lever: 'fee' })).status, 409);
+  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'x', lever: 'recover' })).status, 409);
 
   // an admin note does not use up or hide the explanation
   assert.strictEqual((await post('j.workman', { kind: 'admin_note', body: 'What is going on here?' })).status, 201);
@@ -186,7 +211,11 @@ test('a plan starts with one explanation: nothing else is possible until it is w
   assert.strictEqual(again.status, 409);
   assert.match(again.body.error, /already has its explanation/);
   assert.strictEqual((await post('m.oyelaran', { kind: 'update', body: 'Met the owner.' })).status, 201);
-  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'Request a fee amendment', lever: 'fee' })).status, 201);
+  // nothing is open yet, so a check-in has nothing to report on: it is just the first commitment
+  const firstCheckin = await marcus.post('/api/projects/2025-0230/plan/checkin', { reports: [], lever: 'negotiate', body: 'Ask for a fee adjustment.' });
+  assert.strictEqual(firstCheckin.status, 201);
+  assert.strictEqual(firstCheckin.body.commitments.length, 1);
+  assert.strictEqual((await post('m.oyelaran', { kind: 'commitment', body: 'Request a fee amendment', lever: 'recover' })).status, 201);
   // someone else's project, and the explanation is not available to a reader
   assert.deepStrictEqual((await api('t.lindqvist').get('/api/projects/2025-0230/plan')).body.can.kinds, []);
 }));
@@ -365,10 +394,10 @@ test('commitment patterns: the analysis on the demo year, and the Admin alone se
   assert.deepStrictEqual([p.groups.money.resolved, p.groups.money.kept, p.groups.money.keptRate], [2, 0, 0], 'two money commitments resolved, both missed');
   assert.deepStrictEqual([p.groups.spend.resolved, p.groups.spend.kept, rd(p.groups.spend.keptRate)], [3, 2, 0.667]);
   const act = k => p.actions.find(a => a.lever === k);
-  assert.deepStrictEqual([act('fee').made, act('hours').made, act('hours').kept], [6, 5, 2]);
+  assert.deepStrictEqual([act('recover').made, act('labor').made, act('labor').kept], [7, 5, 2], 'the earlier actions are folded into the new list in the demo data');
   assert.deepStrictEqual([p.groups.money.improved, p.groups.money.notImproved, p.groups.money.improvedRate], [0, 0, null], 'nothing in the demo has been answered as a no, and no money commitment is done');
   assert.ok(p.groups.spend.improved >= 1, 'the done spend-less commitments said yes');
-  assert.strictEqual(p.actions.length, 10);
+  assert.strictEqual(p.actions.length, 10, 'only the current actions are listed');
   assert.deepStrictEqual([p.responsiveness.listed, p.responsiveness.withExplanation, p.responsiveness.withCommitment], [16, 14, 14]);
   assert.strictEqual(p.offList.cameOff, 0);
   assert.strictEqual(p.months.length, 12);
@@ -385,12 +414,12 @@ test('"Other": a fill-in-the-blank action in each group, shown with the commitme
   assert.strictEqual((await post({ lever: 'other_money', otherText: 'x'.repeat(121) })).status, 400);
   assert.strictEqual((await post({ lever: 'other_money', otherText: 'Sell the model' })).status, 201);
   assert.strictEqual((await post({ lever: 'other_spend', otherText: 'Share a consultant with another job' })).status, 201);
-  assert.strictEqual((await post({ lever: 'fee', otherText: 'ignored for a named action' })).status, 201);
+  assert.strictEqual((await post({ lever: 'recover', otherText: 'ignored for a named action' })).status, 201);
 
   const page = (await josh.get('/api/projects/2025-0412/plan')).body;
   const labels = page.commitments.map(c => c.leverLabel);
   assert.ok(labels.includes('Other: Sell the model') && labels.includes('Other: Share a consultant with another job'));
-  assert.ok(labels.includes('Request additional services fee'), 'a named action keeps its own name');
+  assert.ok(labels.includes('Recover additional services'), 'a named action keeps its own name');
   for (const who of ['d.whitfield', 't.lindqvist', 'm.hale']) {
     const labels2 = (await api(who).get('/api/projects/2025-0412/plan')).body.commitments.map(x => x.leverLabel);
     assert.ok(labels2.includes('Other: Sell the model') && labels2.includes('Other: Share a consultant with another job'), who + ' sees the words typed under Other');

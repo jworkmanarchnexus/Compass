@@ -52,7 +52,7 @@
     "commitmentId": "c1",
     "data": {
      "promisedBy": "2026-04-01",
-     "lever": "fee"
+     "lever": "recover"
     }
    },
    {
@@ -73,7 +73,7 @@
     "commitmentId": "c2",
     "data": {
      "promisedBy": "2026-05-01",
-     "lever": "hours"
+     "lever": "labor"
     }
    },
    {
@@ -133,7 +133,7 @@
     "commitmentId": "c4",
     "data": {
      "promisedBy": "2026-08-01",
-     "lever": "cons"
+     "lever": "consult"
     }
    },
    {
@@ -150,7 +150,7 @@
     "commitmentId": "c5",
     "data": {
      "promisedBy": "2026-06-01",
-     "lever": "reneg"
+     "lever": "negotiate"
     }
    },
    {
@@ -202,14 +202,14 @@
    }
   },
   "actions": {
-   "fee": {
+   "recover": {
     "made": 1,
     "kept": 1,
     "improved": 1,
     "notImproved": 0,
     "improvedRate": 1
    },
-   "hours": {
+   "labor": {
     "made": 1,
     "missed": 1,
     "moved": 1,
@@ -223,17 +223,17 @@
     "notImproved": 1,
     "improvedRate": 0
    },
-   "cons": {
+   "consult": {
     "made": 1,
     "open": 1
    },
-   "reneg": {
+   "negotiate": {
     "made": 1,
     "kept": 1,
     "improved": 1,
     "improvedRate": 1
    },
-   "sched": {
+   "creep": {
     "made": 0,
     "keptRate": null
    }

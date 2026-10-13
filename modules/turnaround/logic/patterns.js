@@ -63,7 +63,7 @@ function analyze({ year, entries, listed, cameOff, stillOn, picOf }) {
   }
 
   const groups = { money: metrics(commits.filter(c => c.group === 'money')), spend: metrics(commits.filter(c => c.group === 'spend')) };
-  const actions = Object.entries(plan.LEVERS).map(([lever, L]) => {
+  const actions = Object.entries(plan.LEVERS).filter(([lever, L]) => !L.legacy || commits.some(c => c.lever === lever)).map(([lever, L]) => {
     const mine = commits.filter(c => c.lever === lever);
     return Object.assign({ lever, label: L.label, group: L.group }, metrics(mine));
   });
