@@ -164,3 +164,20 @@ test('tool server: no raw SQL, no approve, no values; errors scrubbed; works end
     assert.ok(res[6].error, 'approve is not a tool');
   } finally { c.close(); }
 });
+
+test('stage names and category counts: configuration words and stage columns only, never name-like columns', async () => {
+  const { DatabaseSync } = require('node:sqlite');
+  const c = freshContext();
+  try {
+    const db = new DatabaseSync(':memory:'); db.exec("ATTACH ':memory:' AS dbo");
+    db.exec("CREATE TABLE dbo.PR (WBS1 TEXT, Stage TEXT, Name TEXT); CREATE TABLE dbo.CFGProjectStageDescriptions (Code TEXT, Description TEXT);");
+    db.exec("INSERT INTO dbo.PR VALUES ('A1','004','x'),('A2','004','y'),('A3','004','z'),('A4','004','w'),('A5','004','v'),('A6','010','u'),('A7',NULL,'t'); INSERT INTO dbo.CFGProjectStageDescriptions VALUES ('004','Awarded'),('010','Negotiation'),('004','Awarded');");
+    const vp = { async query(sql, { rowLimit = 200 } = {}) { assertReadOnlySql(sql); const all = db.prepare(sql).all(); return { rows: all.slice(0, rowLimit).map(r => ({ ...r })), truncated: all.length > rowLimit }; }, async close() {} };
+    c.store.knowledge.prepare("INSERT OR IGNORE INTO dict_columns (tbl, col, primary_key, domain, data_type, nullable, description) VALUES ('PR','Stage','','','nvarchar(10)','YES','Project stage code'), ('PR','Name','','','nvarchar(40)','YES','Project name')").run();
+    const ops = createOperations({ store: c.store, gateway: c.gateway, cfg: c.cfg, vp, investigationId: 'I' });
+    assert.deepStrictEqual((await ops.stageNames()).stages, [{ code: '004', description: 'Awarded' }, { code: '010', description: 'Negotiation' }]);
+    const counts = await ops.codeCounts({ table: 'PR', column: 'Stage' });
+    assert.deepStrictEqual(counts.codes, [{ code: '(null)', rowCount: '<5' }, { code: '004', rowCount: 5 }, { code: '010', rowCount: '<5' }], 'small groups are suppressed');
+    await assert.rejects(ops.codeCounts({ table: 'PR', column: 'Name' }), /short code columns/);
+  } finally { c.close(); }
+});

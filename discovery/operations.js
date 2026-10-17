@@ -11,6 +11,8 @@ const { describeError, scrub } = require('../server/vp/redact');
 const q = name => `[${name}]`;
 const from = t => `[dbo].${q(t)}`;
 const NUMERIC = /^(int|bigint|smallint|tinyint|decimal|numeric|money|smallmoney|float|real)\b/i;
+// category columns longer than 3 characters that are known to hold a short list of stage or status words, never names
+const CATEGORY_COLUMNS = new Set(['PR.Stage', 'PR.Status', 'RPPlan.Status', 'PNPlan.Status']);
 
 function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }) {
   const table = name => assertApprovedTable(name, cfg);
@@ -128,7 +130,7 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
        characters, or small integers) and at most 25 distinct codes: such values are categories, never names or identifiers. */
     async codeCounts({ table: t, column, fromPeriod = null, toPeriod = null, onlyColumn = null, onlyEquals = null }) {
       const T = table(t), { column: C } = col(T, column), type = typeOf(T, C);
-      if (!/^(n?var)?char\((1|2|3)\)$|^(small|tiny)int$/i.test(type)) throw new Error('operation: codeCounts is only for short code columns');
+      if (!/^(n?var)?char\((1|2|3)\)$|^(small|tiny)int$/i.test(type) && !CATEGORY_COLUMNS.has(`${T}.${C}`)) throw new Error('operation: codeCounts is only for short code columns');
       let where = '';
       if (fromPeriod !== null || toPeriod !== null) {
         if (!/^\d{6}$/.test(String(fromPeriod)) || !/^\d{6}$/.test(String(toPeriod))) throw new Error('operation: periods are YYYYMM');
@@ -376,6 +378,13 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       const out = gateway.release(payload, cfg);
       approvals.require(store, approvalId, { consume: true });
       log('runRatioScan', { approvalId }, 'ok'); return out;
+    },
+
+    /* The names behind the project stage codes (a short configuration list: Proposal, Awarded and so on; no project data). */
+    async stageNames() {
+      const rows = await run('stageNames', 'CFGProjectStageDescriptions', 'SELECT Code AS code, MIN(Description) AS description FROM dbo.CFGProjectStageDescriptions GROUP BY Code');
+      const out = { stages: rows.map(r => ({ code: String(r.code).trim(), description: String(r.description).trim() })).sort((a, b) => a.code.localeCompare(b.code)) };
+      log('stageNames', {}, 'ok'); return gateway.release(out, cfg);
     },
 
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
