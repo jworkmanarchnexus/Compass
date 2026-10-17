@@ -219,6 +219,60 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       log('liveColumns', { table: row.name }, 'ok'); return gateway.release(out, cfg);
     },
 
+    /* Column finder. When no field name is known, look for the column whose per-project totals equal a reference column, across the
+       planning and project tables that carry a WBS1 key (tables named PN*, RP*, PR*, Project*, Opp*, EB; no ledgers, no templates).
+       Needs an approved scan request first. The reference values are read here, on this computer; only per-column counts leave. */
+    requestColumnScan({ referenceId, sheet, projectColumn, amountColumn, weightedColumn = null }) {
+      const tables = store.knowledge.prepare("SELECT DISTINCT tbl FROM dict_columns WHERE lower(col) = 'wbs1'").all().map(r => r.tbl)
+        .filter(x => /^(PN|RP|PR|Project|Opp|EB$|Plan)/i.test(x) && !/Template$/i.test(x));
+      const cols = store.knowledge.prepare(`SELECT tbl, col, data_type FROM dict_columns WHERE tbl IN (${tables.map(() => '?').join(',')})`).all(...tables)
+        .filter(c => /^(decimal|money|smallmoney|float|real|int|bigint|smallint)/i.test(c.data_type) && !/^(wbs\d|rowversion|uid)$/i.test(c.col));
+      const id = approvals.request(store, { kind: 'disclosure', description: `Scan ${tables.length} project and planning tables (${cols.length} numeric columns) for the column whose per-project totals equal the reference column "${amountColumn}"`,
+        scope: { scan: true, tables: tables.length, columns: cols.length, referenceId, sheet, projectColumn, amountColumn, weightedColumn, willDisclose: 'for each column, only how many reference projects match exactly; no values, no names' }, investigationId });
+      return gateway.release({ approvalId: id, status: 'pending', tablesCount: tables.length, numericColumnsCount: cols.length }, cfg);
+    },
+
+    async runColumnScan({ approvalId }) {
+      const a = approvals.require(store, approvalId, {});
+      if (a.kind !== 'disclosure' || !a.scope.scan) throw new Error('approvals: not a column scan approval');
+      const refs = require('./reference-library');
+      const Dec = require('./lib/decimal');
+      const { referenceId, sheet, projectColumn, amountColumn, weightedColumn } = a.scope;
+      const columns = { project: projectColumn, amount: amountColumn, ...(weightedColumn ? { weighted: weightedColumn } : {}) };
+      const ref = refs.readDataset(store, referenceId, { sheet, headerRow: 0, columns, numeric: ['amount', ...(weightedColumn ? ['weighted'] : [])], requireNumeric: ['amount'] });
+      const want = new Map(ref.map(r => [r.project, r]));
+      const keys = [...want.keys()].filter(k => /^[A-Za-z0-9._-]{1,30}$/.test(k));
+      const inList = keys.map(k => `'${k}'`).join(', ');
+      const tables = store.knowledge.prepare("SELECT DISTINCT tbl FROM dict_columns WHERE lower(col) = 'wbs1'").all().map(r => r.tbl).filter(x => /^(PN|RP|PR|Project|Opp|EB$|Plan)/i.test(x) && !/Template$/i.test(x));
+      const results = []; let skipped = 0;
+      for (const T of tables) {
+        const cols = store.knowledge.prepare('SELECT col, data_type FROM dict_columns WHERE tbl = ?').all(T).filter(c => /^(decimal|money|smallmoney|float|real|int|bigint|smallint)/i.test(c.data_type) && !/^(wbs\d|rowversion|uid)$/i.test(c.col));
+        if (!cols.length) continue;
+        for (let i = 0; i < cols.length; i += 60) { // a few dozen sums per statement
+          const part = cols.slice(i, i + 60);
+          gateway.spend(a.id, 'runColumnScan', T + ':' + i);
+          let rows;
+          try { rows = (await vp.query(`SELECT WBS1 AS k, ${part.map((c, j) => `SUM(${q(c.col)}) AS c${j}`).join(', ')} FROM ${from(T)} WHERE WBS1 IN (${inList}) GROUP BY WBS1`, { rowLimit: 5000, timeoutSeconds: 60 })).rows; }
+          catch { skipped += part.length; continue; }
+          part.forEach((c, j) => {
+            let est = 0, wt = 0, tot = 0;
+            for (const r of rows) {
+              const w = want.get(String(r.k).trim()); if (!w || r[`c${j}`] === null || r[`c${j}`] === undefined) continue;
+              let sum; try { sum = Dec.parse(typeof r[`c${j}`] === 'bigint' ? r[`c${j}`].toString() : r[`c${j}`], { round: true }); } catch { continue; }
+              if (w.amount !== 0n && sum === w.amount) est++;
+              if (w.weighted !== undefined && w.weighted !== 0n && sum === w.weighted) wt++;
+              tot++;
+            }
+            if (est > 0 || wt > 0) results.push({ table: T, column: c.col, matchesEstimateCount: est, matchesWeightedCount: wt, projectsWithValueCount: tot });
+          });
+        }
+      }
+      results.sort((x, y) => (y.matchesEstimateCount + y.matchesWeightedCount) - (x.matchesEstimateCount + x.matchesWeightedCount));
+      approvals.require(store, approvalId, { consume: true });
+      log('runColumnScan', { approvalId, tables: tables.length }, 'ok');
+      return gateway.release({ referenceProjectsCount: keys.length, tablesScannedCount: tables.length, columnsNotReadableCount: skipped, matches: results.slice(0, 15) }, cfg);
+    },
+
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
        (column names, row count) unless the approval was scoped to release values, which is then single-use. */
     proposeSql({ sql, why, willDisclose = 'column names and row count only', release = null, maxRows = null }) {
