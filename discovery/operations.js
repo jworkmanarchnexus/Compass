@@ -222,13 +222,13 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
     /* Column finder. When no field name is known, look for the column whose per-project totals equal a reference column, across the
        planning and project tables that carry a WBS1 key (tables named PN*, RP*, PR*, Project*, Opp*, EB; no ledgers, no templates).
        Needs an approved scan request first. The reference values are read here, on this computer; only per-column counts leave. */
-    requestColumnScan({ referenceId, sheet, projectColumn, amountColumn, weightedColumn = null }) {
+    requestColumnScan({ referenceId, sheet, projectColumn, amountColumn, amountColumns = null, weightedColumn = null, matchBy = 'number' }) {
       const tables = store.knowledge.prepare("SELECT DISTINCT tbl FROM dict_columns WHERE lower(col) = 'wbs1'").all().map(r => r.tbl)
         .filter(x => /^(PN|RP|PR|Project|Opp|EB$|Plan)/i.test(x) && !/Template$/i.test(x));
       const cols = store.knowledge.prepare(`SELECT tbl, col, data_type FROM dict_columns WHERE tbl IN (${tables.map(() => '?').join(',')})`).all(...tables)
         .filter(c => /^(decimal|money|smallmoney|float|real|int|bigint|smallint)/i.test(c.data_type) && !/^(wbs\d|rowversion|uid)$/i.test(c.col));
       const id = approvals.request(store, { kind: 'disclosure', description: `Scan ${tables.length} project and planning tables (${cols.length} numeric columns) for the column whose per-project totals equal the reference column "${amountColumn}"`,
-        scope: { scan: true, tables: tables.length, columns: cols.length, referenceId, sheet, projectColumn, amountColumn, weightedColumn, willDisclose: 'for each column, only how many reference projects match exactly; no values, no names' }, investigationId });
+        scope: { scan: true, tables: tables.length, columns: cols.length, referenceId, sheet, projectColumn, amountColumn: amountColumn || (amountColumns || []).join(' + '), amountColumns, weightedColumn, matchBy, willDisclose: 'for each column, only how many reference projects match exactly; no values, no names' }, investigationId });
       return gateway.release({ approvalId: id, status: 'pending', tablesCount: tables.length, numericColumnsCount: cols.length }, cfg);
     },
 
@@ -237,9 +237,18 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       if (a.kind !== 'disclosure' || !a.scope.scan) throw new Error('approvals: not a column scan approval');
       const refs = require('./reference-library');
       const Dec = require('./lib/decimal');
-      const { referenceId, sheet, projectColumn, amountColumn, weightedColumn } = a.scope;
-      const columns = { project: projectColumn, amount: amountColumn, ...(weightedColumn ? { weighted: weightedColumn } : {}) };
-      const ref = refs.readDataset(store, referenceId, { sheet, headerRow: 0, columns, numeric: ['amount', ...(weightedColumn ? ['weighted'] : [])], requireNumeric: ['amount'] });
+      const { referenceId, sheet, projectColumn, amountColumn, amountColumns, weightedColumn, matchBy } = a.scope;
+      const multi = Array.isArray(amountColumns) && amountColumns.length > 0;
+      const columns = { project: projectColumn, ...(multi ? Object.fromEntries(amountColumns.map((c, i) => ['a' + i, c])) : { amount: amountColumn }), ...(weightedColumn ? { weighted: weightedColumn } : {}) };
+      const numericFields = [...(multi ? amountColumns.map((_, i) => 'a' + i) : ['amount']), ...(weightedColumn ? ['weighted'] : [])];
+      let ref = refs.readDataset(store, referenceId, { sheet, headerRow: 0, columns, numeric: numericFields, requireNumeric: multi ? [] : ['amount'] });
+      if (multi) ref = ref.map(r => ({ ...r, amount: amountColumns.reduce((t, _, i) => t + (r['a' + i] || 0n), 0n) }));
+      if (matchBy === 'name') { // the reference lists project names, not numbers: map each unique name to its project number on this computer
+        const names = (await vp.query("SELECT WBS1 AS k, Name AS n FROM dbo.PR WHERE WBS2 = '' AND WBS3 = '' AND Status = 'A' AND WBS1 NOT LIKE '[A-Za-z]%'", { rowLimit: 20000 })).rows;
+        const count = new Map(); names.forEach(r => count.set(String(r.n).trim(), (count.get(String(r.n).trim()) || 0) + 1));
+        const toNo = new Map(names.filter(r => count.get(String(r.n).trim()) === 1).map(r => [String(r.n).trim(), String(r.k).trim()]));
+        ref = ref.filter(r => toNo.has(String(r.project).trim())).map(r => ({ ...r, project: toNo.get(String(r.project).trim()) }));
+      }
       const want = new Map(ref.map(r => [r.project, r]));
       const keys = [...want.keys()].filter(k => /^[A-Za-z0-9._-]{1,30}$/.test(k));
       const inList = keys.map(k => `'${k}'`).join(', ');
