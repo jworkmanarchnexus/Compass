@@ -146,3 +146,7 @@
 
 - **Revenue with no market sector stays in an "Unassigned" bucket, as Vantagepoint does** (`bd.noSector` = `keep`, now the default). It is no longer moved by hand into the nearest sector and does not block publishing. `ask` and `other` remain as settings. A project with no PIC already showed in an Unassigned PIC row.
 - **MWIP and the contracted forecast are taken live on the day the report is published** (no month-end lock). A published run is already locked in Compass, so the figures stay as they were at publish; nothing more to snapshot for the BD report. The weekly Pipeline watch snapshots keep their own purpose (trends and alerts).
+
+## 2026-10-17: the contract amount setting is built
+
+`bd.contractAmount` (`feeConsult` default, or `feeConsultReimb`) is an Admin setting on the BD Admin screen. The share is a pure, fixture-tested function (`modules/bd/logic/architectural.js`), applied in `computeBd` when a forecast row carries gross and fees; rows with only an amount are unchanged, so the seed data and existing reports behave as before. Reports record the rule used. Older local database files get the new column added automatically on open. Why fee + consultant fees by default: a reimbursable allowance is a pass-through expense, not fee, and a back-test against Vantagepoint's own Consultants % could not decide between the two (it fits neither: `docs/FORECAST-METHOD.md`).
