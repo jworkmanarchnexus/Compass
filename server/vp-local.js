@@ -22,7 +22,7 @@ function createLocalSource() {
   return {
     name: 'local made-up data (server/db/seed)',
     /* the BD report's inputs, as of a report month: projects (principal and market sector), revenue net of consultants through the
-       billing cutoff, contracted forecast through Dec 31, and pursuits not yet contracted at face value. Money in cents. */
+       billing cutoff, contracted forecast through Dec 31, and pursuits not yet contracted, probability-weighted and before the architectural factor. Money in cents. */
     loadBd(period) {
       const projects = read('bd_projects.csv').map(p => ({ wbs1: p.WBS1, name: p.Name, principal: p.Principal, sector: p.Sector }));
       const revenue = read('bd_revenue.csv').filter(r => Number(r.Period) <= period).map(r => ({ wbs1: r.WBS1, period: Number(r.Period), amount: toCents(r.Amount) }));

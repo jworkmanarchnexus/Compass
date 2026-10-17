@@ -142,6 +142,17 @@
 - **Two stores:** knowledge (AI-facing, sanitized) and protected (raw rows, surrogate key). The tool server cannot reach the second except through the gateway.
 - **Contract-fee denominator is a named option**, not a constant, until reconciliation against Consultants % decides it (see docs/DISCOVERY-HANDOFF.md).
 
+## 2026-10-16: MWIP amount and factor (owner decision)
+
+- **One factor for the PIC and sector views**, kept as the existing effective-dated, append-only Admin setting (`bd_mwip_factor`). The workbook's 0.67 (PIC) and 0.65 (sector) are no longer both used; one number keeps the two views' firm totals equal.
+- **The factor is the architectural share (consultants removed), applied to the probability-weighted amount.** Vantagepoint's MWIP report already weights each pursuit by probability (`PR.WeightedRevenue`) and spreads it by days from start to completion with the current month reduced by elapsed days. The source supplies that; Compass multiplies by the factor. No change to the BD calculation code, only to what the source amount means (open question H4 resolved). Pursuits carry no consultant fee in Vantagepoint, so the factor cannot be derived and stays a setting.
+- **MWIP and the contracted forecast are live plan data with no history.** Month-end figures must come from a snapshot Compass takes at report time (Pipeline watch already snapshots weekly); Vantagepoint cannot reproduce a past month.
+
+## 2026-10-17: Contracted forecast and the architectural ratio
+
+- **The forecast is gross.** PMs type revenue into the plan; Compass reads the plan's period revenue entries (`PNPlannedRevenueLabor.PeriodCost`) by month. The Consultants % column in the Vantagepoint export is not used (owner).
+- **Architectural, for the BD report only:** each month's gross x (1 - consultant fees / full contract amount) per project (owner rule). **Full contract amount defaults to fee + consultant fees (no reimbursable allowance) and will be an Admin setting.** Back-checking against the export's Consultants % could not decide it: that percentage is not derived from the stored fee fields.
+- **MWIP and forecast taken live on the publish day** (see 2026-10-16); a published run keeps what it used.
 ## 2026-10-16: Unassigned revenue, and MWIP timing (owner decisions)
 
 - **Revenue with no market sector stays in an "Unassigned" bucket, as Vantagepoint does** (`bd.noSector` = `keep`, now the default). It is no longer moved by hand into the nearest sector and does not block publishing. `ask` and `other` remain as settings. A project with no PIC already showed in an Unassigned PIC row.

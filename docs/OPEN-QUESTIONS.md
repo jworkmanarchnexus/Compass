@@ -24,8 +24,10 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 |---|---|---|---|
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |
-| H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Built as raw, weighted by the factor when the report is built** (set the factor to 1 if the source already weights) | `docs/SPEC-bd.md` section 4 |
-| H6 | Month-end lock for MWIP and the forecast? | **Resolved by Josh, 2026-10-16: no. Take the latest data on the day the report is published; the published run keeps it** | `docs/DECISIONS.md` |
+| H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Resolved by Josh, 2026-10-16: the source supplies Vantagepoint's probability-weighted fee, spread by days (`docs/MWIP-METHOD.md`), and Compass applies ONE factor (the architectural share, consultants removed) from the existing Admin setting, to both the PIC and sector views.** The calculation is unchanged (amount x factor); only the meaning of the source amount changes from face value to probability-weighted | `docs/SPEC-bd.md` section 4 |
+| M3 | What is the "full contract amount" in the architectural ratio for the contracted forecast? | **Built as the Admin setting `bd.contractAmount`, default fee + consultant fees (no reimbursable allowance); Josh unsure, the back-test against the VP Consultants % was inconclusive (2026-10-17)** | `docs/FORECAST-METHOD.md` |
+| M1 | The BD workbook sums six months of MWIP; Compass's spec sums through Dec 31. Which? | **Resolved by Josh, 2026-10-16: through Dec 31, as Compass is built** | `docs/MWIP-METHOD.md` |
+| M2 | Month-end lock for MWIP and the forecast? | **Resolved by Josh, 2026-10-16: no. Take the latest data on the day the report is published; the published run keeps it** | `docs/DECISIONS.md` |
 | H5 | Where do utilization and net profit come from? | tiles not shown | Home's Firm snapshot |
 | H6 | Are earlier months' runs imported from the Excel workbook, or does history start at go-live? | the first run's "since last month" is blank | |
 | H8 | Fallback for projects with several overhead rates? | reported as a warning, no profit invented | `profit.js` |

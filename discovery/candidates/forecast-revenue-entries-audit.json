@@ -1,0 +1,24 @@
+{
+  "id": "forecast-revenue-entries-audit",
+  "title": "Same as forecast-revenue-entries, plus plans per project and when the entries were last changed (to explain the 9 projects that did not match)",
+  "sqlFile": "forecast-revenue-entries-audit.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "rev_oct"
+  },
+  "extraColumns": [
+    "name",
+    "rev_oct",
+    "rev_nov",
+    "rev_dec",
+    "rev_rows",
+    "rev_plans",
+    "last_mod",
+    "rows_changed_after_export"
+  ],
+  "consultantSource": "none",
+  "basis": "Owner: forecasts are typed in by PMs, not derived from hours or rates. PNPlannedRevenueLabor has 30847 rows, PeriodCost nonzero on all of them and PeriodBill zero on all of them. Live plan data: same-day only.",
+  "status": "hypothesis"
+}

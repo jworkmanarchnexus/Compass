@@ -1,0 +1,21 @@
+{
+  "id": "forecast-revenue-entries",
+  "title": "Contracted forecast: manually entered planned revenue by month (Oct to Dec 2026) from the plan revenue entries, per active contracted project",
+  "sqlFile": "forecast-revenue-entries.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "rev_oct"
+  },
+  "extraColumns": [
+    "name",
+    "rev_oct",
+    "rev_nov",
+    "rev_dec",
+    "rev_rows"
+  ],
+  "consultantSource": "none",
+  "basis": "Owner: forecasts are typed in by PMs, not derived from hours or rates. PNPlannedRevenueLabor has 30847 rows, PeriodCost nonzero on all of them and PeriodBill zero on all of them. Live plan data: same-day only.",
+  "status": "hypothesis"
+}

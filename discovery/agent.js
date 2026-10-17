@@ -31,7 +31,7 @@ function setup(ctx, { dictionaryDir = DEFAULT_DICTIONARY } = {}) {
   const dict = registry.importDictionary(ctx.store, dictionaryDir);
   const disc = registry.importDiscoveries(ctx.store, path.join(dictionaryDir, 'discoveries'));
   const prior = inv.seedPriorFindings(ctx.store, path.join(__dirname, 'knowledge', 'prior-findings.json'));
-  for (const m of [metrics.WHOLE_PROJECT_CONSULTANT_RATIO, metrics.OFFICE_EARNINGS_LEDGER_METHOD]) if (!metrics.get(ctx.store, m.name)) metrics.save(ctx.store, m);
+  for (const m of [metrics.WHOLE_PROJECT_CONSULTANT_RATIO, metrics.OFFICE_EARNINGS_LEDGER_METHOD, metrics.MWIP_BACKLOG_METHOD]) if (!metrics.get(ctx.store, m.name)) metrics.save(ctx.store, m);
   return { dictionary: dict, discoveryNotes: disc.length, priorFindings: prior };
 }
 
