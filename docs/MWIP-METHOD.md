@@ -20,6 +20,13 @@ MWIP (pursuits) keeps **no history** and is not tied to a reporting period: anyo
 - Only one day was validated. Repeat on another day before approving.
 - Compass must snapshot MWIP at report time (the Pipeline watch module already takes weekly snapshots); the BD report must read the snapshot.
 
+## The architectural factor (owner decision 2026-10-16: must be editable in Compass)
+
+Compass already has this as an Admin setting: `bd_mwip_factor`, effective-dated and append-only, in basis points (6700 = 0.67), seeded 0.65 from 2025-01-01 and 0.67 from 2026-01-01, entered on the BD Admin screen. Two things to settle before wiring the verified MWIP method into the BD module:
+
+1. **One factor or two.** The BD workbook uses 0.67 for the PIC view and 0.65 for the sector view; Compass has a single factor. Two factors make the firm total differ between the two views.
+2. **What it is applied to.** Vantagepoint already weights each pursuit by probability (Weighted Fee). The factor is then the architectural share (removing consultants). The BD spec currently says pursuits arrive at face value and the factor is the weighting; that must change so the factor is applied to the probability-weighted, day-spread amount from this method, or probability would be lost.
+
 ## Implementation SQL
 
 ```sql
