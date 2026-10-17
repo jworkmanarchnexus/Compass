@@ -1,0 +1,236 @@
+'use strict';
+/* Approved diagnostic operations: the default way the agent (and Claude, through the tool server) questions Vantagepoint.
+   Each operation builds a fixed statement from validated pieces: table and column names must exist in the data dictionary
+   and the table must be on the approved list; no caller text is ever pasted into SQL. Results are counts and structure only
+   and leave through the gateway. The SQL is plain and portable so tests run the very same text against synthetic data. */
+const registry = require('./registry');
+const approvals = require('./approvals');
+const { assertReadOnlySql, assertApprovedTable } = require('../server/vp/policy');
+const { describeError, scrub } = require('../server/vp/redact');
+
+const q = name => `[${name}]`;
+const from = t => `[dbo].${q(t)}`;
+const NUMERIC = /^(int|bigint|smallint|tinyint|decimal|numeric|money|smallmoney|float|real)\b/i;
+
+function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }) {
+  const table = name => assertApprovedTable(name, cfg);
+  const col = (t, c) => registry.resolveColumn(store, t, c);
+  const run = async (op, target, sql, opts) => {
+    gateway.spend(investigationId, op, target);
+    try { return (await vp.query(sql, opts)).rows; }
+    catch (e) { throw Object.assign(new Error(scrub(e.message, cfg)), { diagnosticFailed: true, state: e.state }); }
+  };
+  const num = v => Number(v);
+  const log = (op, params, outcome) => store.audit('operation', op, { params, outcome, investigationId });
+  const typeOf = (t, c) => store.knowledge.prepare('SELECT data_type FROM dict_columns WHERE tbl = ? AND col = ?').get(t, c)?.data_type || '';
+
+  const ops = {
+    async tablePopulation({ table: t }) {
+      const T = table(t);
+      if (!registry.describeTable(store, T)) throw new Error('registry: unknown table');
+      const [r] = await run('tablePopulation', T, `SELECT COUNT(*) AS n FROM ${from(T)}`);
+      const out = { table: T, rowCount: num(r.n) };
+      log('tablePopulation', { table: T }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    async columnPopulation({ table: t, column }) {
+      const T = table(t), { column: C } = col(T, column), type = typeOf(T, C);
+      const nonzero = NUMERIC.test(type) ? `SUM(CASE WHEN ${q(C)} IS NOT NULL AND ${q(C)} <> 0 THEN 1 ELSE 0 END)` : `SUM(CASE WHEN ${q(C)} IS NOT NULL AND ${q(C)} <> '' THEN 1 ELSE 0 END)`;
+      const [r] = await run('columnPopulation', `${T}.${C}`, `SELECT COUNT(*) AS total, COUNT(${q(C)}) AS non_null, ${nonzero} AS nonzero, COUNT(DISTINCT ${q(C)}) AS distinct_n FROM ${from(T)}`);
+      const out = { table: T, column: C, valueKind: NUMERIC.test(type) ? 'numeric' : 'text', totalRows: num(r.total), nonNullCount: num(r.non_null), nonzeroCount: num(r.nonzero), distinctCount: num(r.distinct_n) };
+      log('columnPopulation', { table: T, column: C }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* is the table current, and which accounting periods does it cover? Period columns are YYYYMM integers, not money. */
+    async periodCoverage({ table: t, column }) {
+      const T = table(t), { column: C } = col(T, column);
+      if (!/period/i.test(C)) throw new Error('operation: periodCoverage needs a period column');
+      const [r] = await run('periodCoverage', `${T}.${C}`, `SELECT MIN(${q(C)}) AS min_p, MAX(${q(C)}) AS max_p, COUNT(DISTINCT ${q(C)}) AS periods FROM ${from(T)}`);
+      const out = { table: T, column: C, minPeriod: num(r.min_p), maxPeriod: num(r.max_p), distinctPeriods: num(r.periods) };
+      log('periodCoverage', { table: T, column: C }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* what happens when A is joined to B on these columns: unmatched rows, duplicate keys on B, fan-out (rows after the join) */
+    async joinCardinality({ leftTable, leftColumns, rightTable, rightColumns }) {
+      if (!Array.isArray(leftColumns) || leftColumns.length === 0 || leftColumns.length !== rightColumns?.length || leftColumns.length > 6) throw new Error('operation: column lists must be the same length (1 to 6)');
+      const L = table(leftTable), R = table(rightTable);
+      const lc = leftColumns.map(c => col(L, c).column), rc = rightColumns.map(c => col(R, c).column);
+      const on = lc.map((c, i) => `l.${q(c)} = r.${q(rc[i])}`).join(' AND ');
+      const grp = rc.map(q).join(', ');
+      const [r] = await run('joinCardinality', `${L}>${R}`,
+        `SELECT (SELECT COUNT(*) FROM ${from(L)}) AS left_rows, ` +
+        `(SELECT COUNT(*) FROM ${from(L)} l WHERE NOT EXISTS (SELECT 1 FROM ${from(R)} r WHERE ${on})) AS left_unmatched, ` +
+        `(SELECT COUNT(*) FROM ${from(L)} l JOIN ${from(R)} r ON ${on}) AS joined_rows, ` +
+        `(SELECT COUNT(*) FROM (SELECT 1 AS x FROM ${from(R)} GROUP BY ${grp} HAVING COUNT(*) > 1) d) AS right_duplicate_keys, ` +
+        `(SELECT MAX(c) FROM (SELECT COUNT(*) AS c FROM ${from(R)} GROUP BY ${grp}) g) AS max_per_key`);
+      const leftRows = num(r.left_rows), joined = num(r.joined_rows), unmatched = num(r.left_unmatched);
+      const out = {
+        leftTable: L, rightTable: R, leftColumns: lc, rightColumns: rc,
+        leftRows, leftUnmatched: gateway.cell(unmatched), joinedRows: joined, rightDuplicateKeys: gateway.cell(num(r.right_duplicate_keys)), maxPerKey: num(r.max_per_key),
+        // fan-out is what double-counts money: joined rows beyond the matched left rows
+        fanOutRows: Math.max(0, joined - (leftRows - unmatched)),
+        verdict: joined - (leftRows - unmatched) > 0 ? 'many-to-one violated: the join multiplies left rows' : unmatched > 0 ? 'unique on the right, some left rows unmatched' : 'unique on the right, every left row matched',
+      };
+      log('joinCardinality', { L, R, lc, rc }, out.verdict); return gateway.release(out, cfg);
+    },
+
+    async duplicateCheck({ table: t, columns }) {
+      if (!Array.isArray(columns) || columns.length === 0 || columns.length > 8) throw new Error('operation: 1 to 8 columns');
+      const T = table(t), cs = columns.map(c => col(T, c).column), grp = cs.map(q).join(', ');
+      const [r] = await run('duplicateCheck', T, `SELECT COUNT(*) AS total, (SELECT COUNT(*) FROM (SELECT 1 AS x FROM ${from(T)} GROUP BY ${grp}) g) AS distinct_keys, (SELECT COUNT(*) FROM (SELECT 1 AS x FROM ${from(T)} GROUP BY ${grp} HAVING COUNT(*) > 1) d) AS duplicate_keys FROM ${from(T)}`);
+      const out = { table: T, columns: cs, totalRows: num(r.total), distinctKeys: num(r.distinct_keys), duplicateKeys: gateway.cell(num(r.duplicate_keys)), unique: num(r.duplicate_keys) === 0 };
+      log('duplicateCheck', { T, cs }, out.unique ? 'unique' : 'duplicates'); return gateway.release(out, cfg);
+    },
+
+    /* Why might ledger revenue not equal a report? Counts only: projects the join would drop, projects with no known principal or
+       type name, and rows that fall in or out of the period depending on posting period versus transaction date. */
+    async grossGapChecks({ period }) {
+      if (!/^\d{6}$/.test(String(period))) throw new Error('operation: period must be YYYYMM');
+      const y = String(period).slice(0, 4), m = Number(String(period).slice(4)), ys = `${y}01`;
+      if (m < 1 || m > 12) throw new Error('operation: month out of range');
+      const next = m === 12 ? `${Number(y) + 1}0101` : `${y}${String(m + 1).padStart(2, '0')}01`, start = `${y}0101`;
+      const rev = `SELECT WBS1 FROM dbo.LedgerAR WHERE TransType = 'IN' AND Period BETWEEN ${ys} AND ${period} GROUP BY WBS1`;
+      const parent = `SELECT 1 FROM dbo.PR p WHERE p.WBS1 = g.WBS1 AND p.WBS2 = '' AND p.WBS3 = ''`;
+      const withP = `FROM (${rev}) g JOIN dbo.PR p ON p.WBS1 = g.WBS1 AND p.WBS2 = '' AND p.WBS3 = ''`;
+      const [r] = await run('grossGapChecks', String(period),
+        `SELECT (SELECT COUNT(*) FROM (${rev}) z) AS a, ` +
+        `(SELECT COUNT(*) FROM (${rev}) g WHERE NOT EXISTS (${parent})) AS b, ` +
+        `(SELECT COUNT(*) FROM (${rev}) g WHERE NOT EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = g.WBS1)) AS b2, ` +
+        `(SELECT COUNT(*) FROM (${rev}) g WHERE NOT EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = g.WBS1) AND EXISTS (SELECT 1 FROM dbo.PR p WHERE UPPER(LTRIM(RTRIM(p.WBS1))) = UPPER(LTRIM(RTRIM(g.WBS1))))) AS b3, ` +
+        `(SELECT COUNT(*) FROM (${rev}) g WHERE NOT EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = g.WBS1) AND EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 LIKE g.WBS1 + '%')) AS b4, ` +
+        `(SELECT COUNT(*) ${withP} WHERE p.Principal IS NULL OR p.Principal = '') AS c, ` +
+        `(SELECT COUNT(*) ${withP} WHERE p.Principal IS NOT NULL AND p.Principal <> '' AND NOT EXISTS (SELECT 1 FROM dbo.EMMain e WHERE e.Employee = p.Principal)) AS d, ` +
+        `(SELECT COUNT(*) ${withP} WHERE NOT EXISTS (SELECT 1 FROM dbo.CFGProjectTypeDescriptions t WHERE t.Code = p.ProjectType)) AS e, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE TransType = 'IN' AND Period BETWEEN ${ys} AND ${period}) AS f, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE TransType = 'IN' AND (Period < ${ys} OR Period > ${period}) AND TransDate >= '${start}' AND TransDate < '${next}') AS g2, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE TransType = 'IN' AND Period BETWEEN ${ys} AND ${period} AND (TransDate < '${start}' OR TransDate >= '${next}')) AS h`);
+      const out = { period: String(period), projectsWithInvoicesCount: num(r.a), projectsWithoutParentCount: gateway.cell(num(r.b)), projectsWithoutAnyProjectRowCount: gateway.cell(num(r.b2)), unmatchedButMatchAfterTrimAndCaseCount: gateway.cell(num(r.b3)), unmatchedButMatchAsPrefixCount: gateway.cell(num(r.b4)), projectsWithoutPrincipalCount: gateway.cell(num(r.c)),
+        projectsPrincipalNotInEmployeesCount: gateway.cell(num(r.d)), projectsWithoutTypeNameCount: gateway.cell(num(r.e)), invoiceRowsInPeriodCount: num(r.f),
+        invoiceRowsDateInRangePeriodOutsideCount: gateway.cell(num(r.g2)), invoiceRowsPeriodInRangeDateOutsideCount: gateway.cell(num(r.h)) };
+      log('grossGapChecks', { period }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* Did invoice postings made after a date change the answer? Counts of posted-in-range invoice rows whose posting run happened
+       on or after cutoffDate (YYYYMMDD), and the projects they touch. Explains small differences against a report run earlier. */
+    async latePostingsCheck({ period, cutoffDate }) {
+      if (!/^\d{6}$/.test(String(period)) || !/^\d{8}$/.test(String(cutoffDate))) throw new Error('operation: period YYYYMM and cutoffDate YYYYMMDD');
+      const ys = `${String(period).slice(0, 4)}01`;
+      const late = `EXISTS (SELECT 1 FROM dbo.CFGPostControl pc WHERE pc.Period = l.Period AND pc.PostSeq = l.PostSeq AND pc.PostDate >= '${cutoffDate}')`;
+      const base = `FROM dbo.LedgerAR l WHERE l.TransType = 'IN' AND l.Period BETWEEN ${ys} AND ${period}`;
+      const [r] = await run('latePostingsCheck', `${period}:${cutoffDate}`,
+        `SELECT (SELECT COUNT(*) ${base} AND ${late}) AS a, (SELECT COUNT(*) FROM (SELECT l.WBS1 ${base} AND ${late} GROUP BY l.WBS1) z) AS b, ` +
+        `(SELECT COUNT(*) ${base} AND NOT EXISTS (SELECT 1 FROM dbo.CFGPostControl pc WHERE pc.Period = l.Period AND pc.PostSeq = l.PostSeq)) AS c`);
+      const out = { period: String(period), cutoffDate: String(cutoffDate), invoiceRowsPostedOnOrAfterCount: gateway.cell(num(r.a)), projectsTouchedCount: gateway.cell(num(r.b)), invoiceRowsWithNoPostingRecordCount: gateway.cell(num(r.c)) };
+      log('latePostingsCheck', { period, cutoffDate }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* How are rows spread across a short code column (transaction type, status, section)? Only columns of code size (1 to 3
+       characters, or small integers) and at most 25 distinct codes: such values are categories, never names or identifiers. */
+    async codeCounts({ table: t, column, fromPeriod = null, toPeriod = null, onlyColumn = null, onlyEquals = null }) {
+      const T = table(t), { column: C } = col(T, column), type = typeOf(T, C);
+      if (!/^(n?var)?char\((1|2|3)\)$|^(small|tiny)int$/i.test(type)) throw new Error('operation: codeCounts is only for short code columns');
+      let where = '';
+      if (fromPeriod !== null || toPeriod !== null) {
+        if (!/^\d{6}$/.test(String(fromPeriod)) || !/^\d{6}$/.test(String(toPeriod))) throw new Error('operation: periods are YYYYMM');
+        if (!store.knowledge.prepare("SELECT 1 FROM dict_columns WHERE tbl = ? AND col = 'Period'").get(T)) throw new Error('operation: that table has no Period column');
+        where = ` WHERE [Period] BETWEEN ${fromPeriod} AND ${toPeriod}`;
+      }
+      if (onlyColumn !== null) { // optional second filter, itself a short code column: e.g. only TransType = 'IN'
+        const { column: F } = col(T, onlyColumn);
+        if (!/^(n?var)?char\((1|2|3)\)$|^(small|tiny)int$/i.test(typeOf(T, F)) || !/^[A-Za-z0-9]{1,3}$/.test(String(onlyEquals))) throw new Error('operation: the filter must be a short code column and a short code');
+        where += `${where ? ' AND' : ' WHERE'} ${q(F)} = '${String(onlyEquals)}'`;
+      }
+      const rows = await run('codeCounts', `${T}.${C}|${onlyColumn}=${onlyEquals}`, `SELECT ${q(C)} AS code, COUNT(*) AS n FROM ${from(T)}${where} GROUP BY ${q(C)}`);
+      if (rows.length > 25) throw new Error('operation: too many distinct codes for a category column');
+      const out = { table: T, column: C, codes: rows.map(r => ({ code: r.code === null ? '(null)' : String(r.code).trim(), rowCount: gateway.cell(num(r.n)) })).sort((a, b) => String(a.code).localeCompare(String(b.code))) };
+      log('codeCounts', { T, C, fromPeriod, toPeriod }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* One project the reconciliation flagged, named only by its surrogate id. The real number is resolved here on this computer
+       (never printed) and used for fixed counts of how its invoice rows are built: automatic entries, retainage, credits, phases,
+       rows tied to it from another project, rows whose date and period disagree. Counts are exact here: one project is already
+       anonymous, and small counts are the whole point. */
+    async projectProfile({ projectId, period }) {
+      if (!/^\d{6}$/.test(String(period))) throw new Error('operation: period must be YYYYMM');
+      const latest = store.raw.prepare('SELECT data FROM candidate_rows ORDER BY rowid DESC LIMIT 1').get();
+      const candidates = latest ? JSON.parse(latest.data).map(r => r.project) : [];
+      const wbs1 = gateway.reverseLocal('project', projectId, candidates);
+      if (!wbs1 || !/^[A-Za-z0-9._-]{1,30}$/.test(wbs1)) throw new Error('operation: that project id is not in the latest run');
+      const y = String(period).slice(0, 4), m = Number(String(period).slice(4)), ys = `${y}01`, start = `${y}0101`;
+      const next = m === 12 ? `${Number(y) + 1}0101` : `${y}${String(m + 1).padStart(2, '0')}01`;
+      const IN = `FROM dbo.LedgerAR WHERE WBS1 = '${wbs1}' AND TransType = 'IN' AND Period BETWEEN ${ys} AND ${period}`;
+      const [r] = await run('projectProfile', projectId,
+        `SELECT (SELECT COUNT(*) ${IN}) AS a, (SELECT COUNT(*) ${IN} AND AutoEntry = 'Y') AS b, (SELECT COUNT(*) ${IN} AND SubType = 'R') AS c, ` +
+        `(SELECT COUNT(*) ${IN} AND Amount > 0) AS d, (SELECT COUNT(*) ${IN} AND WBS2 <> '') AS e, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE TransType = 'IN' AND Period BETWEEN ${ys} AND ${period} AND WBS1 <> '${wbs1}' AND (LinkWBS1 = '${wbs1}' OR XferWBS1 = '${wbs1}' OR BilledWBS1 = '${wbs1}')) AS f, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE WBS1 = '${wbs1}' AND TransType = 'IN' AND (Period < ${ys} OR Period > ${period}) AND TransDate >= '${start}' AND TransDate < '${next}') AS g2, ` +
+        `(SELECT COUNT(*) ${IN} AND (TransDate < '${start}' OR TransDate >= '${next}')) AS h, ` +
+        `(SELECT COUNT(*) FROM dbo.PR WHERE WBS1 = '${wbs1}') AS i, (SELECT COUNT(*) FROM dbo.PR WHERE WBS1 = '${wbs1}' AND WBS2 <> '') AS j, ` +
+        `(SELECT COUNT(*) FROM dbo.LedgerAR WHERE WBS1 = '${wbs1}' AND TransType = 'IN' AND Period > ${period}) AS k`);
+      const out = { projectId, period: String(period), invoiceRowsInPeriodCount: num(r.a), automaticEntryRowsCount: num(r.b), retainageRowsCount: num(r.c), creditRowsCount: num(r.d),
+        rowsOnPhaseLevelCount: num(r.e), rowsLinkedFromOtherProjectCount: num(r.f), dateInRangePeriodOutsideCount: num(r.g2), periodInRangeDateOutsideCount: num(r.h),
+        projectRecordRowsCount: num(r.i), projectPhaseRecordRowsCount: num(r.j), invoiceRowsLaterPeriodCount: num(r.k) };
+      log('projectProfile', { projectId, period }, 'ok'); return gateway.release(out, cfg);
+    },
+
+    /* Projects whose market sector in the latest run differs from the reference's grouping: how many, and what is true of them in
+       Vantagepoint (does the reference's sector appear on a phase row, was the parent record changed after the period, is its type blank).
+       The project numbers and sector names are used only to build the statement here and are never returned; counts only. */
+    async sectorMismatchChecks({ referenceId, period, sheet = 'R_M' }) {
+      if (!/^\d{6}$/.test(String(period))) throw new Error('operation: period must be YYYYMM');
+      const refs = require('./reference-library');
+      const latest = store.raw.prepare('SELECT data FROM candidate_rows ORDER BY rowid DESC LIMIT 1').get();
+      if (!latest) throw new Error('operation: no candidate run yet');
+      const candSector = new Map(JSON.parse(latest.data).map(r => [r.project, String(r.sector || '').trim()]));
+      const ref = refs.readEarnings(store, referenceId, { sheet, groupPrefix: 'Project Type:' });
+      if (!ref.projects.length) throw new Error('operation: that reference has no project rows');
+      const diff = ref.projects.filter(p => candSector.has(p.project) && candSector.get(p.project).toLowerCase() !== p.group.toLowerCase());
+      const ok = diff.filter(d => /^\d{7}\.\d{2}$/.test(d.project) && /^[A-Za-z0-9 &,.'\/()-]{1,60}$/.test(d.group));
+      const base = { period: String(period), projectsComparedCount: ref.projects.length, projectsInDifferentSectorCount: diff.length };
+      if (!ok.length) return gateway.release({ ...base, referenceSectorOnPhaseRowCount: 0, referenceSectorOnParentCount: 0, parentChangedAfterPeriodCount: 0, parentTypeBlankCount: 0, allComparedParentsChangedAfterPeriodCount: 0 }, cfg);
+      const allVals = ref.projects.filter(x => /^\d{7}\.\d{2}$/.test(x.project)).map(x => `('${x.project}')`).join(', ');
+      const vals = ok.map(d => `('${d.project}', '${d.group.replace(/'/g, "''")}')`).join(', ');
+      const V = `(VALUES ${vals}) AS v(w, l)`;
+      const after = `${String(period).slice(0, 4)}${String(Number(String(period).slice(4)) + 1).padStart(2, '0')}01`;
+      const nextMonth = Number(String(period).slice(4)) === 12 ? `${Number(String(period).slice(0, 4)) + 1}0101` : after;
+      const [r] = await run('sectorMismatchChecks', String(referenceId),
+        `SELECT (SELECT COUNT(*) FROM ${V} WHERE EXISTS (SELECT 1 FROM dbo.PR p JOIN dbo.CFGProjectTypeDescriptions t ON t.Code = p.ProjectType WHERE p.WBS1 = v.w AND p.WBS2 <> '' AND t.Description = v.l)) AS a, ` +
+        `(SELECT COUNT(*) FROM ${V} WHERE EXISTS (SELECT 1 FROM dbo.PR p JOIN dbo.CFGProjectTypeDescriptions t ON t.Code = p.ProjectType WHERE p.WBS1 = v.w AND p.WBS2 = '' AND p.WBS3 = '' AND t.Description = v.l)) AS b, ` +
+        `(SELECT COUNT(*) FROM ${V} WHERE EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = v.w AND p.WBS2 = '' AND p.WBS3 = '' AND p.ModDate >= '${nextMonth}')) AS c, ` +
+        `(SELECT COUNT(*) FROM ${V} WHERE EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = v.w AND p.WBS2 = '' AND p.WBS3 = '' AND (p.ProjectType IS NULL OR p.ProjectType = ''))) AS d, ` +
+        `(SELECT COUNT(*) FROM (VALUES ${allVals}) AS u(w) WHERE EXISTS (SELECT 1 FROM dbo.PR p WHERE p.WBS1 = u.w AND p.WBS2 = '' AND p.WBS3 = '' AND p.ModDate >= '${nextMonth}')) AS e`);
+      log('sectorMismatchChecks', { referenceId, period }, 'ok');
+      return gateway.release({ ...base, referenceSectorOnPhaseRowCount: num(r.a), referenceSectorOnParentCount: num(r.b), parentChangedAfterPeriodCount: num(r.c), parentTypeBlankCount: num(r.d), allComparedParentsChangedAfterPeriodCount: num(r.e) }, cfg);
+    },
+
+    /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
+       (column names, row count) unless the approval was scoped to release values, which is then single-use. */
+    proposeSql({ sql, why, willDisclose = 'column names and row count only', release = null, maxRows = null }) {
+      assertReadOnlySql(sql);
+      const tables = [...new Set([...String(sql).matchAll(/\b(?:FROM|JOIN)\s+(?:\[?dbo\]?\.)?\[?([A-Za-z_][A-Za-z0-9_]*)\]?/gi)].map(m => m[1]))];
+      const unknown = tables.filter(t => !store.knowledge.prepare('SELECT 1 FROM dict_tables WHERE lower(name) = lower(?)').get(t));
+      const id = approvals.request(store, { kind: 'sql', description: String(why || '').slice(0, 300), sql, scope: { tables, unknownTables: unknown, willDisclose, ...(release === 'values' ? { release: 'values', maxRows: Math.min(Number(maxRows) || 1, 20) } : {}) }, investigationId });
+      return gateway.release({ approvalId: id, status: 'pending', tables, unknownTables: unknown, message: 'Waiting for the owner to review and approve this exact statement.' }, cfg);
+    },
+
+    async runApprovedSql({ approvalId }) {
+      const a = approvals.require(store, approvalId, {});
+      if (a.kind !== 'sql') throw new Error('approvals: not an SQL approval');
+      approvals.require(store, approvalId, { sql: a.sql_text });
+      const text = assertReadOnlySql(a.sql_text);
+      gateway.spend(investigationId, 'runApprovedSql', approvalId);
+      let res;
+      try { res = await vp.query(text); }
+      catch (e) { throw Object.assign(new Error(scrub(e.message, cfg)), { diagnosticFailed: true }); }
+      const columns = res.rows[0] ? Object.keys(res.rows[0]) : [];
+      if (a.scope.release === 'values') {
+        approvals.require(store, approvalId, { consume: true });
+        return gateway.releaseApproved(approvalId, { columns, rows: res.rows.slice(0, a.scope.maxRows || 20), truncated: res.truncated });
+      }
+      return gateway.release({ columns, rowCount: res.rows.length, truncated: res.truncated }, cfg);
+    },
+  };
+  return ops;
+}
+
+module.exports = { createOperations };

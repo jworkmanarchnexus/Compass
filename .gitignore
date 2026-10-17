@@ -6,3 +6,10 @@ Thumbs.db
 *.log
 server/db/compass.sqlite*
 outbox/
+
+# Vantagepoint connection: credentials and findings stay local
+.env.vp
+vp-findings/
+
+# Discovery agent: local stores, originals and raw reference rows never leave this computer
+discovery/data/

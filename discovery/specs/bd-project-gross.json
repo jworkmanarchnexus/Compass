@@ -1,0 +1,46 @@
+{
+  "id": "bd-project-gross",
+  "title": "Gross billed by project: native VP export against the ledger candidate",
+  "confirmed": false,
+  "confirmNote": "Layout read from the file: header row 0, project number in the second column (blank header, addressed as @1), 'Year-to-Date Total Billed' in the third. Each row is labelled for the period 7/1/2026 - 7/31/2026.",
+  "tolerance": {
+    "absolute": "0.01",
+    "cumulative": "0.05"
+  },
+  "comparisons": [
+    {
+      "name": "gross-by-project",
+      "candidateField": "gross",
+      "dataset": {
+        "sheet": "LISA-Project Improvement Plans",
+        "headerRow": 0,
+        "columns": {
+          "project": "@1",
+          "amount": "Year-to-Date Total Billed"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "requireNumeric": [
+          "amount"
+        ]
+      },
+      "levels": [
+        {
+          "name": "gross firm",
+          "dims": []
+        },
+        {
+          "name": "gross by project",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Reference lists project numbers and total billed only."
+  ]
+}

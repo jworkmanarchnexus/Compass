@@ -1,0 +1,21 @@
+{
+  "id": "gross-variants",
+  "title": "Gross revenue under five rules for which invoice rows count (all; without automatic entries; without retainage; without both; only rows with an invoice section)",
+  "sqlFile": "gross-variants.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "gross_all"
+  },
+  "grossVariants": {
+    "all": "gross_all",
+    "noAuto": "gross_no_auto",
+    "noRetainage": "gross_no_retainage",
+    "neither": "gross_neither",
+    "sectionedOnly": "gross_sectioned_only"
+  },
+  "consultantSource": "none",
+  "basis": "Of 1231 invoice rows YTD July, 73 are automatic entries with no invoice section and 5 are retainage lines. One run compares every rule with the Total Billed column.",
+  "status": "hypothesis"
+}

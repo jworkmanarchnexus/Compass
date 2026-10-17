@@ -1,0 +1,47 @@
+{
+  "id": "bd-june-jtd",
+  "title": "Billed per project, job to date: native VP 'How Is My Project Doing' export against the ledger",
+  "confirmed": false,
+  "confirmNote": "Project number is taken from inside the 'Header Field 1' text; 'Header Field 12' holds the PIC. The export lists 133 projects only, so the candidate is limited to those projects.",
+  "tolerance": {
+    "absolute": "0.01",
+    "cumulative": "0.05"
+  },
+  "comparisons": [
+    {
+      "name": "billed-by-project",
+      "candidateField": "gross",
+      "dataset": {
+        "sheet": "LISA-How Is My Project Doing",
+        "headerRow": 0,
+        "columns": {
+          "project": "Header Field 1",
+          "amount": "JTD Amount"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "requireNumeric": [
+          "amount"
+        ],
+        "extract": {
+          "project": "\\d{7}\\.\\d{2}"
+        },
+        "restrictCandidateToReference": true
+      },
+      "levels": [
+        {
+          "name": "billed total of listed projects",
+          "dims": []
+        },
+        {
+          "name": "billed by project",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ]
+    }
+  ]
+}

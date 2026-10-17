@@ -1,0 +1,19 @@
+{
+  "id": "consultant-ledger-t68",
+  "title": "Gross = -SUM(LedgerAR IN); consultant = SUM of AP, EX and Misc ledger amounts on account types 6 and 8 (Reimbursable Consultant and Direct Consultant), year to date, per parent project",
+  "sqlFile": "consultant-ledger-t68.sql",
+  "params": {
+    "period": "YYYYMM",
+    "yearStart": "derived"
+  },
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "gross",
+    "consultantLedger": "consultant_ledger"
+  },
+  "consultantSource": "ledger",
+  "basis": "Hypothesis: the export's Direct Consultant comes from consultant ledger entries, because the PR fee-ratio did not reproduce it (mixed direction, most PICs over 1%). Sign convention and account-type scope are assumptions to be tested.",
+  "status": "hypothesis"
+}
