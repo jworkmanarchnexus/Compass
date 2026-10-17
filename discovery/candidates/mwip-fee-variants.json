@@ -1,0 +1,25 @@
+{
+  "id": "mwip-fee-variants",
+  "title": "MWIP pursuits: estimated fee under several definitions (project record, plan tasks at each level, plan header)",
+  "sqlFile": "mwip-fee-variants.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "pr_total"
+  },
+  "grossVariants": {
+    "prFee": "pr_fee",
+    "prConsult": "pr_consult",
+    "prFeePlusConsult": "pr_fee_consult",
+    "prTotal": "pr_total",
+    "taskAll": "task_all",
+    "taskParentLevel": "task_parent_level",
+    "taskPhaseLevel": "task_phase_level",
+    "taskCompensationOnly": "task_compensation_all",
+    "planLevel": "plan_level"
+  },
+  "consultantSource": "none",
+  "basis": "Live plan data: only a same-day export can validate this. Tries each definition of Est. Fee against the report.",
+  "status": "hypothesis"
+}
