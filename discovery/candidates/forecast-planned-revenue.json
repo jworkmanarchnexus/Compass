@@ -1,0 +1,32 @@
+{
+  "id": "forecast-planned-revenue",
+  "title": "Contracted forecast: planned billing by month (Oct to Dec 2026) from the time-phased plan tables, per active contracted project",
+  "sqlFile": "forecast-planned-revenue.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "rl_oct"
+  },
+  "extraColumns": [
+    "name",
+    "pr_fee",
+    "pr_consult",
+    "pr_reimb",
+    "rl_oct",
+    "rl_nov",
+    "rl_dec",
+    "lab_oct",
+    "lab_nov",
+    "lab_dec",
+    "con_oct",
+    "con_nov",
+    "con_dec",
+    "exp_oct",
+    "exp_nov",
+    "exp_dec"
+  ],
+  "consultantSource": "none",
+  "basis": "PeriodRev is zero everywhere; PeriodBill in the planned tables is the time-phased amount. Live plan data: same-day only.",
+  "status": "hypothesis"
+}
