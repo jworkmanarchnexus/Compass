@@ -49,7 +49,9 @@ async function fetchCandidateRows({ store, cfg, vp }, approvalId, def, grossVari
   if (grossVariant) { if (!def.grossVariants?.[grossVariant]) throw new Error('candidate: unknown gross variant'); m.gross = def.grossVariants[grossVariant]; }
   const dec = v => (v === null || v === undefined ? null : Dec.parse(typeof v === 'bigint' ? v.toString() : v));
   return res.rows.map(r => ({ project: String(r[m.project]).trim(), pic: String(r[m.pic] ?? '').trim(), sector: String(r[m.sector] ?? '').trim(),
-    gross: dec(r[m.gross]), fee: dec(r[m.fee]), consultFee: dec(r[m.consultFee]), reimbAllow: dec(r[m.reimbAllow]), totalContractValue: dec(r[m.totalContractValue]), consultantLedger: m.consultantLedger ? dec(r[m.consultantLedger]) : undefined }));
+    gross: dec(r[m.gross]), fee: dec(r[m.fee]), consultFee: dec(r[m.consultFee]), reimbAllow: dec(r[m.reimbAllow]), totalContractValue: dec(r[m.totalContractValue]), consultantLedger: m.consultantLedger ? dec(r[m.consultantLedger]) : undefined,
+    // short descriptive columns a candidate may carry for local analysis (stage, status, probability); never returned to Claude
+    extra: Object.fromEntries((def.extraColumns || []).map(k => [k, r[k] === null || r[k] === undefined ? null : String(r[k]).trim()])) }));
 }
 
 /* datasets for a run: pure, so tests can feed synthetic rows. candidateRows = output of fetchCandidateRows */

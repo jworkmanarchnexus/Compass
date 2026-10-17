@@ -1,0 +1,44 @@
+{
+  "id": "mwip-estfee",
+  "title": "MWIP Marketing Master export: Est. Fee per pursuit against the plan data, same day",
+  "confirmed": false,
+  "confirmNote": "Layout read from the export: one row per pursuit, header row 0, project number in 'Project Number', fee in 'Est. Fee'. Live plan data: valid only when the export and the query are the same day.",
+  "tolerance": {
+    "absolute": "0.01",
+    "cumulative": "0.05"
+  },
+  "comparisons": [
+    {
+      "name": "estfee-by-pursuit",
+      "candidateField": "gross",
+      "dataset": {
+        "sheet": "VP-MWIP Marketing Master",
+        "headerRow": 0,
+        "columns": {
+          "project": "Project Number",
+          "amount": "Est. Fee"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "requireNumeric": [
+          "amount"
+        ],
+        "restrictCandidateToReference": true
+      },
+      "levels": [
+        {
+          "name": "est fee total of listed pursuits",
+          "dims": []
+        },
+        {
+          "name": "est fee by pursuit",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ]
+    }
+  ]
+}

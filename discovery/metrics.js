@@ -107,4 +107,20 @@ const OFFICE_EARNINGS_LEDGER_METHOD = {
   status: 'draft',
 };
 
-module.exports = { OFFICE_EARNINGS_LEDGER_METHOD, CONTRACT_FEE_DEFINITIONS, architecturalRevenue, save, get, markReconciled, approve, WHOLE_PROJECT_CONSULTANT_RATIO };
+/* MWIP backlog as the VP-MWIP Marketing Master report builds it. Live plan data: reproducible only same day or from a snapshot. */
+const MWIP_BACKLOG_METHOD = {
+  name: 'mwip-backlog-method',
+  businessDefinition: 'Weighted estimated fee of active not-yet-awarded pursuits, spread by days across calendar months from the pursuit start to completion, with the report month reduced by the days already elapsed.',
+  sourceTables: ['PR', 'EMMain', 'CFGProjectTypeDescriptions'],
+  requiredFields: ['PR.WBS1, WBS2, WBS3', 'PR.Status', 'PR.Stage', 'PR.Probability', 'PR.Revenue', 'PR.WeightedRevenue', 'PR.EstStartDate', 'PR.EstCompletionDate', 'PR.Principal', 'PR.ProjectType'],
+  relationships: ['parent PR row only (WBS2 and WBS3 empty); pursuit numbers start with a letter'],
+  calculation: 'population: Status A, probability 1 to 99, Revenue not zero, stage in (001, 002, 009, 010, 011, 015); estimated fee = PR.Revenue; weighted fee = PR.WeightedRevenue; monthly = weighted fee spread by days from EstStartDate to EstCompletionDate; report month x (days in month - day + 1) / days in month; past months 0',
+  parameters: { windowMonths: 12, windowStart: 'report month', remainingOffset: 1 },
+  supportedDimensions: ['pursuit', 'pic', 'sector'], cutoffLogic: 'live data: the report date is the as-of date; no history exists',
+  classificationBasis: 'current PR.Principal and PR.ProjectType',
+  knownExclusions: ['probability 100 (3 pursuits in Negotiation at validation)', 'awarded stages 004 and 016', 'lost, cancelled and no-go stages', 'inactive and dormant projects'],
+  openQuestions: ['Validated against one same-day export only (2026-10-16); repeat on another day.', 'Month-end figures need a Compass snapshot taken at report time; Vantagepoint cannot reproduce them later.', 'The 0.67 and 0.65 factors applied by hand in the BD workbook are unverified assumptions (pursuits carry no consultant fee).'],
+  status: 'draft',
+};
+
+module.exports = { MWIP_BACKLOG_METHOD, OFFICE_EARNINGS_LEDGER_METHOD, CONTRACT_FEE_DEFINITIONS, architecturalRevenue, save, get, markReconciled, approve, WHOLE_PROJECT_CONSULTANT_RATIO };
