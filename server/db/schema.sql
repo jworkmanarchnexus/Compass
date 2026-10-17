@@ -274,7 +274,8 @@ CREATE TABLE IF NOT EXISTS bd_run_meta (
   factor_bp      INTEGER NOT NULL,
   on_pace_pct    INTEGER NOT NULL,
   on_track_pct   INTEGER NOT NULL,
-  no_sector_rule TEXT NOT NULL
+  no_sector_rule TEXT NOT NULL,
+  contract_amount_rule TEXT NOT NULL DEFAULT 'feeConsult'  -- what "full contract amount" meant for the architectural share of the forecast
 );
 -- the report's rows, frozen with the run. Percentages are not stored; they are worked out from these.
 CREATE TABLE IF NOT EXISTS bd_rows (

@@ -40,13 +40,13 @@ function compute(db, source, period, settings) {
   const data = source.loadBd(period);
   const projects = Object.fromEntries(data.projects.map(p => [p.wbs1, { pic: p.principal, sector: p.sector, name: p.name }]));
   const th = { onPace: settings['bd.onPacePct'], onTrack: settings['bd.onTrackPct'] };
-  const out = report.computeBd({ period, goals: own.goals, projects, revenue: data.revenue, forecast: data.forecast, mwip: data.mwip, factorBp: own.factorBp, thresholds: th, sectors: own.sectors, overrides: own.overrides, unknownTo: settings['bd.noSector'] === 'other' ? 'Other' : undefined });
+  const out = report.computeBd({ period, goals: own.goals, projects, revenue: data.revenue, forecast: data.forecast, mwip: data.mwip, factorBp: own.factorBp, thresholds: th, sectors: own.sectors, overrides: own.overrides, unknownTo: settings['bd.noSector'] === 'other' ? 'Other' : undefined, contractAmount: settings['bd.contractAmount'] });
   return { out, own, projects, th };
 }
 
 function fill(db, runId, period, settings, c) {
   const { out, own, projects, th } = c;
-  db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector']);
+  db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule, contract_amount_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector'], settings['bd.contractAmount']);
   const put = (scope, r, sort) => db.run('INSERT INTO bd_rows (run_id, scope, key, label, sort, goal, ytd_goal, ytd, forecast, mwip_raw, mwip, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, scope, r.key, r.label, sort, r.goal, r.ytdGoal, r.ytd, r.forecast, r.mwipRaw, r.mwip, r.total, r.status);
   put('firm', out.firm, 0);
   out.pic.forEach((r, i) => put('pic', r, i + 1));
@@ -56,6 +56,7 @@ function fill(db, runId, period, settings, c) {
   // 'keep' (the default, as Vantagepoint does it): the revenue stays in its own Unassigned row and publishing is not held up
   for (const u of out.unassignedSector) warn(settings['bd.noSector'] === 'keep' ? 'note' : 'no_sector', u.wbs1, settings['bd.noSector'] === 'keep' ? `${name(u.wbs1)}: revenue with no market sector stays in Unassigned` : `${name(u.wbs1)}: revenue with no market sector`, u.amount);
   for (const u of out.unassignedPic) warn('no_pic', u.wbs1, `${name(u.wbs1)}: no PIC in Vantagepoint`, u.amount);
+  for (const n of out.forecastNotes) warn('note', n.wbs1, n.issue === 'no-contract-fee' ? `${name(n.wbs1)}: forecast kept at its full amount (no contract fee on the project record)` : `${name(n.wbs1)}: forecast kept at its full amount (consultant fee is above the contract amount)`, n.amount);
   for (const r of out.rolled) warn('note', '', `${r.from} counted in ${r.into}`, r.ytd + r.forecast + r.mwip);
   for (const a of out.assigned) warn('note', a.wbs1, `${name(a.wbs1)}: unassigned revenue went to ${a.sector}`, a.amount);
   for (const d of out.defaulted) warn('note', d.wbs1, `${name(d.wbs1)}: revenue with no market sector went to Other`, d.amount);

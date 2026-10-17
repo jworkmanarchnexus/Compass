@@ -224,3 +224,13 @@ test('the monthly email for a BD draft says how many projects need a sector, and
     assert.ok(!mailer.sent[0].body.includes('Midvale'), 'no project names in the email');
   } finally { await t.close(); }
 });
+
+test('the contract amount rule is an Admin setting: validated, defaulted, and recorded on every report', () => withApp(async ({ api, db }) => {
+  const josh = api('j.workman');
+  assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'bd.contractAmount': 'everything' } })).status, 400);
+  const first = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
+  assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', first.run.id).r, 'feeConsult', 'the default');
+  assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'bd.contractAmount': 'feeConsultReimb' } })).status, 200);
+  const rebuilt = (await josh.post(`/api/admin/bd/runs/${first.run.id}/rebuild`)).body;
+  assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', rebuilt.run.id).r, 'feeConsultReimb', 'the report records the rule it was built with');
+}));
