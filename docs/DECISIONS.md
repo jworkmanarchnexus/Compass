@@ -134,3 +134,10 @@
 - **Export is a CSV** (opens in Excel) instead of a .xlsx, so there is no spreadsheet library to maintain (P5).
 - **Notes** (Admin, append-only) are shown only to the Admin.
 - **Found while building:** a regular expression written inside a JavaScript template literal loses its backslashes; the build scripts that write code now use the Write tool instead.
+
+## 2026-10-15: VP Discovery Agent
+- **Where:** discovery/ (dev utility, not served by the app), reusing server/vp/ for the connection. Reasoning: the existing backend has no Vantagepoint connection; the agent and the future nightly pull need the same read-only path, so it lives once.
+- **One new dependency, odbc:** reuses the Windows ODBC data source (the one DBeaver uses) so no server name, password flow or driver setup is duplicated. The Windows SQL Server ODBC driver is installed.
+- **No spreadsheet or MCP libraries:** a 150-line local xlsx reader (never runs macros or follows links) and a hand-written stdio tool server keep the dependency list at one.
+- **Two stores:** knowledge (AI-facing, sanitized) and protected (raw rows, surrogate key). The tool server cannot reach the second except through the gateway.
+- **Contract-fee denominator is a named option**, not a constant, until reconciliation against Consultants % decides it (see docs/DISCOVERY-HANDOFF.md).

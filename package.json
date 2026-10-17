@@ -3,13 +3,20 @@
   "version": "0.0.1",
   "private": true,
   "description": "Arch Nexus Compass: business intelligence and accountability portal (prototype)",
-  "engines": { "node": ">=22.5" },
+  "engines": {
+    "node": ">=22.5"
+  },
   "scripts": {
     "start": "node server/index.js",
     "seed": "node server/seed.js",
     "run-month": "node server/jobs/monthly-run.js",
     "daily": "node server/jobs/daily.js",
     "pipeline-snapshot": "node server/jobs/weekly-snapshot.js",
-    "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\""
+    "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\" \"discovery/**/*.test.js\"",
+    "vp:check": "node server/vp/check.js",
+    "discovery": "node discovery/cli.js"
+  },
+  "dependencies": {
+    "odbc": "^2.6.0"
   }
 }

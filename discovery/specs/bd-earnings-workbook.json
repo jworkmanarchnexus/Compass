@@ -1,0 +1,210 @@
+{
+  "id": "bd-earnings-workbook",
+  "title": "BD workbook Earnings exports (R_P by principal, R_M by project type), summary or detail layout",
+  "confirmed": true,
+  "confirmNote": "Reads the group totals in either layout. In the detail layout R_M also lists every project with its own numbers, which adds a project-level check for gross, consultant and architectural.",
+  "tolerance": {
+    "absolute": "0.01",
+    "cumulative": "0.05"
+  },
+  "comparisons": [
+    {
+      "name": "gross-by-pic",
+      "candidateField": "gross",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_P",
+        "groupPrefix": "Principal Name:",
+        "groupField": "pic",
+        "measure": "Total Billed",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "gross firm",
+          "dims": []
+        },
+        {
+          "name": "gross by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "gross-by-sector",
+      "candidateField": "gross",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Total Billed",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "gross by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "consultant-by-pic",
+      "candidateField": "consultant",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_P",
+        "groupPrefix": "Principal Name:",
+        "groupField": "pic",
+        "measure": "Direct Consultant",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "consultant firm",
+          "dims": []
+        },
+        {
+          "name": "consultant by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "consultant-by-sector",
+      "candidateField": "consultant",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Direct Consultant",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "consultant by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "architectural-by-pic",
+      "candidateField": "arch",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_P",
+        "groupPrefix": "Principal Name:",
+        "groupField": "pic",
+        "measure": "Architectural Revenue",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "architectural firm",
+          "dims": []
+        },
+        {
+          "name": "architectural by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "architectural-by-sector",
+      "candidateField": "arch",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Architectural Revenue",
+        "records": "groups"
+      },
+      "levels": [
+        {
+          "name": "architectural by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "gross-by-project",
+      "candidateField": "gross",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Total Billed",
+        "records": "projects"
+      },
+      "levels": [
+        {
+          "name": "gross by project",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ],
+      "optional": true
+    },
+    {
+      "name": "consultant-by-project",
+      "candidateField": "consultant",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Direct Consultant",
+        "records": "projects"
+      },
+      "levels": [
+        {
+          "name": "consultant by project",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ],
+      "optional": true
+    },
+    {
+      "name": "architectural-by-project",
+      "candidateField": "arch",
+      "dataset": {
+        "parser": "vp-earnings",
+        "sheet": "R_M",
+        "groupPrefix": "Project Type:",
+        "groupField": "sector",
+        "measure": "Architectural Revenue",
+        "records": "projects"
+      },
+      "levels": [
+        {
+          "name": "architectural by project",
+          "dims": [
+            "project"
+          ],
+          "naturalGrain": true
+        }
+      ],
+      "optional": true
+    }
+  ]
+}

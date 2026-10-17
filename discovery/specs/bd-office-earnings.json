@@ -1,0 +1,209 @@
+{
+  "id": "bd-office-earnings",
+  "title": "BD: Office Earnings gross and architectural revenue by PIC and market sector",
+  "confirmed": true,
+  "confirmNote": "Layout, sheet and column names confirmed by a successful run against the July 2026 workbook. Period 202607 confirmed by the owner. One reference cell (R_M, Healthcare, Architectural Revenue) was hand edited in the workbook; the owner recorded the VP value locally (not in git).",
+  "tolerance": {
+    "absolute": "0.01",
+    "cumulative": "0.05"
+  },
+  "comparisons": [
+    {
+      "name": "gross-by-pic",
+      "candidateField": "gross",
+      "dataset": {
+        "sheet": "R_P",
+        "columns": {
+          "pic": "Estimate Overhead",
+          "amount": "Total Billed"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "pic": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "gross firm",
+          "dims": []
+        },
+        {
+          "name": "gross by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "gross-by-sector",
+      "candidateField": "gross",
+      "dataset": {
+        "sheet": "R_M",
+        "columns": {
+          "sector": "Estimate Overhead",
+          "amount": "Total Billed"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "sector": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "gross by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "arch-by-pic",
+      "candidateField": "arch",
+      "dataset": {
+        "sheet": "R_P",
+        "columns": {
+          "pic": "Estimate Overhead",
+          "amount": "Architectural Revenue"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "pic": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "architectural firm",
+          "dims": []
+        },
+        {
+          "name": "architectural by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "arch-by-sector",
+      "candidateField": "arch",
+      "dataset": {
+        "sheet": "R_M",
+        "columns": {
+          "sector": "Estimate Overhead",
+          "amount": "Architectural Revenue"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "sector": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "architectural by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "consultant-by-pic",
+      "candidateField": "consultant",
+      "dataset": {
+        "sheet": "R_P",
+        "columns": {
+          "pic": "Estimate Overhead",
+          "amount": "Direct Consultant"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "pic": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "consultant firm",
+          "dims": []
+        },
+        {
+          "name": "consultant by PIC",
+          "dims": [
+            "pic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "consultant-by-sector",
+      "candidateField": "consultant",
+      "dataset": {
+        "sheet": "R_M",
+        "columns": {
+          "sector": "Estimate Overhead",
+          "amount": "Direct Consultant"
+        },
+        "numeric": [
+          "amount"
+        ],
+        "skipRowPattern": "^(ytd|final totals|total|grand total)",
+        "headerRow": 7,
+        "requireNumeric": [
+          "amount"
+        ],
+        "clean": {
+          "sector": "^(Principal Name|Project Type):\\s*"
+        }
+      },
+      "levels": [
+        {
+          "name": "consultant by sector",
+          "dims": [
+            "sector"
+          ]
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "PIC x market sector and project-level levels need a reference export at that grain; none has been identified.",
+    "Reference cutoff and period must be confirmed on import."
+  ],
+  "metric": "architectural-revenue-whole-project-ratio"
+}

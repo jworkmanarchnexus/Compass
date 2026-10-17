@@ -1,0 +1,19 @@
+{
+  "id": "consultant-ledger-t8-keep-orphans",
+  "title": "Same as consultant-ledger-t8, but projects with ledger activity and no PR row are kept in a \"(no project record)\" group instead of dropped",
+  "sqlFile": "consultant-ledger-t8-keep-orphans.sql",
+  "params": {
+    "period": "YYYYMM",
+    "yearStart": "derived"
+  },
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "gross",
+    "consultantLedger": "consultant_ledger"
+  },
+  "consultantSource": "ledger",
+  "basis": "Consultant type 8 reproduced the export exactly. This variant tests whether the small gross gap is revenue from projects that no longer have a PR row.",
+  "status": "hypothesis"
+}

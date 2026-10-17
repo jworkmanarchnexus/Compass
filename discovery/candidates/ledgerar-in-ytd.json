@@ -1,0 +1,22 @@
+{
+  "id": "ledgerar-in-ytd",
+  "title": "Gross revenue = negative sum of LedgerAR IN transactions, year to date, per parent project",
+  "sqlFile": "ledgerar-in-ytd.sql",
+  "params": {
+    "period": "YYYYMM, the report period",
+    "yearStart": "derived: January of the same year"
+  },
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "gross",
+    "fee": "fee",
+    "consultFee": "consult_fee",
+    "reimbAllow": "reimb_allow",
+    "totalContractValue": "total_contract_value"
+  },
+  "basis": "Discovery 006 (verified on one project only). Hypothesis for firm-wide gross recognized revenue; NOT verified. Invoice section F alone already failed.",
+  "status": "hypothesis",
+  "consultantSource": "fee-ratio"
+}

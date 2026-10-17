@@ -1,0 +1,34 @@
+{
+  "id": "prior-bd-revenue-2026-10",
+  "title": "BD revenue: findings carried over from the earlier SQL investigation",
+  "requirement": "Reproduce the Office Earnings gross billed amount and architectural revenue by PIC and market sector (August 2026 BD report).",
+  "evidence": [
+    { "tbl": "PR", "col": "Fee", "level": "populated", "status": "verified", "note": "5406 of 8566 parent projects have a nonzero Fee; 10746 nonzero rows overall." },
+    { "tbl": "PR", "col": "ConsultFee", "level": "populated", "status": "verified", "note": "975 of 8566 parent projects have a nonzero ConsultFee; 3484 nonzero rows overall." },
+    { "tbl": "PR", "col": "Fee", "level": "authoritative", "status": "verified", "note": "Parent Fee equals the sum of phase Fee on all 2491 projects with phases; no parent-plus-child summing." },
+    { "tbl": "PR", "col": "ConsultFee", "level": "authoritative", "status": "verified", "note": "Parent ConsultFee equals the sum of phase ConsultFee on all 2491 projects with phases." },
+    { "tbl": "PR", "col": "Revenue", "level": "populated", "status": "verified", "note": "2749 of 8566 parent projects nonzero." },
+    { "tbl": "PR", "col": "Revenue", "level": "authoritative", "status": "provisional", "note": "Not assumed authoritative: matched the phase sum on only 1102 of 2492 projects; reporting-period behavior unverified." },
+    { "tbl": "PRSummaryMain", "col": null, "level": "current", "status": "failed", "note": "70530 rows, latest period 201505; Use Summary Table is off in Office Earnings. Not a viable current source." },
+    { "tbl": "PRSummarySub", "col": null, "level": "current", "status": "failed", "note": "Same population and latest period as PRSummaryMain." },
+    { "tbl": "LedgerAR", "col": null, "level": "populated", "status": "verified", "note": "Holds 2026 invoice activity." },
+    { "tbl": "LedgerAR", "col": null, "level": "reconciled", "status": "failed", "note": "Invoice section F alone (809 rows, 115 projects) did not match the report target. Not a verified revenue source." },
+    { "tbl": "BILD", "col": null, "level": "authoritative", "status": "provisional", "note": "Billed-period activity too sparse to serve as a standalone historical revenue source." },
+    { "tbl": "BIED", "col": null, "level": "authoritative", "status": "provisional", "note": "Billed-period activity too sparse to serve as a standalone historical revenue source." },
+    { "tbl": "billInvSums", "col": null, "level": "populated", "status": "verified", "note": "92320 rows: 44282 invoice-summary (I) and 48038 posting-summary (P). The two populations must never be summed together." },
+    { "tbl": "billInvSums", "col": null, "level": "reconciled", "status": "provisional", "note": "No invoice-history revenue methodology validated yet (discovery 010 reconciled five benchmark projects only)." },
+    { "tbl": "AR", "col": null, "level": "authoritative", "status": "provisional", "note": "Of 28795 invoices, 2205 span multiple periods; invoice number alone is not a unique period key. Invoice+project comparison unfinished." }
+  ],
+  "relationships": [
+    { "leftTable": "PR", "leftColumns": ["WBS1"], "rightTable": "PR", "rightColumns": ["WBS1", "WBS2", "WBS3"], "status": "verified", "cardinality": "parent row plus phase rows", "note": "Parent contract fee and consultant fee equal the sum of the phase rows (2491 projects)." },
+    { "leftTable": "billInvSums", "leftColumns": ["Invoice", "MainWBS1", "PreInvoice"], "rightTable": "billInvMaster", "rightColumns": ["Invoice", "MainWBS1", "PreInvoice"], "status": "inferred", "cardinality": "unverified", "note": "Matched all but 22 rows per population; the 22 are one invoice spanning 14 projects. Dropping MainWBS1 creates non-unique matches." },
+    { "leftTable": "AR", "leftColumns": ["Invoice"], "rightTable": "AR", "rightColumns": ["Period"], "status": "failed", "cardinality": "one invoice to many periods in 2205 cases", "note": "Invoice alone does not determine period." }
+  ],
+  "findings": [
+    { "kind": "rejected", "subject": "LedgerAR section F alone as gross revenue", "body": { "reason": "No match to the existing report target (809 rows, 115 projects)." } },
+    { "kind": "rejected", "subject": "PRSummaryMain/PRSummarySub as current revenue source", "body": { "reason": "Stale since 201505." } },
+    { "kind": "hypothesis", "subject": "LedgerAR IN transactions, negative sum, year to date", "body": { "basis": "Discovery 006, verified on one project (WSU CAMP) only; firm-wide reconciliation not attempted." } },
+    { "kind": "hypothesis", "subject": "billInvSums ArrayType I invoice-level breakdown", "body": { "basis": "Discovery 010, five benchmark projects; section mappings not universal." } },
+    { "kind": "decision", "subject": "Whole-project consultant ratio", "body": { "rule": "Consultant ratio uses total project consultant fee over total project contract fee, applied uniformly to every phase; computed per project before roll-up.", "source": "owner" } }
+  ]
+}

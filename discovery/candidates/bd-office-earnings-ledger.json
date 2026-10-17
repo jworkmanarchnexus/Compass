@@ -1,0 +1,20 @@
+{
+  "id": "bd-office-earnings-ledger",
+  "title": "Office Earnings from the ledger: gross = -SUM(LedgerAR IN, retainage excluded); Direct Consultant = SUM(AP, EX, Misc on account type 8); architectural = gross - consultant; YTD by posting period, per parent project",
+  "sqlFile": "bd-office-earnings-ledger.sql",
+  "params": {
+    "period": "YYYYMM",
+    "yearStart": "derived"
+  },
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "gross",
+    "consultantLedger": "consultant_ledger"
+  },
+  "consultantSource": "ledger",
+  "basis": "Gross (retainage excluded) reconciled to a native VP project export and to the PIC and sector export; consultant type 8 reconciled to the Direct Consultant column. This candidate combines both.",
+  "status": "reconciled-in-parts",
+  "metric": "office-earnings-ledger-method"
+}

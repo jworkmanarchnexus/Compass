@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "compass-vp-discovery": {
+      "command": "node",
+      "args": ["discovery/cli.js", "serve"],
+      "cwd": "C:\\Users\\jworkman\\Documents\\GitHub\\Compass"
+    }
+  }
+}
