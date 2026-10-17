@@ -263,14 +263,18 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
               if (w.weighted !== undefined && w.weighted !== 0n && sum === w.weighted) wt++;
               tot++;
             }
-            if (est > 0 || wt > 0) results.push({ table: T, column: c.col, matchesEstimateCount: est, matchesWeightedCount: wt, projectsWithValueCount: tot });
+            if (est > 0 || wt > 0) results.push({ table: T, column: c.col, matchesEstimateCount: est, matchesWeightedCount: wt, projectsWithDataCount: tot });
           });
         }
       }
       results.sort((x, y) => (y.matchesEstimateCount + y.matchesWeightedCount) - (x.matchesEstimateCount + x.matchesWeightedCount));
+      const payload = { referenceProjectsCount: keys.length, tablesScannedCount: tables.length, columnsNotReadableCount: skipped, matches: results.slice(0, 15) };
+      // keep the result locally first so a refused or failed release never costs another full scan; the approval is spent only after release works
+      store.raw.prepare('INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)').run('scan:' + approvalId, JSON.stringify(payload));
+      const out = gateway.release(payload, cfg);
       approvals.require(store, approvalId, { consume: true });
       log('runColumnScan', { approvalId, tables: tables.length }, 'ok');
-      return gateway.release({ referenceProjectsCount: keys.length, tablesScannedCount: tables.length, columnsNotReadableCount: skipped, matches: results.slice(0, 15) }, cfg);
+      return out;
     },
 
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
