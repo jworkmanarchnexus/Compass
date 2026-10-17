@@ -35,3 +35,15 @@ test('credits and bad input', () => {
   assert.throws(() => spread(1n, '12/01/2026', '2026-12-31', W), /YYYY-MM-DD/);
   assert.throws(() => spread(1n, '2026-10-01', '2026-12-31', W, 'guess'), /unknown method/);
 });
+
+test('as-of decay: day 1 shows the whole month, each day removes 1/days, past months drop out', () => {
+  const month = d => spread(Dec.parse('3000'), '2026-09-01', '2026-11-30', W, 'months-even', d).get('2026-10'); // 1000 a month
+  assert.strictEqual(month('2026-10-01'), Dec.parse('1000'));
+  assert.strictEqual(month('2026-10-02'), Dec.mulDiv(Dec.parse('1000'), 30n, 31n)); // day 2 of 31 days: 30/31 left
+  assert.strictEqual(month('2026-10-16'), Dec.mulDiv(Dec.parse('1000'), 16n, 31n));
+  assert.strictEqual(month('2026-10-31'), Dec.mulDiv(Dec.parse('1000'), 1n, 31n));
+  const later = spread(Dec.parse('3000'), '2026-09-01', '2026-11-30', W, 'months-even', '2026-10-16');
+  assert.strictEqual(later.get('2026-11'), Dec.parse('1000'), 'future months are whole');
+  assert.strictEqual(spread(Dec.parse('3000'), '2026-09-01', '2026-11-30', W, 'months-even', '2026-11-05').get('2026-10'), 0n, 'a past month shows nothing');
+  assert.strictEqual(spread(Dec.parse('3000'), '2026-09-01', '2026-11-30', W, 'months-even', '2026-10-16', 0).get('2026-10'), Dec.mulDiv(Dec.parse('1000'), 15n, 31n), 'alternative: remaining after today');
+});

@@ -17,9 +17,14 @@ function monthsTouched(start, end) {
   return out;
 }
 
-function spread(amount, startIso, endIso, window, method = 'months-even') {
+/* asOf: the report date. Owner rule: on day 1 of the current month the full monthly amount shows; each later day removes 1/30 (1/days in the month)
+   until none is left at month end, so on day d the current month shows (days in month - d + 1) / days in month of its normal amount.
+   lastDayShows: the share left on the last day is 1/dim under this rule. Months before the report month are past and drop out.
+   remainingOffset lets a reference decide between 'including today' (+1, the owner's wording) and 'after today' (0). */
+function spread(amount, startIso, endIso, window, method = 'months-even', asOfIso = null, remainingOffset = 1) {
   const s = parse(startIso), e = parse(endIso);
   if (dayNo(e) < dayNo(s)) throw new Error('spread: end before start');
+  const asOf = asOfIso ? parse(asOfIso) : null;
   const months = monthsTouched(s, e), out = new Map(window.map(k => [k, 0n]));
   let shares;
   if (method === 'months-even') shares = months.map(() => 1n);
@@ -32,7 +37,12 @@ function spread(amount, startIso, endIso, window, method = 'months-even') {
     const piece = i === months.length - 1 ? amount - given : Dec.mulDiv(amount, shares[i], total);
     given += piece;
     const k = key(y, mo);
-    if (out.has(k)) out.set(k, out.get(k) + piece);
+    let shown = piece;
+    if (asOf) {
+      if (y < asOf.y || (y === asOf.y && mo < asOf.mo)) shown = 0n; // already past
+      else if (y === asOf.y && mo === asOf.mo) shown = Dec.mulDiv(piece, BigInt(Math.max(0, dim(y, mo) - asOf.d + remainingOffset)), BigInt(dim(y, mo)));
+    }
+    if (out.has(k)) out.set(k, out.get(k) + shown);
   });
   return out;
 }
