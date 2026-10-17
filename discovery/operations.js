@@ -203,6 +203,22 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       return gateway.release({ ...base, referenceSectorOnPhaseRowCount: num(r.a), referenceSectorOnParentCount: num(r.b), parentChangedAfterPeriodCount: num(r.c), parentTypeBlankCount: num(r.d), allComparedParentsChangedAfterPeriodCount: num(r.e) }, cfg);
     },
 
+    /* Column names and types of one table as the live database has them (metadata only, no data). Finds firm-defined custom fields
+       that the standard dictionary does not list. Table must be in the dictionary; names and types are not sensitive. */
+    async liveColumns({ table: t, namePattern = null }) {
+      const row = store.knowledge.prepare('SELECT name FROM dict_tables WHERE lower(name) = lower(?)').get(String(t));
+      if (!row) throw new Error('registry: unknown table');
+      if (namePattern !== null && !/^[A-Za-z0-9_%]{1,30}$/.test(String(namePattern))) throw new Error('operation: bad pattern');
+      const like = namePattern ? ` AND COLUMN_NAME LIKE '${namePattern}'` : '';
+      const rows = await run('liveColumns', row.name, `SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${row.name}'${like}`);
+      const known = new Set(store.knowledge.prepare('SELECT lower(col) AS c FROM dict_columns WHERE lower(tbl) = lower(?)').all(row.name).map(r => r.c));
+      const out = { table: row.name, columnCount: rows.length, columns: rows.map(r => ({ name: String(r.name), type: String(r.type), inDictionary: known.has(String(r.name).toLowerCase()) })).sort((a, b) => a.name.localeCompare(b.name)) };
+      // firm-defined columns the dictionary lacks are remembered as such so the other operations can address them
+      const add = store.knowledge.prepare("INSERT OR IGNORE INTO dict_columns (tbl, col, primary_key, domain, data_type, nullable, description) VALUES (?,?,?,?,?,?,?)");
+      for (const c of out.columns) if (!c.inDictionary) add.run(row.name, c.name, '', 'firm-defined', c.type, '', 'Firm-defined column found in the live schema (not in the Deltek dictionary).');
+      log('liveColumns', { table: row.name }, 'ok'); return gateway.release(out, cfg);
+    },
+
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
        (column names, row count) unless the approval was scoped to release values, which is then single-use. */
     proposeSql({ sql, why, willDisclose = 'column names and row count only', release = null, maxRows = null }) {

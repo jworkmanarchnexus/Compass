@@ -8,7 +8,7 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..', '..');
 
 // the only tables the agent may touch: the ones reference/handoff/sql/compass_negative_projects.sql reads, plus CA (chart of accounts: account types)
-const APPROVED_TABLES = ['PR', 'EMMain', 'LD', 'LedgerAP', 'LedgerAR', 'LedgerEX', 'LedgerMisc', 'RPPlan', 'CA', 'RPTask', 'PNPlan', 'PNTask', 'PRRevenue'];
+const APPROVED_TABLES = ['PR', 'EMMain', 'LD', 'LedgerAP', 'LedgerAR', 'LedgerEX', 'LedgerMisc', 'RPPlan', 'CA', 'RPTask', 'PNPlan', 'PNTask', 'PRRevenue', 'ProjectCustomTabFields'];
 
 function parseEnvFile(text) {
   const out = {};
