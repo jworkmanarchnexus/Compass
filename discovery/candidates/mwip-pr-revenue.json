@@ -1,0 +1,23 @@
+{
+  "id": "mwip-pr-revenue",
+  "title": "MWIP pursuits: estimated fee and weighted fee from PR.Revenue and PR.WeightedRevenue, with status, stage and probability",
+  "sqlFile": "mwip-pr-revenue.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "revenue"
+  },
+  "grossVariants": {
+    "revenue": "revenue",
+    "weighted": "weighted"
+  },
+  "extraColumns": [
+    "status",
+    "stage",
+    "probability"
+  ],
+  "consultantSource": "none",
+  "basis": "A column scan against a same-day export found PR.Revenue = Est. Fee and PR.WeightedRevenue = Weighted Fee for 103 of 121 pursuits. Live plan data: validate same-day only.",
+  "status": "hypothesis"
+}
