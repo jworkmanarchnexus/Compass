@@ -277,6 +277,29 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       return out;
     },
 
+    /* Where could the contracted revenue forecast come from? Counts for active contracted (non-pursuit) parent projects: how many have
+       plans, plan tasks with revenue dates still ahead, task fees, a fee on the project record, tasks dated past year end, and projects
+       with more than one plan. Counts only; asOf is YYYYMMDD. */
+    async forecastMapping({ asOf }) {
+      if (!/^\d{8}$/.test(String(asOf))) throw new Error('operation: asOf must be YYYYMMDD');
+      const yearEnd = `${String(asOf).slice(0, 4)}1231`;
+      const P = `FROM dbo.PR p WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-z]%'`;
+      const hasTask = cond => `EXISTS (SELECT 1 FROM dbo.PNTask k WHERE k.WBS1 = p.WBS1 AND ${cond})`;
+      const [r] = await run('forecastMapping', String(asOf),
+        `SELECT (SELECT COUNT(*) ${P}) AS a, ` +
+        `(SELECT COUNT(*) ${P} AND EXISTS (SELECT 1 FROM dbo.PNPlan x WHERE x.WBS1 = p.WBS1)) AS b, ` +
+        `(SELECT COUNT(*) ${P} AND ${hasTask(`k.RevenueEndDate >= '${asOf}'`)}) AS c, ` +
+        `(SELECT COUNT(*) ${P} AND ${hasTask(`(k.CompensationFee <> 0 OR k.ConsultantFee <> 0)`)}) AS d, ` +
+        `(SELECT COUNT(*) ${P} AND p.Fee <> 0) AS e, ` +
+        `(SELECT COUNT(*) ${P} AND ${hasTask(`k.RevenueEndDate > '${yearEnd}'`)}) AS f, ` +
+        `(SELECT COUNT(*) ${P} AND (SELECT COUNT(*) FROM dbo.PNPlan x WHERE x.WBS1 = p.WBS1) > 1) AS g, ` +
+        `(SELECT COUNT(*) ${P} AND ${hasTask(`k.RevenueEndDate >= '${asOf}' AND (k.CompensationFee <> 0 OR k.ConsultantFee <> 0)`)}) AS h, ` +
+        `(SELECT COUNT(*) ${P} AND p.Revenue <> 0) AS i`);
+      const out = { asOf: String(asOf), activeContractedProjectsCount: num(r.a), withPlanCount: num(r.b), withTaskDatesAheadCount: num(r.c), withNonzeroTaskCount: num(r.d), withNonzeroProjectTotalCount: num(r.e),
+        withTaskDatedPastYearEndCount: num(r.f), withSeveralPlansCount: num(r.g), withNonzeroAndDatesAheadCount: num(r.h), withEarnedFieldCount: num(r.i) };
+      log('forecastMapping', { asOf }, 'ok'); return gateway.release(out, cfg);
+    },
+
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
        (column names, row count) unless the approval was scoped to release values, which is then single-use. */
     proposeSql({ sql, why, willDisclose = 'column names and row count only', release = null, maxRows = null }) {
