@@ -1,0 +1,35 @@
+{
+  "id": "forecast-task-rows",
+  "title": "Contracted forecast: plan task rows (dates, fees, percent complete, billed) for active contracted projects, for local analysis",
+  "sqlFile": "forecast-task-rows.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "comp_fee"
+  },
+  "extraColumns": [
+    "task_id",
+    "wbs2",
+    "wbs3",
+    "wbs_type",
+    "outline_level",
+    "children_count",
+    "rev_start",
+    "rev_end",
+    "comp_fee",
+    "cons_fee",
+    "pct_complete",
+    "jtd_lab_bill",
+    "jtd_con_bill",
+    "jtd_exp_bill",
+    "pr_fee",
+    "pr_consult",
+    "pr_reimb",
+    "pr_revenue",
+    "billed_jtd"
+  ],
+  "consultantSource": "none",
+  "basis": "Live plan data: validate same-day only. Several rows per project; used for local analysis, never returned to Claude.",
+  "status": "hypothesis"
+}
