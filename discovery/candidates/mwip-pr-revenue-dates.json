@@ -1,0 +1,28 @@
+{
+  "id": "mwip-pr-revenue-dates",
+  "title": "MWIP pursuits (active, probability 1 to 99) with estimated start, completion and end dates, for the monthly spread",
+  "sqlFile": "mwip-pr-revenue-dates.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "revenue"
+  },
+  "grossVariants": {
+    "revenue": "revenue",
+    "weighted": "weighted"
+  },
+  "extraColumns": [
+    "status",
+    "stage",
+    "probability",
+    "est_start",
+    "est_completion",
+    "est_end",
+    "start_date",
+    "end_date"
+  ],
+  "consultantSource": "none",
+  "basis": "Est. Fee and Weighted Fee reproduced for all 121 pursuits (PR.Revenue, PR.WeightedRevenue). This adds the date columns to test the monthly spread.",
+  "status": "hypothesis"
+}
