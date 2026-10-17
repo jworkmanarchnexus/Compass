@@ -82,7 +82,7 @@ export function bdAdminCards(ctx, settings, inputs, canEdit, rerender) {
   cards.push(settingsCard('Report rules and status labels', 'Fixed for every report so numbers can be compared month to month. The numbers below are settings; a report records the ones it was built with.', settings, ['bd.noSector', 'bd.onPacePct', 'bd.onTrackPct'], canEdit, rerender, ed => [
     row('Billing cutoff', 'Revenue billed through the cutoff counts as YTD.', h('span', { class: 'muted', text: 'Last day of the previous month' })),
     row('Revenue is shown', null, h('span', { class: 'muted', text: 'Net of consultants' })),
-    row('Revenue with no market sector', 'Pick one answer. Asking is the safe choice: it stops the report until you say where each project belongs.', ed.select('bd.noSector', [['ask', 'Stop and ask me before I publish'], ['other', 'Put it in Other and say so']])),
+    row('Revenue with no market sector', 'Pick one answer. Keeping it in Unassigned shows it on its own row, as Vantagepoint does, so totals still tie and publishing is not held up.', ed.select('bd.noSector', [['keep', 'Keep it in an Unassigned row, like Vantagepoint'], ['ask', 'Stop and ask me before I publish'], ['other', 'Put it in Other and say so']])),
     row('On Track', 'YTD plus forecast plus MWIP reaches this share of the annual goal.', ed.num('bd.onTrackPct', { narrow: true }), h('span', { class: 'muted', text: '% of goal' })),
     row('On Pace', 'Otherwise, YTD billings are at least this share of pace, but need more planned revenue. Below it: Behind Pace.', ed.num('bd.onPacePct', { narrow: true }), h('span', { class: 'muted', text: '% of pace' })),
   ]));

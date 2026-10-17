@@ -80,8 +80,20 @@ test('only the Admin builds, publishes or archives; drafts are invisible to ever
   assert.strictEqual((await josh.post('/api/admin/runs', { kind: 'bd', period: 202610 })).status, 400, 'a month that has not closed');
 }, demo));
 
-test('revenue with no market sector stops publishing until the Admin picks one (the default rule)', () => withApp(async ({ api, db }) => {
+test('by default revenue with no market sector stays in its own Unassigned row and does not hold up publishing (as Vantagepoint does it)', () => withApp(async ({ api, db }) => {
   const josh = api('j.workman');
+  const d = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
+  assert.ok(d.sector.some(s => s.label === 'Unassigned'), 'its own row');
+  assert.strictEqual(d.sector.reduce((s, r) => s + r.total, 0), d.firm.total, 'totals still tie');
+  assert.deepStrictEqual(d.warnings.filter(w => w.kind === 'no_sector'), [], 'nothing to resolve');
+  assert.ok(d.notes.some(n => /stays in Unassigned/.test(n)), 'noted on the report, without blocking');
+  assert.strictEqual((await josh.post(`/api/admin/bd/runs/${d.run.id}/publish`)).status, 200);
+  assert.strictEqual(db.get('SELECT status FROM runs WHERE id = ?', d.run.id).status, 'published');
+}));
+
+test("with the 'ask' rule, revenue with no market sector stops publishing until the Admin picks one", () => withApp(async ({ api, db }) => {
+  const josh = api('j.workman');
+  await josh.put('/api/admin/settings', { changes: { 'bd.noSector': 'ask' } });
   const d = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
   assert.deepStrictEqual(d.warnings.map(w => [w.kind, w.amount]), [['no_sector', 342000]]);
   assert.match(d.warnings[0].detail, /Midvale Storage Pavilion: revenue with no market sector/);
@@ -203,6 +215,7 @@ test('the monthly email for a BD draft says how many projects need a sector, and
   const mailer = { sent: [], sendToAdmin(m) { this.sent.push(m); } };
   const t = await start({ today: () => '2026-10-07', mailer });
   try {
+    await t.api('j.workman').put('/api/admin/settings', { changes: { 'bd.noSector': 'ask' } }); // the email only counts projects when the Admin must answer
     await t.api('j.workman').post('/api/admin/runs', { kind: 'bd', period: 202609 });
     assert.strictEqual(mailer.sent.length, 1);
     assert.match(mailer.sent[0].subject, /Marketing Report draft ready: September 2026/);

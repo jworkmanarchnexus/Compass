@@ -53,7 +53,8 @@ function fill(db, runId, period, settings, c) {
   out.sector.forEach((r, i) => put('sector', r, i + 1));
   const warn = (kind, wbs1, detail, amount) => db.run('INSERT INTO run_warnings (run_id, kind, wbs1, detail, ytd_billed) VALUES (?, ?, ?, ?, ?)', runId, kind, wbs1, detail, amount);
   const name = w => (projects[w] ? projects[w].name : w);
-  for (const u of out.unassignedSector) warn('no_sector', u.wbs1, `${name(u.wbs1)}: revenue with no market sector`, u.amount);
+  // 'keep' (the default, as Vantagepoint does it): the revenue stays in its own Unassigned row and publishing is not held up
+  for (const u of out.unassignedSector) warn(settings['bd.noSector'] === 'keep' ? 'note' : 'no_sector', u.wbs1, settings['bd.noSector'] === 'keep' ? `${name(u.wbs1)}: revenue with no market sector stays in Unassigned` : `${name(u.wbs1)}: revenue with no market sector`, u.amount);
   for (const u of out.unassignedPic) warn('no_pic', u.wbs1, `${name(u.wbs1)}: no PIC in Vantagepoint`, u.amount);
   for (const r of out.rolled) warn('note', '', `${r.from} counted in ${r.into}`, r.ytd + r.forecast + r.mwip);
   for (const a of out.assigned) warn('note', a.wbs1, `${name(a.wbs1)}: unassigned revenue went to ${a.sector}`, a.amount);

@@ -25,6 +25,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |
 | H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Built as raw, weighted by the factor when the report is built** (set the factor to 1 if the source already weights) | `docs/SPEC-bd.md` section 4 |
+| H6 | Month-end lock for MWIP and the forecast? | **Resolved by Josh, 2026-10-16: no. Take the latest data on the day the report is published; the published run keeps it** | `docs/DECISIONS.md` |
 | H5 | Where do utilization and net profit come from? | tiles not shown | Home's Firm snapshot |
 | H6 | Are earlier months' runs imported from the Excel workbook, or does history start at go-live? | the first run's "since last month" is blank | |
 | H8 | Fallback for projects with several overhead rates? | reported as a warning, no profit invented | `profit.js` |

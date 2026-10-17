@@ -141,3 +141,8 @@
 - **No spreadsheet or MCP libraries:** a 150-line local xlsx reader (never runs macros or follows links) and a hand-written stdio tool server keep the dependency list at one.
 - **Two stores:** knowledge (AI-facing, sanitized) and protected (raw rows, surrogate key). The tool server cannot reach the second except through the gateway.
 - **Contract-fee denominator is a named option**, not a constant, until reconciliation against Consultants % decides it (see docs/DISCOVERY-HANDOFF.md).
+
+## 2026-10-16: Unassigned revenue, and MWIP timing (owner decisions)
+
+- **Revenue with no market sector stays in an "Unassigned" bucket, as Vantagepoint does** (`bd.noSector` = `keep`, now the default). It is no longer moved by hand into the nearest sector and does not block publishing. `ask` and `other` remain as settings. A project with no PIC already showed in an Unassigned PIC row.
+- **MWIP and the contracted forecast are taken live on the day the report is published** (no month-end lock). A published run is already locked in Compass, so the figures stay as they were at publish; nothing more to snapshot for the BD report. The weekly Pipeline watch snapshots keep their own purpose (trends and alerts).
