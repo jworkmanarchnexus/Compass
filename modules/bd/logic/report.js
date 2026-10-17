@@ -18,6 +18,7 @@
      Behind Pace otherwise
    A row with no goal has no status. */
 
+const { architecturalAmount } = require('./architectural');
 const BP = 10000;
 
 function pace(goal, months) { return Math.round(goal * months / 12); }
@@ -34,7 +35,8 @@ function statusOf({ goal, ytdGoal, ytd, total }, th) {
      goals        { pic: { code: cents }, sector: { name: cents }, picOrder: [codes], sectorOrder: [names] }
      projects     { wbs1: { pic, sector } }   sector as the source gives it (may be blank or unknown)
      revenue      [{ wbs1, period, amount }]  net of consultants; only periods up to `period` of the same year count
-     forecast     [{ wbs1, amount }]
+     forecast     [{ wbs1, amount }]  or, when the source supplies the entered gross, [{ wbs1, gross, fee, consultFee, reimbAllow }]: the architectural share is then worked out here (logic/architectural.js)
+     contractAmount  'feeConsult' (default) or 'feeConsultReimb': what "full contract amount" means for that share
      mwip         [{ id, pic, sector, amount }]   at face value
      factorBp     the MWIP factor in basis points (6700 = 0.67)
      thresholds   { onPace: 99, onTrack: 100 }
@@ -42,8 +44,16 @@ function statusOf({ goal, ytdGoal, ytd, total }, th) {
      overrides    { wbs1: sectorName }  the Admin's answer for a project whose sector is missing
      unknownTo    optional sector name: where revenue with no sector goes, instead of being held back as unassigned */
 function computeBd(input) {
-  const { period, goals, projects, revenue, forecast, mwip, factorBp, thresholds, sectors } = input;
+  const { period, goals, projects, revenue, mwip, factorBp, thresholds, sectors } = input;
   const overrides = input.overrides || {};
+  // a forecast row with a gross amount and fees is scaled to its architectural share; a row with only an amount is already architectural
+  const forecastNotes = [];
+  const forecast = input.forecast.map(f => {
+    if (f.gross === undefined) return f;
+    const r = architecturalAmount(f, input.contractAmount || 'feeConsult');
+    if (r.issue) forecastNotes.push({ wbs1: f.wbs1, issue: r.issue, amount: f.gross });
+    return { wbs1: f.wbs1, amount: r.amount };
+  });
   const months = period % 100, year = Math.floor(period / 100);
   const asOf = `${year}-${String(months).padStart(2, '0')}-28`; // a day inside the report month, for "until" dates
   const known = new Map(sectors.map(s => [s.name, s]));
@@ -117,6 +127,7 @@ function computeBd(input) {
     assigned: [...assigned].map(([wbs1, amount]) => ({ wbs1, sector: overrides[wbs1], amount })),
     defaulted: [...defaulted].map(([wbs1, amount]) => ({ wbs1, amount })),
     rolled: [...rolled.values()],
+    forecastNotes,
   };
 }
 

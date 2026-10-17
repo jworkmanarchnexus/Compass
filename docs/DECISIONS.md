@@ -153,3 +153,11 @@
 - **The forecast is gross.** PMs type revenue into the plan; Compass reads the plan's period revenue entries (`PNPlannedRevenueLabor.PeriodCost`) by month. The Consultants % column in the Vantagepoint export is not used (owner).
 - **Architectural, for the BD report only:** each month's gross x (1 - consultant fees / full contract amount) per project (owner rule). **Full contract amount defaults to fee + consultant fees (no reimbursable allowance) and will be an Admin setting.** Back-checking against the export's Consultants % could not decide it: that percentage is not derived from the stored fee fields.
 - **MWIP and forecast taken live on the publish day** (see 2026-10-16); a published run keeps what it used.
+## 2026-10-16: Unassigned revenue, and MWIP timing (owner decisions)
+
+- **Revenue with no market sector stays in an "Unassigned" bucket, as Vantagepoint does** (`bd.noSector` = `keep`, now the default). It is no longer moved by hand into the nearest sector and does not block publishing. `ask` and `other` remain as settings. A project with no PIC already showed in an Unassigned PIC row.
+- **MWIP and the contracted forecast are taken live on the day the report is published** (no month-end lock). A published run is already locked in Compass, so the figures stay as they were at publish; nothing more to snapshot for the BD report. The weekly Pipeline watch snapshots keep their own purpose (trends and alerts).
+
+## 2026-10-17: the contract amount setting is built
+
+`bd.contractAmount` (`feeConsult` default, or `feeConsultReimb`) is an Admin setting on the BD Admin screen. The share is a pure, fixture-tested function (`modules/bd/logic/architectural.js`), applied in `computeBd` when a forecast row carries gross and fees; rows with only an amount are unchanged, so the seed data and existing reports behave as before. Reports record the rule used. Older local database files get the new column added automatically on open. Why fee + consultant fees by default: a reimbursable allowance is a pass-through expense, not fee, and a back-test against Vantagepoint's own Consultants % could not decide between the two (it fits neither: `docs/FORECAST-METHOD.md`).

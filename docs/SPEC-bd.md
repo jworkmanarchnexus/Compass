@@ -44,8 +44,12 @@ The line under the title says what was done to the numbers, for everyone: "Labs 
 ## 3. Market sectors, and revenue with none
 
 - Each project carries its sector from Vantagepoint. A sector can **roll into** another until a date: **Labs counts in Healthcare through 2026-12-31**; from 2027-01-01 it is its own sector (it must then be given a goal in Admin).
-- A project whose sector is **missing or unknown** is "unassigned". By default (`bd.noSector` = `ask`) the draft shows it in its own "Unassigned" row, so the totals still tie, and **publishing is refused** until the Admin picks a sector for it. The Admin picks one on the draft (a drop-down per project, then "Assign and rebuild"); the answer is remembered and applies to every later report. With `bd.noSector` = `other`, unassigned revenue goes to **Other** automatically and the report says so.
+- A project whose sector is **missing or unknown** is "unassigned". **By default (`bd.noSector` = `keep`, decided by Josh 2026-10-16) it stays in its own "Unassigned" row, as Vantagepoint shows it; the totals still tie, the report notes it, and publishing is not held up.** With `bd.noSector` = `ask` the draft is the same but **publishing is refused** until the Admin picks a sector for it. The Admin picks one on the draft (a drop-down per project, then "Assign and rebuild"); the answer is remembered and applies to every later report. With `bd.noSector` = `other`, unassigned revenue goes to **Other** automatically and the report says so.
 - A project with no PIC shows in an "Unassigned" PIC row and as a warning on the draft.
+
+## 3b. The architectural share of the contracted forecast
+
+The contracted forecast is entered gross by the PMs. For this report only, each project's month is scaled by **(full contract amount − consultant fees) ÷ full contract amount** (a $100k contract with $30k of consultants shows 0.7 of the month). **"Full contract amount" is the Admin setting `bd.contractAmount`**, decided 2026-10-17: `feeConsult` (the default: fee + consultant fees) or `feeConsultReimb` (also the reimbursable allowance). Each report records the rule it was built with (`bd_run_meta.contract_amount_rule`). A project with no contract fee, or with consultant fees above the contract amount, keeps its full forecast and gets a note on the draft. The source supplies, per project, the gross amount and the fee, consultant fee and reimbursable allowance from the project record (`docs/FORECAST-METHOD.md`); a source that still supplies only an already-architectural amount keeps working unchanged. The calculation is `modules/bd/logic/architectural.js`, with fixtures in `modules/bd/tests/fixtures/architectural.json`.
 
 ## 4. The MWIP factor
 

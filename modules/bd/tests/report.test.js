@@ -73,3 +73,16 @@ test('a project with no PIC is reported as unassigned, not dropped', () => {
   assert.deepStrictEqual(out.unassignedPic.map(u => u.wbs1).sort(), ['P3']);
   assert.strictEqual(out.pic.reduce((s, r) => s + r.ytd, 0), out.firm.ytd);
 });
+
+test('a forecast row with gross and fees is scaled to its architectural share, by the chosen contract amount', () => {
+  const input = JSON.parse(JSON.stringify(fx.report.input));
+  const wbs1 = Object.keys(input.projects)[0];
+  input.forecast = [{ wbs1, gross: 1000000, fee: 7000000, consultFee: 3000000, reimbAllow: 1000000 }];
+  assert.strictEqual(computeBd({ ...input, contractAmount: 'feeConsult' }).firm.forecast, 700000);
+  assert.strictEqual(computeBd(input).firm.forecast, 700000, 'fee + consultant fees is the default');
+  assert.strictEqual(computeBd({ ...input, contractAmount: 'feeConsultReimb' }).firm.forecast, 727273);
+  const legacy = computeBd({ ...input, forecast: [{ wbs1, amount: 123456 }] });
+  assert.strictEqual(legacy.firm.forecast, 123456, 'a row that only has an amount is already architectural: unchanged');
+  const bad = computeBd({ ...input, forecast: [{ wbs1, gross: 500000, fee: 0, consultFee: 0, reimbAllow: 0 }] });
+  assert.strictEqual(bad.firm.forecast, 500000); assert.deepStrictEqual(bad.forecastNotes, [{ wbs1, issue: 'no-contract-fee', amount: 500000 }]);
+});
