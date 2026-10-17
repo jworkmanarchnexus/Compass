@@ -309,6 +309,16 @@ function createOperations({ store, gateway, cfg, vp, investigationId = 'adhoc' }
       log('forecastMapping', { asOf }, 'ok'); return gateway.release(out, cfg);
     },
 
+    /* How many rows fall in each calendar month of a date column (dates are not sensitive): shows what period a time-phased table covers. */
+    async dateHistogram({ table: t, column, nonzeroColumn = null }) {
+      const T = table(t), { column: C } = col(T, column);
+      if (!/date/i.test(typeOf(T, C)) && !/datetime|date/i.test(typeOf(T, C))) throw new Error('operation: dateHistogram needs a date column');
+      const nz = nonzeroColumn ? ` WHERE ${q(col(T, nonzeroColumn).column)} <> 0` : '';
+      const rows = await run('dateHistogram', `${T}.${C}`, `SELECT CONVERT(varchar(7), ${q(C)}, 120) AS ym, COUNT(*) AS n FROM ${from(T)}${nz} GROUP BY CONVERT(varchar(7), ${q(C)}, 120)`);
+      const out = { table: T, column: C, months: rows.filter(r => r.ym).map(r => ({ month: String(r.ym), rowCount: num(r.n) })).sort((a, b) => a.month.localeCompare(b.month)) };
+      log('dateHistogram', { T, C }, 'ok'); return gateway.release(out, cfg);
+    },
+
     /* Extended mode. The agent proposes SQL; it cannot run until the owner approves that exact text. Output is shape only
        (column names, row count) unless the approval was scoped to release values, which is then single-use. */
     proposeSql({ sql, why, willDisclose = 'column names and row count only', release = null, maxRows = null }) {

@@ -1,0 +1,29 @@
+{
+  "id": "forecast-planned-hours",
+  "title": "Contracted forecast: planned hours x billing rate by month (Oct to Dec 2026), plus planned consultant and expense billing, per active contracted project",
+  "sqlFile": "forecast-planned-hours.sql",
+  "columns": {
+    "project": "project",
+    "pic": "pic",
+    "sector": "sector",
+    "gross": "hr_oct"
+  },
+  "extraColumns": [
+    "name",
+    "hr_oct",
+    "hr_nov",
+    "hr_dec",
+    "hours_oct",
+    "hours_nov",
+    "hours_dec",
+    "con_oct",
+    "con_nov",
+    "con_dec",
+    "exp_oct",
+    "exp_nov",
+    "exp_dec"
+  ],
+  "consultantSource": "none",
+  "basis": "PeriodBill is zero in the planned labor table but PeriodHrs is filled for Oct to Dec 2026; revenue is likely hours x billing rate. Live plan data: same-day only.",
+  "status": "hypothesis"
+}
