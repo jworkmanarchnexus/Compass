@@ -75,12 +75,17 @@ export function lineChart(points, { fmt, aria, zero, ticks, height }) {
 /* Horizontal stacked bars, one row each. rows: [{ label, segs: [{ v, kind, text? }], marks?: [{ v, kind }], endText? }]
    kinds map to CSS classes sb-<kind>. Used by the BD report (revenue, forecast and MWIP against pace and goal).
    Values are cents; fmt(v) writes an axis tick.
+   Options: guides [{ v, kind, title }] draw a dashed line down the whole chart (class sb-guide-<kind>); a row's gapBefore starts a new group;
+   rowHeight sets the row height; tight makes each bar fill its row (no space between the bars of a pair).
    A segment with `pick: true` can be hovered (everything else is muted) and clicked: onPick({ rowKey, kind }) is called with the row's `key`
    and the segment's kind. `picked` ({ rowKey, kind }) keeps one segment lit while a drill-down is open. Keyboard: Tab and Enter. */
-export function stackedBars(rows, { fmt, aria, max, onPick, picked }) {
-  const W = 1100, L = 170, R = 80, T = 8, B = 30, RH = rows.length > 2 ? 38 : 44;
-  const H = T + rows.length * RH + B;
-  const top = max || Math.max(...rows.map(r => r.segs.reduce((a, s) => a + s.v, 0)), ...rows.flatMap(r => (r.marks || []).map(m => m.v)));
+export function stackedBars(rows, { fmt, aria, max, onPick, picked, guides, rowHeight, tight }) {
+  const W = 1100, L = 170, R = 80, T = 8, B = 30, RH = rowHeight || (rows.length > 2 ? 38 : 44), GAP = tight ? 20 : 16;
+  // a row with gapBefore starts a new group (a bar and its goal bar sit together); guides are dashed lines down the whole chart
+  const ys = []; let yy = T;
+  rows.forEach(r => { if (r.gapBefore) yy += GAP; ys.push(yy); yy += RH; });
+  const H = yy + B;
+  const top = max || Math.max(...rows.map(r => r.segs.reduce((a, s) => a + s.v, 0)), ...rows.flatMap(r => (r.marks || []).map(m => m.v)), ...(guides || []).map(g => g.v));
   const step = niceStep(top, 5);
   const axisMax = Math.ceil(top / step) * step;
   const x = v => L + v / axisMax * (W - L - R);
@@ -90,7 +95,8 @@ export function stackedBars(rows, { fmt, aria, max, onPick, picked }) {
     svg.append(el('text', { x: x(v), y: H - 10, 'text-anchor': 'middle', class: 'ch-tick' }, fmt(v)));
   }
   rows.forEach((r, i) => {
-    const y = T + i * RH, bh = RH * 0.62, by = y + (RH - bh) / 2;
+    // tight: the bar fills its row, so a bar and its goal bar sit flush together; the space is only between pairs
+    const y = ys[i], bh = tight ? RH : RH * 0.62, by = tight ? y : y + (RH - bh) / 2;
     svg.append(el('text', { x: L - 8, y: by + bh / 2 + 4, 'text-anchor': 'end', class: 'sb-label' }, r.label));
     let acc = 0;
     for (const s of r.segs) {
@@ -114,6 +120,7 @@ export function stackedBars(rows, { fmt, aria, max, onPick, picked }) {
     for (const m of r.marks || []) svg.append(el('line', { x1: x(m.v), x2: x(m.v), y1: by - 4, y2: by + bh + 4, class: 'sb-mark-' + m.kind }, el('title', {}, m.title || '')));
     if (r.endText) svg.append(el('text', { x: x(acc) + 6, y: by + bh / 2 + 4, class: 'sb-end' }, r.endText));
   });
+  for (const g of guides || []) svg.append(el('line', { x1: x(g.v), x2: x(g.v), y1: T, y2: H - B, class: 'sb-guide sb-guide-' + g.kind }, el('title', {}, g.title || '')));
   svg.append(el('line', { x1: L, x2: L, y1: T, y2: H - B, class: 'ch-zero' }));
   return svg;
 }

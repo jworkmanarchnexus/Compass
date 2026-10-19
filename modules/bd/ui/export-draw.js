@@ -164,7 +164,8 @@ function niceStep(range, ticks) {
 }
 const KEYS = {
   firm: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']],
-  rows: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['markpace', 'Pace to date'], ['markgoal', 'Annual goal']],
+  rows: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']],
+  single: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']],
 };
 
 function chartRows(sec, d) {
@@ -177,20 +178,29 @@ function chartRows(sec, d) {
       rows: [{ label: 'Total firm', segs: [['ytd', f.ytd], ['forecast', f.forecast], ['mwip', f.mwip]], end: K(f.mwip) }, { label: 'Annual goal', segs: [['pace', f.ytdGoal], ['rest', rest]] }],
     };
   }
-  const src = (sec.id === 'picChart' ? d.pic : d.sector).filter(r => r.total > 0).slice().sort((a, b) => b.total - a.total);
+  // the PIC and market sector charts show the goal the way Dave's reports do (logic/goal-chart.js)
+  const scope = sec.id === 'picChart' ? 'pic' : 'sector';
+  const lay = window.BdGoalChart.layout(scope === 'pic' ? d.pic : d.sector, scope);
+  const goalSegs = r => [['pace', r.ytdGoal], ['rest', Math.max(0, r.goal - r.ytdGoal)]];
+  const actual = (r, gap) => ({ label: r.label, gap, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], end: K(r.mwip) });
+  const single = lay.mode === 'single';
   return {
-    title: sec.id === 'picChart' ? 'By PIC' : 'By market sector', keys: KEYS.rows, tall: false,
-    rows: src.map(r => ({ label: r.label, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], marks: [['pace', r.ytdGoal], ['goal', r.goal]], end: K(r.mwip) })),
+    title: scope === 'pic' ? 'By PIC' : 'By market sector', keys: single ? KEYS.single : KEYS.rows, tall: false, small: true, tight: !single,
+    guides: single ? [['pace', lay.goal.ytdGoal], ['goal', lay.goal.goal]] : [],
+    rows: single ? [{ label: 'Goal', segs: goalSegs(lay.goal), muted: true }, ...lay.rows.map((r, i) => actual(r, i === 0))]
+      : lay.rows.flatMap(r => [actual(r, true), { label: 'Goal', segs: goalSegs(r), muted: true }]),
   };
 }
 
 function paintChart(c, F, pal, w, y0, sec, d) {
   const C = X.C;
   const ch = chartRows(sec, d);
-  const rh = ch.tall ? C.firmRow : C.row, bh = rh * 0.64;
-  const L = 130, R = 44, bodyTop = C.sum + C.top, bodyH = ch.rows.length * rh;
+  const rh = ch.tall ? C.firmRow : ch.small ? C.goalRow : C.row, bh = ch.tight ? rh : rh * 0.64; // tight: a bar and its goal bar sit flush
+  const ys = []; let yy = 0;
+  ch.rows.forEach(r => { if (r.gap) yy += C.gap; ys.push(yy); yy += rh; });
+  const L = 130, R = 44, bodyTop = C.sum + C.top, bodyH = yy;
   const total = bodyTop + bodyH + C.axis + C.key;
-  const top = Math.max(...ch.rows.map(r => r.segs.reduce((a, s) => a + s[1], 0)), ...ch.rows.flatMap(r => (r.marks || []).map(m => m[1])), 1);
+  const top = Math.max(...ch.rows.map(r => r.segs.reduce((a, s) => a + s[1], 0)), ...(ch.guides || []).map(g => g[1]), 1);
   const step = niceStep(top, 5), axisMax = Math.ceil(top / step) * step;
   const px = v => L + v / axisMax * (w - L - R);
   c.save(); c.translate(0, y0);
@@ -204,8 +214,8 @@ function paintChart(c, F, pal, w, y0, sec, d) {
     c.fillStyle = pal.muted; c.textAlign = 'center'; c.fillText(X.fmtK(v), px(v), bodyTop + bodyH + 11);
   }
   ch.rows.forEach((r, i) => {
-    const y = bodyTop + i * rh + (rh - bh) / 2;
-    c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 9.5); c.textAlign = 'right';
+    const y = bodyTop + ys[i] + (rh - bh) / 2; // (no offset when tight)
+    c.fillStyle = r.muted ? pal.muted : pal.ink; c.font = fnt(F, 'ui', r.muted ? 8.5 : 9.5); c.textAlign = 'right';
     c.fillText(fitText(c, r.label, L - 10), L - 8, y + bh / 2 + 3.4);
     let acc = 0;
     for (const [kind, v] of r.segs) {
@@ -215,14 +225,15 @@ function paintChart(c, F, pal, w, y0, sec, d) {
       if (kind !== 'mwip' && x1 - x0 > 34) { c.fillStyle = inkOn(pal[kind]); c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center'; c.fillText(X.fmtK(v), (x0 + x1) / 2, y + bh / 2 + 3.2); }
       acc += v;
     }
-    for (const [kind, v] of r.marks || []) {
-      c.strokeStyle = kind === 'pace' ? pal.pace : pal.goalMark; c.lineWidth = kind === 'pace' ? 2.4 : 1.6;
-      dashed(c, kind === 'goal');
-      c.beginPath(); c.moveTo(px(v), y - 3); c.lineTo(px(v), y + bh + 3); c.stroke();
-      dashed(c, false);
-    }
-    if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(Math.max(acc, ...(r.marks || []).map(m => m[1]))) + 6, y + bh / 2 + 3.2); }
+    if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(acc) + 6, y + bh / 2 + 3.2); }
   });
+  // dashed lines down the whole chart: where each should be by now, and the full goal
+  for (const [kind, v] of ch.guides || []) {
+    c.strokeStyle = kind === 'pace' ? pal.pace : pal.goalMark; c.lineWidth = 1.4;
+    dashed(c, true);
+    c.beginPath(); c.moveTo(px(v), bodyTop); c.lineTo(px(v), bodyTop + bodyH); c.stroke();
+    dashed(c, false);
+  }
   c.fillStyle = pal.ink; c.fillRect(L - 0.4, bodyTop, 0.8, bodyH);
   // key: swatches and words, centered as a row
   c.font = fnt(F, 'ui', 8.5);

@@ -97,3 +97,10 @@ table.bd-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-siz
 .bd-drill table.bd-t td { white-space: nowrap; }
 .bd-drill table.bd-t td.bd-name { white-space: normal; min-width: 180px; }
 .bd-drill .bd-zero { color: var(--text-3); }
+
+/* the dashed lines down the PIC chart: where each should be by now, and the full goal */
+.sb .sb-guide { fill: none; stroke-dasharray: 6 5; stroke-width: 1.75; pointer-events: none; }
+.sb .sb-guide-pace { stroke: var(--bd-pace); }
+.sb .sb-guide-goal { stroke: var(--bd-navy); }
+.bd-key .sw.sb-markpace, .bd-key .sw.sb-markgoal { width: 2px; height: 14px; background: repeating-linear-gradient(var(--bd-pace) 0 4px, transparent 4px 7px); }
+.bd-key .sw.sb-markgoal { background: repeating-linear-gradient(var(--bd-navy) 0 4px, transparent 4px 7px); }

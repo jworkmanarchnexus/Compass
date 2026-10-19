@@ -34,7 +34,8 @@ const paperSize = (paper, orientation) => {
 
 /* section sizes, design units */
 const T = { sum: 26, head: 38, row: 16, legendLine: 11, legendPad: 8 };
-const C = { sum: 24, top: 8, row: 18, firmRow: 24, axis: 18, key: 18 };
+const C = { sum: 24, top: 8, row: 18, firmRow: 24, axis: 18, key: 18, gap: 9, goalRow: 14 };
+const goalChart = () => (typeof module !== 'undefined' && module.exports ? require('./goal-chart') : window.BdGoalChart);
 
 /* "$1,234K" from cents */
 const fmtK = cents => '$' + Math.round(cents / 100000).toLocaleString('en-US') + 'K';
@@ -50,18 +51,20 @@ function legendLines(meta) {
 }
 
 const tableHeight = (nRows, legendN) => T.sum + T.head + (nRows + 1) * T.row + legendN * T.legendLine + T.legendPad;
-const chartHeight = (nRows, firmChart) => C.sum + C.top + nRows * (firmChart ? C.firmRow : C.row) + C.axis + C.key;
+const chartHeight = (nRows, firmChart, groups) => C.sum + C.top + nRows * (firmChart ? C.firmRow : groups ? C.goalRow : C.row) + (groups || 0) * C.gap + C.axis + C.key;
 
 /* which sections the report has, in order, for the options chosen. d is the report as the server sends it. */
 function sectionsFor(d, inc, grouping) {
   const out = [];
   const lg = legendLines(d.meta).length;
-  const charted = rows => rows.filter(r => r.total > 0).length;
+  const G = goalChart();
+  const shape = (rows, scope) => G.size(G.layout(rows, scope)); // { rows, groups }: bar rows and groups, with each goal bar
   if (inc.picTable) out.push({ id: 'picTable', seg: 'pic', group: 'tables', h: tableHeight(d.pic.length, lg) });
   if (inc.sectorTable) out.push({ id: 'sectorTable', seg: 'sector', group: 'tables', h: tableHeight(d.sector.length, lg) });
   if (inc.firmChart) out.push({ id: 'firmChart', seg: 'pic', group: 'charts', h: chartHeight(2, true) });
-  if (inc.picChart && charted(d.pic)) out.push({ id: 'picChart', seg: 'pic', group: 'charts', h: chartHeight(charted(d.pic), false) });
-  if (inc.sectorChart && charted(d.sector)) out.push({ id: 'sectorChart', seg: 'sector', group: 'charts', h: chartHeight(charted(d.sector), false) });
+  const ps = shape(d.pic, 'pic'), ss = shape(d.sector, 'sector');
+  if (inc.picChart && ps.rows) out.push({ id: 'picChart', seg: 'pic', group: 'charts', h: chartHeight(ps.rows, false, ps.groups) });
+  if (inc.sectorChart && ss.rows) out.push({ id: 'sectorChart', seg: 'sector', group: 'charts', h: chartHeight(ss.rows, false, ss.groups) });
   // by PIC then by market sector: the total-firm chart opens the PIC page; each page is its table, then its charts
   if (grouping === 'segment') { const rank = x => (x.seg === 'pic' ? 0 : 10) + (x.group === 'tables' ? 0 : x.id === 'firmChart' ? 1 : 2); out.sort((a, b) => rank(a) - rank(b)); }
   return out;

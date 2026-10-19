@@ -168,3 +168,10 @@
 - **Months are a spread, not a second source of truth.** The source gives each project's and pursuit's monthly shape; the report's counted amount (after the architectural share and the factor) is split in those proportions, to the cent. That keeps the grid honest to the totals whatever the source's own rounding.
 - **Hover mutes the rest; click opens a panel under the chart** (one at a time), rather than navigating away, so the bar stays in view. The segment stays outlined while its panel is open. Tab and Enter work too, since hover alone excludes keyboards and touch.
 - **The MWIP factor stays off PIC pages**: the detail shows only the weighted amounts already in a PIC's totals.
+
+## Goal bars on the PIC and market charts (2026-10-18)
+
+- **Back to Dave's layout**: one shared goal bar plus dashed lines when every PIC has the same goal; a goal bar under each bar when the goals differ and on the market chart. The earlier per-row pace and goal tick marks are gone.
+- **The choice is made from the data**, not a setting: if the goals are all equal the single bar is exactly right, and if they are not a single bar would be wrong for most PICs.
+- **Both dashed lines** (pace and full goal) are drawn, since "compare the goal location from actual" could mean either; say if only the pace line is wanted.
+- The PDF uses the same rules, so a PDF page now needs more height when pairs are used.

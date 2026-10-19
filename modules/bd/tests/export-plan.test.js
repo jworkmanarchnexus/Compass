@@ -6,8 +6,8 @@ const path = require('node:path');
 const X = require('../logic/export-plan');
 const fx = require('./fixtures/export-plan.json');
 
-const rows = n => Array.from({ length: n }, (_, i) => ({ label: 'R' + i, total: 100 }));
-const report = (pic, sector) => ({ pic: rows(pic), sector: rows(sector), meta: { onTrackPct: 100, onPacePct: 99, factor: 0.25 }, firm: { mwipRaw: 100000000 } });
+const rows = (n, goal) => Array.from({ length: n }, (_, i) => ({ key: 'R' + i, label: 'R' + i, total: 100 + i, goal: goal || 0, ytdGoal: goal ? Math.round(goal * 7 / 12) : 0 }));
+const report = (pic, sector) => ({ pic: rows(pic, 150000000), sector: rows(sector, 300000000), meta: { onTrackPct: 100, onPacePct: 99, factor: 0.25 }, firm: { mwipRaw: 100000000 } });
 
 test('pages: which sections go on which page', () => {
   for (const c of fx.cases) {

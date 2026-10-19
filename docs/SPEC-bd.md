@@ -91,3 +91,12 @@ Every dark green (YTD), light green (forecast) and gray (MWIP) segment of the tw
 For a PIC or sector bar the panel is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
 
 How the months are made: each forecast project and each pursuit comes from the source with a monthly shape (`forecastMonths`, `mwipMonths`). That shape is only a set of weights: the amount the report counted (after the architectural share and the factor) is spread over the remaining months in those proportions, with the odd cents placed so every row adds to exactly what the report used (`logic/drill.js`, fixture `drill.json`).
+
+## How the charts show the goal (Dave's layout)
+
+Rules in `modules/bd/logic/goal-chart.js` (fixture `goal-chart.json`), used by the page and the PDF so both draw the same thing.
+
+- **By PIC, when every PIC has the same goal** (the real case): one **Goal** bar at the top (dark blue = where each PIC should be by this month, light blue = the rest of the year's goal), then a bar per PIC, biggest total first. A **dashed line runs down the whole chart** at the pace and at the full goal, so any PIC's bar reads against them.
+- **By PIC when the goals differ**, and **always By market sector**: each row is a pair, the actual bar with its own goal bar flush underneath (no gap inside a pair; space only between pairs).
+- Every PIC or sector with a row is shown even with nothing yet; "Unassigned" only if it has something. The local demo's PIC goals differ (they are the mockup's), so the demo shows pairs; set them equal in Admin and build a draft to see the single goal bar.
+- The total-firm chart (Total firm over Annual goal) is unchanged.
