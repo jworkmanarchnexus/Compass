@@ -205,7 +205,12 @@ function paintChart(c, F, pal, w, y0, sec, d) {
       if (v <= 0) continue;
       const x0 = px(acc), x1 = px(acc + v);
       c.fillStyle = pal[kind]; c.fillRect(x0, y, Math.max(1, x1 - x0), bh);
-      if (kind !== 'mwip' && x1 - x0 > 34) { c.fillStyle = inkOn(pal[kind]); c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center'; c.fillText(X.fmtK(v), (x0 + x1) / 2, y + bh / 2 + 3.2); }
+      if (kind !== 'mwip') {
+        const t = X.fmtK(v);
+        c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center';
+        if (x1 - x0 >= c.measureText(t).width + 6) { c.fillStyle = inkOn(pal[kind]); c.fillText(t, (x0 + x1) / 2, y + bh / 2 + 3.2); }
+        else if (ch.tight && r.gap) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 8, true); c.fillText(t, (x0 + x1) / 2, y - 2); } // too narrow: just above the bar
+      }
       acc += v;
     }
     if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(acc) + 6, y + bh / 2 + 3.2); }

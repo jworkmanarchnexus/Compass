@@ -104,3 +104,7 @@ table.bd-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-siz
 .sb .sb-guide-goal { stroke: var(--bd-navy); }
 .bd-key .sw.sb-markpace, .bd-key .sw.sb-markgoal { width: 2px; height: 14px; background: repeating-linear-gradient(var(--bd-pace) 0 4px, transparent 4px 7px); }
 .bd-key .sw.sb-markgoal { background: repeating-linear-gradient(var(--bd-navy) 0 4px, transparent 4px 7px); }
+
+/* a segment's amount too long for the segment sits just above it; neither label should catch the pointer */
+.sb .sb-out { font: 700 10.5px var(--f-cond); fill: var(--text-strong); pointer-events: none; }
+.sb .sb-in { pointer-events: none; }

@@ -114,7 +114,12 @@ export function stackedBars(rows, { fmt, aria, max, onPick, picked, guides, rowH
         rect.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick({ rowKey: r.key, kind: s.kind }); } });
       }
       svg.append(rect);
-      if (s.text && x(acc + s.v) - x(acc) > 46) svg.append(el('text', { x: (x(acc) + x(acc + s.v)) / 2, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
+      if (s.text) {
+        const cx = (x(acc) + x(acc + s.v)) / 2, fits = x(acc + s.v) - x(acc) >= s.text.length * 6.4 + 8;
+        // too narrow for its words: inside if it fits, otherwise just above the bar (where there is room: not on a goal bar tucked under its pair)
+        if (fits) svg.append(el('text', { x: cx, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
+        else if (!tight || r.gapBefore) svg.append(el('text', { x: cx, y: by - 4, 'text-anchor': 'middle', class: 'sb-out' }, s.text));
+      }
       acc += s.v;
     }
     for (const m of r.marks || []) svg.append(el('line', { x1: x(m.v), x2: x(m.v), y1: by - 4, y2: by + bh + 4, class: 'sb-mark-' + m.kind }, el('title', {}, m.title || '')));
