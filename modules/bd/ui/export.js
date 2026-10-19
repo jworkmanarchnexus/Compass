@@ -3,11 +3,11 @@
 import { buildJob, pageCanvas, buildPdf, fontsReady, loadLogo } from './export-draw.js';
 
 const X = window.BdExportPlan;
-const DEFAULTS = { paper: 'letter', orientation: 'portrait', logo: 'first', printed: true };
+const DEFAULTS = { paper: 'letter', orientation: 'portrait', logo: 'all', printed: true };
 
 function load(pref) {
   try {
-    const o = JSON.parse(pref('bd.xo2') || '{}');
+    const o = JSON.parse(pref('bd.xo3') || '{}');
     return { ...DEFAULTS, ...o, desc: '' };
   } catch (e) { return { ...DEFAULTS, desc: '' }; }
 }
@@ -17,7 +17,7 @@ export function openExport(ctx, d) {
   const pref = ctx.T.pref;
   const O = load(pref);
   const today = ctx.today ? ctx.today() : new Date().toISOString().slice(0, 10);
-  const save = () => { const { desc, ...rest } = O; pref('bd.xo2', JSON.stringify(rest)); };
+  const save = () => { const { desc, ...rest } = O; pref('bd.xo3', JSON.stringify(rest)); };
 
   const prev = h('div', { class: 'xw-prev', 'aria-live': 'polite' });
   const sum = h('span', { class: 'xw-sum' });
@@ -56,7 +56,7 @@ export function openExport(ctx, d) {
       h('div', { class: 'xo-field' }, h('label', { text: 'Paper' }), select('paper', Object.entries(X.PAPER).map(([k, p]) => [k, p.label]), 'Paper')),
       h('div', { class: 'xo-field' }, h('label', { text: 'Orientation' }), seg('orientation', [['portrait', 'Portrait'], ['landscape', 'Landscape']]))),
     h('fieldset', {}, h('legend', { text: 'Heading and footer' }),
-      h('div', { class: 'xo-field' }, h('label', { text: 'Arch Nexus logo, top right' }), select('logo', [['first', 'First page'], ['all', 'Every page'], ['none', 'Not shown']], 'Logo')),
+      h('div', { class: 'xo-field' }, h('label', { text: 'Arch Nexus logo, top right' }), select('logo', [['first', 'First page only'], ['all', 'Every page'], ['none', 'Not shown']], 'Logo')),
       check(() => O.printed, v => { O.printed = v; }, 'Print date in the footer'),
       h('div', { class: 'xo-field' }, h('label', { text: 'Description' }), desc))));
 
