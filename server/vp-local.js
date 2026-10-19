@@ -22,13 +22,20 @@ function createLocalSource() {
   return {
     name: 'local made-up data (server/db/seed)',
     /* the BD report's inputs, as of a report month: projects (principal and market sector), revenue net of consultants through the
-       billing cutoff, contracted forecast through Dec 31, and pursuits not yet contracted, probability-weighted and before the architectural factor. Money in cents. */
+       billing cutoff, contracted forecast through Dec 31, and pursuits not yet contracted, probability-weighted and before the architectural factor. Money in cents.
+       Also, for the drill-downs: forecastMonths [{ id, month, amount }] (a project's forecast by month, YYYYMM) and mwipMonths (a pursuit's amount by month), used only as weights, and a name on each pursuit. */
     loadBd(period) {
       const projects = read('bd_projects.csv').map(p => ({ wbs1: p.WBS1, name: p.Name, principal: p.Principal, sector: p.Sector }));
       const revenue = read('bd_revenue.csv').filter(r => Number(r.Period) <= period).map(r => ({ wbs1: r.WBS1, period: Number(r.Period), amount: toCents(r.Amount) }));
       const forecast = read('bd_forecast.csv').filter(r => Number(r.Period) === period).map(r => ({ wbs1: r.WBS1, amount: toCents(r.Amount) }));
       const mwip = read('bd_mwip.csv').filter(r => Number(r.Period) === period).map(r => ({ id: r.Pursuit, pic: r.Principal, sector: r.Sector, amount: toCents(r.Amount) }));
-      return { projects, revenue, forecast, mwip };
+      // the monthly shape of each forecast project and pursuit (weights for the drill-downs; the totals above are what the report counts), and pursuit names
+      const forecastMonths = read('bd_forecast_months.csv').filter(r => Number(r.Period) === period).map(r => ({ id: r.WBS1, month: Number(r.Month), amount: toCents(r.Amount) }));
+      const mwipMonthRows = read('bd_mwip_months.csv').filter(r => Number(r.Period) === period);
+      const mwipMonths = mwipMonthRows.map(r => ({ id: r.Pursuit, month: Number(r.Month), amount: toCents(r.Amount) }));
+      const pursuitName = Object.fromEntries(mwipMonthRows.map(r => [r.Pursuit, r.Name]));
+      for (const m of mwip) m.name = pursuitName[m.id] || m.id;
+      return { projects, revenue, forecast, mwip, forecastMonths, mwipMonths };
     },
     /* Pipeline watch: what the pipeline looks like on a snapshot Monday. In production this is what the pull returns right now and the
        snapshot is stamped with today's Monday; locally the seed files hold eight Mondays and the one asked for is picked out.

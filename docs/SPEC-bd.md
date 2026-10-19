@@ -77,3 +77,17 @@ Projects (project number, name, principal code, market sector), monthly revenue 
 ## Export PDF window
 
 Opens from the report page. **Look:** Report (the Excel colors), Arch Nexus (brand palette), Quiet, Black and white. **Include:** table by PIC, table by market sector, and three charts (total firm, by PIC, by market sector). **Pages:** layout (automatic / tables then charts / everything on one page), paper (Letter, Tabloid, A4, A3), orientation. **Heading and footer:** the Arch Nexus logo top right (first page, every page or off), print date, a description under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). The rule for which sections go on which page is `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing the file on paper, and other PDF viewers than the browser's.
+
+## Drill-downs (click a bar)
+
+Every dark green (YTD), light green (forecast) and gray (MWIP) segment of the two charts, for the firm, each PIC and each market sector, can be pointed at and clicked. Pointing lights that segment and mutes the rest (the dim also reaches the keyboard: Tab to a segment, Enter to open it). Clicking opens a panel under that chart; clicking the same segment again, or Close, shuts it. Switching between By PIC and By market sector closes it.
+
+| Segment | The panel shows |
+|---|---|
+| YTD revenue | each project with a bar for the revenue billed to date, biggest first |
+| Revenue forecast | the Vantagepoint-style forecast: a row per project, a column for each remaining month of the year, the amount in each, and totals |
+| MWIP backlog | the same, a row per pursuit, with the factored amounts |
+
+For a PIC or sector bar the panel is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
+
+How the months are made: each forecast project and each pursuit comes from the source with a monthly shape (`forecastMonths`, `mwipMonths`). That shape is only a set of weights: the amount the report counted (after the architectural share and the factor) is spread over the remaining months in those proportions, with the odd cents placed so every row adds to exactly what the report used (`logic/drill.js`, fixture `drill.json`).

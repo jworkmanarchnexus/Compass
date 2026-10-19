@@ -319,6 +319,11 @@ function createServer(db, opts) {
       if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
       return sendJson(res, 200, bdDb.listReports(db, { role: user.role }));
     }
+    const bd2 = /^\/api\/bd\/reports\/([^/]+)\/detail$/.exec(p);
+    if (bd2 && method === 'GET') {
+      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, bdDb.drillDetail(db, bd2[1], { role: user.role }, { kind: url.searchParams.get('kind'), scope: url.searchParams.get('scope'), key: url.searchParams.get('key') }));
+    }
     const bm = /^\/api\/bd\/reports\/([^/]+)$/.exec(p);
     if (bm && method === 'GET') {
       if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');

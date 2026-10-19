@@ -74,15 +74,17 @@ export function lineChart(points, { fmt, aria, zero, ticks, height }) {
 
 /* Horizontal stacked bars, one row each. rows: [{ label, segs: [{ v, kind, text? }], marks?: [{ v, kind }], endText? }]
    kinds map to CSS classes sb-<kind>. Used by the BD report (revenue, forecast and MWIP against pace and goal).
-   Values are cents; fmt(v) writes an axis tick. */
-export function stackedBars(rows, { fmt, aria, max }) {
+   Values are cents; fmt(v) writes an axis tick.
+   A segment with `pick: true` can be hovered (everything else is muted) and clicked: onPick({ rowKey, kind }) is called with the row's `key`
+   and the segment's kind. `picked` ({ rowKey, kind }) keeps one segment lit while a drill-down is open. Keyboard: Tab and Enter. */
+export function stackedBars(rows, { fmt, aria, max, onPick, picked }) {
   const W = 1100, L = 170, R = 80, T = 8, B = 30, RH = rows.length > 2 ? 38 : 44;
   const H = T + rows.length * RH + B;
   const top = max || Math.max(...rows.map(r => r.segs.reduce((a, s) => a + s.v, 0)), ...rows.flatMap(r => (r.marks || []).map(m => m.v)));
   const step = niceStep(top, 5);
   const axisMax = Math.ceil(top / step) * step;
   const x = v => L + v / axisMax * (W - L - R);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': aria, class: 'chart sb' });
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': aria, class: 'chart sb' + (picked ? ' sb-has-pick' : '') });
   for (let v = 0; v <= axisMax + 1; v += step) {
     svg.append(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, class: 'ch-grid' }));
     svg.append(el('text', { x: x(v), y: H - 10, 'text-anchor': 'middle', class: 'ch-tick' }, fmt(v)));
@@ -93,7 +95,19 @@ export function stackedBars(rows, { fmt, aria, max }) {
     let acc = 0;
     for (const s of r.segs) {
       if (s.v <= 0) continue;
-      svg.append(el('rect', { x: x(acc), y: by, width: Math.max(1, x(acc + s.v) - x(acc)), height: bh, class: 'sb-' + s.kind }, el('title', {}, `${s.title || s.kind}: ${fmt(s.v)}`)));
+      const live = onPick && s.pick;
+      const isPicked = !!(picked && live && picked.rowKey === r.key && picked.kind === s.kind);
+      const rect = el('rect', { x: x(acc), y: by, width: Math.max(1, x(acc + s.v) - x(acc)), height: bh, class: 'sb-' + s.kind + (live ? ' sb-click' : '') + (isPicked ? ' sb-picked' : ''),
+        tabindex: live ? '0' : null, role: live ? 'button' : null, 'aria-pressed': live ? String(isPicked) : null,
+        'aria-label': live ? `Show what is behind ${s.title || s.kind} for ${r.label}: ${fmt(s.v)}` : null }, el('title', {}, `${s.title || s.kind}: ${fmt(s.v)}${live ? '. Click for the detail.' : ''}`));
+      if (live) {
+        const on = () => { svg.classList.add('sb-hover'); rect.classList.add('sb-hot'); };
+        const off = () => { svg.classList.remove('sb-hover'); rect.classList.remove('sb-hot'); };
+        rect.addEventListener('mouseenter', on); rect.addEventListener('mouseleave', off); rect.addEventListener('focus', on); rect.addEventListener('blur', off);
+        rect.addEventListener('click', () => onPick({ rowKey: r.key, kind: s.kind }));
+        rect.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick({ rowKey: r.key, kind: s.kind }); } });
+      }
+      svg.append(rect);
       if (s.text && x(acc + s.v) - x(acc) > 46) svg.append(el('text', { x: (x(acc) + x(acc + s.v)) / 2, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
       acc += s.v;
     }

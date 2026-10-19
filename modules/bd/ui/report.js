@@ -4,6 +4,7 @@ import { stackedBars } from '/shared/ui/charts.js';
 import { fmtDay, fmtDayYear, fmtWhen, plural } from '/shared/ui/format.js';
 import { Bd } from '/shared/platform/index.js';
 import { openExport } from './export.js';
+import { drillPanel } from './drill.js';
 
 const K = c => `$${Math.round(c / 100000).toLocaleString('en-US')}K`;
 const pct = (n, d) => (d ? `${(100 * n / d).toFixed(1)}%` : '-');
@@ -21,6 +22,7 @@ export async function renderBd(ctx, body, wantedId) {
   }
   let id = wantedId && list.some(r => r.id === wantedId) ? wantedId : (list.find(r => r.status === 'published') || list[0]).id;
   let tab = 'pic';
+  let drill = null; // { scope, key, label, kind }: the bar segment whose detail is open
   const holder = h('div', { class: 'stack' });
   body.append(holder);
 
@@ -40,8 +42,19 @@ export async function renderBd(ctx, body, wantedId) {
       banner(ctx, d, isAdmin, load, go),
       ...(isAdmin && d.warnings && d.warnings.length ? [warningsCard(ctx, d, load)] : []));
     holder.append(h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Report tabs' },
-      ...[['pic', 'By PIC'], ['sector', 'By market sector']].map(([k, label]) => h('button', { type: 'button', role: 'tab', 'aria-pressed': String(tab === k), text: label, onclick: () => { tab = k; paint(d); } }))));
-    holder.append(tableCard(ctx, d, tab), firmChart(ctx, d), rowChart(ctx, d, tab));
+      ...[['pic', 'By PIC'], ['sector', 'By market sector']].map(([k, label]) => h('button', { type: 'button', role: 'tab', 'aria-pressed': String(tab === k), text: label, onclick: () => { tab = k; drill = null; paint(d); } }))));
+    const onPick = (scope, label) => ({ rowKey, kind }) => {
+      drill = drill && drill.scope === scope && drill.key === rowKey && drill.kind === kind ? null : { scope, key: rowKey, label: rowKey === 'firm' ? 'Total firm' : label(rowKey), kind };
+      paint(d);
+      const p = holder.querySelector('.bd-drill');
+      if (p) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+    const rows = tab === 'pic' ? d.pic : d.sector;
+    const mine = scope => (drill && drill.scope === scope ? { rowKey: drill.key, kind: drill.kind } : null);
+    const firmCard = firmChart(ctx, d, onPick('firm', () => 'Total firm'), mine('firm'));
+    const rowCard = rowChart(ctx, d, tab, onPick(tab, k => (rows.find(r => r.key === k) || {}).label || k), mine(tab));
+    const panel = () => drillPanel(ctx, d.run.id, drill, () => { drill = null; paint(d); });
+    holder.append(...[tableCard(ctx, d, tab), firmCard, drill && drill.scope === 'firm' ? panel() : null, rowCard, drill && drill.scope === tab ? panel() : null].filter(Boolean));
     ctx.T.hydrateIcons(holder);
   }
   await load();
@@ -120,28 +133,28 @@ function tableCard(ctx, d, tab) {
     h('div', { class: 'bd-legend', text: legend }));
 }
 
-function firmChart(ctx, d) {
+function firmChart(ctx, d, onPick, picked) {
   const { h } = ctx;
   const f = d.firm;
   const remaining = Math.max(0, f.goal - f.ytdGoal);
   const svg = stackedBars([
-    { label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue' }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast' }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog' }], endText: K(f.mwip) },
+    { key: 'firm', label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue', pick: true }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast', pick: true }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }], endText: K(f.mwip) },
     { label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal achieved (pace)' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
-  ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal' });
+  ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal', onPick, picked });
   return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']]));
 }
 
-function rowChart(ctx, d, tab) {
+function rowChart(ctx, d, tab, onPick, picked) {
   const { h } = ctx;
   const rows = (tab === 'pic' ? d.pic : d.sector).filter(r => r.total > 0).slice().sort((a, b) => b.total - a.total);
   const svg = stackedBars(rows.map(r => ({
-    label: r.label, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue' }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast' }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog' }],
+    key: r.key, label: r.label, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue', pick: true }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast', pick: true }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }],
     marks: [{ v: r.ytdGoal, kind: 'pace', title: `Pace to date: ${K(r.ytdGoal)}` }, { v: r.goal, kind: 'goal', title: `Annual goal: ${K(r.goal)}` }], endText: K(r.mwip) })),
-  { fmt: K, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}: revenue, forecast and MWIP against pace and annual goal` });
+  { fmt: K, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}: revenue, forecast and MWIP against pace and annual goal`, onPick, picked });
   return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: tab === 'pic' ? 'By PIC' : 'By market sector' }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['markpace', 'Pace to date (goal x months / 12)'], ['markgoal', 'Annual goal']]),
-    h('div', { class: 'bd-legend', text: 'Labels in thousands.' }));
+    h('div', { class: 'bd-legend', text: 'Labels in thousands. Point at a bar to light it; click it to see the projects behind it.' }));
 }
 
 function legend({ h }, items) {

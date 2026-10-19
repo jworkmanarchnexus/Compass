@@ -234,3 +234,83 @@ test('the contract amount rule is an Admin setting: validated, defaulted, and re
   const rebuilt = (await josh.post(`/api/admin/bd/runs/${first.run.id}/rebuild`)).body;
   assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', rebuilt.run.id).r, 'feeConsultReimb', 'the report records the rule it was built with');
 }));
+
+/* ---- drill-downs: what is behind each bar ---- */
+const sum = (xs, f) => xs.reduce((a, x) => a + f(x), 0);
+const detail = (api, id, kind, scope, key) => api.get(`/api/bd/reports/${id}/detail?kind=${kind}&scope=${scope}` + (key === undefined ? '' : '&key=' + encodeURIComponent(key)));
+const rowField = { ytd: 'ytd', forecast: 'forecast', mwip: 'mwip' };
+
+test('every bar\'s drill-down adds up to the bar: firm, each PIC and each market sector, for all three kinds', () => withApp(async ({ api }) => {
+  const josh = api('j.workman');
+  const list = (await josh.get('/api/bd/reports')).body;
+  for (const rep of list) {
+    const r = (await josh.get(`/api/bd/reports/${rep.id}`)).body;
+    for (const kind of ['ytd', 'forecast', 'mwip']) {
+      const firm = (await detail(josh, rep.id, kind, 'firm')).body;
+      assert.strictEqual(firm.available, true);
+      assert.strictEqual(firm.totals.total, r.firm[rowField[kind]], `${rep.label} firm ${kind}`);
+      for (const [scope, rows] of [['pic', r.pic], ['sector', r.sector]]) {
+        for (const row of rows) {
+          const d = (await detail(josh, rep.id, kind, scope, row.key)).body;
+          assert.strictEqual(d.totals.total, row[rowField[kind]], `${rep.label} ${scope} ${row.label} ${kind}`);
+          assert.ok(d.items.every(i => (scope === 'pic' ? i.pic === row.key : i.sector === row.label)), 'only this one\'s projects');
+        }
+      }
+    }
+  }
+}, demo));
+
+test('the forecast and MWIP drill-downs have a column for each month left in the year, and each row adds across', () => withApp(async ({ api }) => {
+  const josh = api('j.workman');
+  const [sep, aug] = (await josh.get('/api/bd/reports')).body;
+  const f = (await detail(josh, sep.id, 'forecast', 'firm')).body;
+  assert.deepStrictEqual(f.months, [202610, 202611, 202612]);
+  assert.deepStrictEqual((await detail(josh, aug.id, 'mwip', 'firm')).body.months, [202609, 202610, 202611, 202612]);
+  for (const i of f.items) assert.strictEqual(sum(f.months, m => i.byMonth[m] || 0), i.total, i.name);
+  for (const m of f.months) assert.strictEqual(sum(f.items, i => i.byMonth[m] || 0), f.totals.byMonth[m]);
+  assert.strictEqual((await detail(josh, sep.id, 'ytd', 'firm')).body.months.length, 0, 'revenue to date has no months');
+  const m = (await detail(josh, sep.id, 'mwip', 'firm')).body;
+  assert.ok(m.items.every(i => /^P-/.test(i.id) && i.name && i.name !== i.id), 'pursuits are named');
+  assert.deepStrictEqual(f.items.map(i => i.total), f.items.map(i => i.total).sort((a, b) => b - a), 'biggest first');
+}, demo));
+
+test('the market sector drill-down includes the project coded Labs under Healthcare, and the Admin\'s sector answer', () => withApp(async ({ api }) => {
+  const josh = api('j.workman');
+  const sep = (await josh.get('/api/bd/reports')).body[0];
+  const healthcare = (await detail(josh, sep.id, 'ytd', 'sector', 'Healthcare')).body;
+  const civic = (await detail(josh, sep.id, 'ytd', 'sector', 'Civic')).body;
+  assert.ok(healthcare.items.length > 0 && civic.items.length > 0);
+  assert.ok(healthcare.items.every(i => i.sector === 'Healthcare'), 'Labs is counted and shown as Healthcare through 2026');
+  assert.ok(civic.items.some(i => /Midvale/.test(i.name)), 'the project with no sector went to Civic');
+}, demo));
+
+test('drill-downs follow the report\'s access: Finance and Marketing read them, a PIC only when allowed, drafts only the Admin', () => withApp(async ({ api, db }) => {
+  const josh = api('j.workman');
+  const sep = (await josh.get('/api/bd/reports')).body[0];
+  for (const u of ['m.hale', 'c.brandt']) assert.strictEqual((await detail(api(u), sep.id, 'ytd', 'firm')).status, 200, u);
+  assert.strictEqual((await detail(api('d.whitfield'), sep.id, 'ytd', 'firm')).status, 403, 'PICs are off by default');
+  assert.strictEqual((await detail(api(), sep.id, 'ytd', 'firm')).status, 401);
+  assert.strictEqual((await detail(josh, sep.id, 'nonsense', 'firm')).status, 400);
+  assert.strictEqual((await detail(josh, sep.id, 'ytd', 'region')).status, 400);
+  assert.strictEqual((await detail(josh, sep.id, 'ytd', 'pic')).status, 400, 'which PIC?');
+  assert.strictEqual((await detail(josh, 'nope', 'ytd', 'firm')).status, 404);
+  const draft = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202607 })).body.run.id;
+  assert.strictEqual((await detail(josh, draft, 'ytd', 'firm')).status, 200, 'the Admin sees a draft\'s detail');
+  assert.strictEqual((await detail(api('m.hale'), draft, 'ytd', 'firm')).status, 404, 'nobody else does');
+  // a report built before drill-downs existed has none, and says so
+  db.run('DELETE FROM bd_detail WHERE run_id = ?', draft);
+  const none = (await detail(josh, draft, 'forecast', 'firm')).body;
+  assert.deepStrictEqual([none.available, none.items], [false, undefined]);
+}, demo));
+
+test('the detail is locked with a published report, and a rebuilt draft gets fresh detail', () => withApp(async ({ api, db }) => {
+  const josh = api('j.workman');
+  const sep = (await josh.get('/api/bd/reports')).body[0];
+  assert.throws(() => db.run('UPDATE bd_detail SET amount = 1 WHERE run_id = ?', sep.id), /locked/);
+  assert.throws(() => db.run('DELETE FROM bd_detail WHERE run_id = ?', sep.id), /locked/);
+  const draft = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202607 })).body.run.id;
+  const before = db.get('SELECT COUNT(*) AS n FROM bd_detail WHERE run_id = ?', draft).n;
+  assert.ok(before > 0);
+  assert.strictEqual((await josh.post(`/api/admin/bd/runs/${draft}/rebuild`, {})).status, 200);
+  assert.strictEqual(db.get('SELECT COUNT(*) AS n FROM bd_detail WHERE run_id = ?', draft).n, before, 'rebuilt, not doubled');
+}, demo));

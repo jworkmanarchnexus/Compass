@@ -161,3 +161,10 @@
 ## 2026-10-17: the contract amount setting is built
 
 `bd.contractAmount` (`feeConsult` default, or `feeConsultReimb`) is an Admin setting on the BD Admin screen. The share is a pure, fixture-tested function (`modules/bd/logic/architectural.js`), applied in `computeBd` when a forecast row carries gross and fees; rows with only an amount are unchanged, so the seed data and existing reports behave as before. Reports record the rule used. Older local database files get the new column added automatically on open. Why fee + consultant fees by default: a reimbursable allowance is a pass-through expense, not fee, and a back-test against Vantagepoint's own Consultants % could not decide between the two (it fits neither: `docs/FORECAST-METHOD.md`).
+
+## Marketing Report drill-downs (2026-10-18)
+
+- **Detail is frozen with the report**, like its rows (`bd_detail`, locked once published), so a drill-down can never disagree with its bar, even after Vantagepoint changes. The cost is a few hundred rows per report. Reports built earlier have none; the page says so.
+- **Months are a spread, not a second source of truth.** The source gives each project's and pursuit's monthly shape; the report's counted amount (after the architectural share and the factor) is split in those proportions, to the cent. That keeps the grid honest to the totals whatever the source's own rounding.
+- **Hover mutes the rest; click opens a panel under the chart** (one at a time), rather than navigating away, so the bar stays in view. The segment stays outlined while its panel is open. Tab and Enter work too, since hover alone excludes keyboards and touch.
+- **The MWIP factor stays off PIC pages**: the detail shows only the weighted amounts already in a PIC's totals.

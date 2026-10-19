@@ -81,3 +81,19 @@ table.bd-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-siz
   .mainwrap, .page { padding: 0 !important; max-width: none !important; }
   .sec, .bd-box { break-inside: avoid; box-shadow: none; }
 }
+
+/* ---- drill-downs: point at a segment and the rest of the chart steps back; click it and the detail opens below ---- */
+.sb rect.sb-click { cursor: pointer; transition: opacity .12s ease; }
+.sb.sb-hover rect:not(.sb-hot), .sb.sb-has-pick rect:not(.sb-picked) { opacity: .32; }
+.sb.sb-has-pick.sb-hover rect:not(.sb-hot):not(.sb-picked) { opacity: .32; }
+.sb rect.sb-hot, .sb rect.sb-picked { opacity: 1; stroke: var(--text-strong); stroke-width: 1.5; }
+.sb rect.sb-click:focus-visible { outline: none; stroke: var(--accent); stroke-width: 2.5; }
+.sb.sb-hover .sb-in, .sb.sb-has-pick .sb-in { opacity: .6; }
+.bd-drill { border-color: var(--accent); }
+.bd-drill .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; text-align: left; }
+.bd-drill .sec-head h2 { margin: 0; font: 700 18px/1.2 var(--f-cond); }
+.bd-drill .sec-head p { margin: var(--s1) 0 0; color: var(--text-2); font-size: 13px; flex-basis: 100%; }
+.bd-drill td.r, .bd-drill th.r { text-align: right; }
+.bd-drill table.bd-t td { white-space: nowrap; }
+.bd-drill table.bd-t td.bd-name { white-space: normal; min-width: 180px; }
+.bd-drill .bd-zero { color: var(--text-3); }

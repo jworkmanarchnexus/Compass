@@ -380,3 +380,26 @@ CREATE TRIGGER IF NOT EXISTS forecast_snapshots_no_delete BEFORE DELETE ON forec
 CREATE TRIGGER IF NOT EXISTS pursuit_notes_no_update BEFORE UPDATE ON pursuit_notes BEGIN SELECT RAISE(ABORT, 'notes are append-only'); END;
 CREATE TRIGGER IF NOT EXISTS pursuit_notes_no_delete BEFORE DELETE ON pursuit_notes BEGIN SELECT RAISE(ABORT, 'notes are append-only'); END;
 CREATE TRIGGER IF NOT EXISTS pipeline_alerts_no_delete BEFORE DELETE ON pipeline_alerts BEGIN SELECT RAISE(ABORT, 'alerts are never deleted'); END;
+
+-- what is behind each bar of a BD report (drill-downs), frozen with the run: one row per project (or pursuit) per month.
+-- ytd rows have month 0; forecast and mwip rows have a YYYYMM month after the billing cutoff. mwip amounts are factored as in the totals.
+CREATE TABLE IF NOT EXISTS bd_detail (
+  run_id TEXT NOT NULL REFERENCES runs(id),
+  kind   TEXT NOT NULL CHECK (kind IN ('ytd','forecast','mwip')),
+  item_id TEXT NOT NULL,                   -- project number, or pursuit id
+  name   TEXT NOT NULL,
+  pic    TEXT NOT NULL DEFAULT '',         -- VP employee code, as counted in the report
+  sector TEXT NOT NULL DEFAULT '',         -- market sector after the Admin's answers and any roll-up
+  month  INTEGER NOT NULL,
+  amount INTEGER NOT NULL,                 -- cents
+  PRIMARY KEY (run_id, kind, item_id, month)
+);
+CREATE TRIGGER IF NOT EXISTS bd_detail_locked_insert BEFORE INSERT ON bd_detail
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_detail_locked_update BEFORE UPDATE ON bd_detail
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS bd_detail_locked_delete BEFORE DELETE ON bd_detail
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;

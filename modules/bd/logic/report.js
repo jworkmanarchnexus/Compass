@@ -38,6 +38,7 @@ function statusOf({ goal, ytdGoal, ytd, total }, th) {
      forecast     [{ wbs1, amount }]  or, when the source supplies the entered gross, [{ wbs1, gross, fee, consultFee, reimbAllow }]: the architectural share is then worked out here (logic/architectural.js)
      contractAmount  'feeConsult' (default) or 'feeConsultReimb': what "full contract amount" means for that share
      mwip         [{ id, pic, sector, amount }]   at face value
+   output also has `lines`: [{ kind: 'ytd'|'forecast'|'mwip', id, pic, sector, amount }], every amount counted and where (for the drill-downs, logic/drill.js)
      factorBp     the MWIP factor in basis points (6700 = 0.67)
      thresholds   { onPace: 99, onTrack: 100 }
      sectors      [{ name, rollsInto, rollsUntil }]  a sector may roll into another until a date ('YYYY-MM-DD')
@@ -79,8 +80,10 @@ function computeBd(input) {
   const unassigned = { sector: new Map(), pic: new Map() }; // wbs1 -> amount, for the Admin to resolve
   const assigned = new Map(), defaulted = new Map();         // wbs1 -> amount: what the Admin assigned, and what went to the default
 
+  const lines = []; // everything counted, with the PIC and (rolled-up) sector it was counted under: the drill-downs are built from these
   const add = (wbs1, pic, rawSector, field, amount, mwipRaw) => {
     const { sector, from, defaulted: dflt } = resolve(rawSector, wbs1);
+    lines.push({ kind: field, id: wbs1, pic: pic || '', sector: sector || '', amount });
     if (overrides[wbs1] && sector) assigned.set(wbs1, (assigned.get(wbs1) || 0) + amount);
     if (dflt) defaulted.set(wbs1, (defaulted.get(wbs1) || 0) + amount);
     const picKey = pic || '';
@@ -127,7 +130,7 @@ function computeBd(input) {
     assigned: [...assigned].map(([wbs1, amount]) => ({ wbs1, sector: overrides[wbs1], amount })),
     defaulted: [...defaulted].map(([wbs1, amount]) => ({ wbs1, amount })),
     rolled: [...rolled.values()],
-    forecastNotes,
+    forecastNotes, lines,
   };
 }
 

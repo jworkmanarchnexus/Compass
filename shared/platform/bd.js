@@ -7,6 +7,8 @@ const enc = encodeURIComponent;
 export const Bd = {
   reports() { return request('GET', '/api/bd/reports'); },
   report(id) { return request('GET', '/api/bd/reports/' + enc(id)); },
+  /* what is behind a bar: kind ytd | forecast | mwip, scope firm | pic | sector, key a PIC code or a sector name */
+  detail(id, { kind, scope, key }) { return request('GET', `/api/bd/reports/${enc(id)}/detail?kind=${enc(kind)}&scope=${enc(scope)}` + (key !== undefined && key !== null ? '&key=' + enc(key) : '')); },
   /* the Admin's side */
   inputs() { return request('GET', '/api/admin/bd/inputs'); },
   setGoal({ year, scope, key, amount }) { return request('PUT', '/api/admin/bd/goals', { year, scope, key, amount }); },
