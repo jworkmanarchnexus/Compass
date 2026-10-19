@@ -27,6 +27,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `bd_sectors` | market sectors, with an optional roll-up (`rolls_into` until `rolls_until`: Labs into Healthcare through 2026-12-31) | |
 | `bd_mwip_factor` | the MWIP weighting factor in basis points, effective-dated | **append-only** (database triggers) |
 | `bd_sector_overrides` | the Admin's sector for a project that had none in Vantagepoint | applies to every later report |
+| `bd_detail` | what is behind each bar (drill-downs): one row per project or pursuit per month (ytd rows have month 0): name, PIC, sector as counted, cents | locked with the run |
 | `bd_run_meta`, `bd_rows` | a BD run's facts (months elapsed, cutoff, factor, thresholds) and its rows (firm, PIC, sector: goal, pace, YTD, forecast, raw and weighted MWIP, total, status) | locked with the run; a BD run is a `runs` row with kind `bd`, its notes are `run_warnings` rows |
 | `pipeline_snapshots` | one row per Monday snapshot | **never changed or deleted** (triggers) |
 | `pursuit_snapshots` | each MWIP pursuit as it stood that Monday: id (its project number), name, PIC code, stage, win probability, amount | never changed or deleted |
@@ -39,7 +40,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 ## Invariants the database enforces (so a bug in the code cannot break them)
 
 1. `audit_log`, `plan_entries`, `bd_mwip_factor`, `pursuit_notes` and the three snapshot tables: no update, no delete.
-2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`) can be added, changed or removed only while the run is a **draft**.
+2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`, `bd_detail`) can be added, changed or removed only while the run is a **draft**.
 3. A run itself moves only draft → published, or published → archived with a non-empty reason and nothing else changed; an archived run never changes; only a draft may be deleted.
 
 A reset of the local database (`npm run seed`) is a developer action: it drops these guards, empties the tables and recreates the guards. The app has no such path.

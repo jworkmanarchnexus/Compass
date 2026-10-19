@@ -9,6 +9,7 @@ const report = require('../modules/bd/logic/report');
 const lifecycle = require('../modules/turnaround/logic/lifecycle');
 const schedule = require('../modules/turnaround/logic/schedule');
 const { isValid } = require('../modules/turnaround/logic/dates');
+const drill = require('../modules/bd/logic/drill');
 
 const KIND = 'bd';
 const label = r => `${schedule.periodLabel(r.period)}, version ${r.version}`;
@@ -41,11 +42,14 @@ function compute(db, source, period, settings) {
   const projects = Object.fromEntries(data.projects.map(p => [p.wbs1, { pic: p.principal, sector: p.sector, name: p.name }]));
   const th = { onPace: settings['bd.onPacePct'], onTrack: settings['bd.onTrackPct'] };
   const out = report.computeBd({ period, goals: own.goals, projects, revenue: data.revenue, forecast: data.forecast, mwip: data.mwip, factorBp: own.factorBp, thresholds: th, sectors: own.sectors, overrides: own.overrides, unknownTo: settings['bd.noSector'] === 'other' ? 'Other' : undefined, contractAmount: settings['bd.contractAmount'] });
-  return { out, own, projects, th };
+  const names = Object.fromEntries(data.projects.map(p => [p.wbs1, p.name]).concat(data.mwip.map(m => [m.id, m.name || m.id])));
+  const detail = drill.buildDetail({ period, lines: out.lines, forecastMonths: data.forecastMonths || [], mwipMonths: data.mwipMonths || [], names });
+  return { out, own, projects, th, detail };
 }
 
 function fill(db, runId, period, settings, c) {
-  const { out, own, projects, th } = c;
+  const { out, own, projects, th, detail } = c;
+  for (const d of detail) db.run('INSERT INTO bd_detail (run_id, kind, item_id, name, pic, sector, month, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', runId, d.kind, d.id, d.name, d.pic, d.sector, d.month, d.amount);
   db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule, contract_amount_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector'], settings['bd.contractAmount']);
   const put = (scope, r, sort) => db.run('INSERT INTO bd_rows (run_id, scope, key, label, sort, goal, ytd_goal, ytd, forecast, mwip_raw, mwip, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, scope, r.key, r.label, sort, r.goal, r.ytdGoal, r.ytd, r.forecast, r.mwipRaw, r.mwip, r.total, r.status);
   put('firm', out.firm, 0);
@@ -81,7 +85,7 @@ function rebuildDraft(db, runId, { source, settings }) {
   if (!verdict.ok) throw new HttpError(409, verdict.error);
   const c = compute(db, source, run.period, settings);
   db.tx(() => {
-    for (const t of ['bd_rows', 'bd_run_meta', 'run_warnings']) db.run(`DELETE FROM ${t} WHERE run_id = ?`, runId);
+    for (const t of ['bd_detail', 'bd_rows', 'bd_run_meta', 'run_warnings']) db.run(`DELETE FROM ${t} WHERE run_id = ?`, runId);
     db.run('UPDATE runs SET settings_json = ? WHERE id = ?', JSON.stringify(settings), runId);
     fill(db, runId, run.period, settings, c);
   });
@@ -148,6 +152,31 @@ function reportDetail(db, id, viewer) {
   };
 }
 
+/* The drill-down for one bar: kind (ytd | forecast | mwip), scope (firm | pic | sector) and key (a PIC code or a sector name).
+   Read from what was frozen with the run, so it always adds up to the report; a report built before this existed has none (available: false). */
+function drillDetail(db, id, viewer, { kind, scope, key }) {
+  const run = getRun(db, id);
+  if (viewer.role !== 'admin' && run.status !== 'published') throw new HttpError(404, 'Report not found.');
+  if (!['ytd', 'forecast', 'mwip'].includes(kind)) throw new HttpError(400, 'Pick revenue to date, forecast or MWIP.');
+  if (!['firm', 'pic', 'sector'].includes(scope)) throw new HttpError(400, 'Pick the firm, a PIC or a market sector.');
+  if (scope !== 'firm' && typeof key !== 'string') throw new HttpError(400, 'Which one?');
+  if (!db.get('SELECT 1 AS x FROM bd_detail WHERE run_id = ? LIMIT 1', id)) return { available: false, kind, scope, key: key || null };
+  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const where = scope === 'pic' ? ' AND pic = ?' : scope === 'sector' ? ' AND sector = ?' : '';
+  const rows = db.all(`SELECT * FROM bd_detail WHERE run_id = ? AND kind = ?${where} ORDER BY item_id, month`, ...[id, kind].concat(scope === 'firm' ? [] : [key]));
+  const items = new Map();
+  for (const r of rows) {
+    if (!items.has(r.item_id)) items.set(r.item_id, { id: r.item_id, name: r.name, pic: r.pic, picName: r.pic ? emp[r.pic] || r.pic : 'Unassigned', sector: r.sector || 'Unassigned', byMonth: {}, total: 0 });
+    const it = items.get(r.item_id);
+    if (r.month) it.byMonth[r.month] = r.amount;
+    it.total += r.amount;
+  }
+  const list = [...items.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+  const months = kind === 'ytd' ? [] : [...new Set(rows.map(r => r.month))].sort((a, b) => a - b);
+  const totals = { total: list.reduce((s, i) => s + i.total, 0), byMonth: Object.fromEntries(months.map(m => [m, list.reduce((s, i) => s + (i.byMonth[m] || 0), 0)])) };
+  return { available: true, kind, scope, key: key || null, months, items: list, totals };
+}
+
 /* ---- the Admin's own BD data ---- */
 function adminInputs(db) {
   const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
@@ -200,4 +229,4 @@ function runMonthly(db, { source, settings, period, mailer, baseUrl, adminEmails
   return { created: true, id };
 }
 
-module.exports = { KIND, label, allBd, getRun, buildDraft, rebuildDraft, publish, archiveAndRerun, listReports, reportDetail, adminInputs, setGoal, addFactor, setOverride, runMonthly, unresolvedSector };
+module.exports = { KIND, label, allBd, getRun, drillDetail, buildDraft, rebuildDraft, publish, archiveAndRerun, listReports, reportDetail, adminInputs, setGoal, addFactor, setOverride, runMonthly, unresolvedSector };

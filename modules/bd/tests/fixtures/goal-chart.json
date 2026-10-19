@@ -1,0 +1,49 @@
+{
+  "note": "How the PIC and market sector charts show the goal. Rows are the report's rows (cents in the real data; small numbers here).",
+  "cases": [
+    { "name": "PICs with the same goal: one goal bar, biggest total first, a PIC with nothing yet still has a row",
+      "scope": "pic",
+      "rows": [
+        { "key": "A", "label": "Ann", "goal": 1500, "ytdGoal": 875, "total": 300 },
+        { "key": "B", "label": "Bo", "goal": 1500, "ytdGoal": 875, "total": 900 },
+        { "key": "C", "label": "Cy", "goal": 1500, "ytdGoal": 875, "total": 0 },
+        { "key": "", "label": "Unassigned", "goal": 0, "ytdGoal": 0, "total": 0 }
+      ],
+      "expect": { "mode": "single", "order": ["B", "A", "C"], "goal": { "goal": 1500, "ytdGoal": 875 } } },
+    { "name": "Unassigned shows when it has something, and does not stop the goal bar",
+      "scope": "pic",
+      "rows": [
+        { "key": "A", "label": "Ann", "goal": 1500, "ytdGoal": 875, "total": 300 },
+        { "key": "", "label": "Unassigned", "goal": 0, "ytdGoal": 0, "total": 50 }
+      ],
+      "expect": { "mode": "single", "order": ["A", ""], "goal": { "goal": 1500, "ytdGoal": 875 } } },
+    { "name": "PICs with different goals: each gets its own pair of bars",
+      "scope": "pic",
+      "rows": [
+        { "key": "A", "label": "Ann", "goal": 1500, "ytdGoal": 875, "total": 300 },
+        { "key": "B", "label": "Bo", "goal": 2000, "ytdGoal": 1167, "total": 900 }
+      ],
+      "expect": { "mode": "paired", "order": ["B", "A"], "goal": null } },
+    { "name": "a PIC with no goal set is not hidden behind a shared goal bar",
+      "scope": "pic",
+      "rows": [
+        { "key": "A", "label": "Ann", "goal": 1500, "ytdGoal": 875, "total": 300 },
+        { "key": "B", "label": "Bo", "goal": 0, "ytdGoal": 0, "total": 900 }
+      ],
+      "expect": { "mode": "paired", "order": ["B", "A"], "goal": null } },
+    { "name": "market sectors are always pairs, even when the goals match",
+      "scope": "sector",
+      "rows": [
+        { "key": "Civic", "label": "Civic", "goal": 1000, "ytdGoal": 583, "total": 100 },
+        { "key": "Healthcare", "label": "Healthcare", "goal": 1000, "ytdGoal": 583, "total": 700 }
+      ],
+      "expect": { "mode": "paired", "order": ["Healthcare", "Civic"], "goal": null } },
+    { "name": "ties in total keep name order",
+      "scope": "sector",
+      "rows": [
+        { "key": "Z", "label": "Zed", "goal": 1, "ytdGoal": 1, "total": 5 },
+        { "key": "Y", "label": "Why", "goal": 1, "ytdGoal": 1, "total": 5 }
+      ],
+      "expect": { "mode": "paired", "order": ["Y", "Z"], "goal": null } }
+  ]
+}

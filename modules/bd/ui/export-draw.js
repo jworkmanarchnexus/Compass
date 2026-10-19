@@ -9,33 +9,15 @@ import { LOGO, PDF_FONTS } from '/shared/export/assets.js';
 
 const X = window.BdExportPlan;
 
-/* ---------- the looks ----------
-   Each look is a palette. "report" copies the firm's Excel report; "nexus" uses the Arch Nexus brand colors; "quiet" is light on
-   ink; "mono" is for black-and-white printers (status is always written out, so no look relies on color alone). */
+/* ---------- the palette ----------
+   The firm's Excel report look: navy headings, green and blue figures, tinted status cells. (There is one look; the report is not
+   restyled per person.) */
 export const LOOKS = {
   report: {
-    name: 'Report', note: 'Like the firm\'s Excel report: navy headings, green and blue figures, tinted status cells.',
+    name: 'Report',
     pal: { ink: '#1E2428', text2: '#50585E', muted: '#6E777D', title: '#1F4E78', headBg: '#1F4E78', headInk: '#FFFFFF', rule: '#BFC6CC', box: '#1E2428',
       goalInk: '#00B050', paceInk: '#0070C0', ytd: '#92D050', forecast: '#D7E4BD', mwip: '#A6A6A6', pace: '#558ED5', rest: '#BDD7EE', goalMark: '#1F4E78', grid: '#E1E5E8',
       on_track: ['#C6E0B4', '#2F4F1D'], on_pace: ['#FFE699', '#6B5200'], behind: ['#F8CBAD', '#7A3410'], firmBg: '#F2F2F2' },
-  },
-  nexus: {
-    name: 'Arch Nexus', note: 'The brand palette: Nexus Blue headings and bars, brand grays, brand green and orange for status.',
-    pal: { ink: '#24292E', text2: '#50585E', muted: '#6E777D', title: '#0099D8', headBg: '#005175', headInk: '#FFFFFF', rule: '#CDD1D2', box: '#504F51',
-      goalInk: '#005175', paceInk: '#0077A8', ytd: '#0099D8', forecast: '#99D6EF', mwip: '#778390', pace: '#005175', rest: '#BEDAEC', goalMark: '#504F51', grid: '#E7E9EA',
-      on_track: ['#DDF0B0', '#3C5A00'], on_pace: ['#FBDDAA', '#7A4A00'], behind: ['#F5C9C6', '#8A1F18'], firmBg: '#EEF3F6' },
-  },
-  quiet: {
-    name: 'Quiet', note: 'Light headings and thin lines, for a report that will be read on screen or in a binder.',
-    pal: { ink: '#24292E', text2: '#50585E', muted: '#6E777D', title: '#24292E', headBg: '#E7EBEE', headInk: '#24292E', rule: '#DADFE3', box: '#9AA3A9',
-      goalInk: '#24292E', paceInk: '#24292E', ytd: '#5F7F9E', forecast: '#B7C8D8', mwip: '#B4BBC1', pace: '#24292E', rest: '#DADFE3', goalMark: '#24292E', grid: '#EEF0F2',
-      on_track: ['#E6F0DC', '#2F4F1D'], on_pace: ['#FBF1D0', '#6B5200'], behind: ['#F8E1D6', '#7A3410'], firmBg: '#F6F7F8' },
-  },
-  mono: {
-    name: 'Black and white', note: 'Grays only, for printers without color. Status is written out in every cell.',
-    pal: { ink: '#000000', text2: '#333333', muted: '#555555', title: '#000000', headBg: '#333333', headInk: '#FFFFFF', rule: '#BBBBBB', box: '#000000',
-      goalInk: '#000000', paceInk: '#000000', ytd: '#4D4D4D', forecast: '#A6A6A6', mwip: '#D9D9D9', pace: '#4D4D4D', rest: '#D9D9D9', goalMark: '#000000', grid: '#E6E6E6',
-      on_track: ['#E6E6E6', '#000000'], on_pace: ['#F3F3F3', '#000000'], behind: ['#CFCFCF', '#000000'], firmBg: '#F2F2F2' },
   },
 };
 
@@ -163,34 +145,45 @@ function niceStep(range, ticks) {
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * pow;
 }
 const KEYS = {
-  firm: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']],
-  rows: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['markpace', 'Pace to date'], ['markgoal', 'Annual goal']],
+  firm: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']],
+  rows: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']],
+  single: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']],
 };
 
 function chartRows(sec, d) {
   const f = d.firm;
   const K = X.fmtK;
-  if (sec.id === 'firmChart') {
+  if (sec.id === 'firmChart' || sec.id === 'firmChartMarket') {
     const rest = Math.max(0, f.goal - f.ytdGoal);
+    const market = sec.id === 'firmChartMarket'; // the market sector page opens with the same totals, labelled for markets
     return {
-      title: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${X.pct(f.total, f.goal)} of goal)`, keys: KEYS.firm, tall: true,
-      rows: [{ label: 'Total firm', segs: [['ytd', f.ytd], ['forecast', f.forecast], ['mwip', f.mwip]], end: K(f.mwip) }, { label: 'Annual goal', segs: [['pace', f.ytdGoal], ['rest', rest]] }],
+      title: `${market ? 'All markets' : 'Total firm'}: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${X.pct(f.total, f.goal)} of goal)`, keys: KEYS.firm, tall: true,
+      rows: [{ label: market ? 'Total market' : 'Total firm', segs: [['ytd', f.ytd], ['forecast', f.forecast], ['mwip', f.mwip]], end: K(f.mwip) }, { label: 'Annual goal', segs: [['pace', f.ytdGoal], ['rest', rest]] }],
     };
   }
-  const src = (sec.id === 'picChart' ? d.pic : d.sector).filter(r => r.total > 0).slice().sort((a, b) => b.total - a.total);
+  // the PIC and market sector charts show the goal the way Dave's reports do (logic/goal-chart.js)
+  const scope = sec.id === 'picChart' ? 'pic' : 'sector';
+  const lay = window.BdGoalChart.layout(scope === 'pic' ? d.pic : d.sector, scope);
+  const goalSegs = r => [['pace', r.ytdGoal], ['rest', Math.max(0, r.goal - r.ytdGoal)]];
+  const actual = (r, gap) => ({ label: r.label, gap, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], end: K(r.mwip) });
+  const single = lay.mode === 'single';
   return {
-    title: sec.id === 'picChart' ? 'By PIC' : 'By market sector', keys: KEYS.rows, tall: false,
-    rows: src.map(r => ({ label: r.label, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], marks: [['pace', r.ytdGoal], ['goal', r.goal]], end: K(r.mwip) })),
+    title: scope === 'pic' ? 'By PIC' : 'By market sector', keys: single ? KEYS.single : KEYS.rows, tall: false, small: true, tight: !single,
+    guides: single ? [['pace', lay.goal.ytdGoal], ['goal', lay.goal.goal]] : [],
+    rows: single ? [{ label: 'Goal', segs: goalSegs(lay.goal), muted: true }, ...lay.rows.map((r, i) => actual(r, i === 0))]
+      : lay.rows.flatMap(r => [actual(r, true), { label: 'Goal', segs: goalSegs(r), muted: true }]),
   };
 }
 
 function paintChart(c, F, pal, w, y0, sec, d) {
   const C = X.C;
   const ch = chartRows(sec, d);
-  const rh = ch.tall ? C.firmRow : C.row, bh = rh * 0.64;
-  const L = 130, R = 44, bodyTop = C.sum + C.top, bodyH = ch.rows.length * rh;
+  const rh = ch.tall ? C.firmRow : ch.small ? C.goalRow : C.row, bh = ch.tight ? rh : rh * 0.64; // tight: a bar and its goal bar sit flush
+  const ys = []; let yy = 0;
+  ch.rows.forEach(r => { if (r.gap) yy += C.gap; ys.push(yy); yy += rh; });
+  const L = 130, R = 44, bodyTop = C.sum + C.top, bodyH = yy;
   const total = bodyTop + bodyH + C.axis + C.key;
-  const top = Math.max(...ch.rows.map(r => r.segs.reduce((a, s) => a + s[1], 0)), ...ch.rows.flatMap(r => (r.marks || []).map(m => m[1])), 1);
+  const top = Math.max(...ch.rows.map(r => r.segs.reduce((a, s) => a + s[1], 0)), ...(ch.guides || []).map(g => g[1]), 1);
   const step = niceStep(top, 5), axisMax = Math.ceil(top / step) * step;
   const px = v => L + v / axisMax * (w - L - R);
   c.save(); c.translate(0, y0);
@@ -204,25 +197,31 @@ function paintChart(c, F, pal, w, y0, sec, d) {
     c.fillStyle = pal.muted; c.textAlign = 'center'; c.fillText(X.fmtK(v), px(v), bodyTop + bodyH + 11);
   }
   ch.rows.forEach((r, i) => {
-    const y = bodyTop + i * rh + (rh - bh) / 2;
-    c.fillStyle = pal.ink; c.font = fnt(F, 'ui', 9.5); c.textAlign = 'right';
+    const y = bodyTop + ys[i] + (rh - bh) / 2; // (no offset when tight)
+    c.fillStyle = r.muted ? pal.muted : pal.ink; c.font = fnt(F, 'ui', r.muted ? 8.5 : 9.5); c.textAlign = 'right';
     c.fillText(fitText(c, r.label, L - 10), L - 8, y + bh / 2 + 3.4);
     let acc = 0;
     for (const [kind, v] of r.segs) {
       if (v <= 0) continue;
       const x0 = px(acc), x1 = px(acc + v);
       c.fillStyle = pal[kind]; c.fillRect(x0, y, Math.max(1, x1 - x0), bh);
-      if (kind !== 'mwip' && x1 - x0 > 34) { c.fillStyle = inkOn(pal[kind]); c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center'; c.fillText(X.fmtK(v), (x0 + x1) / 2, y + bh / 2 + 3.2); }
+      if (kind !== 'mwip') {
+        const t = X.fmtK(v);
+        c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center';
+        if (x1 - x0 >= c.measureText(t).width + 6) { c.fillStyle = inkOn(pal[kind]); c.fillText(t, (x0 + x1) / 2, y + bh / 2 + 3.2); }
+        else if (ch.tight && r.gap) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 8, true); c.fillText(t, (x0 + x1) / 2, y - 2); } // too narrow: just above the bar
+      }
       acc += v;
     }
-    for (const [kind, v] of r.marks || []) {
-      c.strokeStyle = kind === 'pace' ? pal.pace : pal.goalMark; c.lineWidth = kind === 'pace' ? 2.4 : 1.6;
-      dashed(c, kind === 'goal');
-      c.beginPath(); c.moveTo(px(v), y - 3); c.lineTo(px(v), y + bh + 3); c.stroke();
-      dashed(c, false);
-    }
-    if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(Math.max(acc, ...(r.marks || []).map(m => m[1]))) + 6, y + bh / 2 + 3.2); }
+    if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(acc) + 6, y + bh / 2 + 3.2); }
   });
+  // dashed lines down the whole chart: where each should be by now, and the full goal
+  for (const [kind, v] of ch.guides || []) {
+    c.strokeStyle = kind === 'pace' ? pal.pace : pal.goalMark; c.lineWidth = 1.4;
+    dashed(c, true);
+    c.beginPath(); c.moveTo(px(v), bodyTop); c.lineTo(px(v), bodyTop + bodyH); c.stroke();
+    dashed(c, false);
+  }
   c.fillStyle = pal.ink; c.fillRect(L - 0.4, bodyTop, 0.8, bodyH);
   // key: swatches and words, centered as a row
   c.font = fnt(F, 'ui', 8.5);
@@ -244,20 +243,22 @@ function paintChart(c, F, pal, w, y0, sec, d) {
 }
 
 /* ---------- heading and footer (points) ---------- */
+const TITLES = ['Marketing Report: By Principal-in-Charge', 'Marketing Report: By Market Sector'];
 function paintHeading(c, F, pal, o) {
   const { W, page, hd, d, O, logoAt } = o;
   const full = page === 0 || O.logo === 'all';
   const showLogo = O.logo !== 'none' && full && logoImg;
   const rx = W - (showLogo ? hd.logoW + hd.clear : 0);
   c.textAlign = 'left';
-  c.fillStyle = pal.title; c.font = fnt(F, 'cond', full ? 25 : 16, true);
-  const period = periodName(d.run.period);
-  const title = ('Marketing Report · ' + period).toUpperCase() + (page > 0 && !full ? '  (continued)' : '');
-  c.fillText(fitText(c, title, rx - 6), 0, full ? 24 : 18);
+  c.fillStyle = pal.title;
+  // the title is the report's name and which breakdown this page is; the type shrinks until it fits beside the logo
+  let size = full ? 25 : 20;
+  for (c.font = fnt(F, 'cond', size, true); size > 12 && c.measureText(TITLES[page] || TITLES[0]).width > rx - 6; size -= 0.5) c.font = fnt(F, 'cond', size, true);
+  c.fillText(TITLES[page] || TITLES[0], 0, full ? 24 : 20);
+  c.fillStyle = pal.text2; c.font = fnt(F, 'cond', full ? 12.5 : 10.5);
+  const sub = `As of ${longDay(d.meta.cutoff)}  ·  Version ${d.run.version}  ·  ${{ draft: 'Draft', published: 'Published', archived: 'Archived' }[d.run.status]}`;
+  c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, full ? 43 : 35);
   if (full) {
-    c.fillStyle = pal.text2; c.font = fnt(F, 'cond', 12.5);
-    const sub = `As of ${longDay(d.meta.cutoff)}  ·  Version ${d.run.version}  ·  ${{ draft: 'Draft', published: 'Published', archived: 'Archived' }[d.run.status]}`;
-    c.fillText(fitText(c, sub.toUpperCase(), rx - 6), 0, 43);
     c.font = fnt(F, 'ui', 9.4);
     c.fillText(fitText(c, 'All figures presented in this report are in net architectural revenue.', rx - 6), 0, 58);
     if (O.desc && O.desc.trim()) {
@@ -288,9 +289,9 @@ export function buildJob(d, O, today) {
   const P = X.paperSize(O.paper, O.orientation);
   const descLines = O.desc && O.desc.trim() ? Math.min(4, Math.max(1, Math.ceil(O.desc.trim().length / 70))) : 0;
   const hd = X.headingHeights({ logo: O.logo, descLines });
-  const secs = X.sectionsFor(d, O.include, O.grouping);
-  const pl = X.plan({ sections: secs, P, firstHead: hd.full, laterHead: hd.compact, layout: O.layout, grouping: O.grouping });
-  const pal = (LOOKS[O.look] || LOOKS.report).pal;
+  const secs = X.sectionsFor(d);
+  const pl = X.plan({ sections: secs, P, firstHead: hd.full, laterHead: hd.compact });
+  const pal = LOOKS.report.pal;
   const M = X.MARGIN;
   return {
     P, count: pl.pages.length, z: pl.z, pages: pl.pages, empty: !secs.length,

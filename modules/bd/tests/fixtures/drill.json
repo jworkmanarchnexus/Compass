@@ -1,0 +1,52 @@
+{
+  "note": "Splitting a whole-cent total over weights, and building the drill-down lines. Money is cents. Months are YYYYMM.",
+  "spread": [
+    { "name": "even parts", "total": 300, "weights": [1, 1, 1], "expect": [100, 100, 100] },
+    { "name": "odd cents go to the largest remainders, first on a tie", "total": 100, "weights": [1, 1, 1], "expect": [34, 33, 33] },
+    { "name": "weights shape it", "total": 1000, "weights": [1, 2, 2], "expect": [200, 400, 400] },
+    { "name": "no usable weights: equal parts", "total": 10, "weights": [0, 0], "expect": [5, 5] },
+    { "name": "a zero weight gets nothing", "total": 90, "weights": [0, 1, 2], "expect": [0, 30, 60] },
+    { "name": "a negative total keeps its sign", "total": -100, "weights": [1, 1, 1], "expect": [-34, -33, -33] },
+    { "name": "one month takes it all", "total": 12345, "weights": [7], "expect": [12345] },
+    { "name": "no months", "total": 100, "weights": [], "expect": [] }
+  ],
+  "remainingMonths": [
+    { "period": 202609, "expect": [202610, 202611, 202612] },
+    { "period": 202608, "expect": [202609, 202610, 202611, 202612] },
+    { "period": 202611, "expect": [202612] },
+    { "period": 202612, "expect": [202612], "why": "a December report has no months left, so December stands in" }
+  ],
+  "buildDetail": {
+    "period": 202609,
+    "lines": [
+      { "kind": "ytd", "id": "A", "pic": "E1", "sector": "Healthcare", "amount": 1000 },
+      { "kind": "ytd", "id": "A", "pic": "E1", "sector": "Healthcare", "amount": 500 },
+      { "kind": "ytd", "id": "B", "pic": "E2", "sector": "Civic", "amount": 700 },
+      { "kind": "forecast", "id": "A", "pic": "E1", "sector": "Healthcare", "amount": 600 },
+      { "kind": "forecast", "id": "B", "pic": "E2", "sector": "Civic", "amount": 100 },
+      { "kind": "mwip", "id": "P1", "pic": "E1", "sector": "Healthcare", "amount": 335 },
+      { "kind": "ytd", "id": "Z", "pic": "E1", "sector": "Healthcare", "amount": 0 }
+    ],
+    "forecastMonths": [
+      { "id": "A", "month": 202610, "amount": 100 }, { "id": "A", "month": 202611, "amount": 200 }, { "id": "A", "month": 202612, "amount": 300 },
+      { "id": "B", "month": 202610, "amount": 5 }
+    ],
+    "mwipMonths": [
+      { "id": "P1", "month": 202610, "amount": 1 }, { "id": "P1", "month": 202611, "amount": 1 }, { "id": "P1", "month": 202612, "amount": 1 }
+    ],
+    "names": { "A": "Alpha", "B": "Bravo", "P1": "Pursuit One" },
+    "expect": [
+      { "kind": "ytd", "id": "A", "name": "Alpha", "pic": "E1", "sector": "Healthcare", "month": 0, "amount": 1500 },
+      { "kind": "ytd", "id": "B", "name": "Bravo", "pic": "E2", "sector": "Civic", "month": 0, "amount": 700 },
+      { "kind": "forecast", "id": "A", "name": "Alpha", "pic": "E1", "sector": "Healthcare", "month": 202610, "amount": 100 },
+      { "kind": "forecast", "id": "A", "name": "Alpha", "pic": "E1", "sector": "Healthcare", "month": 202611, "amount": 200 },
+      { "kind": "forecast", "id": "A", "name": "Alpha", "pic": "E1", "sector": "Healthcare", "month": 202612, "amount": 300 },
+      { "kind": "forecast", "id": "B", "name": "Bravo", "pic": "E2", "sector": "Civic", "month": 202610, "amount": 100 },
+      { "kind": "forecast", "id": "B", "name": "Bravo", "pic": "E2", "sector": "Civic", "month": 202611, "amount": 0 },
+      { "kind": "forecast", "id": "B", "name": "Bravo", "pic": "E2", "sector": "Civic", "month": 202612, "amount": 0 },
+      { "kind": "mwip", "id": "P1", "name": "Pursuit One", "pic": "E1", "sector": "Healthcare", "month": 202610, "amount": 112 },
+      { "kind": "mwip", "id": "P1", "name": "Pursuit One", "pic": "E1", "sector": "Healthcare", "month": 202611, "amount": 112 },
+      { "kind": "mwip", "id": "P1", "name": "Pursuit One", "pic": "E1", "sector": "Healthcare", "month": 202612, "amount": 111 }
+    ]
+  }
+}

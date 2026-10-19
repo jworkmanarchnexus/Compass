@@ -161,3 +161,25 @@
 ## 2026-10-17: the contract amount setting is built
 
 `bd.contractAmount` (`feeConsult` default, or `feeConsultReimb`) is an Admin setting on the BD Admin screen. The share is a pure, fixture-tested function (`modules/bd/logic/architectural.js`), applied in `computeBd` when a forecast row carries gross and fees; rows with only an amount are unchanged, so the seed data and existing reports behave as before. Reports record the rule used. Older local database files get the new column added automatically on open. Why fee + consultant fees by default: a reimbursable allowance is a pass-through expense, not fee, and a back-test against Vantagepoint's own Consultants % could not decide between the two (it fits neither: `docs/FORECAST-METHOD.md`).
+
+## Marketing Report drill-downs (2026-10-18)
+
+- **Detail is frozen with the report**, like its rows (`bd_detail`, locked once published), so a drill-down can never disagree with its bar, even after Vantagepoint changes. The cost is a few hundred rows per report. Reports built earlier have none; the page says so.
+- **Months are a spread, not a second source of truth.** The source gives each project's and pursuit's monthly shape; the report's counted amount (after the architectural share and the factor) is split in those proportions, to the cent. That keeps the grid honest to the totals whatever the source's own rounding.
+- **Hover mutes the rest; click opens a panel under the chart** (one at a time), rather than navigating away, so the bar stays in view. The segment stays outlined while its panel is open. Tab and Enter work too, since hover alone excludes keyboards and touch.
+- **The MWIP factor stays off PIC pages**: the detail shows only the weighted amounts already in a PIC's totals.
+
+## Goal bars on the PIC and market charts (2026-10-18)
+
+- **Back to Dave's layout**: one shared goal bar plus dashed lines when every PIC has the same goal; a goal bar under each bar when the goals differ and on the market chart. The earlier per-row pace and goal tick marks are gone.
+- **The choice is made from the data**, not a setting: if the goals are all equal the single bar is exactly right, and if they are not a single bar would be wrong for most PICs.
+- **Both dashed lines** (pace and full goal) are drawn, since "compare the goal location from actual" could mean either; say if only the pace line is wanted.
+- The PDF uses the same rules, so a PDF page now needs more height when pairs are used.
+
+## Marketing Report PDF: fixed pages (2026-10-18)
+
+- **Always two pages**: PIC (table and charts), then market sector (table and charts), as Dave's two reports were. The looks, the grouping choice, the layout choice and the include list are gone: they only let the report be assembled differently from the one the firm wants. Paper, orientation, logo, print date and description remain.
+- **Each page opens with the totals chart** (Total firm on the PIC page, Total market on the market page), as in Dave's reports.
+- **Titles name the breakdown**; the month is only in the "As of" line. Title type shrinks to fit rather than being cut off.
+- **Letter portrait is the default** because it fits each page at full size; landscape shrinks to fit.
+- **Legend wording**: "Goal pace" (was "Goal achieved (pace)") on every chart, page and PDF.

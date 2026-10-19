@@ -76,4 +76,34 @@ Projects (project number, name, principal code, market sector), monthly revenue 
 
 ## Export PDF window
 
-Opens from the report page. **Look:** Report (the Excel colors), Arch Nexus (brand palette), Quiet, Black and white. **Include:** table by PIC, table by market sector, and three charts (total firm, by PIC, by market sector). **Pages:** layout (automatic / tables then charts / everything on one page), paper (Letter, Tabloid, A4, A3), orientation. **Heading and footer:** the Arch Nexus logo top right (first page, every page or off), print date, a description under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). The rule for which sections go on which page is `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing the file on paper, and other PDF viewers than the browser's.
+Opens from the report page. The report is **always two pages**, in this order, with nothing optional and no color choices (one look, the firm's Excel report):
+
+- **Page 1, "Marketing Report: By Principal-in-Charge":** the PIC table, the total-firm chart, the PIC chart.
+- **Page 2, "Marketing Report: By Market Sector":** the market sector table, the total-market chart, the market sector chart.
+
+Each page's second line is "As of <billing cutoff> · Version N · Published" (the month appears once; it is not in the title). The title's type shrinks to fit beside the logo. The Arch Nexus logo is top right of **both** pages by default (it can be limited to page 1 or hidden).
+
+What can still be chosen: **paper** (Letter, Tabloid, A4, A3, default Letter), **orientation** (default Portrait: Letter portrait fits each page at full size), the **logo**, the **print date** in the footer, and a **description** under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). A page too tall for the paper shrinks to fit rather than spilling onto a third page, and the window says "small print" when that makes the type hard to read. Rules: `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing on paper, and PDF viewers other than the browser's.
+
+## Drill-downs (click a bar)
+
+Every dark green (YTD), light green (forecast) and gray (MWIP) segment of the two charts, for the firm, each PIC and each market sector, can be pointed at and clicked. Pointing lights that segment and mutes the rest (the dim also reaches the keyboard: Tab to a segment, Enter to open it). Clicking opens a panel under that chart; clicking the same segment again, or Close, shuts it. Switching between By PIC and By market sector closes it.
+
+| Segment | The panel shows |
+|---|---|
+| YTD revenue | each project with a bar for the revenue billed to date, biggest first |
+| Revenue forecast | the Vantagepoint-style forecast: a row per project, a column for each remaining month of the year, the amount in each, and totals |
+| MWIP backlog | the same, a row per pursuit, with the factored amounts |
+
+For a PIC or sector bar the panel is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
+
+How the months are made: each forecast project and each pursuit comes from the source with a monthly shape (`forecastMonths`, `mwipMonths`). That shape is only a set of weights: the amount the report counted (after the architectural share and the factor) is spread over the remaining months in those proportions, with the odd cents placed so every row adds to exactly what the report used (`logic/drill.js`, fixture `drill.json`).
+
+## How the charts show the goal (Dave's layout)
+
+Rules in `modules/bd/logic/goal-chart.js` (fixture `goal-chart.json`), used by the page and the PDF so both draw the same thing.
+
+- **By PIC, when every PIC has the same goal** (the real case): one **Goal** bar at the top (dark blue = where each PIC should be by this month, light blue = the rest of the year's goal), then a bar per PIC, biggest total first. A **dashed line runs down the whole chart** at the pace and at the full goal, so any PIC's bar reads against them.
+- **By PIC when the goals differ**, and **always By market sector**: each row is a pair, the actual bar with its own goal bar flush underneath (no gap inside a pair; space only between pairs).
+- Every PIC or sector with a row is shown even with nothing yet; "Unassigned" only if it has something. The local demo's PIC goals differ (they are the mockup's), so the demo shows pairs; set them equal in Admin and build a draft to see the single goal bar.
+- The total-firm chart (Total firm over Annual goal) is unchanged.
