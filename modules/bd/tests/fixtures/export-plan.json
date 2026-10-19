@@ -1,197 +1,96 @@
 {
-  "note": "How the BD report's sections go onto PDF pages. Input: row counts, paper, orientation, layout. Expect: the section ids on each page, in order, and (when given) whether any page had to shrink.",
+  "note": "The PDF is always two pages: the PIC table and charts, then the market sector table and charts. Expect: the section ids on each page. shrinks: some page is shrunk to fit; small: the type falls below readable.",
   "cases": [
     {
-      "name": "Letter landscape, everything: tables first, charts second",
-      "paper": "letter",
-      "orientation": "landscape",
-      "layout": "auto",
-      "pic": 8,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
-      "expect": [
-        [
-          "picTable",
-          "sectorTable"
-        ],
-        [
-          "firmChart",
-          "picChart",
-          "sectorChart"
-        ]
-      ]
-    },
-    {
-      "name": "Letter portrait, everything: still two pages, text is not shrunk below readable",
+      "name": "Letter portrait (the default): two pages, nothing shrunk",
       "paper": "letter",
       "orientation": "portrait",
-      "layout": "auto",
       "pic": 8,
       "sector": 6,
       "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
       "expect": [
         [
           "picTable",
-          "sectorTable"
+          "firmChart",
+          "picChart"
         ],
         [
-          "firmChart",
-          "picChart",
+          "sectorTable",
+          "firmChartMarket",
           "sectorChart"
         ]
-      ]
+      ],
+      "shrinks": false
     },
     {
-      "name": "Tabloid portrait: all five sections fit on one sheet",
+      "name": "Tabloid portrait: two pages, nothing shrunk",
       "paper": "tabloid",
       "orientation": "portrait",
-      "layout": "auto",
       "pic": 8,
       "sector": 6,
       "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
       "expect": [
         [
           "picTable",
-          "sectorTable",
           "firmChart",
-          "picChart",
+          "picChart"
+        ],
+        [
+          "sectorTable",
+          "firmChartMarket",
+          "sectorChart"
+        ]
+      ],
+      "shrinks": false
+    },
+    {
+      "name": "A4 portrait: two pages",
+      "paper": "a4",
+      "orientation": "portrait",
+      "pic": 8,
+      "sector": 6,
+      "head": "logo",
+      "expect": [
+        [
+          "picTable",
+          "firmChart",
+          "picChart"
+        ],
+        [
+          "sectorTable",
+          "firmChartMarket",
           "sectorChart"
         ]
       ]
     },
     {
-      "name": "Forced one page on Letter landscape shrinks to fit",
+      "name": "Letter landscape: still two pages; each shrinks to fit, never a third page",
       "paper": "letter",
       "orientation": "landscape",
-      "layout": "one",
       "pic": 8,
       "sector": 6,
       "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
       "expect": [
         [
           "picTable",
-          "sectorTable",
           "firmChart",
-          "picChart",
+          "picChart"
+        ],
+        [
+          "sectorTable",
+          "firmChartMarket",
           "sectorChart"
         ]
       ],
       "shrinks": true
     },
     {
-      "name": "Forced split on Tabloid portrait: two pages even though one would fit",
-      "paper": "tabloid",
+      "name": "A long PIC list shrinks its page rather than spilling over",
+      "paper": "letter",
       "orientation": "portrait",
-      "layout": "split",
-      "pic": 8,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
-      "expect": [
-        [
-          "picTable",
-          "sectorTable"
-        ],
-        [
-          "firmChart",
-          "picChart",
-          "sectorChart"
-        ]
-      ]
-    },
-    {
-      "name": "Charts only, with the logo heading: all three charts shrink a little to stay on one page",
-      "paper": "letter",
-      "orientation": "landscape",
-      "layout": "auto",
-      "pic": 8,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
-      "expect": [
-        [
-          "firmChart",
-          "picChart",
-          "sectorChart"
-        ]
-      ],
-      "shrinks": true
-    },
-    {
-      "name": "A long table flows onto more pages instead of shrinking to nothing",
-      "paper": "letter",
-      "orientation": "landscape",
-      "layout": "auto",
       "pic": 30,
-      "sector": 30,
-      "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable"
-      ],
-      "expect": [
-        [
-          "picTable"
-        ],
-        [
-          "sectorTable"
-        ]
-      ]
-    },
-    {
-      "name": "By PIC, then by market sector (Letter landscape, 6 and 6 rows): the PIC page, then the sector page",
-      "paper": "letter",
-      "orientation": "landscape",
-      "layout": "auto",
-      "grouping": "segment",
-      "pic": 6,
       "sector": 6,
       "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
       "expect": [
         [
           "picTable",
@@ -200,83 +99,11 @@
         ],
         [
           "sectorTable",
+          "firmChartMarket",
           "sectorChart"
         ]
-      ]
-    },
-    {
-      "name": "By PIC, then by market sector, Tabloid portrait: still one sheet when it fits",
-      "paper": "tabloid",
-      "orientation": "portrait",
-      "layout": "auto",
-      "grouping": "segment",
-      "pic": 8,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
       ],
-      "expect": [
-        [
-          "picTable",
-          "firmChart",
-          "picChart",
-          "sectorTable",
-          "sectorChart"
-        ]
-      ]
-    },
-    {
-      "name": "By PIC, then by market sector, forced split on Tabloid portrait",
-      "paper": "tabloid",
-      "orientation": "portrait",
-      "layout": "split",
-      "grouping": "segment",
-      "pic": 8,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "picTable",
-        "sectorTable",
-        "firmChart",
-        "picChart",
-        "sectorChart"
-      ],
-      "expect": [
-        [
-          "picTable",
-          "firmChart",
-          "picChart"
-        ],
-        [
-          "sectorTable",
-          "sectorChart"
-        ]
-      ]
-    },
-    {
-      "name": "Only the market sector items selected: one page",
-      "paper": "letter",
-      "orientation": "landscape",
-      "layout": "auto",
-      "grouping": "segment",
-      "pic": 6,
-      "sector": 6,
-      "head": "logo",
-      "include": [
-        "sectorTable",
-        "sectorChart"
-      ],
-      "expect": [
-        [
-          "sectorTable",
-          "sectorChart"
-        ]
-      ]
+      "shrinks": true
     }
   ]
 }

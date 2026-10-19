@@ -139,10 +139,10 @@ function firmChart(ctx, d, onPick, picked) {
   const remaining = Math.max(0, f.goal - f.ytdGoal);
   const svg = stackedBars([
     { key: 'firm', label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue', pick: true }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast', pick: true }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }], endText: K(f.mwip) },
-    { label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal achieved (pace)' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
+    { label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal pace' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
   ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal', onPick, picked });
   return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { class: 'bd-svgwrap' }, svg),
-    legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']]));
+    legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']]));
 }
 
 /* the PIC or market sector chart. The goal is drawn the way Dave's reports do it (logic/goal-chart.js): one Goal bar with dashed lines down the chart when
@@ -150,7 +150,7 @@ function firmChart(ctx, d, onPick, picked) {
 function rowChart(ctx, d, tab, onPick, picked) {
   const { h } = ctx;
   const lay = window.BdGoalChart.layout(tab === 'pic' ? d.pic : d.sector, tab);
-  const goalSegs = r => [{ v: r.ytdGoal, kind: 'pace', text: K(r.ytdGoal), title: 'Goal achieved (pace)' }, { v: Math.max(0, r.goal - r.ytdGoal), kind: 'rest', text: K(Math.max(0, r.goal - r.ytdGoal)), title: 'Goal remaining' }];
+  const goalSegs = r => [{ v: r.ytdGoal, kind: 'pace', text: K(r.ytdGoal), title: 'Goal pace' }, { v: Math.max(0, r.goal - r.ytdGoal), kind: 'rest', text: K(Math.max(0, r.goal - r.ytdGoal)), title: 'Goal remaining' }];
   const actual = (r, gap) => ({ key: r.key, label: r.label, gapBefore: gap, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue', pick: true }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast', pick: true }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }], endText: K(r.mwip) });
   let rows, guides = [];
   if (lay.mode === 'single') {
@@ -161,8 +161,8 @@ function rowChart(ctx, d, tab, onPick, picked) {
   }
   const svg = stackedBars(rows, { fmt: K, rowHeight: lay.mode === 'single' ? 34 : 22, tight: lay.mode !== 'single', guides, onPick, picked, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}, largest total first: revenue, forecast and MWIP${lay.mode === 'single' ? ' against the goal' : ', each with its goal bar'}` });
   const keys = lay.mode === 'single'
-    ? [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']]
-    : [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal achieved (pace)'], ['rest', 'Goal remaining']];
+    ? [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']]
+    : [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']];
   return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: tab === 'pic' ? 'By PIC' : 'By market sector' }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, keys),
     h('div', { class: 'bd-legend', text: (lay.mode === 'single' ? 'Top bar = the goal: dark blue is where each PIC should be by now, light blue the rest of the year. Dashed lines mark both all the way down.' : 'Each top bar = YTD revenue + forecast + MWIP backlog; the bar under it = the annual goal (dark blue = should be done by now).') + ' Labels in thousands. Point at a bar to light it; click it to see the projects behind it.' }));

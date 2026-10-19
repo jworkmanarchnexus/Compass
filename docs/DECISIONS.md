@@ -175,3 +175,11 @@
 - **The choice is made from the data**, not a setting: if the goals are all equal the single bar is exactly right, and if they are not a single bar would be wrong for most PICs.
 - **Both dashed lines** (pace and full goal) are drawn, since "compare the goal location from actual" could mean either; say if only the pace line is wanted.
 - The PDF uses the same rules, so a PDF page now needs more height when pairs are used.
+
+## Marketing Report PDF: fixed pages (2026-10-18)
+
+- **Always two pages**: PIC (table and charts), then market sector (table and charts), as Dave's two reports were. The looks, the grouping choice, the layout choice and the include list are gone: they only let the report be assembled differently from the one the firm wants. Paper, orientation, logo, print date and description remain.
+- **Each page opens with the totals chart** (Total firm on the PIC page, Total market on the market page), as in Dave's reports.
+- **Titles name the breakdown**; the month is only in the "As of" line. Title type shrinks to fit rather than being cut off.
+- **Letter portrait is the default** because it fits each page at full size; landscape shrinks to fit.
+- **Legend wording**: "Goal pace" (was "Goal achieved (pace)") on every chart, page and PDF.
