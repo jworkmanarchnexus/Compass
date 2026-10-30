@@ -31,13 +31,12 @@ SPECs, language-neutral fixtures, a `docs/FOR-KENT.md`.
 
 ## Phase 6: Billing module (proposed, not started)
 
-Spec: `docs/SPEC-billing.md`. Release one covers **all project types** and must be fully working. Build on made-up VP data (CSV), in this order, stopping for Josh after each step:
+Spec: `docs/SPEC-billing.md`. Release one covers both billing types (fixed fee by phase, hourly) and must be fully working. Build on made-up VP data (CSV), in this order, stopping for Josh after each step:
 
-1. **Rules first:** `modules/billing/logic/` in integer cents: phase math, validation with the strict variance rule, pending amounts, billing months and the rollover, billing forms for fixed fee and hourly, state transitions, email preference rules. JSON fixtures and tests, no screens. Settings `billing.varianceThreshold` and `billing.rolloverDay` (effective-dated, Admin).
+1. **Rules first:** `modules/billing/logic/` in integer cents: phase math, validation with the strict variance rule, pending amounts, billing months and the rollover, the two billing forms, state transitions, email preference rules (instant, digest, off; quiet hours; weekends; only mine; empty digests). JSON fixtures and tests, no screens.
 2. **Server and data:** the `billing_*` tables, request creation for every expected project, revisions, audit events, server-side validation and role checks (new `processor` role; PM and PIC by VP code; PA, Finance, Marketing refused).
-3. **Admin:** the deadline calendar page, Billing settings, per-project adjustments.
+3. **Admin:** a Billing tab with the deadline calendar, the reset-clock day, the variance threshold, business hours, and per-project adjustments (all effective-dated where they are settings).
 4. **PM and PIC screens:** unbilled list, fixed-fee and hourly billing, notes, history, mid-month "bill again", on the design system.
-5. **Accounting screens:** queue, return, copy instructions, Assignments page, processor email settings; emails written to `outbox/` locally. Home gets "returned" and "unbilled" counts.
-6. Any further billing types Josh and Kent name (B7).
+5. **Accounting screens:** queue, return, copy instructions, Assignments page, each processor's email notification settings (the Off / Immediate / Digest layout Josh drew); emails written to `outbox/` locally. Home gets "returned" and "unbilled" counts.
 
-**Done when:** a seeded PM can enter, save and submit billing for both fixed-fee and hourly projects, including a second mid-month request; a PIC can edit their project's billing; a processor sees the full queue, returns one request and it is resubmitted as a new revision; the rollover returns every project to unbilled; every rule in the spec's test list passes; no write to VP exists. Live VP reads wait for Kent's verified report.
+**Done when:** a seeded PM can enter, save and submit billing for fixed-fee and hourly projects, including a second mid-month request; a PIC can edit their project's billing; a processor sees the full queue, reassigns a project (both processors notified per their settings), returns one request and it is resubmitted as a new revision; the rollover returns every project to unbilled; every rule in the spec's test list passes; no write to VP exists. Live VP reads wait for Kent's verified report.

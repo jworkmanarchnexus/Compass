@@ -183,3 +183,10 @@
 - **Titles name the breakdown**; the month is only in the "As of" line. Title type shrinks to fit rather than being cut off.
 - **Letter portrait is the default** because it fits each page at full size; landscape shrinks to fit.
 - **Legend wording**: "Goal pace" (was "Goal achieved (pace)") on every chart, page and PDF.
+
+## Billing module (2026-10-30)
+
+- **Billing lives in Compass** as `modules/billing/`, in the same repository (not its own repo), because it shares the database, roles, shell, design system and the VP pull.
+- **Billing emails are their own set**, separate from the Turnaround and Marketing report emails. Invoice processors choose Off, Immediate or Digest per alert type. The Turnaround rule that the only automatic email goes to Josh is unchanged for Turnaround; `CLAUDE.md` says so.
+- **Nothing is locked.** No period lock; history stays append-only through revisions. The Admin enters each month's deadline and sets the reset-clock day (default the 12th).
+- **Two billing types** in release one: fixed fee by phase, and hourly.

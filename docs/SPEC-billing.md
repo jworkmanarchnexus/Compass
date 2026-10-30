@@ -1,6 +1,6 @@
 # Spec: Billing (PM billing instructions and accounting queue)
 
-**Status: draft v2 for Josh (revised 2026-10-30 after his answers). Nothing is built.** Source: the recovered prototype `nexus-billing-workbench-v15.html`, the handoff note of 2026-10-30, and Josh's answers. The prototype is the reference for look and workflow, not for code: it keeps everything in browser storage, uses floating-point dollars and has several known defects (section 10). This module follows `CLAUDE.md` (VP read-only, pure tested logic, money in cents, effective-dated Admin settings, append-only audit).
+**Status: draft v3 for Josh (revised 2026-10-30 after his answers, twice). Nothing is built.** Source: the recovered prototype `nexus-billing-workbench-v15.html`, the handoff note of 2026-10-30, and Josh's answers. The prototype is the reference for look and workflow, not for code: it keeps everything in browser storage, uses floating-point dollars and has several known defects (section 10). This module follows `CLAUDE.md` (VP read-only, pure tested logic, money in cents, effective-dated Admin settings, append-only audit).
 
 ## 1. What it is
 
@@ -33,7 +33,7 @@ Seeds use made-up PMs and the first names Karen, Camille and Josh as processors,
 **Nothing is ever locked.** There is no period lock and no "reconciled" state. History is still never overwritten (section 6).
 
 - **Billing month.** Each request belongs to a billing month. The "current billing month" is the month people are billing for now.
-- **Clock reset (rollover).** On a rollover day each month the current billing month moves forward and **every project shows again in the unbilled list**. Josh suggested "like the 12th"; this is an **Admin setting, default the 12th** (effective-dated), not a constant. Before the rollover day, last month's billing is still the current one.
+- **Clock reset (rollover).** On a rollover day each month the current billing month moves forward and **every project shows again in the unbilled list**. Josh suggested "like the 12th"; this is a setting in the **Admin panel (Billing tab), default the 12th** (effective-dated), not a constant. Before the rollover day, last month's billing is still the current one.
 - **Deadline calendar (Admin).** A page where Josh enters, for each billing month, the **billing deadline** (it moves with holidays and weekends) and, if needed, that month's rollover date. Months with no entry fall back to the default rollover day and show "no deadline set" to PMs and processors.
 - **Anytime entry.** PMs and PICs can enter and submit billing at any time, including **mid-month billing** for clients that need it regularly or at fiscal year-end. Several requests may exist for one project in one billing month (a "bill again" after an earlier one). At most one request per project is open (Draft, Submitted, Returned or in review) at a time. The first request of a month for a project is the regular one. Later ones are marked "additional".
 - **Individual adjustments.** An Admin, or a PM/PIC under **Advanced settings** on a project, can adjust that project: set a different rollover day, mark it as billing on a mid-month schedule (a reminder date only), or exclude it from this month's expected list with a reason. Each change goes to the audit log.
@@ -63,7 +63,7 @@ The **variance threshold** starts at $30,000 and is an **effective-dated Admin s
 
 ## 5. All project types
 
-Release one handles every billing type the firm uses. The prototype has two: fixed fee by phase (section 4) and hourly. **Which other billing types exist in VP (for example not-to-exceed, percent-complete, reimbursable-only, lump-sum with no phases) is an open question for Josh and Kent (B7).** Until answered, the spec defines the two known ones and one rule for the rest: each type is a "billing form" with its own line items and validation, and a project's form is chosen from its VP billing type. Adding a type adds a form, not a rewrite.
+Release one handles the two billing types the firm uses (Josh, 2026-10-30): **fixed fee by phase** (section 4) and **hourly**. Each is a "billing form" with its own line items and validation, chosen from the project's VP billing type, so a third type later adds a form, not a rewrite.
 
 **Hourly (T&M):** authorized or not-to-exceed amount, billed to date, unbilled labor, expenses and consultants, proposed amount per line, projection, and remaining authorization. A proposed amount may not exceed the line's available unbilled amount or push the project over its authorization (counting pending requests, as above). A PM can record a hold or special instruction; a hold is an instruction only, not a VP change. The same notes, variance rule, statuses and history apply.
 
@@ -82,22 +82,42 @@ Release one handles every billing type the firm uses. The prototype has two: fix
 ## 8. Accounting queue, assignments and email
 
 - **Queue:** My projects / All / **Unassigned** (red count). Group by PM or by processor. Each row shows PM, processor, amount, status and the per-phase instructions. **Copy instructions** is kept as the manual handoff to VP.
-- **Assignments page (separate):** one processor per project, carried from month to month, with a log of every change (who, when, from, to). Unassigned projects are listed first with an alert. The dropdown lists every active user with the processor role. The queue has **no** "take ownership" button; the prototype's one on the Assignments page is removed. Default: any of the three processors, and the Admin, may reassign (B2).
+- **Assignments page (separate):** one processor per project, carried from month to month, with a log of every change (who, when, from, to). Unassigned projects are listed first with an alert. The dropdown lists every active user with the processor role. The queue has **no** "take ownership" button; the prototype's one on the Assignments page is removed. Any processor (and the Admin) may reassign; both the old and the new processor are told, per their email settings.
 - **Reminders:** none for PMs and PICs on day one.
-- **Email for accounting (opt in, per processor).** Each processor chooses in their own settings what they get. Starting point, from the settings Josh drafted:
+- **Email for accounting (opt in, per processor).** Billing's emails are their own: they are separate from the Turnaround and Marketing report emails, which keep their own rules. Each processor sets their own preferences (in production tied to the signed-in user; locally a "sign in as" picker). Josh's design (his mockup of 2026-10-30):
 
-| Setting | Values | Starting default |
+| Alert | Fires when | Starting default |
 |---|---|---|
-| Each event type | `instant`, `digest`, `off` | submission: digest; resubmit: instant; revision: instant; assignment: digest; clarification (a PM answers a return): instant; variance (a submission needing the variance note): instant; missing (not submitted near the deadline): digest; stale (waiting on accounting too long): digest; data (a VP pull problem): instant; complete: off |
-| Digest frequency and time | daily, time of day | daily at 07:00 |
-| Include weekends | yes/no | no |
-| Only mine | yes/no | yes (only projects assigned to me) |
-| Send empty digests | yes/no | no |
-| "Missing" window | days before the deadline | 3 |
-| "Stale" after | days | 2 |
-| Quiet hours | on/off | on (instant emails held until the next morning) |
+| New PM submissions | a PM or PIC submits billing for one of my projects | Digest |
+| Resubmitted billing | a returned request is corrected and resubmitted | Immediate |
+| Submitted instructions revised | an authorized revision changes the submitted amounts or notes | Immediate |
+| Assignment changes | projects are assigned to or removed from me (**both** the old and the new processor are told, each by their own setting) | Digest |
+| PM clarification received | a PM answers an accounting question | Immediate |
+| Large billing variances | a request differs from its projection by more than the variance threshold | Immediate |
+| Missing billing instructions | PMs have not submitted by a scheduled deadline (from the deadline calendar) | Digest |
+| Unprocessed requests | a submitted request stays in my queue | Digest |
+| Financial data changed | material VP inputs changed after submission | Immediate |
+| Billing cycle summary | a summary of my finished and outstanding invoices | Off |
 
-  The meaning of each event is my reading of the names; Josh to confirm (B6). **Rule conflict:** `CLAUDE.md` says the only automatic email goes to Josh and has no PIC data. These emails go to processors and carry project and amount details, so this needs Josh's explicit approval to change that rule (B6). Locally the emails are written to `outbox/` like the existing stub; real sending is Kent's question (open question H9).
+Each alert is **Off, Immediate or Digest**.
+
+| Digest preference | Choices | Starting default |
+|---|---|---|
+| Frequency | Daily, Twice daily, Weekly | Daily |
+| First delivery time | time of day | 7:00 AM |
+| Second delivery time (Twice daily) | time of day | 1:00 PM |
+| Day (Weekly) | day of week | Monday |
+| Send on weekends | on/off | off |
+| Only include my assigned projects | on/off | on |
+| Send digest even if nothing has changed | on/off | off |
+
+| Reminder rule | Choices | Starting default |
+|---|---|---|
+| Days before billing cutoff (for "Missing") | days | 3 |
+| Unprocessed request age | days | 2 |
+| Suppress routine immediate alerts outside business hours | on/off | on |
+
+"Business hours" is an Admin setting (default weekdays 8:00 AM to 5:00 PM). Locally the emails are written to `outbox/` like the existing stub; real sending is Kent's question (H9). Resolved with Josh: this is a separate set of emails from Turnaround and Marketing, so the Turnaround rule "the only automatic email goes to Josh" is narrowed to Turnaround in `CLAUDE.md`.
 
 ## 9. Data
 
@@ -125,14 +145,13 @@ Target below prior billed; exactly the threshold versus one cent above, and a ch
 
 ## 12. Open questions
 
-Copied into `docs/OPEN-QUESTIONS.md` (B and K-B numbers).
+Copied into `docs/OPEN-QUESTIONS.md`.
+
+**Decided by Josh (2026-10-30):** billing emails are their own set, separate from Turnaround and Marketing; the email settings are the ones in section 8; only two billing types (fixed fee by phase, hourly); any processor can reassign and both processors are told per their settings; one open request per project, and the second person sees "being edited by"; the clock-reset day is a setting in the Admin panel.
 
 **For Josh**
-- B2. May any processor (and the Admin) reassign projects, or only the Admin? (Default: all three processors.)
-- B3. Rollover default the 12th. Confirm, and say how an additional (mid-month) billing should be labeled for accounting.
-- B6. Confirm the meaning of each email event; approve processor emails as an exception to the "only email Josh" rule.
-- B7. Which billing types exist besides fixed fee by phase and hourly?
-- B8. May a PIC and a PM edit the same request at once, or does the first person's open draft block the other? (Default: one open request, shown as "being edited by".)
+- B3. Confirm the default reset day (the 12th), and how an additional mid-month billing is labeled for accounting (default "Additional").
+- B9. Business hours default (weekdays 8 to 5), the second digest time (1:00 PM) and the weekly day (Monday): fine as defaults?
 
 **For Kent**
 - K-B1. Which VP report verifies phase fee and billed-to-date.
