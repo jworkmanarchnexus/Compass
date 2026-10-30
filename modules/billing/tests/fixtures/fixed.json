@@ -1,0 +1,50 @@
+{
+  "_about": "Fixed-fee billing by phase. All money in cents. prior = billed + pending. Fee $135,000 = 13500000.",
+  "phases": [
+    { "id": "sd", "name": "Schematic Design", "feeCents": 4000000, "billedCents": 4000000, "pendingCents": 0, "projectionCents": 0 },
+    { "id": "dd", "name": "Design Development", "feeCents": 9000000, "billedCents": 6300000, "pendingCents": 0, "projectionCents": 850000 },
+    { "id": "cd", "name": "Construction Documents", "feeCents": 13500000, "billedCents": 5400000, "pendingCents": 0, "projectionCents": 2000000 },
+    { "id": "ca", "name": "Construction Administration", "feeCents": 4000000, "billedCents": 0, "pendingCents": 0, "projectionCents": 0 }
+  ],
+  "lines": [
+    { "name": "amount mode: bill $8,500 more on DD", "phase": "dd", "entry": { "amountCents": 850000 }, "expect": { "priorCents": 6300000, "targetCents": 7150000, "amountCents": 850000, "throughBp": 7944, "remainingCents": 1850000, "errors": [], "locked": false } },
+    { "name": "percent mode: bill CD through 50%", "phase": "cd", "entry": { "pctBp": 5000 }, "expect": { "targetCents": 6750000, "amountCents": 1350000, "throughBp": 5000, "errors": [] } },
+    { "name": "percent below what is already billed blocks", "phase": "dd", "entry": { "pctBp": 5000 }, "expect": { "targetCents": 4500000, "amountCents": -1800000, "errors": ["below-prior"] } },
+    { "name": "a negative amount blocks", "phase": "dd", "entry": { "amountCents": -100 }, "expect": { "targetCents": 6299900, "errors": ["negative"] } },
+    { "name": "an amount above the phase fee blocks", "phase": "cd", "entry": { "amountCents": 9000000 }, "expect": { "targetCents": 14400000, "amountCents": 9000000, "errors": ["over-fee"] } },
+    { "name": "a percent above 100 blocks", "phase": "dd", "entry": { "pctBp": 10001 }, "expect": { "targetCents": 9000900, "amountCents": 2700900, "errors": ["over-fee"] } },
+    { "name": "exactly 100% is fine", "phase": "dd", "entry": { "pctBp": 10000 }, "expect": { "targetCents": 9000000, "amountCents": 2700000, "remainingCents": 0, "errors": [] } },
+    { "name": "a blank entry blocks", "phase": "ca", "entry": null, "expect": { "amountCents": null, "targetCents": null, "errors": ["blank"] } },
+    { "name": "a non-number entry is blank", "phase": "ca", "entry": { "amountCents": null }, "expect": { "errors": ["blank"] } },
+    { "name": "a fully billed phase is locked and needs no entry", "phase": "sd", "entry": null, "expect": { "locked": true, "amountCents": 0, "throughBp": 10000, "remainingCents": 0, "errors": [] } },
+    { "name": "a fully billed phase refuses an amount", "phase": "sd", "entry": { "amountCents": 100 }, "expect": { "locked": true, "amountCents": 0, "errors": ["locked"] } },
+    { "name": "pending amounts count as already billed", "phase": "dd", "phaseOverride": { "pendingCents": 500000 }, "entry": { "amountCents": 2200000 }, "expect": { "priorCents": 6800000, "targetCents": 9000000, "errors": [] } },
+    { "name": "one cent past what pending leaves blocks", "phase": "dd", "phaseOverride": { "pendingCents": 500000 }, "entry": { "amountCents": 2200001 }, "expect": { "errors": ["over-fee"] } },
+    { "name": "pending can make a phase locked", "phase": "dd", "phaseOverride": { "pendingCents": 2700000 }, "entry": null, "expect": { "locked": true, "amountCents": 0, "errors": [] } }
+  ],
+  "evaluate": [
+    {
+      "name": "a normal month",
+      "entries": { "dd": { "amountCents": 850000 }, "cd": { "amountCents": 2000000 }, "ca": { "amountCents": 0 } },
+      "expect": { "totalCents": 2850000, "feeCents": 30500000, "billedCents": 15700000, "pendingCents": 0, "projectionCents": 2850000, "errors": [] }
+    },
+    {
+      "name": "a phase left blank makes the total unknown",
+      "entries": { "dd": { "amountCents": 850000 }, "cd": { "amountCents": 2000000 } },
+      "expect": { "totalCents": null, "errors": [{ "lineId": "ca", "errors": ["blank"] }] }
+    }
+  ],
+  "quick": [
+    { "name": "reset to billed", "action": "reset", "expect": { "entries": { "sd": 0, "dd": 0, "cd": 0, "ca": 0 }, "noBilling": false } },
+    { "name": "use phase projections", "action": "projection", "expect": { "entries": { "sd": 0, "dd": 850000, "cd": 2000000, "ca": 0 }, "noBilling": false } },
+    { "name": "projection is capped at what pending leaves", "action": "projection", "phaseOverrides": { "dd": { "pendingCents": 2000000 } }, "expect": { "entries": { "sd": 0, "dd": 700000, "cd": 2000000, "ca": 0 }, "noBilling": false } },
+    { "name": "no new billings", "action": "none", "expect": { "entries": { "sd": 0, "dd": 0, "cd": 0, "ca": 0 }, "noBilling": true } }
+  ],
+  "edits": [
+    { "name": "a positive amount clears No billing", "noBilling": true, "phaseId": "dd", "entry": { "amountCents": 100 }, "expectNoBilling": false },
+    { "name": "a zero amount leaves it checked", "noBilling": true, "phaseId": "dd", "entry": { "amountCents": 0 }, "expectNoBilling": true },
+    { "name": "a percent equal to what is billed leaves it checked", "noBilling": true, "phaseId": "dd", "entry": { "pctBp": 7000 }, "expectNoBilling": true },
+    { "name": "a percent one hundredth above clears it", "noBilling": true, "phaseId": "dd", "entry": { "pctBp": 7001 }, "expectNoBilling": false },
+    { "name": "unchecked stays unchecked", "noBilling": false, "phaseId": "dd", "entry": { "amountCents": 0 }, "expectNoBilling": false }
+  ]
+}

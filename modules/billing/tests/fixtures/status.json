@@ -1,0 +1,34 @@
+{
+  "_about": "The life of a request. kinds: author (the project's PM or PIC), processor, admin (the Admin is all three). A refused change returns { ok: false, error } and changes nothing.",
+  "transitions": [
+    { "name": "author submits a draft", "status": "draft", "event": "submit", "kinds": ["author"], "expect": { "ok": true, "status": "submitted", "revision": true, "notify": ["submission"], "audit": "billing.submit" } },
+    { "name": "submitting after a return is a resubmit", "status": "draft", "event": "submit", "kinds": ["author"], "ctx": { "wasReturned": true }, "expect": { "ok": true, "status": "submitted", "notify": ["resubmit"] } },
+    { "name": "a submit over the variance threshold also raises the variance alert", "status": "draft", "event": "submit", "kinds": ["author"], "ctx": { "exceedsVariance": true }, "expect": { "ok": true, "notify": ["submission", "variance"] } },
+    { "name": "a processor cannot submit for the PM", "status": "draft", "event": "submit", "kinds": ["processor"], "expect": { "ok": false, "error": "not-allowed" } },
+    { "name": "a draft cannot be put in review", "status": "draft", "event": "start-review", "kinds": ["processor"], "expect": { "ok": false, "error": "bad-state" } },
+    { "name": "the author withdraws a submitted request back to draft", "status": "submitted", "event": "withdraw", "kinds": ["author"], "expect": { "ok": true, "status": "draft", "revision": false, "notify": [] } },
+    { "name": "a processor takes a submitted request into review", "status": "submitted", "event": "start-review", "kinds": ["processor"], "ctx": { "actorId": "camille" }, "expect": { "ok": true, "status": "review", "handledBy": "camille" } },
+    { "name": "a return needs a reason", "status": "review", "event": "return", "kinds": ["processor"], "payload": { "reason": "  " }, "ctx": { "actorId": "camille", "handledBy": "camille" }, "expect": { "ok": false, "error": "reason-required" } },
+    { "name": "the processor returns it with a reason", "status": "review", "event": "return", "kinds": ["processor"], "payload": { "reason": "Which consultant is this?" }, "ctx": { "actorId": "camille", "handledBy": "camille" }, "expect": { "ok": true, "status": "returned", "handledBy": null } },
+    { "name": "a processor can return a submitted request without taking it", "status": "submitted", "event": "return", "kinds": ["processor"], "payload": { "reason": "Wrong phase" }, "expect": { "ok": true, "status": "returned" } },
+    { "name": "another processor cannot act on a request being handled", "status": "review", "event": "return", "kinds": ["processor"], "payload": { "reason": "x" }, "ctx": { "actorId": "karen", "handledBy": "camille" }, "expect": { "ok": false, "error": "handled-by-other" } },
+    { "name": "the Admin can take over", "status": "review", "event": "process", "kinds": ["author", "processor", "admin"], "ctx": { "actorId": "josh", "handledBy": "camille" }, "expect": { "ok": true, "status": "processed", "handledBy": null } },
+    { "name": "processing finishes the request", "status": "review", "event": "process", "kinds": ["processor"], "ctx": { "actorId": "camille", "handledBy": "camille" }, "expect": { "ok": true, "status": "processed", "notify": [], "audit": "billing.process" } },
+    { "name": "releasing puts it back to submitted and frees it", "status": "review", "event": "release", "kinds": ["processor"], "ctx": { "actorId": "camille", "handledBy": "camille" }, "expect": { "ok": true, "status": "submitted", "handledBy": null } },
+    { "name": "an authorized revision keeps the status and makes a new revision", "status": "submitted", "event": "revise", "kinds": ["author"], "expect": { "ok": true, "status": "submitted", "revision": true, "notify": ["revision"] } },
+    { "name": "a revision during review over the threshold also raises the variance alert", "status": "review", "event": "revise", "kinds": ["author"], "ctx": { "exceedsVariance": true }, "expect": { "ok": true, "status": "review", "notify": ["revision", "variance"] } },
+    { "name": "editing a returned request makes it a draft", "status": "returned", "event": "edit", "kinds": ["author"], "expect": { "ok": true, "status": "draft" } },
+    { "name": "resubmitting a returned request", "status": "returned", "event": "resubmit", "kinds": ["author"], "expect": { "ok": true, "status": "submitted", "revision": true, "notify": ["resubmit"] } },
+    { "name": "a PM answer keeps the status and raises the clarification alert", "status": "returned", "event": "answer", "kinds": ["author"], "expect": { "ok": true, "status": "returned", "revision": false, "notify": ["clarification"] } },
+    { "name": "a processed request takes no more changes", "status": "processed", "event": "revise", "kinds": ["author"], "expect": { "ok": false, "error": "bad-state" } },
+    { "name": "processing twice is refused", "status": "processed", "event": "process", "kinds": ["processor"], "expect": { "ok": false, "error": "bad-state" } },
+    { "name": "no kinds, no change", "status": "submitted", "event": "withdraw", "kinds": [], "expect": { "ok": false, "error": "not-allowed" } }
+  ],
+  "actions": [
+    { "status": "draft", "kinds": ["author"], "expect": ["submit"] },
+    { "status": "submitted", "kinds": ["author"], "expect": ["withdraw", "revise", "answer"] },
+    { "status": "submitted", "kinds": ["processor"], "expect": ["start-review", "return"] },
+    { "status": "returned", "kinds": ["author"], "expect": ["edit", "resubmit", "answer"] },
+    { "status": "processed", "kinds": ["author", "processor", "admin"], "expect": [] }
+  ]
+}

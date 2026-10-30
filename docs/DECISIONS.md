@@ -190,3 +190,13 @@
 - **Billing emails are their own set**, separate from the Turnaround and Marketing report emails. Invoice processors choose Off, Immediate or Digest per alert type. The Turnaround rule that the only automatic email goes to Josh is unchanged for Turnaround; `CLAUDE.md` says so.
 - **Nothing is locked.** No period lock; history stays append-only through revisions. The Admin enters each month's deadline and sets the reset-clock day (default the 12th).
 - **Two billing types** in release one: fixed fee by phase, and hourly.
+
+## Billing rules, step 1 (2026-10-30; `modules/billing/logic/`)
+
+- **Percents are whole hundredths of a percent** (62.5% = 6250) and a percent of a fee rounds to the nearest cent, halves up, by integer arithmetic only. No amount touches floating point.
+- **"Prior" means VP's billed-to-date plus pending.** Pending is the amounts in requests that are submitted but not yet processed, which VP cannot know. A phase is locked when prior reaches its fee. This keeps a second mid-month request from overbilling.
+- **A billing month starts on its start date** (project's own day, else the Admin's date for that month, else the default day, 12). From that date the current billing month is that month, so on the 12th every project is unbilled again. Before the 12th the previous month is still current.
+- **One open request per project, in any month.** A later request in the same month is "additional".
+- **The processor who takes a request into review holds it**; another processor cannot return or process it unless they are the Admin. Releasing frees it.
+- **Quiet hours hold a routine instant email until business hours start; they never drop it.** Only "Financial data changed" is urgent. An unassigned project's alerts go to every processor; a reassignment tells the old and the new processor.
+- **The Billing settings are not in `shared/rules/settings.js` yet.** The logic takes the threshold, reset day and business hours as inputs. They are added with the server in step 2, because a setting nothing reads fails the "no dead switch" test.
