@@ -48,6 +48,16 @@ function createLocalSource() {
       const projects = read('pipeline_projects.csv').filter(r => r.Opened <= date).map(r => ({ wbs1: r.WBS1, name: r.Name, pic: r.Principal, opened: r.Opened }));
       return { pursuits, forecast, projects };
     },
+    /* Billing: what the billing screens need from Vantagepoint, for projects that are billed this way. Money in cents.
+         projects: [{ wbs1, billingType: 'fixed' | 'hourly', authorizedCents (null = no limit), billedCents, projectionCents }]
+         lines:    [{ wbs1, lineId, name, kind: 'phase' | 'labor' | 'expense' | 'consultant', sort, feeCents, billedCents, availableCents, projectionCents }]
+       The real names of the Vantagepoint tables behind this are Kent's to confirm (docs/OPEN-QUESTIONS.md K-B1). */
+    loadBilling() {
+      const cents = s => (s === '' || s == null ? 0 : toCents(s));
+      const projects = read('billing_projects.csv').map(r => ({ wbs1: r.WBS1, billingType: r.BillingType, authorizedCents: r.Authorized === '' ? null : toCents(r.Authorized), billedCents: cents(r.Billed), projectionCents: cents(r.Projection) }));
+      const lines = read('billing_lines.csv').map(r => ({ wbs1: r.WBS1, lineId: r.LineId, name: r.Name, kind: r.Kind, sort: Number(r.Sort), feeCents: cents(r.Fee), billedCents: cents(r.Billed), availableCents: cents(r.Available), projectionCents: cents(r.Projection) }));
+      return { projects, lines };
+    },
     load() {
       const projects = read('projects.csv')
         .filter(p => p.Status === 'A' && !/^[ZJ]/.test(p.WBS1)) // the SQL: Status A, WBS1 not starting Z or J

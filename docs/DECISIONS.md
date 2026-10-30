@@ -200,3 +200,13 @@
 - **The processor who takes a request into review holds it**; another processor cannot return or process it unless they are the Admin. Releasing frees it.
 - **Quiet hours hold a routine instant email until business hours start; they never drop it.** Only "Financial data changed" is urgent. An unassigned project's alerts go to every processor; a reassignment tells the old and the new processor.
 - **The Billing settings are not in `shared/rules/settings.js` yet.** The logic takes the threshold, reset day and business hours as inputs. They are added with the server in step 2, because a setting nothing reads fails the "no dead switch" test.
+
+## Billing server, step 2 (2026-10-30)
+
+- **Two new roles: `pm` (Billing only) and `processor`.** PMs are not PICs, and giving them the `pic` role would also show them Project Turnaround. A PM or PIC is matched to a project by their Vantagepoint employee code. Josh (Admin) acts as a processor too: the assignment list is every active `processor` and `admin`.
+- **A request keeps its content as a draft; every submit makes an immutable revision.** The one-open-request rule is a unique index in the database, not just a check. A processed request cannot be changed (a trigger).
+- **Pending = submitted or in review, plus processed since the last Vantagepoint copy.** This is an assumption: it holds until the next copy includes the invoice. Kent should confirm how soon a posted invoice appears (K-B2, K-B4).
+- **Stale data** is a hash of the Vantagepoint inputs. The browser sends the hash it was looking at; a submit from older numbers fails with `stale-source`.
+- **Emails are only queued.** `billing_notifications` holds each alert with each processor's delivery (now, held for business hours, digest, off), worked out by the tested rules. Sending waits for Josh's go-ahead and Kent's mail answer.
+- **Dates are real dates:** a deadline of 2026-02-30 is refused (found by a test).
+- **A local database from before this step is upgraded in place:** the people table is rebuilt so the new roles are allowed, keeping every row (tested).

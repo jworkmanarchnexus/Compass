@@ -1,0 +1,30 @@
+{
+  "_about": "Rich text is cleaned on the server before it is stored. Only b, strong, i, em, u, br, p, div, ul, ol, li survive, with no attributes.",
+  "sanitize": [
+    { "in": "Bill <b>SD</b> in full.", "out": "Bill <b>SD</b> in full." },
+    { "in": "<p>One</p><ul><li>two</li><li>three</li></ul>", "out": "<p>One</p><ul><li>two</li><li>three</li></ul>" },
+    { "in": "<b onclick=\"steal()\" style=\"x\">bold</b>", "out": "<b>bold</b>", "note": "attributes are removed" },
+    { "in": "before<script>alert(1)</script>after", "out": "beforeafter", "note": "a script and its content are dropped" },
+    { "in": "<style>p{display:none}</style>text", "out": "text" },
+    { "in": "<img src=x onerror=alert(1)>text", "out": "text" },
+    { "in": "<a href=\"javascript:alert(1)\">click</a>", "out": "click", "note": "links are removed, the words stay" },
+    { "in": "<iframe src=\"//evil\"></iframe>ok", "out": "ok" },
+    { "in": "1 < 2 & 3 > 2", "out": "1 &lt; 2 &amp; 3 &gt; 2", "note": "plain text is escaped" },
+    { "in": "Fees &amp; costs", "out": "Fees &amp; costs", "note": "an entity already written is not escaped twice" },
+    { "in": "<b>unclosed", "out": "<b>unclosed</b>", "note": "tags are balanced" },
+    { "in": "stray</b> close", "out": "stray close" },
+    { "in": "<b><i>x</b>", "out": "<b><i>x</i></b>" },
+    { "in": "line<br/>two<BR>three", "out": "line<br>two<br>three" },
+    { "in": "<!-- hidden -->shown", "out": "shown" },
+    { "in": "<P>Upper</P>", "out": "<p>Upper</p>" },
+    { "in": "<script>never closed", "out": "" },
+    { "in": null, "out": "" },
+    { "in": "", "out": "" }
+  ],
+  "plainText": [
+    { "in": "<p>Client approved</p>", "out": "Client approved" },
+    { "in": "<p></p><div> </div>", "out": "", "note": "empty markup is not a note" },
+    { "in": "Fees &amp; costs", "out": "Fees & costs" },
+    { "in": "   ", "out": "" }
+  ]
+}

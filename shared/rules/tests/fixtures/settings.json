@@ -176,6 +176,103 @@
       "key": "visibility.picRecords",
       "value": "nobody",
       "expect": false
+    },
+    {
+      "key": "billing.varianceThreshold",
+      "value": 3000000,
+      "expect": true
+    },
+    {
+      "key": "billing.varianceThreshold",
+      "value": 0,
+      "expect": true
+    },
+    {
+      "key": "billing.varianceThreshold",
+      "value": -1,
+      "expect": false
+    },
+    {
+      "key": "billing.varianceThreshold",
+      "value": 30000.5,
+      "expect": false
+    },
+    {
+      "key": "billing.rolloverDay",
+      "value": 12,
+      "expect": true
+    },
+    {
+      "key": "billing.rolloverDay",
+      "value": 29,
+      "expect": false
+    },
+    {
+      "key": "billing.rolloverDay",
+      "value": 0,
+      "expect": false
+    },
+    {
+      "key": "billing.businessHours",
+      "value": {
+        "start": "08:00",
+        "end": "17:00",
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "expect": true
+    },
+    {
+      "key": "billing.businessHours",
+      "value": {
+        "start": "17:00",
+        "end": "08:00",
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "expect": false
+    },
+    {
+      "key": "billing.businessHours",
+      "value": {
+        "start": "08:00",
+        "end": "17:00",
+        "days": []
+      },
+      "expect": false
+    },
+    {
+      "key": "billing.businessHours",
+      "value": {
+        "start": "08:00",
+        "end": "17:00",
+        "days": [
+          1,
+          1
+        ]
+      },
+      "expect": false
+    },
+    {
+      "key": "billing.businessHours",
+      "value": {
+        "start": "8am",
+        "end": "17:00",
+        "days": [
+          1
+        ]
+      },
+      "expect": false
     }
   ],
   "crossCheck": [

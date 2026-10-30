@@ -4,11 +4,11 @@
 
    access = the Admin setting "access" (see settings.js). It lets Josh widen what the narrower roles may see
    without a code change, because the spec leaves some of this open (docs/DECISIONS.md, open questions). */
-const ROLES = ['admin', 'pic', 'finance', 'marketing', 'sysadmin'];
-const ROLE_LABEL = { admin: 'Admin', pic: 'PIC', finance: 'Finance, view only', marketing: 'Marketing director, view only', sysadmin: 'System admin' };
+const ROLES = ['admin', 'pic', 'pm', 'processor', 'finance', 'marketing', 'sysadmin'];
+const ROLE_LABEL = { admin: 'Admin', pic: 'PIC', pm: 'Project manager (Billing only)', processor: 'Invoice processor (Billing)', finance: 'Finance, view only', marketing: 'Marketing director, view only', sysadmin: 'System admin' };
 
 /* areas of the app that have a page of their own */
-const AREAS = ['turnaround', 'checkins', 'bd', 'pipeline', 'admin'];
+const AREAS = ['turnaround', 'checkins', 'bd', 'pipeline', 'billing', 'admin'];
 
 function canView(role, area, access) {
   const a = access || {};
@@ -17,13 +17,14 @@ function canView(role, area, access) {
     case 'checkins': return role === 'admin'; // the reminder queue is Josh's alone
     case 'bd': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picBd);
     case 'pipeline': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picPipeline);
+    case 'billing': return role === 'admin' || role === 'processor' || role === 'pic' || role === 'pm'; // a PIC or PM sees only their own projects (modules/billing/logic/access.js)
     case 'admin': return role === 'admin' || role === 'sysadmin';
     default: return false;
   }
 }
 
 /* Admin tabs, in display order. 'edit' = may change it, 'view' = may read it, null = hidden. */
-const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'people', 'runs', 'patterns', 'audit'];
+const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'billing', 'people', 'runs', 'patterns', 'audit'];
 function adminTab(role, tab) {
   if (role === 'admin') return 'edit';
   if (role === 'sysadmin') {

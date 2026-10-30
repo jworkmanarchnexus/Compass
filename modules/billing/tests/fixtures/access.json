@@ -1,32 +1,298 @@
 {
   "_about": "Who may do what in Billing. A PM or PIC is the author of a project when their Vantagepoint employee code is its project-manager or principal code. Finance, Marketing, System admin and everyone else see nothing in Billing.",
-  "project": { "picCode": "E100", "pmCode": "E200" },
+  "project": {
+    "picCode": "E100",
+    "pmCode": "E200"
+  },
   "access": [
-    { "name": "admin: everything", "user": { "role": "admin", "employeeCode": "E900" }, "expect": { "view": true, "edit": true, "process": true, "assign": true, "admin": true } },
-    { "name": "processor: sees, processes and assigns, does not write the PM's instructions", "user": { "role": "processor", "employeeCode": "E901" }, "expect": { "view": true, "edit": false, "process": true, "assign": true, "admin": false } },
-    { "name": "the project's PIC views and edits", "user": { "role": "pic", "employeeCode": "E100" }, "expect": { "view": true, "edit": true, "process": false, "assign": false, "admin": false } },
-    { "name": "the project's PM views and edits", "user": { "role": "pic", "employeeCode": "E200" }, "expect": { "view": true, "edit": true, "process": false, "assign": false, "admin": false } },
-    { "name": "another PIC sees nothing", "user": { "role": "pic", "employeeCode": "E300" }, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } },
-    { "name": "a PIC with no employee code sees nothing", "user": { "role": "pic", "employeeCode": null }, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } },
-    { "name": "finance sees nothing", "user": { "role": "finance", "employeeCode": "E100" }, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } },
-    { "name": "marketing sees nothing", "user": { "role": "marketing", "employeeCode": "E100" }, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } },
-    { "name": "system admin sees nothing", "user": { "role": "sysadmin", "employeeCode": "E100" }, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } },
-    { "name": "nobody signed in sees nothing", "user": null, "expect": { "view": false, "edit": false, "process": false, "assign": false, "admin": false } }
+    {
+      "name": "admin: everything",
+      "user": {
+        "role": "admin",
+        "employeeCode": "E900"
+      },
+      "expect": {
+        "view": true,
+        "edit": true,
+        "process": true,
+        "assign": true,
+        "admin": true
+      }
+    },
+    {
+      "name": "processor: sees, processes and assigns, does not write the PM's instructions",
+      "user": {
+        "role": "processor",
+        "employeeCode": "E901"
+      },
+      "expect": {
+        "view": true,
+        "edit": false,
+        "process": true,
+        "assign": true,
+        "admin": false
+      }
+    },
+    {
+      "name": "the project's PIC views and edits",
+      "user": {
+        "role": "pic",
+        "employeeCode": "E100"
+      },
+      "expect": {
+        "view": true,
+        "edit": true,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "the project's PM views and edits",
+      "user": {
+        "role": "pic",
+        "employeeCode": "E200"
+      },
+      "expect": {
+        "view": true,
+        "edit": true,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "another PIC sees nothing",
+      "user": {
+        "role": "pic",
+        "employeeCode": "E300"
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "a PIC with no employee code sees nothing",
+      "user": {
+        "role": "pic",
+        "employeeCode": null
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "finance sees nothing",
+      "user": {
+        "role": "finance",
+        "employeeCode": "E100"
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "marketing sees nothing",
+      "user": {
+        "role": "marketing",
+        "employeeCode": "E100"
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "system admin sees nothing",
+      "user": {
+        "role": "sysadmin",
+        "employeeCode": "E100"
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "nobody signed in sees nothing",
+      "user": null,
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "the project PM with the pm role views and edits",
+      "user": {
+        "role": "pm",
+        "employeeCode": "E200"
+      },
+      "expect": {
+        "view": true,
+        "edit": true,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    },
+    {
+      "name": "a pm role user on someone else project sees nothing",
+      "user": {
+        "role": "pm",
+        "employeeCode": "E300"
+      },
+      "expect": {
+        "view": false,
+        "edit": false,
+        "process": false,
+        "assign": false,
+        "admin": false
+      }
+    }
   ],
   "kinds": [
-    { "user": { "role": "admin", "employeeCode": "E900" }, "expect": ["author", "processor", "admin"] },
-    { "user": { "role": "processor", "employeeCode": "E901" }, "expect": ["processor"] },
-    { "user": { "role": "pic", "employeeCode": "E100" }, "expect": ["author"] },
-    { "user": { "role": "pic", "employeeCode": "E300" }, "expect": [] }
+    {
+      "user": {
+        "role": "admin",
+        "employeeCode": "E900"
+      },
+      "expect": [
+        "author",
+        "processor",
+        "admin"
+      ]
+    },
+    {
+      "user": {
+        "role": "processor",
+        "employeeCode": "E901"
+      },
+      "expect": [
+        "processor"
+      ]
+    },
+    {
+      "user": {
+        "role": "pic",
+        "employeeCode": "E100"
+      },
+      "expect": [
+        "author"
+      ]
+    },
+    {
+      "user": {
+        "role": "pic",
+        "employeeCode": "E300"
+      },
+      "expect": []
+    },
+    {
+      "user": {
+        "role": "pm",
+        "employeeCode": "E200"
+      },
+      "expect": [
+        "author"
+      ]
+    }
   ],
-  "sideBar": { "admin": true, "processor": true, "pic": true, "finance": false, "marketing": false, "sysadmin": false, "pa": false },
+  "sideBar": {
+    "admin": true,
+    "processor": true,
+    "pic": true,
+    "finance": false,
+    "marketing": false,
+    "sysadmin": false,
+    "pa": false,
+    "pm": true
+  },
   "visible": {
-    "projects": [{ "wbs1": "P1", "picCode": "E100", "pmCode": "E200" }, { "wbs1": "P2", "picCode": "E300", "pmCode": "E100" }, { "wbs1": "P3", "picCode": "E300", "pmCode": "E400" }],
+    "projects": [
+      {
+        "wbs1": "P1",
+        "picCode": "E100",
+        "pmCode": "E200"
+      },
+      {
+        "wbs1": "P2",
+        "picCode": "E300",
+        "pmCode": "E100"
+      },
+      {
+        "wbs1": "P3",
+        "picCode": "E300",
+        "pmCode": "E400"
+      }
+    ],
     "cases": [
-      { "user": { "role": "pic", "employeeCode": "E100" }, "expect": ["P1", "P2"] },
-      { "user": { "role": "pic", "employeeCode": "E400" }, "expect": ["P3"] },
-      { "user": { "role": "processor", "employeeCode": "E901" }, "expect": ["P1", "P2", "P3"] },
-      { "user": { "role": "finance", "employeeCode": "E100" }, "expect": [] }
+      {
+        "user": {
+          "role": "pic",
+          "employeeCode": "E100"
+        },
+        "expect": [
+          "P1",
+          "P2"
+        ]
+      },
+      {
+        "user": {
+          "role": "pic",
+          "employeeCode": "E400"
+        },
+        "expect": [
+          "P3"
+        ]
+      },
+      {
+        "user": {
+          "role": "processor",
+          "employeeCode": "E901"
+        },
+        "expect": [
+          "P1",
+          "P2",
+          "P3"
+        ]
+      },
+      {
+        "user": {
+          "role": "finance",
+          "employeeCode": "E100"
+        },
+        "expect": []
+      },
+      {
+        "user": {
+          "role": "pm",
+          "employeeCode": "E400"
+        },
+        "expect": [
+          "P3"
+        ]
+      }
     ]
   }
 }

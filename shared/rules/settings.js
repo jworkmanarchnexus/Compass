@@ -34,6 +34,10 @@ const DEFAULTS = {
   'bd.onTrackPct': 100,          // BD report: On Track needs (YTD + forecast + MWIP) at least this % of the goal
   'bd.contractAmount': 'feeConsult', // BD forecast: the full contract amount behind the architectural share: 'feeConsult' (fee + consultant fees) or 'feeConsultReimb' (also the reimbursable allowance)
   'bd.noSector': 'keep',         // revenue with no market sector: 'keep' (its own Unassigned row, like Vantagepoint; publishing is not held up), 'ask' (the Admin must pick before publishing) or 'other' (it goes to Other) // who sees each PIC's on-time and kept figures: everyone | principals | admin
+  /* Billing (docs/SPEC-billing.md). Money is whole cents. */
+  'billing.varianceThreshold': 3000000, // a request whose total differs from the project's monthly projection by MORE than this needs a note to accounting ($30,000)
+  'billing.rolloverDay': 12,            // the "clock reset": from this day of the month the next billing month starts and every project is unbilled again
+  'billing.businessHours': { start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }, // routine immediate emails to processors wait for these hours (days: Sunday is 0)
   /* Pipeline watch alert rules. sev: 'alert' (counts toward the menu badge), 'watch' (shown only) or 'off'. Amounts are dollars. */
   'pipeline.rules': {
     mwipDrop: { sev: 'alert', amount: 75000, days: 7 },          // a PIC's MWIP falls by this much within this many days
@@ -96,6 +100,11 @@ VALIDATORS['pipeline.rules'] = v => !!v && typeof v === 'object' && Object.keys(
   return !!x && typeof x === 'object' && SEVS.includes(x.sev) && Object.keys(shape).every(k => shape[k](x[k])) && Object.keys(x).length === Object.keys(shape).length + 1;
 }) && Object.keys(v).length === Object.keys(RULE_SHAPE).length;
 VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
+VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);
+VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
+const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
+  && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;
 
 const isKnown = key => Object.prototype.hasOwnProperty.call(DEFAULTS, key);
 const isValid = (key, value) => isKnown(key) && VALIDATORS[key](value);

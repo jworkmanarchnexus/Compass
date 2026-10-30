@@ -57,3 +57,25 @@ A reset of the local database (`npm run seed`) is a developer action: it drops t
 ## What a production pull must deliver
 
 `load(period)` (see `server/vp-local.js`) returns, for the run month: the active chargeable projects (`wbs1`, name, principal code, project-manager code, status); monthly ledger rows for those projects (`wbs1`, `period`, `billed`, `labor`, `expenses` in cents; billed positive); and each project's lowest and highest overhead percent. It must be able to serve the past 12 month-ends (the SQL run once per month, as the Excel report is built), because each run stores its own chart history. The local files in `server/db/seed/` show the shape.
+
+## Billing tables (docs/SPEC-billing.md; `server/billing.js`)
+
+Money is whole cents. Nothing here is ever deleted.
+
+**Vantagepoint copy for Billing** (loaded by the scheduled pull, locally from `billing_projects.csv` and `billing_lines.csv`): `vp_billing_projects` (billing type fixed or hourly, authorization, billed to date, projection) and `vp_billing_lines` (a fixed-fee project's phases with fee, billed and projection; an hourly project's labor, expense and consultant lines with what is available). The names are ours; Kent maps them to a verified Vantagepoint report (K-B1). The load time is kept in `system_state` as `billing.vpLoadedAt`.
+
+**Compass's own tables:**
+
+| Table | Holds | Notes |
+|---|---|---|
+| `billing_calendar` | per billing month: the deadline and, if needed, a start date | Admin-entered; changes go to the audit log |
+| `billing_requests` | one per project and billing month (later ones in a month are `additional`): status, the draft being edited, the Vantagepoint hash it was started from, the processor holding it, a `rev` counter | **one open request per project** (a unique index); a trigger refuses any change once `processed`; never deleted |
+| `billing_revisions` | every submit, resubmit or revise: entries, notes, the evaluated lines, total, projection, source hash | append-only (triggers) |
+| `billing_events` | every status change, with a returned reason, a PM's answer or an invoice reference | append-only |
+| `billing_project_notes` | persistent rich-text instructions per project (cleaned on the server) | latest row is current; append-only |
+| `billing_project_adjust` | a project's own reset day, or a month it is left out of (with a reason) | latest row of each kind is in force; append-only |
+| `billing_assignments` | which processor owns a project | latest row is current; append-only |
+| `billing_email_prefs` | each processor's email settings | one row per person |
+| `billing_notifications` | what accounting should hear about, with how each person's own settings say to deliver it (now, held for business hours, digest, off) | nothing is sent yet |
+
+Roles: `pm` (a project manager, Billing only) and `processor` (an invoice processor) join `admin`, `pic`, `finance`, `marketing`, `sysadmin`. A PM or PIC is the author of a project when their VP employee code is its project-manager or principal code.

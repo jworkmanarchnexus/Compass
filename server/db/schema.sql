@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT NOT NULL UNIQUE,     -- the company sign-in name (locally a made-up one)
   display_name  TEXT NOT NULL,
   email         TEXT NOT NULL DEFAULT '',
-  role          TEXT NOT NULL CHECK (role IN ('admin','pic','finance','marketing','sysadmin')),
+  role          TEXT NOT NULL CHECK (role IN ('admin','pic','pm','processor','finance','marketing','sysadmin')),
   draft_name    TEXT NOT NULL DEFAULT '', -- the name used in check-in drafts ("Dana")
   employee_code TEXT,                     -- VP employee code, how a PIC is matched to their projects
   active        INTEGER NOT NULL DEFAULT 1
@@ -403,3 +403,142 @@ BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
 CREATE TRIGGER IF NOT EXISTS bd_detail_locked_delete BEFORE DELETE ON bd_detail
 WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
 BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+
+-- ---- Billing (docs/SPEC-billing.md). Money is whole cents. ----
+-- The Vantagepoint copy for Billing: loaded by the scheduled pull, locally from made-up CSV. Table and column names here are OUR names
+-- for what billing needs; they are mapped to real Vantagepoint reports when Kent supplies one (docs/OPEN-QUESTIONS.md K-B1).
+CREATE TABLE IF NOT EXISTS vp_billing_projects (
+  wbs1             TEXT PRIMARY KEY,
+  billing_type     TEXT NOT NULL CHECK (billing_type IN ('fixed','hourly')),
+  authorized_cents INTEGER,                          -- hourly: the authorization or not-to-exceed amount; NULL = no limit
+  billed_cents     INTEGER NOT NULL DEFAULT 0,       -- billed to date
+  projection_cents INTEGER NOT NULL DEFAULT 0        -- this month's revenue projection for the whole project
+);
+CREATE TABLE IF NOT EXISTS vp_billing_lines (
+  wbs1             TEXT NOT NULL,
+  line_id          TEXT NOT NULL,
+  name             TEXT NOT NULL,
+  kind             TEXT NOT NULL CHECK (kind IN ('phase','labor','expense','consultant')),
+  sort             INTEGER NOT NULL DEFAULT 0,
+  fee_cents        INTEGER NOT NULL DEFAULT 0,       -- phase fee (phases only)
+  billed_cents     INTEGER NOT NULL DEFAULT 0,       -- billed to date (phases only)
+  available_cents  INTEGER NOT NULL DEFAULT 0,       -- unbilled and eligible (hourly lines only)
+  projection_cents INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (wbs1, line_id)
+);
+
+-- Admin-entered deadline (and, if needed, start date) for each billing month
+CREATE TABLE IF NOT EXISTS billing_calendar (
+  month     TEXT PRIMARY KEY,                        -- YYYY-MM, the month being billed
+  deadline  TEXT,                                    -- YYYY-MM-DD
+  starts_on TEXT,                                    -- YYYY-MM-DD, overrides the default reset day for that month
+  set_by    TEXT NOT NULL,
+  set_at    INTEGER NOT NULL
+);
+
+-- One request per project and billing month (later ones in a month are 'additional'). The content being edited is the draft;
+-- every submit makes an immutable revision. Nothing is ever deleted and a processed request takes no more changes.
+CREATE TABLE IF NOT EXISTS billing_requests (
+  id           TEXT PRIMARY KEY,
+  wbs1         TEXT NOT NULL,
+  month        TEXT NOT NULL,
+  kind         TEXT NOT NULL CHECK (kind IN ('regular','additional')),
+  form         TEXT NOT NULL CHECK (form IN ('fixed','hourly')),
+  status       TEXT NOT NULL CHECK (status IN ('draft','submitted','review','returned','processed')),
+  pm_code      TEXT NOT NULL DEFAULT '',
+  pic_code     TEXT NOT NULL DEFAULT '',
+  draft_json   TEXT NOT NULL DEFAULT '{}',           -- { entries, noBilling, notes }
+  source_hash  TEXT NOT NULL DEFAULT '',             -- hash of the Vantagepoint inputs the person was looking at
+  revision     INTEGER NOT NULL DEFAULT 0,           -- number of the latest revision (0 = never submitted)
+  handled_by   TEXT,                                 -- the processor who has it in review
+  was_returned INTEGER NOT NULL DEFAULT 0,
+  invoice_ref  TEXT NOT NULL DEFAULT '',
+  submitted_on TEXT,                                 -- YYYY-MM-DD of the latest submit
+  rev          INTEGER NOT NULL DEFAULT 1,           -- compare-and-set counter: every save must quote the rev it started from
+  created_at   INTEGER NOT NULL,
+  created_by   TEXT NOT NULL,
+  updated_at   INTEGER NOT NULL,
+  updated_by   TEXT NOT NULL,
+  processed_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS billing_requests_wbs1 ON billing_requests (wbs1, month);
+-- at most one open request per project, in any month
+CREATE UNIQUE INDEX IF NOT EXISTS billing_one_open ON billing_requests (wbs1) WHERE status IN ('draft','submitted','review','returned');
+
+CREATE TABLE IF NOT EXISTS billing_revisions (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id       TEXT NOT NULL REFERENCES billing_requests(id),
+  number           INTEGER NOT NULL,
+  event            TEXT NOT NULL,                    -- submit | resubmit | revise
+  entries_json     TEXT NOT NULL,
+  no_billing       INTEGER NOT NULL,
+  notes            TEXT NOT NULL DEFAULT '',
+  lines_json       TEXT NOT NULL,                    -- the evaluated lines (fees, prior billed, amounts) as they were
+  total_cents      INTEGER NOT NULL,
+  projection_cents INTEGER NOT NULL,
+  source_hash      TEXT NOT NULL,
+  created_at       INTEGER NOT NULL,
+  created_by       TEXT NOT NULL,
+  UNIQUE (request_id, number)
+);
+-- what happened to a request, in order: every status change, with a returned reason or a PM's answer
+CREATE TABLE IF NOT EXISTS billing_events (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id  TEXT NOT NULL REFERENCES billing_requests(id),
+  at          INTEGER NOT NULL,
+  user_id     TEXT NOT NULL,
+  event       TEXT NOT NULL,
+  from_status TEXT NOT NULL,
+  to_status   TEXT NOT NULL,
+  text        TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS billing_project_notes (   -- persistent instructions per project; the latest row is current
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  wbs1       TEXT NOT NULL,
+  body       TEXT NOT NULL,                          -- sanitized rich text
+  created_at INTEGER NOT NULL,
+  created_by TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS billing_project_adjust (  -- per-project adjustments; the latest row of each kind is in force
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  wbs1    TEXT NOT NULL,
+  kind    TEXT NOT NULL CHECK (kind IN ('rollover','exclude','include')),
+  value   TEXT NOT NULL DEFAULT '',                  -- rollover: the day ('' = back to the default); exclude/include: the month
+  reason  TEXT NOT NULL DEFAULT '',
+  set_by  TEXT NOT NULL,
+  set_at  INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS billing_assignments (     -- which invoice processor owns a project; the latest row is current
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  wbs1         TEXT NOT NULL,
+  processor_id TEXT,                                 -- NULL = unassigned
+  set_by       TEXT NOT NULL,
+  set_at       INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS billing_email_prefs (     -- one row per invoice processor (modules/billing/logic/notify.js)
+  user_id    TEXT PRIMARY KEY,
+  prefs_json TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS billing_notifications (   -- what the email rules say processors should hear about; sending is a later step
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  at            INTEGER NOT NULL,
+  event         TEXT NOT NULL,
+  wbs1          TEXT NOT NULL,
+  request_id    TEXT,
+  involved_json TEXT NOT NULL DEFAULT '[]',          -- the processors it concerns
+  delivery_json TEXT NOT NULL DEFAULT '[]'           -- for each: how their email settings say to deliver it [{ userId, mode, sendAt }]
+);
+
+CREATE TRIGGER IF NOT EXISTS billing_revisions_no_update BEFORE UPDATE ON billing_revisions BEGIN SELECT RAISE(ABORT, 'billing revisions are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS billing_revisions_no_delete BEFORE DELETE ON billing_revisions BEGIN SELECT RAISE(ABORT, 'billing revisions are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_events_no_update BEFORE UPDATE ON billing_events BEGIN SELECT RAISE(ABORT, 'billing events are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS billing_events_no_delete BEFORE DELETE ON billing_events BEGIN SELECT RAISE(ABORT, 'billing events are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_project_notes_no_update BEFORE UPDATE ON billing_project_notes BEGIN SELECT RAISE(ABORT, 'project notes are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS billing_project_notes_no_delete BEFORE DELETE ON billing_project_notes BEGIN SELECT RAISE(ABORT, 'project notes are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_project_adjust_no_update BEFORE UPDATE ON billing_project_adjust BEGIN SELECT RAISE(ABORT, 'adjustments are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS billing_project_adjust_no_delete BEFORE DELETE ON billing_project_adjust BEGIN SELECT RAISE(ABORT, 'adjustments are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_assignments_no_update BEFORE UPDATE ON billing_assignments BEGIN SELECT RAISE(ABORT, 'assignments are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS billing_assignments_no_delete BEFORE DELETE ON billing_assignments BEGIN SELECT RAISE(ABORT, 'assignments are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_requests_no_delete BEFORE DELETE ON billing_requests BEGIN SELECT RAISE(ABORT, 'billing requests are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS billing_requests_processed BEFORE UPDATE ON billing_requests WHEN OLD.status = 'processed' BEGIN SELECT RAISE(ABORT, 'a processed request takes no more changes'); END;

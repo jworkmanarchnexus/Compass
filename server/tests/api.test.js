@@ -12,7 +12,7 @@ test('static files: the shell and design system are served, nothing else is', ()
 }));
 
 test('seed: made-up people and a Vantagepoint-shaped project copy', () => withApp(async ({ db }) => {
-  assert.strictEqual(db.get('SELECT COUNT(*) n FROM users').n, 12);
+  assert.strictEqual(db.get('SELECT COUNT(*) n FROM users').n, 18);
   assert.strictEqual(db.get("SELECT COUNT(*) n FROM projects WHERE status = 'A'").n, 21);
   assert.strictEqual(db.get("SELECT COUNT(*) n FROM projects WHERE status = 'A' AND principal = ''").n, 2, 'two active projects with no PIC, as in the mockup');
 }));
@@ -29,9 +29,9 @@ test('sign-in: the picker lists active people only; every other call needs a sig
 test('me: carries the role and what that role may see', () => withApp(async ({ api }) => {
   const josh = (await api('j.workman').get('/api/me')).body;
   assert.strictEqual(josh.role, 'admin');
-  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, pipeline: true, admin: true });
+  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, pipeline: true, billing: true, admin: true });
   const casey = (await api('c.brandt').get('/api/me')).body;
-  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, pipeline: true, admin: false }, 'marketing sees BD and Pipeline only by default');
+  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, pipeline: true, billing: false, admin: false }, 'marketing sees BD and Pipeline only by default');
   const dana = (await api('d.whitfield').get('/api/me')).body;
   assert.strictEqual(dana.areas.checkins, false);
   assert.strictEqual(dana.adminTabs.people, null);
