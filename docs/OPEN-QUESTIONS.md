@@ -61,13 +61,15 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 
 ## Billing (not built; see `docs/SPEC-billing.md`)
 
+Decided 2026-10-30 (Josh): processors are Karen, Camille and Josh; PMs and PICs view and edit billing for their projects; PAs, Finance and Marketing have no access; release one covers all project types; nothing is ever locked; the Admin enters each month's deadline; PMs may bill at any time (including mid-month); the variance rule stays as the prototype with the threshold as an Admin setting; no PM reminders on day one; processors choose their own email reminders.
+
 | # | Question | Default in the spec | Who |
 |---|---|---|---|
-| B1 | Is Billing a Compass module that BD and Home read projected versus billed from? | yes | Josh |
-| B2 | Who is an invoice processor and who a billing admin? May a PA edit drafts? Do PICs, Finance and Marketing see Billing? | new `processor` role; admin is billing admin; PA read-only; Finance read-only; PIC and Marketing off (a setting) | Josh |
-| B3 | Is the period one calendar month? Who sets the cutoff and who locks it? | calendar month; billing admin | Josh |
-| B4 | Fixed-fee only in release one, hourly after? | yes | Josh |
-| B5 | How are PMs reminded of a return or a missing submission? | Home counts and the PM's list; no email | Josh |
+| B2 | May any processor (and the Admin) reassign projects, or only the Admin? | all three processors and the Admin | Josh |
+| B3 | Rollover ("clock reset") day, and how an additional mid-month billing is labeled for accounting | the 12th (Admin setting); label "Additional" | Josh |
+| B6 | Meaning of each email event; approve processor emails as an exception to "the only automatic email goes to Josh" | the spec's reading; emails to `outbox/` only | Josh |
+| B7 | Which billing types exist besides fixed fee by phase and hourly? | those two, plus one "billing form" rule for any more | Josh and Kent |
+| B8 | May a PIC and a PM edit the same request at once? | one open request; the second sees "being edited by" | Josh |
 | K-B1 | Which VP report verifies phase fee and billed-to-date? | none yet; made-up CSV | Kent |
 | K-B2 | Does the reporting database lag VP? | unknown | Kent |
 | K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |
