@@ -66,7 +66,7 @@ Decided 2026-10-30 (Josh): processors are Karen, Camille and Josh; PMs and PICs 
 | # | Question | Default in the spec | Who |
 |---|---|---|---|
 | B3 | Reset-clock default day, and how an additional mid-month billing is labeled for accounting | the 12th; "Additional" | Josh |
-| B9 | Business hours, second digest time, weekly digest day | weekdays 8 to 5; 1:00 PM; Monday | Josh |
+| B9 | Business hours, second digest time, weekly digest day; which alerts count as "routine" for quiet hours; who hears about an unassigned project | weekdays 8 to 5; 1:00 PM; Monday; every alert except "Financial data changed"; every processor | Josh |
 | K-B1 | Which VP report verifies phase fee and billed-to-date? | none yet; made-up CSV | Kent |
 | K-B2 | Does the reporting database lag VP? | unknown | Kent |
 | K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |

@@ -1,0 +1,87 @@
+{
+  "_about": "Billing email rules for invoice processors. Times are local YYYY-MM-DDTHH:MM. 2026-10-30 is a Friday, 10-31 Saturday, 11-01 Sunday, 11-02 Monday. Defaults are Josh's mockup of 2026-10-30. Business hours: weekdays 08:00 to 17:00.",
+  "invalidPrefs": [
+    { "name": "defaults are valid", "change": {}, "expect": [] },
+    { "name": "an unknown mode", "change": { "events.submission": "sometimes" }, "expect": ["events.submission"] },
+    { "name": "an unknown frequency", "change": { "digest.frequency": "hourly" }, "expect": ["digest.frequency"] },
+    { "name": "a bad time", "change": { "digest.firstTime": "7am" }, "expect": ["digest.firstTime"] },
+    { "name": "a negative window", "change": { "reminders.cutoffDays": -1 }, "expect": ["reminders.cutoffDays"] },
+    { "name": "a non-true/false switch", "change": { "digest.onlyMine": "yes" }, "expect": ["digest.onlyMine"] }
+  ],
+  "businessHours": [
+    { "now": "2026-10-30T09:00", "expect": true },
+    { "now": "2026-10-30T07:59", "expect": false },
+    { "now": "2026-10-30T16:59", "expect": true },
+    { "now": "2026-10-30T17:00", "expect": false, "note": "the end is not inside business hours" },
+    { "now": "2026-10-31T10:00", "expect": false, "note": "Saturday" }
+  ],
+  "nextBusinessStart": [
+    { "now": "2026-10-30T18:00", "expect": "2026-11-02T08:00", "note": "Friday evening waits for Monday" },
+    { "now": "2026-10-30T07:00", "expect": "2026-10-30T08:00" },
+    { "now": "2026-10-30T08:00", "expect": "2026-11-02T08:00", "note": "already started: the next start" },
+    { "now": "2026-10-31T12:00", "expect": "2026-11-02T08:00" }
+  ],
+  "delivery": [
+    { "name": "digest alerts wait for the digest", "event": "submission", "now": "2026-10-30T10:00", "expect": { "mode": "digest" } },
+    { "name": "an off alert is never sent", "event": "complete", "now": "2026-10-30T10:00", "expect": { "mode": "off" } },
+    { "name": "an immediate alert in business hours goes now", "event": "resubmit", "now": "2026-10-30T10:00", "expect": { "mode": "instant", "sendAt": "2026-10-30T10:00" } },
+    { "name": "a routine immediate alert after hours is held until Monday morning", "event": "resubmit", "now": "2026-10-30T18:00", "expect": { "mode": "instant", "sendAt": "2026-11-02T08:00" } },
+    { "name": "financial data changed is urgent and goes now", "event": "data", "now": "2026-10-30T18:00", "expect": { "mode": "instant", "sendAt": "2026-10-30T18:00" } },
+    { "name": "with quiet hours off, it goes now", "event": "resubmit", "now": "2026-10-30T18:00", "change": { "reminders.quietHours": false }, "expect": { "mode": "instant", "sendAt": "2026-10-30T18:00" } },
+    { "name": "an alert switched to immediate", "event": "submission", "now": "2026-10-30T10:00", "change": { "events.submission": "instant" }, "expect": { "mode": "instant", "sendAt": "2026-10-30T10:00" } }
+  ],
+  "nextDigest": [
+    { "name": "daily at 07:00, before it", "now": "2026-10-30T06:00", "expect": "2026-10-30T07:00" },
+    { "name": "daily, exactly at it moves on, skipping the weekend", "now": "2026-10-30T07:00", "expect": "2026-11-02T07:00" },
+    { "name": "daily, Saturday waits for Monday", "now": "2026-10-31T09:00", "expect": "2026-11-02T07:00" },
+    { "name": "daily with weekends on", "now": "2026-10-30T14:00", "change": { "digest.weekends": true }, "expect": "2026-10-31T07:00" },
+    { "name": "twice daily, between the two", "now": "2026-10-30T08:00", "change": { "digest.frequency": "twice" }, "expect": "2026-10-30T13:00" },
+    { "name": "twice daily, after the second", "now": "2026-10-30T14:00", "change": { "digest.frequency": "twice" }, "expect": "2026-11-02T07:00" },
+    { "name": "twice daily with the times typed in reverse", "now": "2026-10-30T08:00", "change": { "digest.frequency": "twice", "digest.firstTime": "13:00", "digest.secondTime": "07:00" }, "expect": "2026-10-30T13:00" },
+    { "name": "weekly on Monday", "now": "2026-10-30T10:00", "change": { "digest.frequency": "weekly" }, "expect": "2026-11-02T07:00" },
+    { "name": "weekly, after this Monday's", "now": "2026-11-02T08:00", "change": { "digest.frequency": "weekly" }, "expect": "2026-11-09T07:00" }
+  ],
+  "recipients": {
+    "processors": ["camille", "karen", "josh"],
+    "cases": [
+      { "event": "assignment", "project": { "assignedTo": "karen", "previousAssignedTo": "camille" }, "expect": ["karen", "camille"], "note": "both are told" },
+      { "event": "assignment", "project": { "assignedTo": "karen", "previousAssignedTo": null }, "expect": ["karen"] },
+      { "event": "assignment", "project": { "assignedTo": null, "previousAssignedTo": "camille" }, "expect": ["camille"], "note": "taken off a processor" },
+      { "event": "assignment", "project": { "assignedTo": "karen", "previousAssignedTo": "karen" }, "expect": ["karen"] },
+      { "event": "submission", "project": { "assignedTo": "camille" }, "expect": ["camille"] },
+      { "event": "submission", "project": { "assignedTo": null }, "expect": ["camille", "karen", "josh"], "note": "an unassigned project is nobody's, so everybody hears" }
+    ]
+  },
+  "digest": {
+    "items": [
+      { "event": "submission", "wbs1": "P1", "involved": ["camille"] },
+      { "event": "submission", "wbs1": "P2", "involved": ["karen"] },
+      { "event": "submission", "wbs1": "P3", "involved": [] },
+      { "event": "resubmit", "wbs1": "P1", "involved": ["camille"] },
+      { "event": "assignment", "wbs1": "P4", "involved": ["camille", "karen"] },
+      { "event": "missing", "wbs1": "P5", "involved": ["camille"] }
+    ],
+    "cases": [
+      { "name": "only mine keeps mine and the unassigned; instant alerts are not in a digest", "processor": "camille", "expect": { "sections": [{ "event": "submission", "wbs1": ["P1", "P3"] }, { "event": "assignment", "wbs1": ["P4"] }, { "event": "missing", "wbs1": ["P5"] }] } },
+      { "name": "with only mine off it has everything that is digest", "processor": "camille", "change": { "digest.onlyMine": false }, "expect": { "sections": [{ "event": "submission", "wbs1": ["P1", "P2", "P3"] }, { "event": "assignment", "wbs1": ["P4"] }, { "event": "missing", "wbs1": ["P5"] }] } },
+      { "name": "karen's digest", "processor": "karen", "expect": { "sections": [{ "event": "submission", "wbs1": ["P2", "P3"] }, { "event": "assignment", "wbs1": ["P4"] }] } },
+      { "name": "nothing to say sends nothing", "processor": "josh", "items": [], "expect": null },
+      { "name": "only instant items sends nothing", "processor": "camille", "items": [{ "event": "resubmit", "wbs1": "P1", "involved": ["camille"] }], "expect": null },
+      { "name": "an empty digest is sent when asked", "processor": "josh", "items": [], "change": { "digest.sendEmpty": true }, "expect": { "sections": [] } }
+    ]
+  },
+  "missing": [
+    { "deadline": "2026-10-06", "daysLeft": 3, "cutoffDays": 3, "unbilled": 5, "expect": true },
+    { "deadline": "2026-10-06", "daysLeft": 4, "cutoffDays": 3, "unbilled": 5, "expect": false },
+    { "deadline": "2026-10-06", "daysLeft": -2, "cutoffDays": 3, "unbilled": 5, "expect": true, "note": "past the deadline" },
+    { "deadline": "2026-10-06", "daysLeft": 1, "cutoffDays": 3, "unbilled": 0, "expect": false },
+    { "deadline": null, "daysLeft": null, "cutoffDays": 3, "unbilled": 5, "expect": false, "note": "no deadline entered" }
+  ],
+  "stale": [
+    { "status": "submitted", "submittedOn": "2026-10-28", "today": "2026-10-30", "staleDays": 2, "expect": true },
+    { "status": "submitted", "submittedOn": "2026-10-28", "today": "2026-10-29", "staleDays": 2, "expect": false },
+    { "status": "review", "submittedOn": "2026-10-20", "today": "2026-10-30", "staleDays": 2, "expect": true },
+    { "status": "processed", "submittedOn": "2026-10-01", "today": "2026-10-30", "staleDays": 2, "expect": false },
+    { "status": "draft", "submittedOn": "2026-10-01", "today": "2026-10-30", "staleDays": 2, "expect": false }
+  ]
+}

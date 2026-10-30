@@ -1,0 +1,82 @@
+{
+  "_about": "Billing months and the clock reset. Default reset day 12: from the 12th a new billing month starts and every project is unbilled again. 2026-10-30 is a Friday.",
+  "startsOn": [
+    { "month": "2026-10", "opts": { "rolloverDay": 12 }, "expect": "2026-10-12" },
+    { "month": "2026-10", "opts": {}, "expect": "2026-10-12", "note": "the default day is 12" },
+    { "month": "2026-02", "opts": { "rolloverDay": 31 }, "expect": "2026-02-28", "note": "a day past the end of the month is clamped" },
+    { "month": "2026-11", "opts": { "rolloverDay": 12, "calendar": { "2026-11": { "startsOn": "2026-11-10" } } }, "expect": "2026-11-10", "note": "the Admin's date for that month wins" },
+    { "month": "2026-11", "opts": { "rolloverDay": 12, "projectRolloverDay": 5, "calendar": { "2026-11": { "startsOn": "2026-11-10" } } }, "expect": "2026-11-05", "note": "a project's own day wins over both" }
+  ],
+  "current": [
+    { "date": "2026-10-11", "opts": { "rolloverDay": 12 }, "expect": "2026-09", "note": "the day before the reset is still September" },
+    { "date": "2026-10-12", "opts": { "rolloverDay": 12 }, "expect": "2026-10", "note": "on the reset day it switches" },
+    { "date": "2026-10-30", "opts": { "rolloverDay": 12 }, "expect": "2026-10" },
+    { "date": "2026-11-11", "opts": { "rolloverDay": 12 }, "expect": "2026-10" },
+    { "date": "2026-11-12", "opts": { "rolloverDay": 12 }, "expect": "2026-11" },
+    { "date": "2027-01-05", "opts": { "rolloverDay": 12 }, "expect": "2026-12", "note": "across the new year" },
+    { "date": "2026-10-30", "opts": { "rolloverDay": 12, "calendar": { "2026-11": { "startsOn": "2026-10-28" } } }, "expect": "2026-11", "note": "the Admin starts November early" },
+    { "date": "2026-10-15", "opts": { "rolloverDay": 12, "projectRolloverDay": 20 }, "expect": "2026-09", "note": "this project resets on the 20th" },
+    { "date": "2026-10-20", "opts": { "rolloverDay": 12, "projectRolloverDay": 20 }, "expect": "2026-10" }
+  ],
+  "addMonths": [
+    { "month": "2026-12", "n": 1, "expect": "2027-01" },
+    { "month": "2026-01", "n": -1, "expect": "2025-12" },
+    { "month": "2026-10", "n": 0, "expect": "2026-10" }
+  ],
+  "deadline": {
+    "calendar": { "2026-09": { "deadline": "2026-10-06" } },
+    "cases": [
+      { "month": "2026-09", "today": "2026-10-01", "expect": { "deadline": "2026-10-06", "daysLeft": 5, "state": "upcoming" } },
+      { "month": "2026-09", "today": "2026-10-06", "expect": { "deadline": "2026-10-06", "daysLeft": 0, "state": "today" } },
+      { "month": "2026-09", "today": "2026-10-08", "expect": { "deadline": "2026-10-06", "daysLeft": -2, "state": "passed" } },
+      { "month": "2026-10", "today": "2026-10-30", "expect": { "deadline": null, "daysLeft": null, "state": "none" }, "note": "no deadline entered for that month" }
+    ]
+  },
+  "unbilled": {
+    "month": "2026-10",
+    "projects": [
+      { "wbs1": "A" }, { "wbs1": "B" }, { "wbs1": "C" }, { "wbs1": "D" }, { "wbs1": "E" },
+      { "wbs1": "F", "excluded": [{ "month": "2026-10", "reason": "Closed out early" }] },
+      { "wbs1": "G" }, { "wbs1": "H" },
+      { "wbs1": "I", "excluded": [{ "month": "2026-09", "reason": "Only last month" }] }
+    ],
+    "requests": [
+      { "id": "r1", "wbs1": "B", "month": "2026-10", "status": "draft" },
+      { "id": "r2", "wbs1": "C", "month": "2026-10", "status": "returned" },
+      { "id": "r3", "wbs1": "D", "month": "2026-10", "status": "submitted" },
+      { "id": "r4", "wbs1": "E", "month": "2026-10", "status": "processed" },
+      { "id": "r5", "wbs1": "G", "month": "2026-09", "status": "processed" },
+      { "id": "r6", "wbs1": "H", "month": "2026-10", "status": "review" }
+    ],
+    "expect": {
+      "unbilled": [
+        { "wbs1": "A", "state": "awaiting", "requestId": null },
+        { "wbs1": "B", "state": "draft", "requestId": "r1" },
+        { "wbs1": "C", "state": "returned", "requestId": "r2" },
+        { "wbs1": "G", "state": "awaiting", "requestId": null },
+        { "wbs1": "I", "state": "awaiting", "requestId": null }
+      ],
+      "done": [{ "wbs1": "D" }, { "wbs1": "E" }, { "wbs1": "H" }],
+      "excluded": [{ "wbs1": "F", "reason": "Closed out early" }]
+    },
+    "note": "G was billed last month, so it is back in the list; every project appears exactly once"
+  },
+  "canStart": {
+    "requests": [
+      { "id": "r1", "wbs1": "A", "month": "2026-10", "status": "processed" },
+      { "id": "r2", "wbs1": "B", "month": "2026-10", "status": "submitted" },
+      { "id": "r3", "wbs1": "C", "month": "2026-10", "status": "draft" },
+      { "id": "r4", "wbs1": "D", "month": "2026-10", "status": "returned" },
+      { "id": "r5", "wbs1": "E", "month": "2026-10", "status": "review" }
+    ],
+    "cases": [
+      { "wbs1": "A", "month": "2026-10", "expect": { "ok": true, "kind": "additional" }, "note": "a mid-month second billing" },
+      { "wbs1": "A", "month": "2026-11", "expect": { "ok": true, "kind": "regular" } },
+      { "wbs1": "F", "month": "2026-10", "expect": { "ok": true, "kind": "regular" } },
+      { "wbs1": "B", "month": "2026-10", "expect": { "ok": false, "reason": "open-request", "requestId": "r2" } },
+      { "wbs1": "C", "month": "2026-10", "expect": { "ok": false, "reason": "open-request", "requestId": "r3" } },
+      { "wbs1": "D", "month": "2026-11", "expect": { "ok": false, "reason": "open-request", "requestId": "r4" }, "note": "one open request per project, in any month" },
+      { "wbs1": "E", "month": "2026-10", "expect": { "ok": false, "reason": "open-request", "requestId": "r5" } }
+    ]
+  }
+}

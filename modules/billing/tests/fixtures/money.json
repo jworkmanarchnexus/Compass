@@ -1,0 +1,46 @@
+{
+  "_about": "Money is whole cents; a percent is basis points (62.5% = 6250). The rounding rule: a percent of a fee rounds to the nearest cent, halves up.",
+  "bpToCents": [
+    { "feeCents": 10000000, "bp": 6250, "cents": 6250000 },
+    { "feeCents": 12345, "bp": 3333, "cents": 4115, "note": "4114.5885 rounds up" },
+    { "feeCents": 1, "bp": 5000, "cents": 1, "note": "exactly half rounds up" },
+    { "feeCents": 3, "bp": 5000, "cents": 2, "note": "1.5 rounds up" },
+    { "feeCents": 1, "bp": 4999, "cents": 0 },
+    { "feeCents": 9000000, "bp": 10000, "cents": 9000000 },
+    { "feeCents": 9000000, "bp": 0, "cents": 0 }
+  ],
+  "centsToBp": [
+    { "cents": 4115, "feeCents": 12345, "bp": 3333 },
+    { "cents": 5000, "feeCents": 10000, "bp": 5000 },
+    { "cents": 7150000, "feeCents": 9000000, "bp": 7944, "note": "79.444%" },
+    { "cents": 1, "feeCents": 3, "bp": 3333 },
+    { "cents": 0, "feeCents": 0, "bp": 0, "note": "a zero fee has no percent" }
+  ],
+  "parseCents": [
+    { "text": "$12,345.67", "cents": 1234567 },
+    { "text": "100", "cents": 10000 },
+    { "text": "12.5", "cents": 1250 },
+    { "text": " 7 ", "cents": 700 },
+    { "text": "$0.05", "cents": 5 },
+    { "text": "-5.00", "cents": -500 },
+    { "text": "1.234", "cents": null, "note": "more than two decimals" },
+    { "text": "abc", "cents": null },
+    { "text": "", "cents": null }
+  ],
+  "parseBp": [
+    { "text": "62.5", "bp": 6250 },
+    { "text": "62.5%", "bp": 6250 },
+    { "text": "100", "bp": 10000 },
+    { "text": "33.33", "bp": 3333 },
+    { "text": "-1", "bp": null },
+    { "text": "1.234", "bp": null },
+    { "text": "", "bp": null }
+  ],
+  "text": [
+    { "bp": 6250, "bpText": "62.5", "cents": 1234567, "centsText": "$12,345.67" },
+    { "bp": 10000, "bpText": "100", "cents": -5, "centsText": "-$0.05" },
+    { "bp": 3333, "bpText": "33.33", "cents": 0, "centsText": "$0.00" },
+    { "bp": 5, "bpText": "0.05", "cents": 100, "centsText": "$1.00" },
+    { "bp": 0, "bpText": "0", "cents": 99, "centsText": "$0.99" }
+  ]
+}

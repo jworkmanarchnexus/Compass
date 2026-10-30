@@ -1,0 +1,26 @@
+{
+  "_about": "Can a request be submitted? Uses the phases and project in fixed.json / hourly.json. threshold 3000000 = $30,000. The variance rule is STRICTLY greater: exactly the threshold needs no note. Issues are written code or code@lineId.",
+  "thresholdCents": 3000000,
+  "cases": [
+    { "name": "a difference of exactly the threshold needs no note", "form": "fixed", "entries": { "dd": 850000, "cd": 5000000, "ca": 0 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": true, "issues": [], "needsNote": false, "varianceCents": 3000000, "totalCents": 5850000 } },
+    { "name": "one cent more than the threshold needs a note", "form": "fixed", "entries": { "dd": 850000, "cd": 5000001, "ca": 0 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": false, "issues": ["variance-note-required"], "needsNote": true, "varianceCents": 3000001 } },
+    { "name": "a note of only spaces does not count", "form": "fixed", "entries": { "dd": 850000, "cd": 5000001, "ca": 0 }, "projectionCents": 2850000, "notes": "   ", "expect": { "canSubmit": false, "issues": ["variance-note-required"] } },
+    { "name": "a real note lets it through", "form": "fixed", "entries": { "dd": 850000, "cd": 5000001, "ca": 0 }, "projectionCents": 2850000, "notes": "Client approved the early CD milestone.", "expect": { "canSubmit": true, "issues": [] } },
+    { "name": "the threshold is a setting: lowered by one cent, exactly 30,000 now needs a note", "form": "fixed", "thresholdCents": 2999999, "entries": { "dd": 850000, "cd": 5000000, "ca": 0 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": false, "issues": ["variance-note-required"] } },
+    { "name": "billing far under the projection also needs a note, even with No billing", "form": "fixed", "noBilling": true, "entries": { "dd": 0, "cd": 0, "ca": 0 }, "projectionCents": 3500000, "notes": "", "expect": { "canSubmit": false, "issues": ["variance-note-required"], "totalCents": 0 } },
+    { "name": "No billing with a zero total and no big projection is fine", "form": "fixed", "noBilling": true, "entries": { "dd": 0, "cd": 0, "ca": 0 }, "projectionCents": 0, "notes": "", "expect": { "canSubmit": true, "issues": [] } },
+    { "name": "No billing checked with an amount blocks", "form": "fixed", "noBilling": true, "entries": { "dd": 100, "cd": 0, "ca": 0 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": false, "issues": ["no-billing-nonzero"] } },
+    { "name": "a line error blocks, but Save Draft stays available", "form": "fixed", "entries": { "dd": "pct:5000", "cd": 0, "ca": 0 }, "projectionCents": 2850000, "notes": "x", "expect": { "canSubmit": false, "canSaveDraft": true, "issues": ["line-below-prior@dd"] } },
+    { "name": "a blank line blocks and the variance is not computed", "form": "fixed", "entries": { "dd": 850000, "cd": 2000000 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": false, "issues": ["line-blank@ca"], "varianceCents": null, "totalCents": null, "needsNote": false } },
+    { "name": "source data changed since the person worked from it", "form": "fixed", "noBilling": true, "entries": { "dd": 0, "cd": 0, "ca": 0 }, "projectionCents": 0, "notes": "", "sourceHash": "a1", "currentSourceHash": "b2", "expect": { "canSubmit": false, "issues": ["stale-source"] } },
+    { "name": "the same source hash passes", "form": "fixed", "noBilling": true, "entries": { "dd": 0, "cd": 0, "ca": 0 }, "projectionCents": 0, "notes": "", "sourceHash": "a1", "currentSourceHash": "a1", "expect": { "canSubmit": true, "issues": [] } },
+    { "name": "hourly: over the authorization blocks", "form": "hourly", "project": { "authorizedCents": 18000000, "billedCents": 17500000, "pendingCents": 0 }, "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 }, "projectionCents": 2850000, "notes": "", "expect": { "canSubmit": false, "issues": ["over-authorization"] } },
+    { "name": "hourly: a line over what is available blocks", "form": "hourly", "entries": { "prog": 1225001, "design": 0, "exp": 0, "cons": 0 }, "projectionCents": 1225001, "notes": "", "expect": { "canSubmit": false, "issues": ["line-over-available@prog"] } }
+  ],
+  "normalize": [
+    { "totalCents": 0, "noBilling": false, "expect": true },
+    { "totalCents": 100, "noBilling": true, "expect": false },
+    { "totalCents": 100, "noBilling": false, "expect": false },
+    { "totalCents": null, "noBilling": true, "expect": true }
+  ]
+}

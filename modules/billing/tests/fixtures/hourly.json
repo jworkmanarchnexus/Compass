@@ -1,0 +1,62 @@
+{
+  "_about": "Hourly (time and materials) billing. All money in cents. Authorization $180,000 = 18000000.",
+  "project": { "authorizedCents": 18000000, "billedCents": 7840000, "pendingCents": 0 },
+  "lines": [
+    { "id": "prog", "name": "Programming", "kind": "labor", "availableCents": 1225000, "projectionCents": 1200000 },
+    { "id": "design", "name": "Design support", "kind": "labor", "availableCents": 890000, "projectionCents": 1000000 },
+    { "id": "exp", "name": "Reimbursable expenses", "kind": "expense", "availableCents": 184000, "projectionCents": 150000 },
+    { "id": "cons", "name": "Subconsultant services", "kind": "consultant", "availableCents": 620000, "projectionCents": 500000 }
+  ],
+  "evaluate": [
+    {
+      "name": "bill everything available",
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 },
+      "expect": { "totalCents": 2919000, "remainingAuthorizationCents": 7241000, "projectionCents": 2850000, "errors": [], "projectErrors": [] }
+    },
+    {
+      "name": "a line over what is available blocks",
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184001, "cons": 0 },
+      "expect": { "errors": [{ "lineId": "exp", "errors": ["over-available"] }] }
+    },
+    {
+      "name": "a negative line blocks",
+      "entries": { "prog": -1, "design": 0, "exp": 0, "cons": 0 },
+      "expect": { "errors": [{ "lineId": "prog", "errors": ["negative"] }] }
+    },
+    {
+      "name": "a missing line is blank and the total is unknown",
+      "entries": { "prog": 100, "design": 0, "exp": 0 },
+      "expect": { "totalCents": null, "errors": [{ "lineId": "cons", "errors": ["blank"] }] }
+    },
+    {
+      "name": "over the authorization blocks",
+      "project": { "authorizedCents": 18000000, "billedCents": 17500000, "pendingCents": 0 },
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 },
+      "expect": { "totalCents": 2919000, "remainingAuthorizationCents": -2419000, "projectErrors": ["over-authorization"] }
+    },
+    {
+      "name": "exactly the authorization is fine",
+      "project": { "authorizedCents": 18000000, "billedCents": 15081000, "pendingCents": 0 },
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 },
+      "expect": { "remainingAuthorizationCents": 0, "projectErrors": [] }
+    },
+    {
+      "name": "one cent of pending pushes it over",
+      "project": { "authorizedCents": 18000000, "billedCents": 15081000, "pendingCents": 1 },
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 },
+      "expect": { "projectErrors": ["over-authorization"] }
+    },
+    {
+      "name": "no authorization limit means no limit",
+      "project": { "authorizedCents": null, "billedCents": 99999999, "pendingCents": 0 },
+      "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 },
+      "expect": { "remainingAuthorizationCents": null, "projectErrors": [] }
+    }
+  ],
+  "quick": [
+    { "action": "all", "expect": { "entries": { "prog": 1225000, "design": 890000, "exp": 184000, "cons": 620000 }, "noBilling": false } },
+    { "action": "projection", "expect": { "entries": { "prog": 1200000, "design": 890000, "exp": 150000, "cons": 500000 }, "noBilling": false }, "note": "design projection 10,000 is capped at the 8,900 available" },
+    { "action": "clear", "expect": { "entries": { "prog": 0, "design": 0, "exp": 0, "cons": 0 }, "noBilling": false } },
+    { "action": "none", "expect": { "entries": { "prog": 0, "design": 0, "exp": 0, "cons": 0 }, "noBilling": true } }
+  ]
+}
