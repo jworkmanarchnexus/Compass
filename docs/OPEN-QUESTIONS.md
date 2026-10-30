@@ -58,3 +58,17 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | P6 | Should the Admin be able to re-run the rules on an old snapshot after changing a threshold? | no; past alerts stay as they were | |
 | T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |
+
+## Billing (not built; see `docs/SPEC-billing.md`)
+
+Decided 2026-10-30 (Josh): processors are Karen, Camille and Josh; PMs and PICs view and edit billing for their projects; PAs, Finance and Marketing have no access; release one covers fixed fee by phase and hourly; nothing is ever locked; the Admin enters each month's deadline and sets the reset-clock day in the Admin panel; PMs may bill at any time, including mid-month; the variance rule stays as the prototype with the threshold as an Admin setting; no PM reminders on day one; processors choose their own email notifications (separate from Turnaround and Marketing emails); any processor can reassign; one open request per project.
+
+| # | Question | Default in the spec | Who |
+|---|---|---|---|
+| B3 | Reset-clock default day, and how an additional mid-month billing is labeled for accounting | the 12th; "Additional" | Josh |
+| B9 | Business hours, second digest time, weekly digest day | weekdays 8 to 5; 1:00 PM; Monday | Josh |
+| K-B1 | Which VP report verifies phase fee and billed-to-date? | none yet; made-up CSV | Kent |
+| K-B2 | Does the reporting database lag VP? | unknown | Kent |
+| K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |
+| K-B4 | Where does accounting enter amounts in VP; are draft or posted invoices readable? | manual handoff; no reconciliation | Kent |
+| K-B5 | A read-only database account for the pull | n/a locally | Kent |
