@@ -58,3 +58,18 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | P6 | Should the Admin be able to re-run the rules on an old snapshot after changing a threshold? | no; past alerts stay as they were | |
 | T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
 | T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |
+
+## Billing (not built; see `docs/SPEC-billing.md`)
+
+| # | Question | Default in the spec | Who |
+|---|---|---|---|
+| B1 | Is Billing a Compass module that BD and Home read projected versus billed from? | yes | Josh |
+| B2 | Who is an invoice processor and who a billing admin? May a PA edit drafts? Do PICs, Finance and Marketing see Billing? | new `processor` role; admin is billing admin; PA read-only; Finance read-only; PIC and Marketing off (a setting) | Josh |
+| B3 | Is the period one calendar month? Who sets the cutoff and who locks it? | calendar month; billing admin | Josh |
+| B4 | Fixed-fee only in release one, hourly after? | yes | Josh |
+| B5 | How are PMs reminded of a return or a missing submission? | Home counts and the PM's list; no email | Josh |
+| K-B1 | Which VP report verifies phase fee and billed-to-date? | none yet; made-up CSV | Kent |
+| K-B2 | Does the reporting database lag VP? | unknown | Kent |
+| K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |
+| K-B4 | Where does accounting enter amounts in VP; are draft or posted invoices readable? | manual handoff; no reconciliation | Kent |
+| K-B5 | A read-only database account for the pull | n/a locally | Kent |
