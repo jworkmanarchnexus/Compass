@@ -113,3 +113,23 @@ Not built: the Firm snapshot on Home, Export Excel, the plan page's contract fee
 ## BD report PDF export
 
 Browser-side only (no server part). `shared/vendor/jspdf.umd.min.js` and `shared/export/assets.js` (embedded fonts and the Arch Nexus logo) are copies of the Toolbox Scheduler's. The page layout rule is pure (`modules/bd/logic/export-plan.js`, fixture `export-plan.json`); the drawing is `modules/bd/ui/export-draw.js`. If the front end is rebuilt, keep the plan and its fixture and redraw however suits.
+
+## Billing API and the pull (not yet shown on screen; see `docs/SPEC-billing.md`)
+
+Every call is checked on the server (`server/billing.js`); a PM or PIC reaches only their own projects, a processor or the Admin all of them, everyone else is refused. A save quotes the `rev` it started from; a stale one gets 409.
+
+| Call | Who | What |
+|---|---|---|
+| `GET /api/billing/portfolio[?month=&scope=mine\|unassigned\|all]` | PM, PIC, processor, Admin | every expected project once, with its state, amounts, deadline, processor |
+| `GET /api/billing/projects/:wbs1[?month=]` | the project's PM or PIC, processors, Admin | Vantagepoint facts (with pending amounts), the open request, history, notes, deadline |
+| `POST /api/billing/projects/:wbs1/requests` | PM or PIC of the project, Admin | start a request (409 if one is open) |
+| `POST /api/billing/projects/:wbs1/notes`, `.../adjust` | PM or PIC, Admin | persistent notes; a project's own reset day or leaving a month out |
+| `GET /api/billing/requests/:id`, `PUT .../draft` | as above | read; Save Draft (any content) |
+| `POST /api/billing/requests/:id/<event>` | by event | `submit`, `resubmit`, `revise`, `withdraw`, `edit`, `answer` (PM or PIC); `start-review`, `return`, `process`, `release` (processor) |
+| `GET /api/billing/assignments`, `PUT .../assignments/:wbs1` | processors, Admin | who owns each project |
+| `GET /api/billing/calendar`, `PUT /api/admin/billing/calendar` | read: Billing users; write: Admin | each month's deadline and start date |
+| `GET`/`PUT /api/billing/email-prefs` | processors, Admin | the person's own email notification settings |
+
+**The pull.** `source.loadBilling()` (locally `server/vp-local.js`, from made-up CSV) is the one method to implement: projects with their billing type, billed to date and projection, and their phases or hourly lines. The table and column names behind it are Kent's to map to a verified Vantagepoint report (K-B1). Amounts that are submitted but not yet in Vantagepoint count as billed (`pending`) until the next copy is loaded, so a second request cannot overbill.
+
+**Emails.** `billing_notifications` records what accounting should hear about, with the delivery each person's settings call for. Nothing is sent yet; sending is Kent's question (H9).

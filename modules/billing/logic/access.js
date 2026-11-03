@@ -1,9 +1,9 @@
 /* ===== Billing: who may do what =====
    Pure. The SERVER enforces it on every call; the browser only hides controls. Tested from tests/fixtures/access.json.
 
-   user:    { role, employeeCode }   role: admin | processor | pic | finance | marketing | sysadmin (PAs have no Compass role here)
+   user:    { role, employeeCode }   role: admin | processor | pic | pm | finance | marketing | sysadmin (PAs have no Compass role here)
    project: { picCode, pmCode }      the Vantagepoint principal and project-manager codes
-   A user with the 'pic' role is the author of a project when their code is its principal or its project manager.
+   A user with the 'pic' or 'pm' role is the author of a project when their code is its principal or its project manager.
    Finance, Marketing, System admin (and anyone else) have no access to Billing at all, not even to read. */
 'use strict';
 
@@ -13,7 +13,7 @@ function access(user, project) {
   if (!user) return NONE;
   if (user.role === 'admin') return { view: true, edit: true, process: true, assign: true, admin: true };
   if (user.role === 'processor') return { view: true, edit: false, process: true, assign: true, admin: false };
-  if (user.role === 'pic') {
+  if (user.role === 'pic' || user.role === 'pm') {
     const mine = !!user.employeeCode && !!project && (project.picCode === user.employeeCode || project.pmCode === user.employeeCode);
     return mine ? { view: true, edit: true, process: false, assign: false, admin: false } : NONE;
   }
@@ -30,7 +30,7 @@ function kinds(user, project) {
 }
 
 /* does Billing appear in the side bar at all? */
-const canSeeBilling = role => role === 'admin' || role === 'processor' || role === 'pic';
+const canSeeBilling = role => role === 'admin' || role === 'processor' || role === 'pic' || role === 'pm';
 
 /* the projects this user may see in Billing */
 const visibleProjects = (user, projects) => projects.filter(p => access(user, p).view);

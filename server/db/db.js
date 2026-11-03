@@ -14,7 +14,12 @@ function open(file) {
     // phase 1 created run_warnings without ytd_billed and nothing wrote to it; recreate it so older local files keep working
     const old = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run_warnings'").get();
     if (old && !raw.prepare('PRAGMA table_info(run_warnings)').all().some(c => c.name === 'ytd_billed')) raw.exec('DROP TABLE run_warnings');
+    // older local files: the users table's role list did not yet have 'pm' and 'processor' (Billing). A CHECK cannot be altered, so rebuild the table and keep every row.
+    const usersSql = raw.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").get();
+    const rebuildUsers = !!usersSql && !usersSql.sql.includes("'processor'");
+    if (rebuildUsers) raw.exec('ALTER TABLE users RENAME TO users_old');
     raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+    if (rebuildUsers) raw.exec('INSERT INTO users SELECT * FROM users_old; DROP TABLE users_old');
     // older local files: a published report's record of the contract amount rule (reports built before it used the default)
     if (!raw.prepare('PRAGMA table_info(bd_run_meta)').all().some(c => c.name === 'contract_amount_rule')) raw.exec("ALTER TABLE bd_run_meta ADD COLUMN contract_amount_rule TEXT NOT NULL DEFAULT 'feeConsult'");
   };

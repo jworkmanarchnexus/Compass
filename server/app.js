@@ -14,6 +14,7 @@ const bdDb = require('./bd');
 const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
+const billing = require('./billing');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -70,6 +71,8 @@ function createServer(db, opts) {
   // COMPASS_TODAY=2026-10-07 pins the date for a local demo (the seed data is written around that day)
   const today = o.today || (() => process.env.COMPASS_TODAY || planDb.localDate(Date.now()));
   const baseUrl = o.baseUrl || 'http://localhost:5281';
+  // the local date and time as 'YYYY-MM-DDTHH:MM', for the email rules (quiet hours); tests pin it with opts.nowLocal
+  const nowLocal = o.nowLocal || (() => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${today()}T${p(d.getHours())}:${p(d.getMinutes())}`; });
   /* ---- settings (effective-dated rows, only ever added) ---- */
   const settingRows = () => db.all('SELECT key, value_json, effective_from, set_by FROM settings').map(r => ({ key: r.key, value: JSON.parse(r.value_json), effectiveFrom: r.effective_from, setBy: r.set_by }));
   const currentSettings = () => settingsRules.allAt(settingRows(), db.now());
@@ -395,6 +398,38 @@ function createServer(db, opts) {
     if (p === '/api/admin/patterns' && method === 'GET') {
       requireTab(user, 'patterns', 'edit');
       return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), year: Number(url.searchParams.get('year')) || undefined }));
+    }
+
+    /* ---- Billing: PMs and PICs for their own projects; processors and the Admin for everything. Every rule is re-checked in server/billing.js. ---- */
+    if (p.startsWith('/api/billing/') || p === '/api/admin/billing/calendar') {
+      const bctx = { today: today(), settings: currentSettings(), nowLocal, audit: (action, object, detail) => audit(user, action, object, detail) };
+      const month = url.searchParams.get('month') || undefined;
+      if (p === '/api/admin/billing/calendar' && method === 'PUT') {
+        requireTab(user, 'billing', 'edit');
+        return sendJson(res, 200, billing.setCalendar(db, user, await readJson(req), bctx));
+      }
+      if (!roles.canView(user.role, 'billing')) throw new HttpError(403, 'You do not have access to this.');
+      if (p === '/api/billing/portfolio' && method === 'GET') return sendJson(res, 200, billing.portfolio(db, user, bctx, { month, scope: url.searchParams.get('scope') || undefined }));
+      if (p === '/api/billing/calendar' && method === 'GET') return sendJson(res, 200, billing.calendar(db));
+      if (p === '/api/billing/assignments' && method === 'GET') return sendJson(res, 200, billing.assignments(db, user));
+      if (p === '/api/billing/email-prefs' && method === 'GET') return sendJson(res, 200, billing.getPrefs(db, user));
+      if (p === '/api/billing/email-prefs' && method === 'PUT') return sendJson(res, 200, billing.setPrefs(db, user, await readJson(req)));
+      const ba = /^\/api\/billing\/assignments\/([^/]+)$/.exec(p);
+      if (ba && method === 'PUT') return sendJson(res, 200, billing.setAssignment(db, user, decodeURIComponent(ba[1]), await readJson(req), bctx));
+      const bp = /^\/api\/billing\/projects\/([^/]+)(?:\/(requests|notes|adjust))?$/.exec(p);
+      if (bp) {
+        const wbs1 = decodeURIComponent(bp[1]);
+        if (!bp[2] && method === 'GET') return sendJson(res, 200, billing.projectDetail(db, user, wbs1, bctx, { month }));
+        if (bp[2] === 'requests' && method === 'POST') return sendJson(res, 201, billing.createRequest(db, user, wbs1, await readJson(req), bctx));
+        if (bp[2] === 'notes' && method === 'POST') return sendJson(res, 201, billing.addProjectNote(db, user, wbs1, await readJson(req), bctx));
+        if (bp[2] === 'adjust' && method === 'POST') return sendJson(res, 200, billing.adjustProject(db, user, wbs1, await readJson(req), bctx));
+      }
+      const br = /^\/api\/billing\/requests\/([^/]+)(?:\/([a-z-]+))?$/.exec(p);
+      if (br) {
+        if (!br[2] && method === 'GET') return sendJson(res, 200, billing.requestDetail(db, user, br[1]));
+        if (br[2] === 'draft' && method === 'PUT') return sendJson(res, 200, billing.saveDraft(db, user, br[1], await readJson(req), bctx));
+        if (br[2] && method === 'POST') return sendJson(res, 200, billing.act(db, user, br[1], br[2], await readJson(req), bctx));
+      }
     }
 
     throw new HttpError(404, 'Not found.');
