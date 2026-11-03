@@ -256,12 +256,14 @@ test('deadlines are the Admin\'s; the reset day is an Admin setting; a project c
   assert.strictEqual((await ana.post(`/api/billing/projects/${P}/adjust`, { rolloverDay: 20 })).body.rolloverDay, 20);
   const mixed = (await karen.get('/api/billing/portfolio')).body.rows;
   assert.deepStrictEqual([mixed.find(r => r.wbs1 === P).month, mixed.find(r => r.wbs1 === '2025-0187').month], ['2026-09', '2026-10']);
+  assert.strictEqual(mixed.find(r => r.wbs1 === P).adjustments.rolloverDay, 20, 'the portfolio shows the project\'s own reset day (the Admin list reads it)');
   assert.strictEqual((await ana.post(`/api/billing/projects/${P}/adjust`, { rolloverDay: null })).body.rolloverDay, null);
   // leaving a project out of a month needs a reason, is shown (not hidden), and can be undone
   assert.strictEqual((await ana.post(`/api/billing/projects/${P}/adjust`, { exclude: { month: '2026-10', reason: ' ' } })).status, 400);
   await ana.post(`/api/billing/projects/${P}/adjust`, { exclude: { month: '2026-10', reason: 'Closed out early' } });
   const ex = (await karen.get('/api/billing/portfolio')).body;
   assert.deepStrictEqual([ex.rows.length, ex.rows.find(r => r.wbs1 === P).state, ex.rows.find(r => r.wbs1 === P).excludedReason], [13, 'excluded', 'Closed out early']);
+  assert.deepStrictEqual(ex.rows.find(r => r.wbs1 === P).adjustments.excluded, [{ month: '2026-10', reason: 'Closed out early' }]);
   await ana.post(`/api/billing/projects/${P}/adjust`, { include: '2026-10' });
   assert.strictEqual((await karen.get('/api/billing/portfolio')).body.rows.find(r => r.wbs1 === P).state, 'awaiting');
 }));
