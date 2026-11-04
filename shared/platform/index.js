@@ -6,3 +6,4 @@ export { Turnaround, Plan, Checkins } from './turnaround.js';
 export { Home } from './home.js';
 export { Bd } from './bd.js';
 export { Pipeline } from './pipeline.js';
+export { Billing } from './billing.js';

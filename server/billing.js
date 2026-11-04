@@ -217,6 +217,7 @@ function portfolio(db, user, ctx, opts) {
       pic: emp[p.principal] || '', pm: emp[p.proj_mgr] || '', picCode: p.principal, pmCode: p.proj_mgr,
       state: listed.excluded[0] ? 'excluded' : listed.unbilled[0] ? listed.unbilled[0].state : last.status,
       excludedReason: listed.excluded[0] ? listed.excluded[0].reason : '',
+      adjustments: adj, // its own reset day and the months it is left out of (the Admin's project list shows these)
       requestId: req ? req.id : null, kind: req ? req.kind : null,
       assignedTo: assigned ? { id: assigned, name: names[assigned] || '' } : null,
       deadline: Mo.deadlineStatus(month, ctx.today, calendar),

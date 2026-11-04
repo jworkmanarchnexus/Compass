@@ -1,0 +1,2 @@
+/* Billing's own styles. Tokens only: no colours or raw values here. */
+.pair { display: inline-flex; align-items: center; gap: var(--s2); }

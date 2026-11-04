@@ -210,3 +210,10 @@
 - **Emails are only queued.** `billing_notifications` holds each alert with each processor's delivery (now, held for business hours, digest, off), worked out by the tested rules. Sending waits for Josh's go-ahead and Kent's mail answer.
 - **Dates are real dates:** a deadline of 2026-02-30 is refused (found by a test).
 - **A local database from before this step is upgraded in place:** the people table is rebuilt so the new roles are allowed, keeping every row (tested).
+
+## Billing Admin tab, step 3 (2026-11-02)
+
+- **The threshold is typed in dollars and stored in cents.** The Admin tab converts; the stored setting and the rules stay whole cents.
+- **The Admin's project list reads the portfolio.** Each portfolio row now carries the project's own reset day and the months it is left out of, so the Admin tab needs no extra call.
+- **System admin sees the three rules read-only, and a note instead of deadlines and project lists.** They are not a Billing user, so the app does not ask for project data on their behalf.
+- **A left-out month names the month the project is currently in** (so before the reset day it reads "Leave out of September 2026"). It stays out until someone puts it back.

@@ -7,12 +7,13 @@ import { renderBd } from '/modules/bd/ui/report.js';
 import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
 import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
+import { billingAdminCards } from '/modules/billing/ui/admin.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 
-const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Billing, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -169,6 +170,7 @@ function pageNoAccess() {
 /* ---- Admin ---- */
 const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
+  'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
@@ -226,6 +228,12 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const s = await Admin.settings();
       slot.textContent = '';
       slot.append(...pipelineAdminCards(ctx, s, canEdit, rerender));
+    } else if (tab === 'billing') {
+      // a System admin may read the settings but is not a Billing user; they get the settings alone
+      const isBillingUser = !!Session.me().areas.billing;
+      const [s, portfolio, calendar] = await Promise.all([Admin.settings(), isBillingUser ? Billing.portfolio({ scope: 'all' }) : null, isBillingUser ? Billing.calendar() : null]);
+      slot.textContent = '';
+      slot.append(...billingAdminCards(ctx, s, portfolio && calendar ? { calendar, rows: portfolio.rows, today: portfolio.today } : null, canEdit, rerender));
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
