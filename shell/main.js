@@ -8,6 +8,8 @@ import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
 import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
 import { billingAdminCards } from '/modules/billing/ui/admin.js';
+import { renderBillingList } from '/modules/billing/ui/list.js';
+import { renderBillingProject } from '/modules/billing/ui/project.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
@@ -31,6 +33,7 @@ const NAV = [
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
+  { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
 const flatNav = NAV.flatMap(n => [n].concat(n.sub || []));
@@ -148,6 +151,19 @@ async function pagePipeline() {
 async function pageBd(id) {
   const body = frame('bd', [crumb('Compass', '#/'), sep(), crumb('Marketing Report')], 'Marketing Report', 'Principal architectural revenue against goal, with forecast and MWIP backlog. Through the month shown; pace is the annual goal times months elapsed over twelve.');
   await renderBd(ctx, body, id);
+}
+
+async function pageBilling() {
+  const me = Session.me();
+  const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing')], 'Billing', me.role === 'pm' || me.role === 'pic' ? 'Your projects this billing month. Tell accounting what to bill.' : 'Every project this billing month, and where each one stands.');
+  await renderBillingList(ctx, body);
+}
+
+async function pageBillingProject(wbs1, requestId) {
+  const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing', '#/billing'), sep(), crumb(wbs1)], null);
+  try { await renderBillingProject(ctx, body, wbs1, requestId); } catch (e) {
+    body.append(e.status === 404 || e.status === 403 ? h('div', { class: 'empty-note', text: 'That project is not one you can bill, or it does not exist.' }) : banner('circle-alert', e.message, 'err'));
+  }
 }
 
 async function pageCheckins() {
@@ -558,6 +574,8 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
+  if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
+  if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();

@@ -5,6 +5,14 @@ const q = o => { const s = Object.entries(o).filter(([, v]) => v).map(([k, v]) =
 const w = wbs1 => encodeURIComponent(wbs1);
 
 export const Billing = {
+  /* a project's Vantagepoint facts, open request, history, notes and adjustments */
+  project(wbs1, month) { return request('GET', '/api/billing/projects/' + w(wbs1) + q({ month })); },
+  startRequest(wbs1, month) { return request('POST', '/api/billing/projects/' + w(wbs1) + '/requests', month ? { month } : {}); },
+  saveNotes(wbs1, body) { return request('POST', '/api/billing/projects/' + w(wbs1) + '/notes', { body }); },
+  /* one request, with its revisions and events; every call that changes it quotes the rev it started from (409 if it moved) */
+  request(id) { return request('GET', '/api/billing/requests/' + encodeURIComponent(id)); },
+  saveDraft(id, body) { return request('PUT', '/api/billing/requests/' + encodeURIComponent(id) + '/draft', body); },
+  act(id, event, body) { return request('POST', '/api/billing/requests/' + encodeURIComponent(id) + '/' + event, body || {}); },
   portfolio(opts) { return request('GET', '/api/billing/portfolio' + q(opts || {})); },
   calendar() { return request('GET', '/api/billing/calendar'); },
   /* the Admin's deadline (and start date) for one billing month; null clears it */

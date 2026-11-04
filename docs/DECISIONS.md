@@ -217,3 +217,10 @@
 - **The Admin's project list reads the portfolio.** Each portfolio row now carries the project's own reset day and the months it is left out of, so the Admin tab needs no extra call.
 - **System admin sees the three rules read-only, and a note instead of deadlines and project lists.** They are not a Billing user, so the app does not ask for project data on their behalf.
 - **A left-out month names the month the project is currently in** (so before the reset day it reads "Leave out of September 2026"). It stays out until someone puts it back.
+
+## Billing PM and PIC screens, step 4 (2026-11-03)
+
+- **The pure rules run in the browser too, for instant feedback.** `money`, `fixed`, `hourly`, `review` and `status` load as plain scripts (each wrapped in its own function so their private names do not clash; the tests are unchanged). `fixed` and `hourly` both have `evaluate`, so the browser keeps them apart as `CompassBillingFixed` and `CompassBillingHourly`. The server still runs every rule again on save and submit.
+- **Submit is disabled while anything blocks it, and the screen lists why.** Save Draft is always on. The Vantagepoint numbers changing under a request show a banner that must be acknowledged before submitting.
+- **Notes are a small rich-text box (bold, italic, list).** The server cleans them again; the browser only shows text the server has cleaned.
+- **Processors and the Admin can open every project but the screen is read-only for them until step 5** (queue, return, process).

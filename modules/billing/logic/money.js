@@ -2,6 +2,7 @@
    Pure. Money is whole cents (integers). A percent is whole hundredths of a percent ("basis points"): 62.5% is 6250.
    No floating point is ever used for an amount. The one rounding rule: a percent of a fee is rounded to the nearest cent,
    halves up. Tested from tests/fixtures/money.json. */
+(function () {
 'use strict';
 
 /* cents from a percent of a fee: round-half-up(fee * bp / 10000), integers only */
@@ -40,3 +41,4 @@ const centsText = c => (c < 0 ? '-$' : '$') + Math.trunc(Math.abs(c) / 100).toLo
 const api = { bpToCents, centsToBp, parseCents, parseBp, bpText, centsText };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else if (typeof window !== 'undefined') window.CompassBilling = Object.assign(window.CompassBilling || {}, api);
+})();

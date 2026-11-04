@@ -5,6 +5,7 @@
    facts: { noBilling, notes, projectionCents, thresholdCents, sourceHash, currentSourceHash }
    thresholdCents is the Admin setting billing.varianceThreshold. The rule is STRICTLY greater: a difference of exactly the
    threshold passes without a note. */
+(function () {
 'use strict';
 
 const varianceOf = (totalCents, projectionCents) => Math.abs(totalCents - projectionCents);
@@ -32,3 +33,4 @@ function normalizeForSubmit(evaluated, noBilling) {
 const api = { review, varianceOf, normalizeForSubmit };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else if (typeof window !== 'undefined') window.CompassBilling = Object.assign(window.CompassBilling || {}, api);
+})();
