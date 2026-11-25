@@ -152,6 +152,7 @@
 
 - **The MWIP architectural factor is 0.65 for the PIC view and the market sector view alike.** The manual workbook's 0.67 for PICs is no longer used. It stays the existing Admin setting (`bd_mwip_factor`, effective-dated, append-only), so a later change is a new entry with its date, not a code change. The local demo seed keeps the mockup's 0.67 for 2026 only so the demo still reproduces the mockup; the real value is entered in Admin.
 - **MWIP and the contracted forecast always run through Dec 31 of the report year** (restating open question M1). Never the workbook's six months of MWIP.
+- **MWIP counts the first month after the report month in full.** Vantagepoint's MWIP report cuts the current month by the days already gone, for the date it is run for; the BD report applies that rule as of the day after the report month (the October report as of Nov 1), so a report built on Nov 5 or Nov 12 shows the same MWIP. Matches the workbook's ReadMe ("change prior period to be the end of the previous month"). Pursuit data is still the latest on the day the report is built.
 
 ## 2026-10-17: Contracted forecast and the architectural ratio
 

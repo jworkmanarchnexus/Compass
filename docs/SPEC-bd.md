@@ -22,7 +22,7 @@ Each row (the firm, every PIC, every market sector) has:
 | YTD goal (pace) | goal × months elapsed ÷ 12, to the cent (month 9 of 12 is 9/12). |
 | YTD revenue | architectural revenue, **net of consultants**, billed from January through the **billing cutoff** (the last day of the report month). |
 | Revenue forecast | contracted revenue still to be billed through December 31. |
-| MWIP backlog | pursuits not yet contracted, through December 31, **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
+| MWIP backlog | pursuits not yet contracted, from the month after the report month through December 31, with that first month counted **in full** (no reduction for days already gone when the report is built; `docs/MWIP-METHOD.md` rule 6), **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
 | Total projected | YTD + forecast + weighted MWIP. |
 | % of pace billed | YTD ÷ pace. |
 | % of goal (YTD + forecast) | (YTD + forecast) ÷ goal. |

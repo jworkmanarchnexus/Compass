@@ -4,7 +4,8 @@
    to compare with a report built by hand the same day. Read-only account, one SELECT per statement.
    Raw rows are saved to discovery/data/protected/ (git-ignored). Never commit the output.
 
-     node tools/bd-live-pull.js 202610 [asOf YYYY-MM-DD]                                                       */
+     node tools/bd-live-pull.js 202610 [factor, default 0.65]
+   MWIP: Nov 1 for the October report (the month after the report month counts in full; docs/MWIP-METHOD.md rule 6), through Dec 31.                                                       */
 const fs = require('node:fs');
 const path = require('node:path');
 const { loadConfig, missing } = require('../server/vp/config');
@@ -12,8 +13,10 @@ const { open } = require('../server/vp/connection');
 const { spread, windowFrom } = require('../discovery/logic/mwip-spread');
 
 const period = Number(process.argv[2] || 202610);
-const asOf = process.argv[3] || new Date().toISOString().slice(0, 10);
+const factor = Number(process.argv[3] || 0.65);
+const asOf = new Date().toISOString().slice(0, 10); // the day the data was pulled (no history exists)
 const year = Math.floor(period / 100), yearStart = year * 100 + 1;
+const mwipFrom = period % 100 === 12 ? `${year + 1}-01-01` : `${year}-${String(period % 100 + 1).padStart(2, '0')}-01`;
 const OUT = path.join(__dirname, '..', 'discovery', 'data', 'protected');
 
 const PIC = "LTRIM(RTRIM(ISNULL(e.LastName, ''))) + ', ' + LTRIM(RTRIM(ISNULL(e.FirstName, '')))";
@@ -89,27 +92,26 @@ async function main() {
     add(r.pic, r.sector, 'fcGross', g); add(r.pic, r.sector, 'fcArch', arch);
   }
 
-  // MWIP: weighted fee spread by days, current month decayed as of today; two windows
-  const a = asOf.split('-').map(Number);
+  // MWIP: weighted fee spread by days, as of the first day after the report month (that month in full), through Dec 31
+  const a = mwipFrom.split('-').map(Number);
   const winDec = windowFrom(a[0], a[1], 12).filter(k => Number(k.slice(0, 4)) === year);
-  const win6 = windowFrom(a[0], a[1], 6);
   let skipped = 0;
   for (const r of mw) {
     if (!STAGES.has(String(r.stage)) || !Number(r.revenue) || !r.est_start || !r.est_completion) { skipped++; continue; }
     const w = BigInt(cents(r.weighted));
-    const all = spread(w, r.est_start, r.est_completion, windowFrom(a[0], a[1], 12), 'days-even', asOf, 1);
+    const all = spread(w, r.est_start, r.est_completion, windowFrom(a[0], a[1], 12), 'days-even', mwipFrom, 1);
     const sum = keys => Number(keys.reduce((t, k) => t + (all.get(k) || 0n), 0n));
-    add(r.pic, r.sector, 'mwipDec', sum(winDec)); add(r.pic, r.sector, 'mwip6', sum(win6));
+    add(r.pic, r.sector, 'mwipDec', sum(winDec)); add(r.pic, r.sector, 'mwipF', Math.round(sum(winDec) * factor));
   }
 
-  const cols = [['gross', 'YTD gross'], ['consult', 'YTD consult'], ['ytd', 'YTD arch'], ['fcGross', 'Fcst gross'], ['fcArch', 'Fcst arch'], ['mwipDec', 'MWIP wtd->Dec'], ['mwip6', 'MWIP wtd 6mo']];
+  const cols = [['gross', 'YTD gross'], ['consult', 'YTD consult'], ['ytd', 'YTD arch'], ['fcGross', 'Fcst gross'], ['fcArch', 'Fcst arch'], ['mwipDec', 'MWIP weighted'], ['mwipF', `MWIP x ${factor}`]];
   const print = (scope, title) => {
     const rows = [...groups[scope].entries()].sort((x, y) => x[0].localeCompare(y[0]));
     const firm = {}; for (const [, g] of rows) for (const [k] of cols) firm[k] = (firm[k] || 0) + (g[k] || 0);
     console.log(`\n${title}\n| ${scope === 'pic' ? 'PIC' : 'Sector'} | ${cols.map(c => c[1]).join(' | ')} |\n|---|${cols.map(() => '--:').join('|')}|`);
     for (const [k, g] of rows.concat([['**Firm**', firm]])) console.log(`| ${k} | ${cols.map(([c]) => $(g[c] || 0)).join(' | ')} |`);
   };
-  console.log(`BD live pull, period ${period}, as of ${asOf}. Forecast months ${fcFrom}-${year}12. MWIP to-Dec window ${winDec.join(',')}; 6-month window ${win6.join(',')}. Pursuits skipped (stage/zero fee/no dates): ${skipped}.`);
+  console.log(`BD live pull, period ${period}, as of ${asOf}. Forecast months ${fcFrom}-${year}12. MWIP months ${winDec.join(',')} (first month in full), factor ${factor}. Pursuits skipped (stage/zero fee/no dates): ${skipped}.`);
   print('pic', 'By PIC');
   print('sector', 'By market sector (Vantagepoint project type)');
 }
