@@ -220,7 +220,7 @@
 
 ## Design refresh (2026-11-25)
 
-- **(Josh) A more modern look, shared with the Toolbox.** The new look lives in the shared design system (`shared/design-system/toolbox.css`, "Modern layer" at the end), not a Compass-only overlay, so the Toolbox can take the same file. It still has to be copied to `../ToolBox/design-system` by hand (see the 2026-10-11 copy decision).
+- **(Josh) A more modern look, shared with the Toolbox.** The Toolbox is the master: tokens `canvas`, `shadow-soft`, `r5`, `r6` in `../ToolBox/design-system/project/tokens.json` and the "Modern layer" block in its `components/bundle.css`. Compass copies the generated `shared/design-system/toolbox.css` from the Toolbox, so the two files are identical (copied 2026-11-25).
 - **(Josh) Keep the left side bar and the branding.** Expanded with labels, shrinkable to icons, a slide-out menu below 860px, all as before. The Arch Nexus logo and the Compass product line stay at the top. Only the styling changed: the shell sits on a tinted canvas (`--canvas`), and the side bar and page are floating white panels with soft shadows (`--shadow-soft`, `--r5`, `--r6`).
 - **Pages opt in one at a time.** A page that adds `.on-canvas` to `.mainwrap` drops its white sheet and shows its sections as separate cards with dot status chips. Home is the first. Pages that have not opted in sit on a white sheet and look as they did. No logic, API or test changed.
 - **Not adopted from the inspiration shots:** bright red/green money amounts (non-punitive tone), top-bar navigation, emoji. Headline tiles with icon, change badge and trend line are for pages whose figures already exist; Home has none yet.

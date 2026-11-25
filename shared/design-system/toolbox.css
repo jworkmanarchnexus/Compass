@@ -23,6 +23,8 @@
   --r2: 4px;
   --r3: 6px;
   --r4: 8px;
+  --r5: 12px;
+  --r6: 16px;
   --ctl-h: 32px;
   --row-h: 32px;
   --side-w: 232px;
@@ -43,6 +45,7 @@
   --nx-green: #93D500;
   --nx-lightblue: #99D6EF;
   --bg: #FFFFFF;
+  --canvas: #EEF1F4;
   --surface: #FFFFFF;
   --surface-2: #F7F7F8;
   --surface-3: #EDEDEE;
@@ -75,18 +78,15 @@
   --crit-bg: #FCECEB;
   --shadow-1: 0 1px 2px rgba(40, 46, 52, 0.08);
   --shadow-2: 0 8px 24px rgba(40, 46, 52, 0.14), 0 1px 3px rgba(40, 46, 52, 0.08);
-  --focus: 0 0 0 3px rgba(0, 153, 216, 0.28);
-  /* modern layer (2026-11): a tinted canvas behind floating white panels */
-  --canvas: #EEF1F4;
-  --r5: 12px;
-  --r6: 16px;
   --shadow-soft: 0 1px 2px rgba(30, 45, 60, 0.04), 0 6px 20px rgba(30, 45, 60, 0.06);
+  --focus: 0 0 0 3px rgba(0, 153, 216, 0.28);
   color-scheme: light;
 }
 body.dense { --row-h: 27px; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #15181B;
+    --canvas: #101316;
     --surface: #1B1F23;
     --surface-2: #1F2429;
     --surface-3: #272D33;
@@ -115,13 +115,13 @@ body.dense { --row-h: 27px; }
     --crit: #EF6F68;
     --crit-bg: #3A1D1C;
     --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-    --canvas: #101316;
     --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #15181B;
+  --canvas: #101316;
   --surface: #1B1F23;
   --surface-2: #1F2429;
   --surface-3: #272D33;
@@ -150,7 +150,6 @@ body.dense { --row-h: 27px; }
   --crit: #EF6F68;
   --crit-bg: #3A1D1C;
   --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-  --canvas: #101316;
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
   color-scheme: dark;
 }
@@ -424,7 +423,6 @@ body.side-collapsed .nav-item.nav-sub { padding-left: 10px; }
   .ptitle h1 { font-size: 24px; }
 }
 
-
 /* ==========================================================================
    Modern layer (2026-11): the shell sits on a tinted canvas. The side bar and
    the page are floating white panels with soft depth instead of hairlines.
@@ -472,3 +470,4 @@ body.side-collapsed .nav-item.nav-sub { padding-left: 10px; }
   body.side-collapsed .side-foot { flex-direction: row; }
   body.side-collapsed .side-user { justify-content: flex-start; }
 }
+
