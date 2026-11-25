@@ -111,6 +111,7 @@ async function pageHome() {
   const me = Session.me();
   const data = await Home.get();
   const body = frame('home', [crumb('Compass'), sep(), crumb('Home')], 'Home', homeSubtitle(data));
+  body.closest('.mainwrap').classList.add('on-canvas'); // Home is the first page on the modern canvas (DECISIONS 2026-11-25)
   renderHome(ctx, body, data);
   // a small "your pages" list for roles whose Home has little else on it
   if (me.role !== 'admin' && me.role !== 'sysadmin') {
