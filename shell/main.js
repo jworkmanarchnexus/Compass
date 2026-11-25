@@ -201,7 +201,18 @@ const fmtTime = ms => {
 };
 const fmtClock = v => { const [hh, mm] = v.split(':').map(Number); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a.m.' : 'p.m.'}`; };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const showValue = v => typeof v === 'boolean' ? (v ? 'on' : 'off') : (v && typeof v === 'object') ? JSON.stringify(v) : String(v);
+// plain words for settings stored as a code, so the audit log reads the way the Admin page does
+const CHOICE_LABEL = {
+  'bd.mwipBasis': { weighted: 'Weighted Fee', estimated: 'Estimated Fee' },
+  'bd.mwipAllocation': { spread: 'spread evenly', start: 'all to the estimated start date', completion: 'all to the estimated completion date' },
+  'bd.mwipPeriod': { monthly: 'monthly' },
+  'bd.mwipStart': { afterReportMonth: 'the month after the report month, in full', buildDay: 'the day the report is built' },
+  'bd.mwipThrough': { yearEnd: 'December 31', 3: '3 months', 6: '6 months', 12: '12 months' },
+  'bd.contractAmount': { feeConsult: 'fee + consultant fees', feeConsultReimb: 'fee + consultant fees + reimbursable allowance' },
+  'bd.noSector': { keep: 'keep in Unassigned', ask: 'ask before publishing', other: 'put in Other' },
+  'include.noPic': { 'leave-out-warn': 'leave out and warn', unassigned: 'show as Unassigned' },
+};
+const showValue = (v, key) => (CHOICE_LABEL[key] && typeof v !== 'object' && CHOICE_LABEL[key][v] !== undefined) ? CHOICE_LABEL[key][v] : typeof v === 'boolean' ? (v ? 'on' : 'off') : (v && typeof v === 'object') ? JSON.stringify(v) : String(v);
 
 async function pageAdmin(tab) {
   const me = Session.me();
@@ -531,7 +542,7 @@ function archivePanel(run, act) {
 }
 
 function auditText(e) {
-  if (e.action === 'setting.change') return [`Changed setting: ${SETTING_LABEL[e.object] || e.object}`, `${showValue(e.detail.from)} to ${showValue(e.detail.to)}`];
+  if (e.action === 'setting.change') return [`Changed setting: ${SETTING_LABEL[e.object] || e.object}`, `${showValue(e.detail.from, e.object)} to ${showValue(e.detail.to, e.object)}`];
   if (e.action === 'user.change') {
     const parts = Object.keys(e.detail.to).filter(k => JSON.stringify(e.detail.to[k]) !== JSON.stringify(e.detail.from[k]))
       .map(k => `${{ role: 'role', active: 'status', draftName: 'name in drafts' }[k] || k}: ${k === 'active' ? (e.detail.from[k] ? 'active' : 'inactive') : showValue(e.detail.from[k])} to ${k === 'active' ? (e.detail.to[k] ? 'active' : 'inactive') : showValue(e.detail.to[k])}`);
