@@ -2,7 +2,7 @@
    It reaches the server only through shared/platform. The server enforces who may do what; this file only hides controls. */
 import * as platform from '/shared/platform/index.js';
 
-import { renderHome, homeSubtitle } from '/shell/home.js';
+import { renderHome, homeHeader } from '/shell/home.js';
 import { renderBd } from '/modules/bd/ui/report.js';
 import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
@@ -110,7 +110,9 @@ const banner = (iconName, text, kind) => h('div', { class: 'banner' + (kind ? ' 
 async function pageHome() {
   const me = Session.me();
   const data = await Home.get();
-  const body = frame('home', [crumb('Compass'), sep(), crumb('Home')], 'Home', homeSubtitle(data));
+  const body = frame('home', [], null);
+  body.closest('.mainwrap').classList.add('on-canvas'); // Home is the first page on the modern canvas (DECISIONS 2026-11-25)
+  body.parentNode.querySelector('.phead').replaceChildren(homeHeader(ctx, data, me, new Date().getHours())); // a greeting, not a title
   renderHome(ctx, body, data);
   // a small "your pages" list for roles whose Home has little else on it
   if (me.role !== 'admin' && me.role !== 'sysadmin') {

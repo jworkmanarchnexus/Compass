@@ -36,9 +36,16 @@ test('admin Home on the demo day: what needs attention, what was published, what
 
   assert.strictEqual(h.next[0].title, 'Project Turnaround run');
   assert.strictEqual(h.next[0].date, '2026-11-02');
-  assert.deepStrictEqual(h.pull, { period: 202609, label: 'September 2026', dataAsOf: '2026-09-30', builtAt: h.pull.builtAt });
+  assert.deepStrictEqual(h.pull, { period: 202609, label: 'September 2026', dataAsOf: '2026-09-30', builtAt: h.pull.builtAt, current: true });
   assert.strictEqual(h.yours, undefined);
 }));
+
+test('once a month closes and its run is not built, the pull is no longer current', () => withDemo(async t => {
+  const h = (await home(t, 'j.workman')).body;
+  assert.strictEqual(h.pull.period, 202609);
+  assert.strictEqual(h.pull.current, false, 'October has closed; the latest run is still September');
+  assert.strictEqual(h.checks[0].status, 'fix', 'the same rule as the Monthly Vantagepoint pull check');
+}, { today: () => '2026-11-10' }));
 
 test('a draft waiting for review is the first thing on the admin\'s Home, unless switched off', () => withDemo(async t => {
   const josh = t.api('j.workman');

@@ -175,6 +175,22 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .chk:last-child { border-bottom: 0; }
 .nx { display: flex; justify-content: space-between; gap: var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .nx:last-child { border-bottom: 0; }
+/* Home on the canvas: roomier rows, quieter dividers, cards spaced by the grid */
+.on-canvas .home-grid { gap: var(--s4); }
+.on-canvas .att { padding: var(--s4) var(--s6); border-bottom-color: var(--line-2); }
+.on-canvas .home-head { padding: var(--s5) var(--s6) var(--s3); }
+.on-canvas .sec-body { padding: 0 var(--s6) var(--s2); }
+.on-canvas .chk, .on-canvas .nx { border-bottom-color: var(--line-2); }
+/* Home header: greeting and summary on the left, data tags on the right */
+.home-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s3) var(--s6); padding: var(--s2) 0 var(--s1); }
+.home-hero .hello { min-width: 0; flex: 1 1 360px; }
+.home-hero h1 { font: 700 30px/1.15 var(--f-ui); color: var(--text-strong); letter-spacing: -.005em; text-transform: none; }
+.home-hero p { margin-top: var(--s1); color: var(--text-2); font-size: 15px; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: flex-end; }
+.hero-tags .chip { height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12.5px; background: var(--surface); box-shadow: var(--shadow-soft); }
+.hero-tags .chip:not(.ok):not(.warn):not(.blue) { color: var(--text); }
+.on-canvas .home-hero + * { margin-top: 0; }
+@media (max-width: 640px) { .home-hero h1 { font-size: 24px; } .hero-tags { justify-content: flex-start; } }
 
 /* a PIC with nothing below break-even */
 .great { display: flex; gap: var(--s4); align-items: center; background: var(--ok-bg); color: var(--ok); border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s5); }

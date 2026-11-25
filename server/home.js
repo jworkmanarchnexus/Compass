@@ -140,7 +140,7 @@ function buildHome(db, user, { today, settings }) {
       { title: 'Daily checks', text: 'Every day. Records missed commitments and prepares check-in drafts.', date: null },
     ];
     const latest = last || null;
-    out.pull = latest ? { period: latest.period, label: schedule.periodLabel(latest.period), dataAsOf: schedule.lastDayOfPeriod(latest.period), builtAt: latest.created_at } : null;
+    out.pull = latest ? { period: latest.period, label: schedule.periodLabel(latest.period), dataAsOf: schedule.lastDayOfPeriod(latest.period), builtAt: latest.created_at, current: latest.period >= latestClosed } : null;
   }
 
   out.areas = roles.describe(user.role, settings.access).areas;
