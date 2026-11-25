@@ -273,6 +273,71 @@
         ]
       },
       "expect": false
+    },
+    {
+      "key": "bd.mwipBasis",
+      "value": "estimated",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipBasis",
+      "value": "probable",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipAllocation",
+      "value": "completion",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipAllocation",
+      "value": "closeDate",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "monthly",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "weekly",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipStart",
+      "value": "buildDay",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipStart",
+      "value": "today",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipThrough",
+      "value": "yearEnd",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipThrough",
+      "value": "12",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipThrough",
+      "value": "0",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipThrough",
+      "value": "25",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipThrough",
+      "value": 12,
+      "expect": false
     }
   ],
   "crossCheck": [

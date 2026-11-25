@@ -154,6 +154,13 @@
 - **MWIP and the contracted forecast always run through Dec 31 of the report year** (restating open question M1). Never the workbook's six months of MWIP.
 - **MWIP counts the first month after the report month in full.** Vantagepoint's MWIP report cuts the current month by the days already gone, for the date it is run for; the BD report applies that rule as of the day after the report month (the October report as of Nov 1), so a report built on Nov 5 or Nov 12 shows the same MWIP. Matches the workbook's ReadMe ("change prior period to be the end of the previous month"). Pursuit data is still the latest on the day the report is built.
 
+## 2026-11-25: MWIP options are Admin settings, mirroring Vantagepoint's MWIP report
+
+- **Josh asked for the report's options to be settings** so the method can change without code. Built: basis (Weighted or Estimated Fee), fee allocation (spread, start month, completion month), calculation period (monthly), count from, count through. Admin only, like every other BD setting.
+- **Options not yet checked against Vantagepoint are shown but cannot be picked** (close date, the project's allocation method, periods other than monthly). An unchecked option would produce numbers that silently disagree with Vantagepoint. Each is turned on after a same-day comparison.
+- **Compass works out MWIP from the pursuit records**, not from a source that already did it, so the options apply. The pursuit filter (not-yet-awarded stages, non-zero fee) is in the pure rule, not only in the SQL, so a rebuild in another language keeps it. The local made-up source still supplies finished MWIP, so the demo's numbers (and the mockup match) do not move; the options are tested with a test source.
+- **The live pull script uses the same rule**, so the local Vantagepoint test and the report cannot drift apart.
+
 ## 2026-10-17: Contracted forecast and the architectural ratio
 
 - **The forecast is gross.** PMs type revenue into the plan; Compass reads the plan's period revenue entries (`PNPlannedRevenueLabor.PeriodCost`) by month. The Consultants % column in the Vantagepoint export is not used (owner).

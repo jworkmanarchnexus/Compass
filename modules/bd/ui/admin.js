@@ -49,11 +49,11 @@ export function bdAdminCards(ctx, settings, inputs, canEdit, rerender) {
 
   // ---- MWIP factor ----
   const date = h('input', { class: 'txt', type: 'date', style: 'width:170px', 'aria-label': 'Effective from', disabled: !canEdit });
-  const factor = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:90px', 'aria-label': 'New factor', placeholder: '0.67', disabled: !canEdit });
+  const factor = h('input', { class: 'txt', type: 'text', inputmode: 'decimal', style: 'width:90px', 'aria-label': 'New factor', placeholder: '0.65', disabled: !canEdit });
   const fmsg = h('span', { class: 'muted small' });
   const add = h('button', { class: 'btn primary sm', type: 'button', text: 'Add', disabled: !canEdit, onclick: async () => {
     const f = Number(factor.value);
-    if (!date.value || !(f > 0)) { fmsg.textContent = 'Enter the date it takes effect and the factor, for example 0.67.'; return; }
+    if (!date.value || !(f > 0)) { fmsg.textContent = 'Enter the date it takes effect and the factor, for example 0.65.'; return; }
     try { await Bd.addFactor({ effectiveFrom: date.value, factorBp: Math.round(f * 10000) }); await rerender(); } catch (e) { fmsg.textContent = e.message; }
   } });
   // the day before the next factor takes effect: when each factor stops
@@ -69,8 +69,18 @@ export function bdAdminCards(ctx, settings, inputs, canEdit, rerender) {
     ? h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: 'Old reports keep the factor they were built with. A past factor is never changed.' }), h('div', { class: 'acts' }, fmsg, factor, date, add))
     : null;
   cards.push(h('section', { class: 'sec' },
-    h('div', { class: 'sec-head' }, h('h2', { text: 'MWIP weighting factor' }), h('p', { text: 'Pursuits that are not contracted yet are counted at face value times this factor. It is effective-dated, so last year\'s reports never move when it changes. It is never shown on PIC pages.' })),
+    h('div', { class: 'sec-head' }, h('h2', { text: 'MWIP weighting factor' }), h('p', { text: 'The architectural share of MWIP (consultants removed), the same for the PIC and market sector views. It multiplies the MWIP worked out below. It is effective-dated, so last year\'s reports never move when it changes. It is never shown on PIC pages.' })),
     factorTable, factorFoot));
+
+  // ---- how MWIP is worked out: the options of Vantagepoint's MWIP report ----
+  const soon = { disabled: true };
+  cards.push(settingsCard('MWIP calculation', 'The same choices as the Options tab of Vantagepoint\'s MWIP report (VP-MWIP Marketing Master). Choices marked "not yet available" have not been checked against a Vantagepoint run, so they cannot be picked yet. A report records the choices it was built with.', settings, ['bd.mwipBasis', 'bd.mwipAllocation', 'bd.mwipPeriod', 'bd.mwipStart', 'bd.mwipThrough'], canEdit, rerender, ed => [
+    row('Calculate pursuit amounts using', 'Vantagepoint: "Calculate Pursuit Forecast Using". Weighted Fee is the estimated fee times the win probability.', ed.select('bd.mwipBasis', [['weighted', 'Weighted Fee'], ['estimated', 'Estimated Fee']])),
+    row('Fee allocation', 'Vantagepoint: "Fee Allocation". Spread evenly splits the fee by days from the estimated start date to the estimated completion date. A pursuit missing a date it needs is left out and listed on the draft.', ed.select('bd.mwipAllocation', [['spread', 'Spread evenly across the timescale'], ['start', 'All fee to the estimated start date'], ['completion', 'All fee to the estimated completion date'], ['closeDate', 'All fee to the close date (not yet available)', soon], ['project', 'Use the allocation method of the project (not yet available)', soon]])),
+    row('Calculation period', 'Vantagepoint: "Calculation Period".', ed.select('bd.mwipPeriod', [['monthly', 'Monthly'], ['daily', 'Daily (not yet available)', soon], ['weekly', 'Weekly (not yet available)', soon], ['biweekly', 'Bi-weekly (not yet available)', soon], ['semimonthly', 'Semi-monthly (not yet available)', soon]])),
+    row('Count from', 'Vantagepoint cuts the month it is run for by the days already gone. "The month after the report month, in full" gives the October report all of November whichever day it is built, as the workbook did. "The day the report is built" cuts November by the days gone on that day.', ed.select('bd.mwipStart', [['afterReportMonth', 'The month after the report month, in full'], ['buildDay', 'The day the report is built']])),
+    row('Count through', 'Vantagepoint: "Duration".', ed.select('bd.mwipThrough', [['yearEnd', 'December 31 of the report year'], ['3', '3 months'], ['6', '6 months'], ['12', '12 months']])),
+  ]));
 
   // ---- sectors ----
   cards.push(h('section', { class: 'sec' },

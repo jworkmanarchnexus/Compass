@@ -187,6 +187,7 @@ function pageNoAccess() {
 const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
+  'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
@@ -297,7 +298,7 @@ function makeEditor(settings, keys, canEdit) {
     draft,
     select(key, options) {
       const el = h('select', { class: 'txt', disabled: !canEdit, onchange: () => { draft[key] = el.value; } },
-        ...options.map(([v, l]) => h('option', { value: v, text: l, selected: v === draft[key] })));
+        ...options.map(([v, l, o]) => h('option', { value: v, text: l, selected: v === draft[key], disabled: !!(o && o.disabled) })));
       if (!options.some(([v]) => v === draft[key])) el.append(h('option', { value: draft[key], text: String(draft[key]), selected: true }));
       return el;
     },

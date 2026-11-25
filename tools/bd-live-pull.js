@@ -10,13 +10,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loadConfig, missing } = require('../server/vp/config');
 const { open } = require('../server/vp/connection');
-const { spread, windowFrom } = require('../discovery/logic/mwip-spread');
+const { computeMwip, DEFAULT_OPTIONS } = require('../modules/bd/logic/mwip');
 
 const period = Number(process.argv[2] || 202610);
 const factor = Number(process.argv[3] || 0.65);
 const asOf = new Date().toISOString().slice(0, 10); // the day the data was pulled (no history exists)
 const year = Math.floor(period / 100), yearStart = year * 100 + 1;
-const mwipFrom = period % 100 === 12 ? `${year + 1}-01-01` : `${year}-${String(period % 100 + 1).padStart(2, '0')}-01`;
 const OUT = path.join(__dirname, '..', 'discovery', 'data', 'protected');
 
 const PIC = "LTRIM(RTRIM(ISNULL(e.LastName, ''))) + ', ' + LTRIM(RTRIM(ISNULL(e.FirstName, '')))";
@@ -56,7 +55,6 @@ LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
 ${SECTOR_JOIN}
 WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.WBS1 LIKE '[A-Za-z]%' AND p.Status = 'A' AND p.Probability > 0 AND p.Probability < 100`;
 
-const STAGES = new Set(['001', '002', '009', '010', '011', '015']);
 const cents = v => Math.round(Number(v || 0) * 100);
 const $ = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
@@ -92,17 +90,15 @@ async function main() {
     add(r.pic, r.sector, 'fcGross', g); add(r.pic, r.sector, 'fcArch', arch);
   }
 
-  // MWIP: weighted fee spread by days, as of the first day after the report month (that month in full), through Dec 31
-  const a = mwipFrom.split('-').map(Number);
-  const winDec = windowFrom(a[0], a[1], 12).filter(k => Number(k.slice(0, 4)) === year);
-  let skipped = 0;
-  for (const r of mw) {
-    if (!STAGES.has(String(r.stage)) || !Number(r.revenue) || !r.est_start || !r.est_completion) { skipped++; continue; }
-    const w = BigInt(cents(r.weighted));
-    const all = spread(w, r.est_start, r.est_completion, windowFrom(a[0], a[1], 12), 'days-even', mwipFrom, 1);
-    const sum = keys => Number(keys.reduce((t, k) => t + (all.get(k) || 0n), 0n));
-    add(r.pic, r.sector, 'mwipDec', sum(winDec)); add(r.pic, r.sector, 'mwipF', Math.round(sum(winDec) * factor));
-  }
+  // MWIP: the report's own calculation (modules/bd/logic/mwip.js) with the default options (Weighted Fee, spread evenly, monthly,
+  // the month after the report month in full, through Dec 31). The source supplies pursuits exactly as Compass's source would.
+  const pursuits = mw.map(r => ({ id: r.project, name: r.name, pic: r.pic, sector: r.sector, stage: r.stage == null ? '' : String(r.stage),
+    estFee: cents(r.revenue), weightedFee: cents(r.weighted), estStart: r.est_start, estCompletion: r.est_completion }));
+  const m = computeMwip({ pursuits, period, buildDate: asOf, options: DEFAULT_OPTIONS });
+  const byId = Object.fromEntries(pursuits.map(p => [p.id, p]));
+  for (const x of m.mwip) { add(byId[x.id].pic, byId[x.id].sector, 'mwipDec', x.amount); add(byId[x.id].pic, byId[x.id].sector, 'mwipF', Math.round(x.amount * factor)); }
+  const skipped = m.leftOut.length;
+  const winDec = m.months;
 
   const cols = [['gross', 'YTD gross'], ['consult', 'YTD consult'], ['ytd', 'YTD arch'], ['fcGross', 'Fcst gross'], ['fcArch', 'Fcst arch'], ['mwipDec', 'MWIP weighted'], ['mwipF', `MWIP x ${factor}`]];
   const print = (scope, title) => {

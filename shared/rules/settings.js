@@ -33,6 +33,12 @@ const DEFAULTS = {
   'bd.onPacePct': 99,            // BD report: On Pace needs YTD revenue at least this % of pace
   'bd.onTrackPct': 100,          // BD report: On Track needs (YTD + forecast + MWIP) at least this % of the goal
   'bd.contractAmount': 'feeConsult', // BD forecast: the full contract amount behind the architectural share: 'feeConsult' (fee + consultant fees) or 'feeConsultReimb' (also the reimbursable allowance)
+  /* BD MWIP backlog, the options of Vantagepoint's MWIP report (modules/bd/logic/mwip.js, docs/MWIP-METHOD.md) */
+  'bd.mwipBasis': 'weighted',          // 'weighted' (Weighted Fee = fee x probability) or 'estimated' (Est. Fee)
+  'bd.mwipAllocation': 'spread',       // 'spread' (by days, estimated start to completion), 'start' or 'completion' (all in that month)
+  'bd.mwipPeriod': 'monthly',          // calculation period; only monthly is checked against Vantagepoint so far
+  'bd.mwipStart': 'afterReportMonth',  // 'afterReportMonth' (the month after the report month in full) or 'buildDay' (cut by the days gone when the report is built)
+  'bd.mwipThrough': 'yearEnd',         // 'yearEnd' (through Dec 31 of the report year) or a number of months, '1' to '24'
   'bd.noSector': 'keep',         // revenue with no market sector: 'keep' (its own Unassigned row, like Vantagepoint; publishing is not held up), 'ask' (the Admin must pick before publishing) or 'other' (it goes to Other) // who sees each PIC's on-time and kept figures: everyone | principals | admin
   /* Billing (docs/SPEC-billing.md). Money is whole cents. */
   'billing.varianceThreshold': 3000000, // a request whose total differs from the project's monthly projection by MORE than this needs a note to accounting ($30,000)
@@ -88,6 +94,11 @@ const VALIDATORS = {
   'bd.onTrackPct': v => Number.isInteger(v) && v >= 50 && v <= 200,
   'bd.contractAmount': oneOf(['feeConsult', 'feeConsultReimb']),
   'bd.noSector': oneOf(['keep', 'ask', 'other']),
+  'bd.mwipBasis': oneOf(['weighted', 'estimated']),
+  'bd.mwipAllocation': oneOf(['spread', 'start', 'completion']),
+  'bd.mwipPeriod': oneOf(['monthly']),
+  'bd.mwipStart': oneOf(['afterReportMonth', 'buildDay']),
+  'bd.mwipThrough': v => v === 'yearEnd' || (typeof v === 'string' && /^\d{1,2}$/.test(v) && Number(v) >= 1 && Number(v) <= 24),
   'visibility.picRecords': oneOf(['everyone', 'principals', 'admin']),
   'access': v => !!v && typeof v === 'object' && Object.keys(DEFAULTS.access).every(k => typeof v[k] === 'boolean') && Object.keys(v).length === Object.keys(DEFAULTS.access).length,
 };
