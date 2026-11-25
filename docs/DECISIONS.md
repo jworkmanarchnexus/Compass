@@ -154,6 +154,12 @@
 - **MWIP and the contracted forecast always run through Dec 31 of the report year** (restating open question M1). Never the workbook's six months of MWIP.
 - **MWIP counts the first month after the report month in full.** Vantagepoint's MWIP report cuts the current month by the days already gone, for the date it is run for; the BD report applies that rule as of the day after the report month (the October report as of Nov 1), so a report built on Nov 5 or Nov 12 shows the same MWIP. Matches the workbook's ReadMe ("change prior period to be the end of the previous month"). Pursuit data is still the latest on the day the report is built.
 
+## 2026-11-25: How Vantagepoint's Calculation Period spreads MWIP (from five same-day exports)
+
+- **One rule covers every period:** equal shares per calculation period from estimated start to completion (partial periods count whole), periods that ended before the start date drop out, the current one counts in full. Daily, Semi-monthly and Monthly reproduce the exports exactly; Weekly and Bi-weekly do not (within about a dollar) and are not offered.
+- **The earlier "current month decay" formula is replaced.** It was Daily seen through one export, and it was wrong for pursuits starting partway through a month.
+- **Default Daily**, because the October export and the Nov 12 workbook were made with it. Josh can change it in Admin.
+
 ## 2026-11-25: MWIP options are Admin settings, mirroring Vantagepoint's MWIP report
 
 - **Josh asked for the report's options to be settings** so the method can change without code. Built: basis (Weighted or Estimated Fee), fee allocation (spread, start month, completion month), calculation period (monthly), count from, count through. Admin only, like every other BD setting.

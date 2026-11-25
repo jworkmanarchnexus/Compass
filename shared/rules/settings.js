@@ -36,7 +36,7 @@ const DEFAULTS = {
   /* BD MWIP backlog, the options of Vantagepoint's MWIP report (modules/bd/logic/mwip.js, docs/MWIP-METHOD.md) */
   'bd.mwipBasis': 'weighted',          // 'weighted' (Weighted Fee = fee x probability) or 'estimated' (Est. Fee)
   'bd.mwipAllocation': 'spread',       // 'spread' (by days, estimated start to completion), 'start' or 'completion' (all in that month)
-  'bd.mwipPeriod': 'monthly',          // calculation period; only monthly is checked against Vantagepoint so far
+  'bd.mwipPeriod': 'daily',            // calculation period: 'daily', 'semimonthly' or 'monthly' (each reproduced exactly; weekly and bi-weekly are not)
   'bd.mwipStart': 'afterReportMonth',  // 'afterReportMonth' (the month after the report month in full) or 'buildDay' (cut by the days gone when the report is built)
   'bd.mwipThrough': 'yearEnd',         // 'yearEnd' (through Dec 31 of the report year) or a number of months, '1' to '24'
   'bd.noSector': 'keep',         // revenue with no market sector: 'keep' (its own Unassigned row, like Vantagepoint; publishing is not held up), 'ask' (the Admin must pick before publishing) or 'other' (it goes to Other) // who sees each PIC's on-time and kept figures: everyone | principals | admin
@@ -96,7 +96,7 @@ const VALIDATORS = {
   'bd.noSector': oneOf(['keep', 'ask', 'other']),
   'bd.mwipBasis': oneOf(['weighted', 'estimated']),
   'bd.mwipAllocation': oneOf(['spread', 'start', 'completion']),
-  'bd.mwipPeriod': oneOf(['monthly']),
+  'bd.mwipPeriod': oneOf(['daily', 'semimonthly', 'monthly']),
   'bd.mwipStart': oneOf(['afterReportMonth', 'buildDay']),
   'bd.mwipThrough': v => v === 'yearEnd' || (typeof v === 'string' && /^\d{1,2}$/.test(v) && Number(v) >= 1 && Number(v) <= 24),
   'visibility.picRecords': oneOf(['everyone', 'principals', 'admin']),

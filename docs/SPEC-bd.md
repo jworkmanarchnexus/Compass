@@ -22,7 +22,7 @@ Each row (the firm, every PIC, every market sector) has:
 | YTD goal (pace) | goal × months elapsed ÷ 12, to the cent (month 9 of 12 is 9/12). |
 | YTD revenue | architectural revenue, **net of consultants**, billed from January through the **billing cutoff** (the last day of the report month). |
 | Revenue forecast | contracted revenue still to be billed through December 31. |
-| MWIP backlog | pursuits not yet contracted, worked out the way Vantagepoint's MWIP report does it with the options in section 4b (by default: Weighted Fee, spread evenly by days, from the month after the report month **in full** through December 31), **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
+| MWIP backlog | pursuits not yet contracted, worked out the way Vantagepoint's MWIP report does it with the options in section 4b (by default: Weighted Fee, spread evenly, Daily, starting on the first day after the report month, through December 31), **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
 | Total projected | YTD + forecast + weighted MWIP. |
 | % of pace billed | YTD ÷ pace. |
 | % of goal (YTD + forecast) | (YTD + forecast) ÷ goal. |
@@ -67,13 +67,13 @@ The same choices as the Options tab of Vantagepoint's MWIP report (VP-MWIP Marke
 |---|---|---|
 | `bd.mwipBasis` | Weighted Fee (fee x win probability); Estimated Fee | Calculate Pursuit Forecast Using |
 | `bd.mwipAllocation` | spread evenly by days from estimated start to estimated completion; all to the estimated start month; all to the estimated completion month | Fee Allocation |
-| `bd.mwipPeriod` | Monthly | Calculation Period |
-| `bd.mwipStart` | the month after the report month, in full (owner, 2026-11-25); the day the report is built (that month cut by the days gone) | Start Date |
+| `bd.mwipPeriod` | Daily; Semi-monthly; Monthly. The fee is split into equal pieces per day, half-month or month; pieces that ended before the start date drop out, the one the start date falls in counts in full | Calculation Period |
+| `bd.mwipStart` | the first day after the report month (owner, 2026-11-25); the day the report is built ("Today") | Start Date |
 | `bd.mwipThrough` | December 31 of the report year; 3, 6 or 12 months | Duration |
 
-Shown but **not yet available** (they have not been checked against a Vantagepoint run, so they cannot be picked): Fee Allocation "close date" and "allocation method of the project" (the fields behind them are not found yet), and Calculation Period daily, weekly, bi-weekly and semi-monthly (how they change the numbers is not known yet). To add one: run Vantagepoint's MWIP report with that option, compare it to Compass the same day, then allow it.
+Shown but **not yet available** (they have not been checked against a Vantagepoint run, so they cannot be picked): Fee Allocation "close date" and "allocation method of the project" (the fields behind them are not found yet), and Calculation Period weekly and bi-weekly (within about a dollar of Daily, but not reproduced exactly). To add one: run Vantagepoint's MWIP report with that option, compare it to Compass the same day, then allow it.
 
-Only pursuits in a not-yet-awarded stage with a non-zero estimated fee count (`docs/MWIP-METHOD.md` rule 1). A pursuit missing a date its allocation needs is left out and listed on the draft as a note, never guessed. The default options reproduce the October 2026 workbook where pursuits had not changed since (Burbank, McBride, K-12, Higher Education exact).
+Only pursuits in a not-yet-awarded stage with a non-zero estimated fee count (`docs/MWIP-METHOD.md` rule 1). A pursuit missing a date its allocation needs is left out and listed on the draft as a note, never guessed. The default options reproduce the October 2026 workbook where pursuits had not changed since (Burbank, McBride, K-12, Higher Education exact). Daily, Semi-monthly and Monthly each reproduce a same-day Vantagepoint export exactly (2026-11-25, 109 of 109 pursuits).
 
 ## 5. Goals
 

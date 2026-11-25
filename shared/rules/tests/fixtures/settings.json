@@ -295,16 +295,6 @@
       "expect": false
     },
     {
-      "key": "bd.mwipPeriod",
-      "value": "monthly",
-      "expect": true
-    },
-    {
-      "key": "bd.mwipPeriod",
-      "value": "weekly",
-      "expect": false
-    },
-    {
       "key": "bd.mwipStart",
       "value": "buildDay",
       "expect": true
@@ -337,6 +327,31 @@
     {
       "key": "bd.mwipThrough",
       "value": 12,
+      "expect": false
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "daily",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "semimonthly",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "monthly",
+      "expect": true
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "weekly",
+      "expect": false
+    },
+    {
+      "key": "bd.mwipPeriod",
+      "value": "biweekly",
       "expect": false
     }
   ],

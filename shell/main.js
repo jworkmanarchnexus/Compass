@@ -205,8 +205,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const CHOICE_LABEL = {
   'bd.mwipBasis': { weighted: 'Weighted Fee', estimated: 'Estimated Fee' },
   'bd.mwipAllocation': { spread: 'spread evenly', start: 'all to the estimated start date', completion: 'all to the estimated completion date' },
-  'bd.mwipPeriod': { monthly: 'monthly' },
-  'bd.mwipStart': { afterReportMonth: 'the month after the report month, in full', buildDay: 'the day the report is built' },
+  'bd.mwipPeriod': { daily: 'Daily', semimonthly: 'Semi-monthly', monthly: 'Monthly' },
+  'bd.mwipStart': { afterReportMonth: 'the first day after the report month', buildDay: 'the day the report is built' },
   'bd.mwipThrough': { yearEnd: 'December 31', 3: '3 months', 6: '6 months', 12: '12 months' },
   'bd.contractAmount': { feeConsult: 'fee + consultant fees', feeConsultReimb: 'fee + consultant fees + reimbursable allowance' },
   'bd.noSector': { keep: 'keep in Unassigned', ask: 'ask before publishing', other: 'put in Other' },
