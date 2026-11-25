@@ -1,6 +1,6 @@
 # Contracted revenue forecast method, reproduced against a same-day export (2026-10-17)
 
-Status: **source verified against one same-day export; not approved.** No firm amounts or names are in this file.
+Status: **monthly amounts reproduced to the dollar against a same-day export (2026-11-25: 144 of 144 projects, 12 months); not approved.** The export's Consultants % column is not reproduced yet. No firm amounts or names are in this file.
 
 ## Why this is live data
 
@@ -9,7 +9,7 @@ Like MWIP, the forecast has no history and is not tied to a reporting period: PM
 ## Rules
 
 1. **Population:** active (`Status = 'A'`) parent projects (`WBS2` and `WBS3` empty) whose number does not start with a letter (those are pursuits, see `docs/MWIP-METHOD.md`).
-2. **Gross monthly forecast** = the sum of the plan's period revenue entries: `PNPlannedRevenueLabor.PeriodCost`, joined to `PNTask` on `PlanID` and `TaskID` to find the project, bucketed by the month of `StartDate`. The amounts are **gross, exactly as the PM entered them**. (The `PeriodBill` column in that table is zero on every row; the revenue lives in `PeriodCost`.) The window is the months from the report month through December of the same year (Compass: through Dec 31).
+2. **Gross monthly forecast** = the sum of the plan's period revenue entries: `PNPlannedRevenueLabor.PeriodCost`, joined to `PNTask` on `PlanID` and `TaskID` to find the project, **each entry spread across its own dates (`StartDate` to `EndDate`) by working days**: Monday to Friday, less the firm holiday calendar (`CFGHoliday`), then added up by month (2026-11-25). Bucketing by the month of `StartDate` is right only for entries inside one month; the 9 projects that missed on 2026-10-17 had entries spanning months. Vantagepoint shows whole dollars. The amounts are **gross, exactly as the PM entered them**. (The `PeriodBill` column in that table is zero on every row; the revenue lives in `PeriodCost`.) The window is the months from the report month through December of the same year (Compass: through Dec 31).
 3. **No current-month reduction** (unlike MWIP), and **no Consultants % applied**: the Vantagepoint export's Consultants % column is not used for the forecast and does not need to be reproduced (owner, 2026-10-17).
 4. **Architectural forecast, for the BD report only (owner rule):** each month's gross x (1 - consultant fees / full contract amount) for that project. A $100k contract with $30k of consultants shows 0.7 x the month. The consultant fees and full contract amount come from the project record (`PR.ConsultFee`, and `PR.Fee` + `PR.ConsultFee`, with or without `PR.ReimbAllow`). **Decision: default is fee + consultant fees, without the reimbursable allowance, and it will be a setting you can change** (Josh was unsure; the choice moves only 12 of 145 projects, by at most 2.4 points of the ratio).
 
@@ -19,9 +19,16 @@ Like MWIP, the forecast has no history and is not tied to a reporting period: PM
 - Ruled out: plan task fees spread by dates (192 variants), planned hours x billing rate, `PR` fee fields, the empty `PRRevenue` table, custom fields, and a scan of 41 project and planning tables for any single column equal to the report.
 - Adding consultant, expense and unit plan entries changes nothing.
 
+## Evidence (live, 2026-11-25): "CFO-Nexus Contracted Revenue Forecast for MC Reports", Nov 2026 to Oct 2027
+
+- **Population:** 144 projects in the export; no active project with plan entries in the window is missing from it.
+- **Monthly amounts:** 144 of 144 projects within $1 in every month (1,725 of 1,728 cells exact to the dollar; the other 3 differ by $1, rounding) with the working-day spread and the full holiday calendar. Bucketing by start month: 130 of 144. Calendar days, or weekdays without holidays: 130 to 131.
+- **Backlog column** = Fee + Consultant fee + Reimbursable allowance from the project record, less billed to date (`LedgerAR` invoices, retainage excluded): 118 of 144. Not used by the BD report.
+- **Consultants % column:** not reproduced. It is not consultant fee / (fee + consultant fee) from the project record or the plan (39 of 144 at best), and it changes from month to month on projects whose contract did not change. Closest: consultant cost to date (`CA.Type` 5 to 8) / billed to date, 74 of 144 exact and 112 within half a point; some projects are far off (one shows 0.09% against 31% from the ledger). It is probably a calculated column defined in the report itself: read its definition in Vantagepoint (Columns & Groups) or ask its owner.
+
 ## Unresolved
 
-- **9 projects do not match.** Not edits after the export (none of the 145 projects had entries changed after it), not multiple plans (all have one). Owner to look at them: the private list is in `discovery/data/protected/forecast-mismatches.txt` (git-ignored).
+- ~~9 projects do not match.~~ Resolved 2026-11-25: entries spanning months, spread by working days (rule 2).
 - "Full contract amount" is settled as a default, not proven. The report's Consultants % was checked as a back-test: on the 11 projects where the two definitions differ it fits neither (median distance about 2 points), and a search of every pair among 138 stored project, plan and ledger columns found none that reproduces that percentage for half of the projects, so the report's number is not a simple ratio of stored totals. Earlier note on the ledger fit: Against the ledger's actual consultant cost to date, `ConsultFee / (Fee + ConsultFee + ReimbAllow)` and `ConsultFee / (Fee + ConsultFee)` fit equally well (about 25 of 84 projects with consultants within 0.1%), because the ledger accrual does not always follow the whole-project ratio; this is a business rule, not a Vantagepoint calculation.
 - One reference name was not matched, and the reference has no project numbers; repeat with an export that includes them.
 
