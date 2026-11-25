@@ -148,6 +148,11 @@
 - **The factor is the architectural share (consultants removed), applied to the probability-weighted amount.** Vantagepoint's MWIP report already weights each pursuit by probability (`PR.WeightedRevenue`) and spreads it by days from start to completion with the current month reduced by elapsed days. The source supplies that; Compass multiplies by the factor. No change to the BD calculation code, only to what the source amount means (open question H4 resolved). Pursuits carry no consultant fee in Vantagepoint, so the factor cannot be derived and stays a setting.
 - **MWIP and the contracted forecast are live plan data with no history.** Month-end figures must come from a snapshot Compass takes at report time (Pipeline watch already snapshots weekly); Vantagepoint cannot reproduce a past month.
 
+## 2026-11-25: MWIP factor is 0.65 for both views (owner decision)
+
+- **The MWIP architectural factor is 0.65 for the PIC view and the market sector view alike.** The manual workbook's 0.67 for PICs is no longer used. It stays the existing Admin setting (`bd_mwip_factor`, effective-dated, append-only), so a later change is a new entry with its date, not a code change. The local demo seed keeps the mockup's 0.67 for 2026 only so the demo still reproduces the mockup; the real value is entered in Admin.
+- **MWIP and the contracted forecast always run through Dec 31 of the report year** (restating open question M1). Never the workbook's six months of MWIP.
+
 ## 2026-10-17: Contracted forecast and the architectural ratio
 
 - **The forecast is gross.** PMs type revenue into the plan; Compass reads the plan's period revenue entries (`PNPlannedRevenueLabor.PeriodCost`) by month. The Consultants % column in the Vantagepoint export is not used (owner).

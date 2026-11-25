@@ -53,7 +53,11 @@ The contracted forecast is entered gross by the PMs. For this report only, each 
 
 ## 4. The MWIP factor
 
-Effective-dated and **append-only** (the database refuses to change or delete a past factor); the factor used is the latest one in force on the cutoff, and each report records it. The mockup's 0.67 (from Jan 1, 2026) and 0.65 (2025) are the seed. **Open question H4 is resolved this way:** the source supplies pursuits at face value (raw), and Compass applies the factor when it builds a report, so a changed factor never needs the source to change. If Vantagepoint already weights the column, the factor should be set to 1.
+**One factor, the same for the PIC view and the market sector view: 0.65** (Josh, 2026-11-25). The manual workbook used 0.67 for PICs and 0.65 for sectors; Compass uses 0.65 for both, so the firm total is the same on both tabs.
+
+It is the Admin setting on Admin > BD reports (`bd_mwip_factor`). It takes effect from a date and is **append-only**: the database refuses to change or delete a past factor. Each report uses the latest factor in force on its cutoff and records which one it used. To change the factor, the Admin adds a new one with the date it takes effect. The local demo seed still holds the mockup's 0.67 from Jan 1, 2026, so it reproduces the mockup; the real value is 0.65.
+
+**What the factor is applied to (open question H4, resolved 2026-10-16):** the source supplies each pursuit already weighted by probability and spread by days, as Vantagepoint's MWIP report does (`docs/MWIP-METHOD.md`). The factor is the architectural share (consultants removed), applied by Compass when it builds a report, so a changed factor never needs the source to change.
 
 ## 5. Goals
 

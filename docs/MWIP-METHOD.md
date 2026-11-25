@@ -10,22 +10,22 @@ MWIP (pursuits) keeps **no history** and is not tied to a reporting period: anyo
 
 1. **Which projects count:** parent project record (`WBS2` and `WBS3` empty) whose number starts with a letter, `Status = 'A'` (active), `Probability` from 1 to 99, `Revenue` not zero, and `Stage` in the not-yet-awarded set: Go No Go (001), Marketing Proposal (002), Shortlisted (009), Negotiation (010), Research (011), Fee Proposal Only (015). Pursuits at 100% probability (3 in Negotiation) are left out; awarded stages are left out.
 2. **Est. Fee** = `PR.Revenue`. **Weighted Fee** = `PR.WeightedRevenue` = Est. Fee x Probability / 100. (Task fees, plan fees, `PR.EstFees`, the empty `PRRevenue` table and the custom fields are not the source.)
-3. **Monthly spread:** spread the Weighted Fee **by days** from `PR.EstStartDate` to `PR.EstCompletionDate`, one column per calendar month for twelve months starting with the report month.
+3. **Monthly spread:** spread the Weighted Fee **by days** from `PR.EstStartDate` to `PR.EstCompletionDate`, one column per calendar month for twelve months starting with the report month (that is how Vantagepoint's MWIP report shows it). **The BD report counts only the months through Dec 31 of the report year** (owner, open question M1, 2026-10-16; restated 2026-11-25). The old workbook's sum of six months is not used.
 4. **Current month decay (owner rule):** on day 1 of the report month the full month shows; each later day removes 1 / (days in the month); on day d the month shows (days in month - d + 1) / days in month of its normal amount. Past months drop out. (Counting only days after today matches 103 of 121; equal months matches 25 of 121.)
 5. The spread rule is `discovery/logic/mwip-spread.js`, with tests.
 
 ## What is not verified
 
-- The 0.67 (PIC) and 0.65 (sector) factors the BD workbook applies afterwards to get architectural revenue are hand-applied assumptions. Pursuits carry no consultant fee in Vantagepoint (`ConsultFee` and plan consultant fees are zero for them), so there is nothing to derive the factor from. Keep them as settings.
+- The architectural factor applied afterwards (0.65, see below) is an assumption set by the owner, not a Vantagepoint number. Pursuits carry no consultant fee in Vantagepoint (`ConsultFee` and plan consultant fees are zero for them), so there is nothing to derive the factor from. It stays a setting.
 - Only one day was validated. Repeat on another day before approving.
 - Compass must snapshot MWIP at report time (the Pipeline watch module already takes weekly snapshots); the BD report must read the snapshot.
 
 ## The architectural factor (owner decision 2026-10-16: must be editable in Compass)
 
-Compass already has this as an Admin setting: `bd_mwip_factor`, effective-dated and append-only, in basis points (6700 = 0.67), seeded 0.65 from 2025-01-01 and 0.67 from 2026-01-01, entered on the BD Admin screen. Two things to settle before wiring the verified MWIP method into the BD module:
+Compass already has this as an Admin setting: `bd_mwip_factor`, effective-dated and append-only, in basis points (6500 = 0.65), entered on the BD Admin screen. Both questions are settled:
 
-1. **One factor or two.** The BD workbook uses 0.67 for the PIC view and 0.65 for the sector view; Compass has a single factor. Two factors make the firm total differ between the two views.
-2. **What it is applied to.** Vantagepoint already weights each pursuit by probability (Weighted Fee). The factor is then the architectural share (removing consultants). The BD spec currently says pursuits arrive at face value and the factor is the weighting; that must change so the factor is applied to the probability-weighted, day-spread amount from this method, or probability would be lost.
+1. **One factor, 0.65, for both views** (owner, 2026-10-16 for one factor; 2026-11-25 for the value). The old BD workbook used 0.67 for the PIC view and 0.65 for the sector view. Compass uses 0.65 for both, so the firm total is the same on both tabs. Expect the PIC view's MWIP to come out lower than a workbook built the old way (0.65 / 0.67, about 3% lower). The local demo seed keeps the mockup's 0.67 for 2026 only so it reproduces the mockup.
+2. **What it is applied to.** Vantagepoint already weights each pursuit by probability (Weighted Fee). The factor is the architectural share (consultants removed), applied to the probability-weighted, day-spread amount from this method.
 
 ## Implementation SQL
 
