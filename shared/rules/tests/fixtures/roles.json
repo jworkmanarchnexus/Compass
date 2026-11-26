@@ -4,7 +4,6 @@
       "role": "admin",
       "access": {},
       "see": [
-        "dashboard",
         "turnaround",
         "checkins",
         "bd",
@@ -17,7 +16,6 @@
       "role": "pic",
       "access": {},
       "see": [
-        "dashboard",
         "turnaround",
         "billing"
       ]
@@ -29,7 +27,6 @@
         "picPipeline": true
       },
       "see": [
-        "dashboard",
         "turnaround",
         "bd",
         "pipeline",
@@ -82,7 +79,6 @@
       "role": "pm",
       "access": {},
       "see": [
-        "dashboard",
         "billing"
       ]
     }

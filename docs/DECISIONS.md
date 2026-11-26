@@ -259,4 +259,9 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Sizes are min/max per dashpart** in the catalog; the server forces every saved size inside them.
 - **New dashparts start off** for people who already saved a layout, so the catalog can grow without changing anyone's page.
 - 2026-11-26 (Josh): **a new person starts with six dashparts on**: My projects below break-even, Revenue against goal, Pipeline, Portfolio bubble chart, Fee by phase, Unbilled work. Staff mix by role, Client scorecard and Where the fee goes start in Available.
+- 2026-11-26 (Josh): **two dashboards in the side bar, PIC and PM**, each shown only to people who are PIC (or PM) on something. I read "on anything" as at least one **active** project in the Vantagepoint copy, and it follows the projects, not the Compass role, so a PIC who manages one project also gets the PM dashboard. The Admin always has both (my default). The role-based `dashboard` area from the first build is gone; `/api/me` carries `dashboards` instead.
+- **One saved arrangement per person per dashboard** (`dashboard_layouts` keyed by person and board). Local databases from the first build drop the old table on start; it only held preferences made today.
+- **The PM dashboard's dashparts are my first pick** (phase, unbilled, where the fee goes, staff mix); Josh to confirm (D5).
+- **No seeded person is both PIC and PM**, and I did not change the seed because Billing's tests depend on who manages what. The test makes Tom Lindqvist PM on the Ogden Library Annex for the both-dashboards case.
+- 2026-11-26 (Josh): **the dashparts' real numbers come from Vantagepoint.**
 - **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.

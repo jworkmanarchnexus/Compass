@@ -2,7 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const L = require('../logic/layout');
-const { CATALOG } = require('../logic/catalog');
+const { CATALOGS } = require('../logic/catalog');
+const ALL = Object.values(CATALOGS);
 const fx = require('./fixtures/layout.json');
 
 const cat = fx.catalog;
@@ -26,7 +27,8 @@ test('pack: first-fit on 4, 2 and 1 columns; too-wide ones drawn at the grid wid
 });
 
 test('pack: no two dashparts ever overlap, whatever the sizes', () => {
-  const real = L.defaultLayout(CATALOG);
+  for (const cat of ALL) {
+  const real = L.defaultLayout(cat);
   real.items.forEach(i => { i.on = true; });
   for (const cols of [1, 2, 3, 4]) {
     const { cells } = L.pack(real, cols);
@@ -35,6 +37,7 @@ test('pack: no two dashparts ever overlap, whatever the sizes', () => {
       assert.ok(x < cols, `${c.id} past the right edge`);
       const k = x + ',' + y; assert.ok(!seen.has(k), `${c.id} overlaps at ${k} on ${cols} columns`); seen.add(k);
     }
+  }
   }
 });
 
@@ -79,14 +82,16 @@ test('columnsFor: 4 on a wide screen, 2 on a tablet, 1 on a phone', () => {
   for (const [px, cols] of fx.columnsFor) assert.strictEqual(L.columnsFor(px), cols, `${px}px`);
 });
 
-test('the real catalog: unique ids, defaults inside the limits, a clear title and blurb for each', () => {
+test('the real catalogs: unique ids, defaults inside the limits, a clear title and blurb for each', () => {
+  for (const cat of ALL) {
   const ids = new Set();
-  for (const c of CATALOG) {
+  for (const c of cat) {
     assert.ok(!ids.has(c.id), c.id + ' twice'); ids.add(c.id);
     assert.ok(c.minW >= 1 && c.minW <= c.maxW && c.maxW <= 4, c.id + ' width limits');
     assert.ok(c.minH >= 1 && c.minH <= c.maxH && c.maxH <= 3, c.id + ' height limits');
     assert.ok(c.w >= c.minW && c.w <= c.maxW && c.h >= c.minH && c.h <= c.maxH, c.id + ' default size');
     assert.ok(c.title && c.blurb, c.id + ' words');
+  }
   }
 });
 
@@ -96,9 +101,11 @@ test('a drag into the gap really lands there: d moved before c fills the top rig
 });
 
 test('the order always reads left to right, top to bottom', () => {
-  const real = L.defaultLayout(CATALOG); real.items.forEach(i => { i.on = true; });
+  for (const cat of ALL) {
+  const real = L.defaultLayout(cat); real.items.forEach(i => { i.on = true; });
   for (const cols of [1, 2, 4]) {
     const cells = L.pack(real, cols).cells;
     for (let i = 1; i < cells.length; i++) assert.ok(cells[i].y > cells[i - 1].y || (cells[i].y === cells[i - 1].y && cells[i].x > cells[i - 1].x), `${cells[i].id} reads before ${cells[i - 1].id} on ${cols} columns`);
+  }
   }
 });

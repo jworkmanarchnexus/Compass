@@ -1,4 +1,4 @@
-/* My dashboard: the page. Each person arranges the curated dashparts for themselves.
+/* My dashboards (PIC and PM): the page. Each person arranges the curated dashparts for themselves, per dashboard.
    View mode: the dashparts that are on, in their grid. "Customize" turns on edit mode:
    - the dashparts jiggle; drag one to move it and the others reshuffle as you go
    - the arrows on the right and bottom edges make it narrower, wider, shorter or taller, one grid cell at a time, within the
@@ -14,10 +14,10 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const sizeText = (w, h) => `${w} wide, ${h} tall`;
 const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export async function renderDashboard(ctx, body) {
+export async function renderDashboard(ctx, body, board) {
   const { h, T, icon, actions, banner, Session } = ctx;
   const me = Session.me();
-  const data = await Dashboard.get();
+  const data = await Dashboard.get(board);
   const catalog = data.catalog;
   const info = new Map(catalog.map(c => [c.id, c]));
 
@@ -162,9 +162,9 @@ export async function renderDashboard(ctx, body) {
     if (save) {
       btnDone.disabled = true;
       try {
-        const r = await Dashboard.save(layout);
+        const r = await Dashboard.save(board, layout);
         layout = r.layout;
-        T.toast('Your dashboard is saved. Only you see this arrangement.');
+        T.toast(`Your ${data.label} is saved. Only you see this arrangement.`);
       } catch (e) {
         btnDone.disabled = false;
         msg.replaceChildren(banner('circle-alert', 'Could not save your dashboard. Your changes are still here; try Done again. ' + (e.message || ''), 'err'));

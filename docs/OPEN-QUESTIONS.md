@@ -22,8 +22,10 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 
 | # | Question | Default today | Where it lives |
 |---|---|---|---|
-| D1 | Who has My dashboard? | Admin, PICs and project managers | `shared/rules/roles.js` (`dashboard`); could become an `access` setting |
-| D2 | Which dashparts to keep, and where each one's real numbers come from (several, like phase overrun, staff mix by role and client scorecard, need Vantagepoint data Compass does not pull yet) | nine dashparts on made-up data | `docs/SPEC-dashboard.md` |
+| D1 | Who has a dashboard? | **Resolved by Josh, 2026-11-26: a PIC dashboard and a PM dashboard; each shows only for people who are PIC (or PM) on at least one active project** | `modules/dashboard/logic/boards.js` |
+| D4 | Should the Admin always have both dashboards, even when not PIC or PM on anything? | yes, to see what people see | `boards.js` |
+| D5 | Which dashparts belong on the PM dashboard? | Fee by phase, Unbilled work, Where the fee goes, Staff mix by role | `catalog.js` (`PM`) |
+| D2 | Exactly which Vantagepoint tables and fields each dashpart needs. **Source decided by Josh, 2026-11-26: Vantagepoint.** Several (phase overrun, staff mix by role, client scorecard, write-offs, days to pay) need data the scheduled copy does not pull yet | made-up data | `docs/SPEC-dashboard.md`; Kent for the pull |
 | D3 | Which dashparts a new person sees first, and at what size | **Resolved by Josh, 2026-11-26: the six as built** (below break-even, revenue, pipeline, portfolio bubble chart, fee by phase, unbilled work); staff mix, client scorecard and where the fee goes start in Available | `modules/dashboard/logic/catalog.js` |
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |

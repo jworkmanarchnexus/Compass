@@ -8,12 +8,11 @@ const ROLES = ['admin', 'pic', 'pm', 'processor', 'finance', 'marketing', 'sysad
 const ROLE_LABEL = { admin: 'Admin', pic: 'PIC', pm: 'Project manager (Billing only)', processor: 'Invoice processor (Billing)', finance: 'Finance, view only', marketing: 'Marketing director, view only', sysadmin: 'System admin' };
 
 /* areas of the app that have a page of their own */
-const AREAS = ['dashboard', 'turnaround', 'checkins', 'bd', 'pipeline', 'billing', 'admin'];
+const AREAS = ['turnaround', 'checkins', 'bd', 'pipeline', 'billing', 'admin'];
 
 function canView(role, area, access) {
   const a = access || {};
   switch (area) {
-    case 'dashboard': return role === 'admin' || role === 'pic' || role === 'pm'; // My dashboard: each person's own page (modules/dashboard)
     case 'turnaround': return role === 'admin' || role === 'pic' || role === 'finance' || (role === 'marketing' && !!a.marketingTurnaround);
     case 'checkins': return role === 'admin'; // the reminder queue is Josh's alone
     case 'bd': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picBd);

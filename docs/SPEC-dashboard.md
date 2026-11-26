@@ -1,8 +1,17 @@
-# My dashboard (scaffolding)
+# PIC and PM dashboards (scaffolding)
 
-A page each PIC (and PM, and the Admin) arranges for themselves from dashparts Josh curates. Built 2026-11-26 as scaffolding: the grid, edit mode and per-person saving are real and tested; **every dashpart draws made-up sample data**. None is connected to a source yet.
+Two dashboards, each a page a person arranges for themselves from dashparts Josh curates: the **PIC dashboard** and the **PM dashboard**. Built 2026-11-26 as scaffolding: the grid, edit mode and per-person saving are real and tested; **every dashpart draws made-up sample data**. Their real numbers will come from Vantagepoint (Josh, 2026-11-26), for the projects the person leads or manages.
 
-Route `#/dashboard`, side bar "My dashboard". Code: `modules/dashboard/` (logic, tests, ui), `server/dashboard.js`, `shared/platform/dashboard.js`.
+Routes `#/dashboard/pic` and `#/dashboard/pm` (`#/dashboard` opens the first one the person has). Code: `modules/dashboard/` (logic, tests, ui), `server/dashboard.js`, `shared/platform/dashboard.js`.
+
+## Who sees which (`modules/dashboard/logic/boards.js`, tested from `tests/fixtures/boards.json`)
+
+Decided by Josh, 2026-11-26: it follows the projects, not the Compass role.
+- **PIC dashboard** in the side bar if the person is principal in charge on at least one active project in the Vantagepoint copy (`projects.principal` = their employee code, status `A`).
+- **PM dashboard** if they are project manager on at least one (`projects.proj_mgr`).
+- Both if both; neither if neither (that item is not in the side bar, and the API refuses it with 403). It changes as soon as the next Vantagepoint copy changes their projects.
+- The Admin always has both (my default, so Josh can see what people see; open question D4).
+- Each dashboard has its own dashparts and its own saved arrangement.
 
 ## What a person can do
 
@@ -23,9 +32,11 @@ Route `#/dashboard`, side bar "My dashboard". Code: `modules/dashboard/` (logic,
 - A dashpart wider than the grid (a 4-wide one on a tablet) is drawn at the grid's width; its saved size is kept for wide screens.
 - Every saved layout is normalized on the server before it is stored and again when read: unknown or repeated dashparts dropped, sizes forced inside the limits, and any dashpart the person has never seen added to the end of Available, **off**. So adding a dashpart to the catalog later never changes anyone's page under them.
 
-## The catalog (`modules/dashboard/logic/catalog.js`)
+## The catalogs (`modules/dashboard/logic/catalog.js`)
 
-Each dashpart has an id, title, one-sentence blurb, min and max width (1 to 4 columns) and height (1 to 3 rows), a default size, and whether a new person sees it on. Josh curates it; adding one is a catalog row plus a drawing in `ui/parts.js`.
+One list per dashboard. Each dashpart has an id, title, one-sentence blurb, min and max width (1 to 4 columns) and height (1 to 3 rows), a default size, and whether a new person sees it on. Josh curates it; adding one is a catalog row plus a drawing in `ui/parts.js`.
+
+**PIC dashboard**
 
 | Dashpart | Sizes (w x h) | Default | On for a new person |
 |---|---|---|---|
@@ -39,20 +50,27 @@ Each dashpart has an id, title, one-sentence blurb, min and max width (1 to 4 co
 | Client scorecard | 2-4 x 2-3 | 2 x 2 | no |
 | Where the fee goes (contract fee to collected) | 2-4 x 1-2 | 2 x 1 | no |
 
+**PM dashboard** (my first pick, for Josh to change; open question D5)
+
+| Dashpart | Sizes (w x h) | Default | On for a new person |
+|---|---|---|---|
+| Fee by phase, planned against actual | 2-4 x 1-2 | 2 x 2 | yes |
+| Unbilled work | 1-2 x 1-2 | 2 x 1 | yes |
+| Where the fee goes | 2-4 x 1-2 | 2 x 1 | yes |
+| Staff mix by role | 2-4 x 1-3 | 4 x 1 | yes |
+
+The same dashpart draws the same way on either dashboard; only the projects behind it will differ once it has real data.
+
 ## How a dashpart draws (`modules/dashboard/ui/parts.js`)
 
 `render({ w, h, px, py })` draws for its size in cells and its exact pixel size, and draws **more** as it grows (more rows, axis labels, names on bubbles, more table columns, a second chart), never a stretched copy. `says(w, h)` is the plain sentence for edit mode. In edit mode the drawing is faded so the controls lead. Colors are classes in `ui/dashboard.css` built on brand tokens; nothing over or under is red.
 
-## Who
-
-`dashboard` area in `shared/rules/roles.js`: Admin, PIC and project manager. Others get 403 from the API and "No access" on the page. (Open question D1.)
-
 ## API
 
-`GET /api/dashboard` → `{ catalog, layout, saved, updatedAt }` (the default layout when nothing is saved). `PUT /api/dashboard` with `{ layout }` saves (normalized first) or `{ reset: true }` removes the saved row. Table `dashboard_layouts` (one row per person).
+`GET /api/me` carries `dashboards`: `["pic"]`, `["pm"]`, both or none. `GET /api/dashboards/:board` (`pic` or `pm`) → `{ board, label, catalog, layout, saved, updatedAt }` (the default layout when nothing is saved). `PUT /api/dashboards/:board` with `{ layout }` saves (normalized against that dashboard's catalog first) or `{ reset: true }` removes the saved row. 403 for a dashboard the person does not have, 404 for one that does not exist. Table `dashboard_layouts` (one row per person per dashboard).
 
 ## Not built
 
-- Real data for any dashpart, and which source each one needs (open question D2).
+- Real data. Every dashpart will read Vantagepoint (through the scheduled copy, never from the browser); exactly which tables and fields each needs is open question D2.
 - Per-dashpart settings (for example which projects the bubble chart includes).
 - The Admin curating the catalog on a screen (today it is a code file).

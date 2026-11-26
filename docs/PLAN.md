@@ -41,6 +41,6 @@ Spec: `docs/SPEC-billing.md`. Release one covers both billing types (fixed fee b
 
 **Done when:** a seeded PM can enter, save and submit billing for fixed-fee and hourly projects, including a second mid-month request; a PIC can edit their project's billing; a processor sees the full queue, reassigns a project (both processors notified per their settings), returns one request and it is resubmitted as a new revision; the rollover returns every project to unbilled; every rule in the spec's test list passes; no write to VP exists. Live VP reads wait for Kent's verified report.
 
-## My dashboard (scaffolding built on branch `dashboard`; see SPEC-dashboard)
+## PIC and PM dashboards (scaffolding built on branch `dashboard`; see SPEC-dashboard)
 
-Grid, edit mode (jiggle, drag, resize arrows, put away and bring back), per-person saving, nine dashparts on made-up data. Next, once Josh has tried it: pick the dashparts to keep and connect them to real data one at a time.
+Two dashboards, shown by whether the person is PIC or PM on an active project. Grid, edit mode (jiggle, drag, resize arrows, put away and bring back), per-person saving, nine dashparts on made-up data. Next, once Josh has tried it: pick the dashparts to keep and connect them to real data one at a time.

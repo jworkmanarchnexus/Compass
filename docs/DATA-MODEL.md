@@ -35,7 +35,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `pipeline_projects` | project numbers that exist (copied each snapshot), to tell a converted pursuit from a vanished one | grows only |
 | `pipeline_alerts` | what the rules found each Monday (rule, Alert or Watch, PIC, plain-language message) | only the Admin clearing one changes a row; never deleted |
 | `pursuit_notes` | the Admin's notes on a pursuit | **append-only** |
-| `dashboard_layouts` | My dashboard: one row per person, their layout JSON (`{ version, items: [{ id, w, h, on }] }`), when saved | replaced on save; always normalized against the catalog first (`modules/dashboard/logic/layout.js`) |
+| `dashboard_layouts` | PIC and PM dashboards: one row per person per dashboard (`board` = `pic` or `pm`), their layout JSON (`{ version, items: [{ id, w, h, on }] }`), when saved | replaced on save; always normalized against the catalog first (`modules/dashboard/logic/layout.js`) |
 | `system_state` | small job state (the day the Admin was last emailed) | |
 
 ## Invariants the database enforces (so a bug in the code cannot break them)

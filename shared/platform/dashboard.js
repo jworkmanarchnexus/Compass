@@ -1,8 +1,9 @@
-/* My dashboard: the signed-in person's own layout. Nobody can read or change anyone else's. */
+/* My dashboards (board = 'pic' or 'pm'): the signed-in person's own arrangement. Nobody can read or change anyone else's. */
 import { request } from './http.js';
 
+const url = board => '/api/dashboards/' + encodeURIComponent(board);
 export const Dashboard = {
-  get() { return request('GET', '/api/dashboard'); },
-  save(layout) { return request('PUT', '/api/dashboard', { layout }); },
-  reset() { return request('PUT', '/api/dashboard', { reset: true }); },
+  get(board) { return request('GET', url(board)); },
+  save(board, layout) { return request('PUT', url(board), { layout }); },
+  reset(board) { return request('PUT', url(board), { reset: true }); },
 };

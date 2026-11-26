@@ -28,7 +28,9 @@ const displayChanged = () => window.dispatchEvent(new Event('compass:display'));
 /* ---------- side bar. `phase` says when the page gets real content. ---------- */
 const NAV = [
   { id: 'home', href: '#/', icon: 'house', label: 'Home' },
-  { id: 'dashboard', area: 'dashboard', href: '#/dashboard', icon: 'layout-grid', label: 'My dashboard', blurb: 'Your own page of dashparts. Choose which ones, their size and their order.' },
+  // shown only to people who are PIC (or PM) on at least one active project; me.dashboards says which (modules/dashboard/logic/boards.js)
+  { id: 'dash-pic', board: 'pic', href: '#/dashboard/pic', icon: 'layout-grid', label: 'PIC dashboard', blurb: 'Your own page of dashparts for the projects you lead.' },
+  { id: 'dash-pm', board: 'pm', href: '#/dashboard/pm', icon: 'layout-template', label: 'PM dashboard', blurb: 'Your own page of dashparts for the projects you manage.' },
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
@@ -76,6 +78,7 @@ function frame(routeId, crumbs, titleText, sub) {
   const nav = [h('div', { class: 'navh', text: 'Modules' })];
   for (const n of NAV) {
     if (n.area && !me.areas[n.area]) continue;
+    if (n.board && !(me.dashboards || []).includes(n.board)) continue;
     nav.push(navItem(n, routeId === n.id, false, n.id === 'pipeline' && me.badges ? me.badges.pipeline : undefined));
     for (const s of n.sub || []) if (me.areas[s.area]) nav.push(navItem(s, routeId === s.id, true, s.id === 'checkins' && me.badges ? me.badges.checkins : undefined));
   }
@@ -144,9 +147,10 @@ async function pageTurnaround() {
   renderOverview(ctx, body, data);
 }
 
-async function pageDashboard() {
-  const body = frame('dashboard', [crumb('Compass', '#/'), sep(), crumb('My dashboard')], 'My dashboard', 'Sample data: every dashpart shows made-up numbers for now.');
-  await renderDashboard(ctx, body);
+async function pageDashboard(board) {
+  const label = board === 'pm' ? 'PM dashboard' : 'PIC dashboard';
+  const body = frame('dash-' + board, [crumb('Compass', '#/'), sep(), crumb(label)], label, `Sample data: every dashpart shows made-up numbers for now. Later they come from Vantagepoint, for the projects you ${board === 'pm' ? 'manage' : 'lead'}.`);
+  await renderDashboard(ctx, body, board);
 }
 
 async function pagePipeline() {
@@ -567,7 +571,10 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
-  if (hash === '#/dashboard') return me.areas.dashboard ? pageDashboard() : pageNoAccess();
+  if ((m = /^#\/dashboard(?:\/(pic|pm))?$/.exec(hash))) {
+    const mine = me.dashboards || [], board = m[1] || mine[0];
+    return board && mine.includes(board) ? pageDashboard(board) : pageNoAccess();
+  }
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
