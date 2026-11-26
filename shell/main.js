@@ -95,7 +95,7 @@ function frame(routeId, crumbs, titleText, sub) {
   const page = h('div', { class: 'page' },
     h('div', { class: 'phead' },
       h('div', { class: 'crumbs' }, ...crumbs),
-      titleText ? h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: titleText }), sub ? h('span', { class: 'sub', text: sub }) : null) : null),
+      titleText ? h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: titleText }), sub ? h('span', { class: 'sub', text: sub }) : null, h('div', { class: 'pacts' })) : null),
     body);
   // every page sits on the canvas: its sections are separate cards (design refresh, DECISIONS 2026-11-25)
   mount(h('div', { class: 'shell' }, side, h('div', { class: 'mainwrap on-canvas' }, mtop, page)), scrim);
@@ -548,7 +548,9 @@ function auditCard(entries) {
 }
 
 /* what the Turnaround screens (modules/turnaround/ui) borrow from the shell */
-const ctx = { h, T, icon, frame, crumb, sep, banner, row, settingsCard, Session, ApiError };
+/* put buttons (Export and the like) at the right of the page's title row; body is what frame() returned */
+const actions = (body, ...nodes) => { const slot = body.parentNode && body.parentNode.querySelector('.pacts'); if (slot) { slot.replaceChildren(...nodes.filter(Boolean)); T.hydrateIcons(slot); } };
+const ctx = { h, T, icon, frame, crumb, sep, banner, row, settingsCard, Session, ApiError, actions };
 
 /* ---------- routing ---------- */
 function route() {

@@ -2,6 +2,7 @@
    Same page for the admin (any run, draft included) and for everyone else (the last published run).
    What each person sees was already decided by the server; this file only draws it. */
 import { negativeBars } from '/shared/ui/charts.js';
+import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
 import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtM, fmtDay, fmtPeriod, monthLetter, initials, plural } from '/shared/ui/format.js';
 
 export function planChip({ h }, plan) {
@@ -51,6 +52,35 @@ export function renderOverview(ctx, container, data) {
   };
   container.append(controls, holder);
   paint();
+  // Export: what is on screen now (everyone, or the one PIC picked), never more than this person can already see
+  if (ctx.actions && data.pics.length) ctx.actions(container, exportMenu(ctx, { excel: () => turnaroundSheet(data, focus), pdf: () => window.print() }));
+}
+
+const planText = plan => plan.status === 'current' ? 'Current'
+  : plan.status === 'update_due' ? 'Update due'
+    : plan.status === 'overdue' ? `Overdue ${plural(plan.daysOverdue, 'day')}`
+      : plan.daysOverdue > 0 ? `No plan, ${plural(plan.daysOverdue, 'day')}` : 'No plan yet';
+
+/* one row per project, for Export > Excel */
+export function turnaroundSheet(data, focus) {
+  const pics = focus !== null ? data.pics.filter(p => p.code === focus) : data.pics;
+  const rows = [];
+  for (const pic of pics) for (const p of pic.projects) {
+    const n = p.next;
+    rows.push([pic.name, p.wbs1, p.name, p.pm && p.pm.name, Math.round(p.profit.ytd / 100), p.pctYtd === null || p.pctYtd === undefined ? null : p.pctYtd / 100,
+      planText(p.plan), p.plan.dueDate || null, p.latest ? p.latest.date : null, p.latest ? p.latest.text : null,
+      n ? n.dueDate : null, n ? n.text : null, n ? (n.pastDue ? `Past due ${plural(n.daysPastDue, 'day')}` : n.revisions ? `Date moved ${n.revisions === 1 ? 'once' : n.revisions + ' times'}` : 'Open') : null,
+      p.earlierMissed || 0]);
+  }
+  const who = focus !== null && pics[0] ? '-' + fileSafe(pics[0].name) : '';
+  return {
+    file: `Project-Turnaround-${fileSafe(data.run.label)}${who}.xlsx`,
+    sheets: [{ name: `Turnaround ${data.run.label}`, columns: [
+      { title: 'PIC', width: 20 }, { title: 'Project number', width: 14 }, { title: 'Project', width: 36 }, { title: 'PM', width: 18 },
+      { title: 'Profit YTD', type: 'money', width: 13 }, { title: '% of billed', type: 'pct', width: 11 }, { title: 'Plan', width: 16 }, { title: 'Plan due', width: 11 },
+      { title: 'Latest update', width: 12 }, { title: 'Latest update text', width: 60 }, { title: 'Next commitment due', width: 12 }, { title: 'Next commitment', width: 50 },
+      { title: 'Commitment status', width: 18 }, { title: 'Earlier commitments missed', type: 'int', width: 14 }], rows }],
+  };
 }
 
 /* a PIC with nothing below break-even this year */

@@ -54,10 +54,10 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | P2 | Normal billing lowers the contracted forecast, so "Forecast drops fast" will fire on a busy week. Alert on the whole drop, or only on the part moved into next year? | the whole drop, threshold $150,000 in 7 days | Admin > Pipeline alerts |
 | P3 | "MWIP slides week after week": the mockup's own table slides every week for every PIC, so a short run would alert on everyone. How many in a row? | 8 | Admin > Pipeline alerts |
 | P4 | The spec offers a PIC copy of the Monday alert email. The handoff rule is that the system never emails a PIC. | no PIC email, no switch | |
-| P5 | Export Excel on Pipeline watch: CSV (opens in Excel) or a real .xlsx? | CSV | |
+| P5 | ~~Export Excel on Pipeline watch: CSV or a real .xlsx?~~ **Answered (Josh, 2026-11-25): Excel.** Export > Excel gives a real .xlsx; the CSV route stays in the API. | .xlsx | |
 | P6 | Should the Admin be able to re-run the rules on an old snapshot after changing a threshold? | no; past alerts stay as they were | |
-| T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
-| T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |
+| T24 | Export PDF: anything else wanted? **Partly answered (Josh, 2026-11-25): Excel too.** Export > Excel gives both tabs as two sheets. Still open: emailing it, a fixed monthly PDF saved on the server. | PDF window and Excel | Export menu |
+| T17 | ~~Export Excel on the Turnaround page~~ **Answered (Josh, 2026-11-25): built** (Export > Excel, one row per project; Export > PDF prints the page). Still open: contract fee and billed-to-date on the plan page. | not built (no fee data in the validated SQL) | |
 
 ## Billing (not built; see `docs/SPEC-billing.md`)
 

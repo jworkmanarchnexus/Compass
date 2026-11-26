@@ -1,6 +1,7 @@
 /* Pipeline watch: weekly snapshots of MWIP (pursuits not yet contracted) and contracted forecast, by PIC, with this week's alerts.
    Everyone who may open it sees every PIC. Only the Admin can clear an alert or add a note (the server checks; the buttons are hidden for others). */
 import { lineChart } from '/shared/ui/charts.js';
+import { exportMenu } from '/shared/ui/export-menu.js';
 import { Pipeline } from '/shared/platform/index.js';
 
 const K = c => `$${Math.round(Math.abs(c) / 100000).toLocaleString('en-US')}K`;
@@ -30,17 +31,11 @@ export async function renderPipeline(ctx, body) {
     holder.textContent = '';
     const pick = h('select', { class: 'txt', style: 'max-width:340px', 'aria-label': 'Snapshot', onchange: e => { state.date = e.target.value; state.pic = null; load(); } },
       ...d.dates.map((x, i) => h('option', { value: x, text: `${dayLong(x)}${i === 0 ? ' (latest)' : ''}`, selected: x === d.date })));
-    const exportBtn = h('button', { class: 'btn', type: 'button', text: 'Export CSV', title: 'A spreadsheet file that opens in Excel', onclick: async () => {
-      try {
-        const text = await Pipeline.exportCsv(d.date, d.kind);
-        const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
-        const a = h('a', { href: url, download: `pipeline-${d.kind}-${d.date}.csv` });
-        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-      } catch (e) { ctx.T.toast(e.message); }
-    } });
+    // Export at the right of the title row: Excel (this tab's table, as on screen) or the browser's Save as PDF
+    if (ctx.actions) ctx.actions(body, exportMenu(ctx, { excel: () => pipelineSheet(d), pdf: () => window.print() }));
     holder.append(
       h('p', { class: 'muted', style: 'margin:0', text: `Snapshot ${dayLong(d.date)} · Last ${d.weeks.length} weekly snapshots shown, older ones kept` }),
-      h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Snapshot' }), pick), exportBtn),
+      h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Snapshot' }), pick)),
       h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Pipeline tabs' },
         ...[['mwip', 'MWIP, not yet contracted'], ['forecast', 'Forecast, contracted']].map(([k, t]) => h('button', { type: 'button', role: 'tab', 'aria-pressed': String(state.kind === k), text: t, onclick: () => { state.kind = k; state.pic = null; load(); } }))));
     const main = h('div', { class: 'stack' }, tableCard(ctx, d, state, () => paint(d), sel => { state.pic = sel; paint(d); }));
@@ -159,4 +154,14 @@ function noteControl(ctx, it) {
   });
   wrap.append(open);
   return wrap;
+}
+
+/* the table on screen as one sheet, for Export > Excel (same columns as the CSV the API serves) */
+export function pipelineSheet(d) {
+  const dollars = c => (c === null || c === undefined ? null : Math.round(c / 100));
+  const fc = d.kind === 'forecast';
+  const columns = [{ title: 'PIC', width: 22 }, ...d.weeks.map(w => ({ title: w, type: 'money', width: 13 })), { title: 'This week', type: 'money', width: 13 }, { title: 'Vs 4 weeks ago', type: 'money', width: 14 },
+    fc ? { title: 'Moved to next year', type: 'money', width: 16 } : { title: 'New pursuits (30d)', type: 'int', width: 16 }, { title: 'New contracts (30d)', type: 'int', width: 16 }];
+  const line = r => [r.label, ...r.values.map(dollars), dollars(r.thisWeek), dollars(r.vs4), fc ? dollars(r.moved) : r.newPursuits, r.newContracts];
+  return { file: 'Pipeline-' + d.kind + '-' + d.date + '.xlsx', sheets: [{ name: (fc ? 'Forecast ' : 'MWIP ') + d.date, columns, rows: [...d.rows.map(line), line(d.firm)] }] };
 }
