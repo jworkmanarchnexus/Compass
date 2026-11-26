@@ -50,7 +50,7 @@ One list per dashboard. Each dashpart has an id, title, one-sentence blurb, min 
 | Client scorecard | 2-4 x 2-3 | 2 x 2 | no |
 | Where the fee goes (contract fee to collected) | 2-4 x 1-2 | 2 x 1 | no |
 
-**PM dashboard** (my first pick, for Josh to change; open question D5)
+**PM dashboard** (confirmed by Josh, 2026-11-26)
 
 | Dashpart | Sizes (w x h) | Default | On for a new person |
 |---|---|---|---|
