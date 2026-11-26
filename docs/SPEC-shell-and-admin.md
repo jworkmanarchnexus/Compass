@@ -22,12 +22,24 @@ Pure rule, `shared/rules/roles.js`. The server enforces it on every call; the br
 
 Three of these are **assumptions** the spec left open, each a setting (`access`): Finance sees Turnaround, BD and Pipeline; PICs see Turnaround only (BD and Pipeline are off for them until decided); Marketing does not see Turnaround. The last active Admin can never be demoted or deactivated.
 
+### 2a. Modules in preview
+
+A module can be released to a few people before everyone gets it (Josh, 2026-11-26). Pure rule, `roles.canUse(user, area, settings)` in `shared/rules/roles.js`, tested from `shared/rules/tests/fixtures/roles.json` (`canUse`) and `server/tests/api.test.js`.
+
+- Each of Project Turnaround, Marketing Report, Pipeline watch and Billing is **Live** (everyone its role allows) or in **Preview** (the Admin plus the people picked). Admin and Check-in drafts are never in preview.
+- **Preview never widens a role.** A tester still needs a role, and the `access` setting, that opens the module. Admin, People only lists those people.
+- The Admin always sees a module in preview, so they can try it.
+- The server refuses the module's pages and API calls to anyone else, exactly as for a role that cannot open it. The side bar and Home hide it the same way.
+- Testers see a **Preview** tag next to the module in the side bar and on Home's "Your pages". On Home, "Recently published" tells the Admin a run in preview is visible to the preview testers, not to the roles.
+- Stored as one effective-dated setting, `release`: `{ module: { stage: 'live' | 'preview', testers: [user id] } }`. Every change is in the audit log ("Billing in preview (2 testers)"). Testers must be people in People; the server refuses anyone else. A tester list is kept when the module goes back to Live, so it can return to preview with the same people.
+- Scheduled jobs and emails are not affected: preview only decides who can open the pages.
+
 ## 3. Admin
 
 Tabs, in order: Project Turnaround, Reminders and standing, BD reports, Pipeline alerts, People, Report runs, Commitment patterns, Audit log. **Pipeline alerts** holds the seven alert rules (each Alert, Watch or Off, with thresholds), the Monday email switch, and a button to take this week's snapshot by hand (`docs/SPEC-pipeline.md`). **BD reports** holds the annual goals (by PIC and by sector, per year), the MWIP factor history (add a new one with the date it takes effect), the market sectors with their roll-up, and the report rules and thresholds (`docs/SPEC-bd.md`). Report runs builds, and links to, either report.
 
 - **Settings cards** (Project Turnaround, Reminders and standing, and the access card on People): every setting is stored as an effective-dated row; saving adds a row and never overwrites. Only changed values are saved, validated on the server (type, range, and rules that span settings: the reminder ladder must be in order, Escalated cutoffs not above Good). "Changes apply to the next run. Published runs never change."
-- **People:** name, login, role, the name used in drafts, status (Active/Inactive, reversible), and the count of active projects the person leads in Vantagepoint.
+- **People:** the people table, the access card, the **Modules in preview** card (section 2a) and a summary of the roles. Each person has name, login, role, the name used in drafts, status (Active/Inactive, reversible), and the count of active projects the person leads in Vantagepoint.
 - **Report runs:** the list of runs (everyone with Admin access) and, for the Admin, build / review / publish / rebuild / archive and rerun (`docs/SPEC-turnaround.md` section 3).
 - **Commitment patterns:** the background analysis of commitments (kind against kind, by action, by PIC, by month, responsiveness, projects that left the list, what PICs typed under Other), with a year picker. The per-action analysis is Admin-only. See `docs/SPEC-turnaround.md` section 9a.
 - **Audit log:** newest first. Records: setting changes (old and new value), role/status/draft-name changes, run build, rebuild, publish and archive (with the reason), check-in sent, dismissed and undone, daily checks run. Entries cannot be changed or removed (a database rule). The scheduled jobs write as "Scheduled job".

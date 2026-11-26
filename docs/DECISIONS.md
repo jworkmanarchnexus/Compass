@@ -249,3 +249,14 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Status names (technical).** The four status keys stay (`current`, `update_due`, `overdue`, `no_plan`) so Home, the drafts ladder and the exports keep working; the words change: Done for this round, Goal check-in / Mid-month update due, ... late, First goal due / No goal yet. `owes` says which round is owed.
 - **Comments between rounds stay** (default; Josh did not decide). Kept as "Add a comment" in the History card. Easy to remove.
 - **Mark done and the separate explanation and commitment entries are gone from the API.** The page never offered Mark done; the goal check-in writes the explanation, the report and the goal in one transaction.
+
+## Modules in preview (2026-11-26, Josh: "yes, go ahead")
+
+Josh asked how to let a few people try a module before everyone gets it.
+
+- **An Admin setting, not a code switch.** One effective-dated setting, `release`, so it is dated, audited and changed without a new version, like every other setting. Kent keeps it if he rebuilds the screens: the rule is pure (`roles.canUse`) and the fixtures carry it.
+- **Per module, with its own testers.** The people trying Billing are not the people trying a Marketing Report change, so each module has its own list.
+- **Narrows, never widens.** Preview only takes people away from what their role opens. Who may see what stays the job of the role rules and the `access` setting, so a preview can never show someone data their role should not see.
+- **The Admin always sees a preview** (otherwise nobody could try it before picking testers). A System admin does not: they are not an Admin and never see module content they are not given.
+- **Pages only.** Jobs and emails ignore the preview. A preview on the live server still uses real data, and plan-log entries are permanent, so a module that writes data should be tried on a test server first (Kent).
+- **Whole modules for now.** A smaller feature inside a page can use the same rule later by adding its key to `PREVIEWABLE` and the `release` default.

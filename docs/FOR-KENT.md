@@ -104,6 +104,7 @@ These were deliberate decisions; each is enforced somewhere and tested.
 - The server binds to `127.0.0.1` only. The sign-in-as picker is for local use and must not be reachable from the network.
 - No real firm data is in the repo. Josh decides if and when real data is loaded; it must stay out of git.
 - PIC performance data and profit by project are sensitive. In production, enforce the role rules in `shared/rules/roles.js` on the server (it already does) and keep the Vantagepoint credential out of the repo and out of the browser.
+- Modules in preview: the server check is `roles.canUse(user, area, settings)`, which is the role rule plus the `release` setting (`docs/SPEC-shell-and-admin.md` section 2a). Keep it on the server; the browser only hides the menu item. A test server alongside the live one is still the right place for anything that writes data.
 - Static files are served only from `shell/`, `shared/` and `modules/`; `reference/`, `server/` and `docs/` are not reachable.
 - The Toolbox's shared stylesheet shows the mobile-menu overlay whenever the window is narrow; Compass overrides it (`shell/shell.css`). The Toolbox probably has the same problem.
 
