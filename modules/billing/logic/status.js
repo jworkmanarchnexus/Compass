@@ -6,6 +6,7 @@
 
    actor.kinds: who the person is for this request: 'author' (the project's PM or PIC) and/or 'processor' (an invoice processor).
    The Admin is both. ctx: { actorId, handledBy, wasReturned, exceedsVariance }. */
+(function () {
 'use strict';
 
 const STATUSES = ['draft', 'submitted', 'review', 'returned', 'processed'];
@@ -61,3 +62,4 @@ function actionsFor(status, actor) {
 const api = { STATUSES, transition, actionsFor };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else if (typeof window !== 'undefined') window.CompassBilling = Object.assign(window.CompassBilling || {}, api);
+})();

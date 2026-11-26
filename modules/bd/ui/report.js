@@ -5,7 +5,7 @@ import { fmtDay, fmtDayYear, fmtWhen, plural } from '/shared/ui/format.js';
 import { Bd } from '/shared/platform/index.js';
 import { openExport } from './export.js';
 import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
-import { drillPanel } from './drill.js';
+import { loadDrill, drillCard } from './drill.js';
 
 const K = c => `$${Math.round(c / 100000).toLocaleString('en-US')}K`;
 const pct = (n, d) => (d ? `${(100 * n / d).toFixed(1)}%` : '-');
@@ -23,7 +23,7 @@ export async function renderBd(ctx, body, wantedId) {
   }
   let id = wantedId && list.some(r => r.id === wantedId) ? wantedId : (list.find(r => r.status === 'published') || list[0]).id;
   let tab = 'pic';
-  let drill = null; // { scope, key, label, kind }: the bar segment whose detail is open
+  let drill = null; // { scope, key, label, vt, backTo, data }: the bar the chart is drilled into
   const holder = h('div', { class: 'stack' });
   body.append(holder);
 
@@ -46,19 +46,28 @@ export async function renderBd(ctx, body, wantedId) {
       ...(isAdmin && d.warnings && d.warnings.length ? [warningsCard(ctx, d, load)] : []));
     holder.append(h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Report tabs' },
       ...[['pic', 'By PIC'], ['sector', 'By market sector']].map(([k, label]) => h('button', { type: 'button', role: 'tab', 'aria-pressed': String(tab === k), text: label, onclick: () => { tab = k; drill = null; paint(d); } }))));
-    const onPick = (scope, label) => ({ rowKey, kind }) => {
-      drill = drill && drill.scope === scope && drill.key === rowKey && drill.kind === kind ? null : { scope, key: rowKey, label: rowKey === 'firm' ? 'Total firm' : label(rowKey), kind };
-      paint(d);
-      const p = holder.querySelector('.bd-drill');
-      if (p) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    };
+    // drilling in: the detail is fetched first, then the chart turns into it in place (and back again)
     const rows = tab === 'pic' ? d.pic : d.sector;
-    const mine = scope => (drill && drill.scope === scope ? { rowKey: drill.key, kind: drill.kind } : null);
-    const firmCard = firmChart(ctx, d, onPick('firm', () => 'Total firm'), mine('firm'));
-    const rowCard = rowChart(ctx, d, tab, onPick(tab, k => (rows.find(r => r.key === k) || {}).label || k), mine(tab));
-    const panel = () => drillPanel(ctx, d.run.id, drill, () => { drill = null; paint(d); });
-    holder.append(...[tableCard(ctx, d, tab), firmCard, drill && drill.scope === 'firm' ? panel() : null, rowCard, drill && drill.scope === tab ? panel() : null].filter(Boolean));
+    const onPick = (scope, label) => async ({ rowKey }) => {
+      const want = { scope, key: rowKey, label: rowKey === 'firm' ? 'Total firm' : label(rowKey), vt: scope === 'firm' ? 'bd-vt-firm' : 'bd-vt-rows', backTo: scope === 'firm' ? 'total firm' : tab === 'pic' ? 'PIC' : 'market sector' };
+      let data;
+      try { data = await loadDrill(d.run.id, want); } catch (e) { data = { error: e.message }; }
+      morph(() => { drill = { ...want, data }; paint(d); }, `.${want.vt}`);
+    };
+    const back = () => { const vt = drill && drill.vt; morph(() => { drill = null; paint(d); }, vt && `.${vt}`); };
+    const card = (scope, chart) => (drill && drill.scope === scope ? drillCard(ctx, drill, drill.data, back, legend) : chart());
+    holder.append(tableCard(ctx, d, tab),
+      card('firm', () => firmChart(ctx, d, onPick('firm', () => 'Total firm'))),
+      card(tab, () => rowChart(ctx, d, tab, onPick(tab, k => (rows.find(r => r.key === k) || {}).label || k))));
     ctx.T.hydrateIcons(holder);
+  }
+
+  /* swap the page with a smooth cross-fade and resize of the card that changes (the browser's view transitions), and keep that card in view */
+  function morph(swap, sel) {
+    const settle = () => { const el = sel && holder.querySelector(sel); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || still) { swap(); settle(); return; }
+    document.startViewTransition(swap).finished.then(settle, settle);
   }
   await load();
 }
@@ -136,39 +145,39 @@ function tableCard(ctx, d, tab) {
     h('div', { class: 'bd-legend', text: legend }));
 }
 
-function firmChart(ctx, d, onPick, picked) {
+function firmChart(ctx, d, onPick) {
   const { h } = ctx;
   const f = d.firm;
   const remaining = Math.max(0, f.goal - f.ytdGoal);
   const svg = stackedBars([
-    { key: 'firm', label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue', pick: true }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast', pick: true }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }], endText: K(f.mwip) },
-    { label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal pace' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
-  ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal', onPick, picked });
-  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { class: 'bd-svgwrap' }, svg),
+    { key: 'firm', group: 'firm', label: 'Total firm', segs: [{ v: f.ytd, kind: 'ytd', text: K(f.ytd), title: 'YTD revenue' }, { v: f.forecast, kind: 'forecast', text: K(f.forecast), title: 'Revenue forecast' }, { v: f.mwip, kind: 'mwip', title: 'MWIP backlog' }], endText: K(f.mwip) },
+    { group: 'firm', label: 'Annual goal', segs: [{ v: f.ytdGoal, kind: 'pace', text: K(f.ytdGoal), title: 'Goal pace' }, { v: remaining, kind: 'rest', text: K(remaining), title: 'Goal remaining' }] },
+  ], { fmt: K, aria: 'Firm total: revenue, forecast and MWIP against the annual goal', onPick });
+  return h('section', { class: 'sec bd-box bd-chart bd-vt-firm' }, h('div', { class: 'sec-head bd-sum', text: `Total firm: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${pct(f.total, f.goal)} of goal)` }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']]));
 }
 
 /* the PIC or market sector chart. The goal is drawn the way Dave's reports do it (logic/goal-chart.js): one Goal bar with dashed lines down the chart when
    every PIC has the same goal; otherwise each row is the actual bar with its own goal bar under it. */
-function rowChart(ctx, d, tab, onPick, picked) {
+function rowChart(ctx, d, tab, onPick) {
   const { h } = ctx;
   const lay = window.BdGoalChart.layout(tab === 'pic' ? d.pic : d.sector, tab);
   const goalSegs = r => [{ v: r.ytdGoal, kind: 'pace', text: K(r.ytdGoal), title: 'Goal pace' }, { v: Math.max(0, r.goal - r.ytdGoal), kind: 'rest', text: K(Math.max(0, r.goal - r.ytdGoal)), title: 'Goal remaining' }];
-  const actual = (r, gap) => ({ key: r.key, label: r.label, gapBefore: gap, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue', pick: true }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast', pick: true }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog', pick: true }], endText: K(r.mwip) });
+  const actual = (r, gap) => ({ key: r.key, group: r.key, label: r.label, gapBefore: gap, segs: [{ v: r.ytd, kind: 'ytd', text: K(r.ytd), title: 'YTD revenue' }, { v: r.forecast, kind: 'forecast', text: K(r.forecast), title: 'Revenue forecast' }, { v: r.mwip, kind: 'mwip', title: 'MWIP backlog' }], endText: K(r.mwip) });
   let rows, guides = [];
   if (lay.mode === 'single') {
     rows = [{ key: '_goal', label: 'Goal', segs: goalSegs(lay.goal) }, ...lay.rows.map((r, i) => actual(r, i === 0))];
     guides = [{ v: lay.goal.ytdGoal, kind: 'pace', title: `Pace to date: ${K(lay.goal.ytdGoal)}` }, { v: lay.goal.goal, kind: 'goal', title: `Annual goal: ${K(lay.goal.goal)}` }];
   } else {
-    rows = lay.rows.flatMap(r => [actual(r, true), { key: r.key + '_goal', label: 'Goal', segs: goalSegs(r) }]);
+    rows = lay.rows.flatMap(r => [actual(r, true), { key: r.key + '_goal', group: r.key, label: 'Goal', segs: goalSegs(r) }]);
   }
-  const svg = stackedBars(rows, { fmt: K, rowHeight: lay.mode === 'single' ? 34 : 22, tight: lay.mode !== 'single', guides, onPick, picked, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}, largest total first: revenue, forecast and MWIP${lay.mode === 'single' ? ' against the goal' : ', each with its goal bar'}` });
+  const svg = stackedBars(rows, { fmt: K, rowHeight: lay.mode === 'single' ? 34 : 22, tight: lay.mode !== 'single', guides, onPick, aria: `${tab === 'pic' ? 'PICs' : 'Market sectors'}, largest total first: revenue, forecast and MWIP${lay.mode === 'single' ? ' against the goal' : ', each with its goal bar'}` });
   const keys = lay.mode === 'single'
     ? [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']]
     : [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']];
-  return h('section', { class: 'sec bd-box bd-chart' }, h('div', { class: 'sec-head bd-sum', text: tab === 'pic' ? 'By PIC' : 'By market sector' }), h('div', { class: 'bd-svgwrap' }, svg),
+  return h('section', { class: 'sec bd-box bd-chart bd-vt-rows' }, h('div', { class: 'sec-head bd-sum', text: tab === 'pic' ? 'By PIC' : 'By market sector' }), h('div', { class: 'bd-svgwrap' }, svg),
     legend(ctx, keys),
-    h('div', { class: 'bd-legend', text: (lay.mode === 'single' ? 'Top bar = the goal: dark blue is where each PIC should be by now, light blue the rest of the year. Dashed lines mark both all the way down.' : 'Each top bar = YTD revenue + forecast + MWIP backlog; the bar under it = the annual goal (dark blue = should be done by now).') + ' Labels in thousands. Point at a bar to light it; click it to see the projects behind it.' }));
+    h('div', { class: 'bd-legend', text: (lay.mode === 'single' ? 'Top bar = the goal: dark blue is where each PIC should be by now, light blue the rest of the year. Dashed lines mark both all the way down.' : 'Each top bar = YTD revenue + forecast + MWIP backlog; the bar under it = the annual goal (dark blue = should be done by now).') + ` Labels in thousands. Click a ${tab === 'pic' ? 'PIC' : 'market sector'} to see the projects behind it.` }));
 }
 
 function legend({ h }, items) {

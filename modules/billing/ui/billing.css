@@ -1,2 +1,34 @@
 /* Billing's own styles. Tokens only: no colours or raw values here. */
 .pair { display: inline-flex; align-items: center; gap: var(--s2); }
+
+.bproj-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s3); align-items: flex-start; }
+.bproj-name { font: 700 22px/1.2 var(--f-cond); margin: 0 0 var(--s1); }
+.bproj-chips { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.bproj-status { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+.bproj-filters { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+.bproj-quick { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; padding: var(--s3) 0; }
+.bproj-facts { display: flex; flex-wrap: wrap; gap: var(--s5); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
+.bproj-totals { display: flex; flex-wrap: wrap; gap: var(--s5); align-items: center; padding: var(--s3) 0; font-size: 15px; }
+.bproj-foot { margin: var(--s2) 0 0; font-size: 13.5px; }
+.bproj-issues { max-width: 1100px; color: var(--text-2); font-size: 14px; }
+.bproj-issues ul { margin: var(--s1) 0 0; padding-left: var(--s5); }
+
+.bill-tbl td, .bill-tbl th { vertical-align: top; }
+.bill-tbl .txt.narrow { width: 110px; }
+.bill-tbl .txt[aria-invalid="true"] { border-color: var(--crit); }
+.ctl-inline { display: inline-flex; align-items: center; gap: var(--s1); }
+.money-in { text-align: right; }
+.cell-err { color: var(--crit); font-size: 13px; font-weight: 400; }
+.cell-err:empty { display: none; }
+
+.rich { border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--surface); }
+.rich-bar { display: flex; gap: var(--s1); padding: var(--s1) var(--s2); border-bottom: 1px solid var(--line); }
+.rich-box { min-height: 88px; padding: var(--s2) var(--s3); outline: none; }
+.rich-box:focus { box-shadow: 0 0 0 2px var(--accent); }
+.rich-box[contenteditable="false"] { color: var(--text-2); }
+.rich-show { max-width: 84ch; }
+.rich-show p, .rich-box p { margin: 0 0 var(--s2); }
+
+.trail { list-style: none; margin: 0 0 var(--s3); padding: 0; display: grid; gap: var(--s2); }
+.trail-text { margin: var(--s1) 0 0 var(--s4); color: var(--text-2); }
+details.adv > summary { cursor: pointer; padding: var(--s3) var(--s5); font-weight: 700; }
