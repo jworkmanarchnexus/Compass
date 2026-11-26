@@ -7,6 +7,9 @@ export const Admin = {
   saveSettings(changes) { return request('PUT', '/api/admin/settings', { changes }); },
   people() { return request('GET', '/api/admin/people'); },
   changePerson(id, change) { return request('PUT', '/api/admin/people/' + encodeURIComponent(id), change); },
+  /* [{ code, vpName, displayName|null }]: the name Compass shows for each Vantagepoint person */
+  names() { return request('GET', '/api/admin/names'); },
+  setName(code, name) { return request('PUT', '/api/admin/names/' + encodeURIComponent(code), { name }); },
   audit(limit) { return request('GET', '/api/admin/audit' + (limit ? '?limit=' + limit : '')); },
   runs() { return request('GET', '/api/admin/runs'); },
   run(id) { return request('GET', '/api/admin/runs/' + encodeURIComponent(id)); },

@@ -242,9 +242,9 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       slot.textContent = '';
       slot.append(...turnaroundCards(s, canEdit, rerender));
     } else if (tab === 'people') {
-      const [people, s] = await Promise.all([Admin.people(), Admin.settings()]);
+      const [people, s, names] = await Promise.all([Admin.people(), Admin.settings(), Admin.names()]);
       slot.textContent = '';
-      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), accessCard(s, canEdit, rerender), rolesCard());
+      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), namesCard(names, canEdit), accessCard(s, canEdit, rerender), rolesCard());
     } else if (tab === 'reminders') {
       const s = await Admin.settings();
       slot.textContent = '';
@@ -418,6 +418,44 @@ function peopleCard(people, canEdit, rerender, onError) {
       h('tbody', {}, ...trs))));
 }
 
+/* the name Compass shows for each Vantagepoint person (PICs and PMs on every page, reports and exports). Vantagepoint is never changed. */
+function namesCard(rows, canEdit) {
+  const body = h('tbody', {});
+  const find = h('input', { class: 'txt', type: 'search', placeholder: 'Find a person', 'aria-label': 'Find a person', style: 'max-width:260px' });
+  const onlyChanged = h('input', { type: 'checkbox', id: 'names-only-changed' });
+  const paint = () => {
+    const q = find.value.trim().toLowerCase();
+    body.replaceChildren(...rows
+      .filter(r => (!onlyChanged.checked || r.displayName) && (!q || (r.vpName + ' ' + (r.displayName || '') + ' ' + r.code).toLowerCase().includes(q)))
+      .map(r => {
+        const msg = h('span', { class: 'muted small', role: 'status' });
+        const input = h('input', { class: 'txt', type: 'text', maxlength: '60', value: r.displayName || '', placeholder: r.vpName, disabled: !canEdit, 'aria-label': 'Name shown for ' + r.vpName });
+        input.addEventListener('change', async () => {
+          msg.textContent = '';
+          try {
+            const out = await Admin.setName(r.code, input.value);
+            const now = out.rows.find(x => x.code === r.code);
+            r.displayName = now ? now.displayName : null;
+            input.value = r.displayName || '';
+            msg.textContent = out.changed ? (r.displayName ? 'Saved.' : 'Back to the Vantagepoint name.') : 'Nothing changed.';
+          } catch (e) { msg.textContent = e.message; }
+        });
+        return h('tr', {}, h('td', { class: 'strong', text: r.vpName }), h('td', {}, input), h('td', {}, msg), h('td', { class: 'muted', text: r.code }));
+      }));
+  };
+  find.addEventListener('input', paint);
+  onlyChanged.addEventListener('change', paint);
+  paint();
+  return h('section', { class: 'sec' },
+    h('div', { class: 'sec-head' }, h('h2', { text: 'Names shown for Vantagepoint people' }),
+      h('p', { text: 'PICs and PMs show with their Vantagepoint name. Type another name to show it instead everywhere in Compass (pages, reports, exports); clear it to go back. Vantagepoint is not changed. Every change is in the audit log.' })),
+    h('div', { class: 'sec-body' }, h('div', { class: 'bd-tools' }, find, h('label', { class: 'check' }, onlyChanged, h('span', { text: 'Only names changed here' })))),
+    h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: 'min-width:640px' },
+      h('thead', {}, h('tr', {}, ...['Vantagepoint name', 'Name shown in Compass', '', 'Employee code'].map(x => h('th', { text: x })))),
+      body)),
+    canEdit ? null : h('div', { class: 'sec-foot' }, h('span', { class: 'chip', text: 'View only' })));
+}
+
 function rolesCard() {
   const rows = [
     ['Admin', 'Runs and publishes reports, edits every setting, adds admin notes. Cannot write in a PIC\'s plan voice.'],
@@ -557,6 +595,7 @@ function auditText(e) {
   if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
+  if (e.action === 'name.set') return [`Changed the name shown for ${e.object}`, `${e.detail.from} to ${e.detail.to}`];
   if (e.action === 'pipeline.snapshot') return ['Saved a pipeline snapshot', e.object];
   if (e.action === 'pipeline.clear') return ['Cleared a pipeline alert', e.object];
   if (e.action === 'pipeline.note') return ['Added a note on a pursuit', e.object];

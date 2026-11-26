@@ -64,6 +64,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `POST /api/projects/:wbs1/plan/midmonth` | the project's PIC | the mid-month update: `{ status: progress | done | stuck, comment }`\| done \| stuck, comment }` |
 | `GET /api/admin/settings`, `PUT /api/admin/settings` | Admin edit; System admin read | settings; save `{ changes: { key: value } }` |
 | `GET /api/admin/people`, `PUT /api/admin/people/:id` | Admin edit; System admin read | people; change role, active, draft name |
+| `GET /api/admin/names`, `PUT /api/admin/names/:code` | Admin edit; System admin read | the name shown for a Vantagepoint person (`{ name }`; empty = the Vantagepoint name). Table `employee_names`; every name shown goes through `server/names.js` |
 | `GET /api/admin/audit` | Admin, System admin | the audit log |
 | `GET /api/admin/runs` | Admin, System admin | the run list |
 | `POST /api/admin/runs` | Admin | build a draft (`{ period }`, default last closed month) |

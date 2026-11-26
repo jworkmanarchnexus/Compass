@@ -15,6 +15,7 @@ const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
+const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -150,6 +151,23 @@ function createServer(db, opts) {
         }
       });
       return sendJson(res, 200, { saved });
+    }
+
+    /* the names shown for Vantagepoint people (server/names.js): Admin edits, System admin reads */
+    if (p === '/api/admin/names' && method === 'GET') {
+      requireTab(user, 'people', 'view');
+      return sendJson(res, 200, names.nameRows(db));
+    }
+    const nm = /^\/api\/admin\/names\/([^/]+)$/.exec(p);
+    if (nm && method === 'PUT') {
+      requireTab(user, 'people', 'edit');
+      const body = await readJson(req);
+      const changed = db.tx(() => {
+        const c = names.setName(db, decodeURIComponent(nm[1]), body.name === undefined ? null : body.name, user.id);
+        if (c) audit(user, 'name.set', c.vpName, { from: c.from, to: c.to });
+        return c;
+      });
+      return sendJson(res, 200, { changed: !!changed, rows: names.nameRows(db) });
     }
 
     if (p === '/api/admin/people' && method === 'GET') {
