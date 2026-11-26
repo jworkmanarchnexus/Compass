@@ -4,6 +4,7 @@
    the Admin's drafts, run contents and the commitment analysis are the Admin's alone. A commitment's action and whether it improved the
    project are visible to everyone who may read the plan (Josh's decision, 2026-10-11; it reverses the handoff's rule). */
 const crypto = require('node:crypto');
+const { employeeNames } = require('./names');
 const { HttpError } = require('./errors');
 const plan = require('../modules/turnaround/logic/plan');
 const draftsLogic = require('../modules/turnaround/logic/drafts');
@@ -17,7 +18,7 @@ const patterns = require('../modules/turnaround/logic/patterns');
 const REMARK_KINDS = ['explanation', 'update', 'correction', 'done']; // what "latest comment" can show: the PIC's words, not a goal
 
 function directory(db) {
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const userByCode = Object.fromEntries(db.all("SELECT * FROM users WHERE role = 'pic' AND employee_code IS NOT NULL").map(u => [u.employee_code, u]));
   const userById = Object.fromEntries(db.all('SELECT * FROM users').map(u => [u.id, u]));
   return { emp, userByCode, userById, name: code => (code ? emp[code] || code : 'Unassigned') };

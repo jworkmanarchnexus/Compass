@@ -11,6 +11,13 @@ CREATE TABLE IF NOT EXISTS employees (
   last_name   TEXT NOT NULL,
   email       TEXT NOT NULL DEFAULT ''
 );
+-- Compass's own: the name to show for a Vantagepoint person instead of the Vantagepoint name (Admin > People). Never written back.
+CREATE TABLE IF NOT EXISTS employee_names (
+  code         TEXT PRIMARY KEY,          -- VP employee code
+  display_name TEXT NOT NULL,
+  set_by       TEXT,                      -- users.id
+  set_at       INTEGER
+);
 CREATE TABLE IF NOT EXISTS projects (
   wbs1        TEXT PRIMARY KEY,           -- VP project number (PR.WBS1)
   name        TEXT NOT NULL,

@@ -4,6 +4,7 @@
    The arithmetic is modules/bd/logic/report.js (pure, tested). The run lifecycle rules are the same ones Project Turnaround
    uses (modules/turnaround/logic/lifecycle.js): draft, published and locked, archived with a reason and the word RERUN. */
 const crypto = require('node:crypto');
+const { employeeNames } = require('./names');
 const { HttpError } = require('./errors');
 const report = require('../modules/bd/logic/report');
 const lifecycle = require('../modules/turnaround/logic/lifecycle');
@@ -162,7 +163,7 @@ function reportDetail(db, id, viewer) {
   const run = getRun(db, id);
   if (viewer.role !== 'admin' && run.status !== 'published') throw new HttpError(404, 'Report not found.');
   const meta = db.get('SELECT * FROM bd_run_meta WHERE run_id = ?', id);
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const hideFactor = viewer.role === 'pic';
   const rows = scope => db.all('SELECT * FROM bd_rows WHERE run_id = ? AND scope = ? ORDER BY sort', id, scope).map(r => ({
     key: r.key, label: scope === 'pic' ? (emp[r.key] || r.label || 'Unassigned') : r.label, goal: r.goal, ytdGoal: r.ytd_goal, ytd: r.ytd, forecast: r.forecast,
@@ -190,7 +191,7 @@ function drillDetail(db, id, viewer, { kind, scope, key }) {
   if (!['firm', 'pic', 'sector'].includes(scope)) throw new HttpError(400, 'Pick the firm, a PIC or a market sector.');
   if (scope !== 'firm' && typeof key !== 'string') throw new HttpError(400, 'Which one?');
   if (!db.get('SELECT 1 AS x FROM bd_detail WHERE run_id = ? LIMIT 1', id)) return { available: false, kind, scope, key: key || null };
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const where = scope === 'pic' ? ' AND pic = ?' : scope === 'sector' ? ' AND sector = ?' : '';
   const rows = db.all(`SELECT * FROM bd_detail WHERE run_id = ? AND kind = ?${where} ORDER BY item_id, month`, ...[id, kind].concat(scope === 'firm' ? [] : [key]));
   const items = new Map();
@@ -208,7 +209,7 @@ function drillDetail(db, id, viewer, { kind, scope, key }) {
 
 /* ---- the Admin's own BD data ---- */
 function adminInputs(db) {
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const goals = db.all('SELECT * FROM bd_goals ORDER BY year DESC, scope, sort, key').map(g => ({ year: g.year, scope: g.scope, key: g.key, name: g.scope === 'pic' ? emp[g.key] || g.key : g.key, amount: g.amount }));
   return {
     years: [...new Set(goals.map(g => g.year))],
