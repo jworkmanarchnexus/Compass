@@ -1,10 +1,13 @@
 'use strict';
 /* The plan log, on the database. The rules live in modules/turnaround/logic/plan.js (pure, tested); this file
-   reads and appends. There is no function here that changes or removes an entry, and the database refuses it too. */
+   reads and appends. There is no function here that changes or removes an entry, and the database refuses it too.
+
+   What a PIC writes (Josh, 2026-11-26): a goal check-in when a month is published, a mid-month update two weeks later, and a comment
+   any time. Each is checked by the pure rules first (plan.goalCheckinProblem, plan.midProblem) and written in one transaction. */
 const crypto = require('node:crypto');
 const { HttpError } = require('./errors');
 const plan = require('../modules/turnaround/logic/plan');
-const { isValid } = require('../modules/turnaround/logic/dates');
+const { year } = require('../modules/turnaround/logic/dates');
 
 /* the local calendar date of a time in ms (the server's own time zone; Kent decides what that should be) */
 function localDate(ms) {
@@ -30,10 +33,27 @@ function entriesByProject(db, wbs1s) {
   return out;
 }
 
-/* wbs1 -> the date the project first showed on a run people could see (the start of its "plan within 14 days" clock) */
+/* wbs1 -> the date the project first showed on a run people could see */
 function firstAppeared(db) {
   const out = new Map();
-  for (const r of db.all('SELECT rp.wbs1 AS wbs1, MIN(r.published_at) AS at FROM run_projects rp JOIN runs r ON r.id = rp.run_id WHERE r.published_at IS NOT NULL GROUP BY rp.wbs1')) out.set(r.wbs1, localDate(r.at));
+  for (const r of db.all("SELECT rp.wbs1 AS wbs1, MIN(r.published_at) AS at FROM run_projects rp JOIN runs r ON r.id = rp.run_id WHERE r.kind = 'turnaround' AND r.published_at IS NOT NULL GROUP BY rp.wbs1")) out.set(r.wbs1, localDate(r.at));
+  return out;
+}
+
+/* The rounds: the day each month was first published. A rerun of a month (archive and publish again) does not start a new round. */
+function roundStarts(db) {
+  return db.all("SELECT MIN(published_at) AS at FROM runs WHERE kind = 'turnaround' AND published_at IS NOT NULL GROUP BY period ORDER BY period").map(r => localDate(r.at)).sort();
+}
+
+/* wbs1 -> the rounds of the months the project was on the list (for its on-time record) */
+function projectRounds(db) {
+  const start = new Map(db.all("SELECT period, MIN(published_at) AS at FROM runs WHERE kind = 'turnaround' AND published_at IS NOT NULL GROUP BY period").map(r => [r.period, localDate(r.at)]));
+  const out = new Map();
+  for (const r of db.all("SELECT DISTINCT rp.wbs1 AS wbs1, r.period AS period FROM run_projects rp JOIN runs r ON r.id = rp.run_id WHERE r.kind = 'turnaround' AND r.published_at IS NOT NULL")) {
+    if (!out.has(r.wbs1)) out.set(r.wbs1, []);
+    out.get(r.wbs1).push(start.get(r.period));
+  }
+  for (const list of out.values()) list.sort();
   return out;
 }
 
@@ -56,10 +76,6 @@ const text = (v, label, max) => {
   if (v.length > (max || 4000)) throw new HttpError(400, `${label} is too long.`);
   return v.trim();
 };
-const number = (v, label) => {
-  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1e9) throw new HttpError(400, `${label} must be a number, zero or more.`);
-  return v;
-};
 
 function insert(db, { wbs1, authorId, kind, body, date, correctsEntryId, commitmentId, data, id, at: when }) {
   const at = when || db.now(); // `when` is only for the demo seed, which dates its history by hand
@@ -69,91 +85,78 @@ function insert(db, { wbs1, authorId, kind, body, date, correctsEntryId, commitm
   return eid;
 }
 
-/* A new entry in the log. Who may write what is plan.canWrite; this checks the content. */
-function addEntry(db, user, wbs1, input, today, settings) {
-  const project = projectOr404(db, wbs1);
-  const kind = input.kind;
-  if (!['explanation', 'commitment', 'update', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist.');
-  if (!plan.canWrite(user.role, kind, isProjectPic(user, project))) throw new HttpError(403, kind === 'admin_note' ? 'Only the Admin adds admin notes.' : 'Only the PIC on this project writes in its plan.');
-  if (project.status !== 'A') throw new HttpError(409, 'This project is not active.');
-  // the order of a plan: one explanation first (it stays the only option until it is written, however late); after that, updates and commitments
-  if (kind !== 'admin_note') {
-    const explained = hasExplanation(db, project.wbs1, today);
-    if (kind === 'explanation' && explained) throw new HttpError(409, 'This project already has its explanation for the year. Add an update or a commitment.');
-    if (kind !== 'explanation' && !explained) throw new HttpError(409, 'Start with an explanation of what is driving the loss. Updates and commitments come after it.');
-  }
-  const body = text(input.body, 'The entry');
-  const entry = { wbs1: project.wbs1, authorId: user.id, kind, body, date: today };
-
-  if (kind === 'commitment') {
-    if (!plan.LEVERS[input.lever] || plan.LEVERS[input.lever].legacy) throw new HttpError(400, 'Pick one of the actions.');
-    // the PIC does not pick a date: the next check-in is every cadence days from the project's first report
-    entry.data = { promisedBy: nextDueFor(db, project.wbs1, today, settings), lever: input.lever };
-    if (plan.LEVERS[input.lever].other) entry.data.otherText = text(input.otherText, 'What the action is', 120); // "Other" needs its few words
-    entry.id = crypto.randomUUID();
-    entry.commitmentId = entry.id; // a commitment's id is its own entry's id
-  }
-  return db.tx(() => insert(db, entry));
+/* where a project stands today: its plan status (with the round and what is owed) and its goals this year */
+function projectState(db, wbs1, today, settings) {
+  const all = entriesFor(db, wbs1);
+  const rounds = roundStarts(db);
+  const inCycle = all.filter(e => year(e.date) === year(today));
+  const status = plan.planStatus({ today, firstAppeared: firstAppeared(db).get(wbs1) || today, entries: all, rounds, settings });
+  const goals = plan.commitmentStates(inCycle, rounds, settings);
+  const lastGoal = goals.slice().sort((a, b) => b.entryDate.localeCompare(a.entryDate))[0] || null;
+  return { all, inCycle, rounds, status, goals, open: goals.filter(g => g.status === 'open'), lastGoal };
 }
 
-function commitmentOr404(db, wbs1, id) {
-  const state = plan.commitmentStates(entriesFor(db, wbs1)).find(c => c.id === id);
-  if (!state) throw new HttpError(404, 'Commitment not found.');
-  return state;
-}
-
-/* the next check-in date for a project: the first of the report-anchored check-in dates after today */
-function nextDueFor(db, wbs1, today, settings) {
-  const cadence = (settings && settings['due.cadenceDays']) || 14;
-  return plan.nextDue(firstAppeared(db).get(wbs1) || null, today, cadence);
-}
-
-/* "Mark done": asks what happened, and yes or no: did this action improve the financial state of the project in the period? On or before its date counts as kept. */
-function markDone(db, user, wbs1, commitmentId, input, today) {
-  const project = projectOr404(db, wbs1);
-  if (!plan.canWrite(user.role, 'done', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
-  const c = commitmentOr404(db, project.wbs1, commitmentId);
-  if (c.status !== 'open') throw new HttpError(409, c.status === 'done' ? 'This commitment is already done.' : 'This commitment was recorded as missed and is closed.');
-  const body = text(input.body, 'What happened');
-  if (typeof input.improved !== 'boolean') throw new HttpError(400, 'Answer yes or no: did this action improve the financial state of the project during this period?');
-  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body, date: today, commitmentId, data: { improved: input.improved } }));
-}
-
-/* The check-in: on (or before) a due date the PIC reports back on every open commitment and makes the next one, in one step.
-   input: { reports: [{ commitmentId, body, improved }], lever, otherText?, body }
-   Each open commitment needs its own report (what happened, and yes or no: did the action improve the project's finances in the period).
-   It closes them as done (on or before the date counts as kept) and writes the new commitment, due at the next check-in. All or nothing. */
-function checkIn(db, user, wbs1, input, today, settings) {
-  const project = projectOr404(db, wbs1);
+function writerOr403(user, project) {
   if (!plan.canWrite(user.role, 'commitment', isProjectPic(user, project))) throw new HttpError(403, 'Only the PIC on this project writes in its plan.');
   if (project.status !== 'A') throw new HttpError(409, 'This project is not active.');
-  if (!hasExplanation(db, project.wbs1, today)) throw new HttpError(409, 'Start with an explanation of what is driving the loss. Updates and commitments come after it.');
-  const thisYear = e => e.date >= `${today.slice(0, 4)}-01-01`;
-  const open = plan.commitmentStates(entriesFor(db, project.wbs1).filter(thisYear)).filter(c => c.status === 'open');
-  const reports = Array.isArray(input.reports) ? input.reports : [];
-  for (const r of reports) if (!open.some(c => c.id === r.commitmentId)) throw new HttpError(409, 'One of those commitments is no longer open. Reload the page.');
-  const done = open.map(c => {
-    const r = reports.find(x => x.commitmentId === c.id);
-    if (!r) throw new HttpError(400, 'Report back on every open commitment first.');
-    const body = text(r.body, 'What happened');
-    if (typeof r.improved !== 'boolean') throw new HttpError(400, 'Answer yes or no: did this action improve the financial state of the project during this period?');
-    return { commitmentId: c.id, body, improved: r.improved };
-  });
-  if (!plan.LEVERS[input.lever] || plan.LEVERS[input.lever].legacy) throw new HttpError(400, 'Pick the kind of action your next commitment will be.');
-  const body = text(input.body, 'Your next commitment');
-  const data = { promisedBy: nextDueFor(db, project.wbs1, today, settings), lever: input.lever };
-  if (plan.LEVERS[input.lever].other) data.otherText = text(input.otherText, 'What the action is', 120);
+}
+
+/* A comment (any time, after the explanation) or an admin note. Goals and mid-month updates have their own steps below. */
+function addEntry(db, user, wbs1, input, today) {
+  const project = projectOr404(db, wbs1);
+  const kind = input.kind;
+  if (!['update', 'admin_note'].includes(kind)) throw new HttpError(400, 'That kind of entry does not exist. Goals are set in the goal check-in.');
+  if (!plan.canWrite(user.role, kind, isProjectPic(user, project))) throw new HttpError(403, kind === 'admin_note' ? 'Only the Admin adds admin notes.' : 'Only the PIC on this project writes in its plan.');
+  if (project.status !== 'A') throw new HttpError(409, 'This project is not active.');
+  if (kind === 'update' && !hasExplanation(db, project.wbs1, today)) throw new HttpError(409, 'Start with the goal check-in: say what is driving the loss and set a first goal. Comments come after it.');
+  const body = text(input.body, kind === 'admin_note' ? 'The note' : 'The comment');
+  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind, body, date: today }));
+}
+
+/* The goal check-in, in one step. input: { cause?, helped?, comment?, keep?, approach?, how? }
+   Writes, all or nothing: the explanation (once a year, from `cause`), the report on the open goal (closing it as done, with
+   Did it help and the comment), and the next goal (a new one, or the same one carried forward). */
+function goalCheckin(db, user, wbs1, input, today, settings) {
+  const project = projectOr404(db, wbs1);
+  writerOr403(user, project);
+  const st = projectState(db, project.wbs1, today, settings);
+  const explained = st.inCycle.some(e => e.kind === 'explanation');
+  const openGoal = st.open.length ? st.open.slice().sort((a, b) => b.entryDate.localeCompare(a.entryDate))[0] : null;
+  const doneThisRound = st.status.hasPlan && !st.status.owes.includes('goal');
+  const problem = plan.goalCheckinProblem(input, { explained, openGoal: openGoal && openGoal.id, lastGoal: st.lastGoal && st.lastGoal.id, doneThisRound });
+  if (problem) throw new HttpError(doneThisRound ? 409 : 400, problem);
+  const cause = explained ? null : text(input.cause, 'What is driving the loss');
+  const comment = openGoal ? text(input.comment, 'The comment') : null;
+  const keep = input.keep === true;
+  const from = keep ? st.inCycle.find(e => e.id === st.lastGoal.id) : null;
+  const goalBody = keep ? from.body : text(input.how, 'How, specifically', 1000);
+  const data = keep ? { lever: from.data.lever, keptFrom: from.id } : { lever: input.approach };
+  if (keep && from.data.otherText) data.otherText = from.data.otherText;
   return db.tx(() => {
-    for (const d of done) insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body: d.body, date: today, commitmentId: d.commitmentId, data: { improved: d.improved } });
+    if (cause) insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'explanation', body: cause, date: today });
+    // every open goal is reported on (normally just one; an older plan may have had more than one open)
+    for (const g of st.open) insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'done', body: comment, date: today, commitmentId: g.id, data: { helped: input.helped, improved: input.helped === 'yes' ? true : input.helped === 'no' ? false : null } });
     const id = crypto.randomUUID();
-    insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'commitment', body, date: today, id, commitmentId: id, data });
+    insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'commitment', body: goalBody, date: today, id, commitmentId: id, data });
     return id;
   });
 }
 
-/* the system's own entry: an open commitment whose date has passed by the Admin's "missed after" days */
+/* The mid-month update: where the goal stands (In progress, Done, Stuck) and a comment. It does not close the goal. */
+function midUpdate(db, user, wbs1, input, today, settings) {
+  const project = projectOr404(db, wbs1);
+  writerOr403(user, project);
+  const st = projectState(db, project.wbs1, today, settings);
+  const owes = st.status.owes.includes('mid') && !!st.status.goal;
+  const problem = plan.midProblem(input, { owesMid: owes });
+  if (problem) throw new HttpError(owes ? 400 : 409, problem);
+  const body = text(input.comment, 'The comment');
+  return db.tx(() => insert(db, { wbs1: project.wbs1, authorId: user.id, kind: 'update', body, date: today, commitmentId: st.status.goal.id, data: { midStatus: input.status } }));
+}
+
+/* the system's own entry: an open goal whose check-in passed by the Admin's "missed after" days */
 function recordMissed(db, wbs1, state, today) {
   return insert(db, { wbs1, authorId: null, kind: 'missed', body: '', date: today, commitmentId: state.id, data: { dueDate: state.dueDate } });
 }
 
-module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, isProjectPic, projectOr404, addEntry, markDone, checkIn, recordMissed, insert, nextDueFor };
+module.exports = { hasExplanation, localDate, rowToEntry, entriesFor, entriesByProject, firstAppeared, roundStarts, projectRounds, projectState, isProjectPic, projectOr404, addEntry, goalCheckin, midUpdate, recordMissed, insert };

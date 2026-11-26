@@ -6,11 +6,13 @@ function addDays(date, n) { return fmt(parse(date) + n * 86400000); }
 /* whole days from a to b (positive when b is later) */
 function daysBetween(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
 function isWeekday(date) { const wd = new Date(parse(date)).getUTCDay(); return wd !== 0 && wd !== 6; }
+/* `n` weekdays after a date (Saturday and Sunday skipped; holidays are not modelled, like the run day) */
+function addBusinessDays(date, n) { let d = date; for (let k = 0; k < n;) { d = addDays(d, 1); if (isWeekday(d)) k++; } return d; }
 function year(date) { return Number(date.slice(0, 4)); }
 function isValid(date) { return typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) && fmt(parse(date)) === date; }
 const max = (a, b) => (a > b ? a : b);
 const min = (a, b) => (a < b ? a : b);
 
-const datesApi = { addDays, daysBetween, isWeekday, year, isValid, max, min };
+const datesApi = { addDays, addBusinessDays, daysBetween, isWeekday, year, isValid, max, min };
 if (typeof module !== 'undefined' && module.exports) module.exports = datesApi;
 else if (typeof window !== 'undefined') window.CompassTurnaround = Object.assign(window.CompassTurnaround || {}, { dates: datesApi });

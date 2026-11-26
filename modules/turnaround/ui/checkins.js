@@ -55,7 +55,7 @@ function draftCard(ctx, d, run) {
   const dirty = () => subject.value !== d.subject || message.value !== d.body;
   const save = async () => { if (dirty()) { await Checkins.edit(d.id, { subject: subject.value, body: message.value }); d.subject = subject.value; d.body = message.value; } };
   const projects = h('div', { class: 'muted' }, ...d.items.flatMap((i, n) => [n ? ', ' : null, h('a', { href: '#/turnaround/p/' + encodeURIComponent(i.wbs1), text: i.name }),
-    (i.situation || d.situation) === 'overdue' ? ` (${i.nextCommitmentText ? '"' + i.nextCommitmentText + '", ' : ''}due ${fmtDay(i.dueDate)})` : ` (${fmtCents(i.ytdProfit)} YTD, no plan)`]));
+    (i.situation || d.situation) === 'overdue' ? ` (${i.nextCommitmentText ? '"' + i.nextCommitmentText + '", ' : ''}due ${fmtDay(i.dueDate)})` : ` (${fmtCents(i.ytdProfit)} YTD, no goal yet)`]));
   const w = why(d);
   return h('section', { class: 'sec ci-card' },
     h('div', { class: 'ci-head' }, h('span', { class: 'avatar', text: initials(d.pic.name) }), h('div', {}, h('h2', { text: d.pic.name }), projects),
@@ -75,7 +75,7 @@ function escalateCard(ctx, data) {
   return h('section', { class: 'sec' },
     h('div', { class: 'sec-head' }, h('h2', { text: `A conversation, not a draft (${data.escalate.length})` }), h('p', { text: `These are ${data.ladder.escalate} days or more past due. Talk in person.` })),
     h('div', { class: 'sec-body' }, ...data.escalate.map(e => h('div', { class: 'set-row' }, h('div', { class: 'what' }, h('div', { class: 'lab' }, h('a', { href: '#/turnaround/p/' + encodeURIComponent(e.wbs1), text: e.name })), h('div', { class: 'help', text: e.picName })),
-      h('div', { class: 'ctl' }, h('span', { class: 'chip crit', text: e.situation === 'no_plan' ? `No plan, ${plural(e.daysOverdue, 'day')} late` : `Overdue ${plural(e.daysOverdue, 'day')}` }))))));
+      h('div', { class: 'ctl' }, h('span', { class: 'chip crit', text: e.situation === 'no_plan' ? `No goal yet, ${plural(e.daysOverdue, 'day')} late` : `Check-in ${plural(e.daysOverdue, 'day')} late` }))))));
 }
 
 function historyCard(ctx, data, run) {

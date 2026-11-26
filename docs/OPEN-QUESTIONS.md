@@ -33,11 +33,13 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | H8 | Fallback for projects with several overhead rates? | reported as a warning, no profit invented | `profit.js` |
 | H10 | Final product name and a vector logo | "Compass"; small raster logo | |
 | H12 | Anything from the earlier ChatGPT engine? | nothing adopted | `reference/handoff/reference/chatgpt-engine-v0.1/` |
-| T6 | Recorded as Missed after how many days past a commitment's date? | 14 | Admin > Project Turnaround > Plan due dates. The mockup's examples disagree (2 days, and 11 days still "past due") |
-| T7 | What makes a plan's next update due? | the earlier of last entry + 30 days and the next commitment date | `plan.js`; the mockup's rows disagree |
-| T8 | A PIC with one missed commitment: Escalated? | no: a measure needs 3 items first | Admin > Reminders and standing |
+| T6 | A goal not reported on is recorded as Missed how many days after the goal check-in it was due at? | 14 | Admin > Project Turnaround > Check-in rounds |
+| T7 | ~~What makes a plan's next update due?~~ | **Decided (Josh, 2026-11-26): two rounds a month tied to the run.** Still open: how many weekdays each round has (default 5) and when the mid-month update opens (default 14 days after publishing) | Admin > Project Turnaround > Check-in rounds |
+| T22 | Keep "Add a comment" between rounds? | yes | `plan.js` (History card) |
+| T23 | Should the cause (what is driving the loss) be a pick-list? | no: one or two sentences | goal check-in |
+| T8 | A PIC with one late check-in: Escalated? | no: a measure needs 3 items first | Admin > Reminders and standing |
 | T9 | Drafts: one per PIC per situation (listing their projects), or one per project? | **one per PIC, full stop** (Josh, 2026-10-12): subject "Project Turnaround Updates", text = project names | `drafts.js` |
-| T10 | No-plan reminders: the mockup shows them 6 days after a project is listed; the ladder (counted from the 14-day due date) gives about 17 | the ladder | Admin: "days to a first plan", ladder days |
+| T10 | No-goal reminders: the ladder counts from the first goal's due date (5 weekdays after the project is listed), so about 3 days after that | the ladder | Admin: Check-in rounds, ladder days |
 | T11 | May the Admin rebuild a draft run without typing RERUN? | yes (nobody else has seen a draft) | `runs.js` |
 | T12 | "Ignore projects billed under $X": YTD billed? | yes | `selection.js` |
 | T13 | A PIC's Home shows their own projects needing action (not in the spec) | yes | `home.js` |
@@ -46,7 +48,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T16 | Should the Admin be able to see plan content for a project that is not on any run? | yes (any project by link) | |
 | T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |
 | T19 | (closed 2026-10-12: commitments no longer carry an amount, so there is no unit to convert.) | n/a | |
-| T20 | Which measures matter most in Commitment patterns? Today: kept rate, delivered against promised, lead time, dates moved, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
+| T20 | Which measures matter most in Commitment patterns? Today: goals reported on time, Did it help, cost against revenue, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
 | T21 | BD report: should "Other" be the home for revenue with no market sector, or should the Admin always be asked? | ask (publishing is refused until each project has a sector) | Admin > BD reports > rules |
 | T22 | BD report: do PICs see it? Do Finance and Marketing see the MWIP factor? | PICs no (setting); Finance and Marketing yes, PICs never see the factor | `access.picBd`; `server/bd.js` |
 | T23 | BD report: status thresholds 100% (On Track) and 99% of pace (On Pace) are the spec's; confirm | as spec | Admin > BD reports > rules |

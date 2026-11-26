@@ -4,7 +4,7 @@
    lineTo/stroke, setLineDash) and solid colors. Hex colors are allowed here, as in the Marketing Report's export: this is the printed page. */
 import { FONTS_CANVAS, FONTS_PDF, PDF_FONTS, LOGO, fnt, fontsReady, loadLogo, logo, loadJsPdf, fitText, wrap, longDay, measurer } from '/shared/export/pdf-kit.js';
 import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtDay, monthLetter, plural } from '/shared/ui/format.js';
-import { kpiItems, planText, STANDING } from './overview.js';
+import { kpiItems, planText, STANDING, MID_LABEL } from './overview.js';
 
 const X = window.TurnExportPlan;
 
@@ -15,7 +15,7 @@ const PAL = {
 };
 const PLAN_TONE = { current: 'ok', update_due: 'warn', overdue: 'crit' };
 const COLS = [0.27, 0.11, 0.34, 0.28];
-const HEADS = ['PROJECT', 'PROFIT YTD', 'LATEST UPDATE', 'NEXT COMMITMENT'];
+const HEADS = ['PROJECT', 'PROFIT YTD', 'LATEST COMMENT', 'CURRENT GOAL'];
 const LH = 11;      // line height in a table row
 const PAD = 6;      // row padding
 const COLHEAD = 16; // column heading band
@@ -30,8 +30,8 @@ function rowBlock(c, p, xs, W) {
   c.font = fnt(F, 'ui', 8);
   const meta = wrap(c, `${p.wbs1} · PM ${p.pm.name}`, cw(0));
   const latest = p.latest ? wrap(c, p.latest.text, cw(2)) : ['Nothing logged yet.'];
-  const n = p.next;
-  const next = n ? wrap(c, n.text, cw(3)) : ['None'];
+  const n = p.goal;
+  const next = n ? wrap(c, n.text, cw(3)) : ['No goal yet'];
   const c1 = name.length + meta.length + 1;
   const c3 = (p.latest ? 1 : 0) + latest.length;
   const c4 = (n ? 1 : 0) + next.length + (p.earlierMissed ? 1 : 0);
@@ -41,7 +41,7 @@ function rowBlock(c, p, xs, W) {
 
 function picHead(pic, showStanding) {
   const r = pic.record;
-  const bits = [`Plans current ${pic.plansCurrent.current} of ${pic.plansCurrent.total}`];
+  const bits = [`Done for this round ${pic.plansCurrent.current} of ${pic.plansCurrent.total}`];
   if (r) bits.push(`On time ${r.pctOnTime === null ? '-' : fmtWholePct(r.pctOnTime)}`, `Kept ${r.kept.kept} of ${r.kept.resolved}`);
   const st = r && showStanding && STANDING[r.standing];
   return { kind: 'pic', pic, right: bits.join('   ·   '), standing: st ? st : null, h: 24 + COLHEAD };
@@ -130,19 +130,20 @@ function paintRow(c, F, W, y, b) {
   if (p.latest) { c.fillStyle = PAL.ink; c.font = fnt(F, 'ui', 8.5, true); c.fillText(fmtDay(p.latest.date), xs[2] + PAD, ty); ty += LH; }
   c.fillStyle = p.latest ? PAL.ink : PAL.muted; c.font = fnt(F, 'ui', 8.5);
   b.latest.forEach(t => { c.fillText(t, xs[2] + PAD, ty); ty += LH; });
-  // next commitment
+  // the current goal: its approach and the latest mid-month word on it, then its words
   ty = y + PAD + 8.5;
-  const n = p.next;
+  const n = p.goal;
   if (n) {
-    c.fillStyle = PAL.ink; c.font = fnt(F, 'ui', 8.5, true); c.fillText(fmtDay(n.dueDate), xs[3] + PAD, ty);
-    const dx = c.measureText(fmtDay(n.dueDate)).width + 8;
-    const st = n.pastDue ? ['crit', `Past due ${plural(n.daysPastDue, 'day')}`] : n.revisions ? ['out', n.revisions === 1 ? 'Date moved once' : `Date moved ${n.revisions} times`] : ['warn', 'Open'];
-    c.fillStyle = PAL[st[0]]; c.font = fnt(F, 'ui', 8, true); c.fillText('• ' + st[1], xs[3] + PAD + dx, ty);
+    c.fillStyle = PAL.ink; c.font = fnt(F, 'ui', 8.5, true); c.fillText(n.approach, xs[3] + PAD, ty);
+    if (n.mid) {
+      const dx = c.measureText(n.approach).width + 8;
+      c.fillStyle = PAL[n.mid.status === 'stuck' ? 'crit' : 'ok']; c.font = fnt(F, 'ui', 8, true); c.fillText('• ' + MID_LABEL[n.mid.status], xs[3] + PAD + dx, ty);
+    }
     ty += LH;
   }
   c.fillStyle = n ? PAL.ink : PAL.muted; c.font = fnt(F, 'ui', 8.5);
   b.next.forEach(t => { c.fillText(t, xs[3] + PAD, ty); ty += LH; });
-  if (p.earlierMissed) { c.fillStyle = PAL.warn; c.font = fnt(F, 'ui', 8); c.fillText(`${plural(p.earlierMissed, 'earlier commitment')} missed`, xs[3] + PAD, ty); }
+  if (p.earlierMissed) { c.fillStyle = PAL.warn; c.font = fnt(F, 'ui', 8); c.fillText(`${plural(p.earlierMissed, 'earlier goal')} not reported on`, xs[3] + PAD, ty); }
   c.fillStyle = PAL.rule; c.fillRect(0, y + b.h - 0.5, W, 0.5);
 }
 

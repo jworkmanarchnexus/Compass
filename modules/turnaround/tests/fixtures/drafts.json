@@ -1,9 +1,8 @@
 {
  "_note": "today is 2026-10-07. Expected create lists are [PIC, step, projects in the draft]: one draft per PIC, whatever mix of situations. A draft is only a subject and the project names.",
  "settings": {
-  "due.newProjectDays": 14,
-  "due.afterEntryDays": 30,
-  "due.soonDays": 14,
+  "round.dueBusinessDays": 5,
+  "round.midOpensDays": 14,
   "due.graceUntil": "02-01",
   "ladder.reminder1Days": 3,
   "ladder.reminder2Days": 10,

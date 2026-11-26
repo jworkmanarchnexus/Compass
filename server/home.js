@@ -47,7 +47,7 @@ function buildHome(db, user, { today, settings }) {
       const count = s => waiting.filter(d => d.situation === s).reduce((n, d) => n + JSON.parse(d.items_json).length, 0);
       const od = count('overdue'), np = count('no_plan');
       items.push({ kind: 'checkins', badge: plural(waiting.length, 'draft'), tone: 'blue', title: 'Check-in drafts are ready for you to send',
-        text: `${[od ? plural(od, 'overdue plan update') : null, np ? `${plural(np, 'project')} with no plan yet` : null].filter(Boolean).join(' and ')}. Each note goes out from your own mailbox.`, href: '#/turnaround/checkins', action: 'Open queue' });
+        text: `${[od ? plural(od, 'overdue check-in') : null, np ? `${plural(np, 'project')} with no goal yet` : null].filter(Boolean).join(' and ')}. Each note goes out from your own mailbox.`, href: '#/turnaround/checkins', action: 'Open queue' });
     }
     const pipeAlerts = pipeDb.alertCount(db);
     if (pipeAlerts > 0) {

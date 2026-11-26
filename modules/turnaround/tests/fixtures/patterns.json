@@ -233,7 +233,7 @@
     "improved": 1,
     "improvedRate": 1
    },
-   "creep": {
+   "cost": {
     "made": 0,
     "keptRate": null
    }
@@ -327,5 +327,86 @@
   "stillOn": [],
   "picOf": {},
   "expectTotal": 0
+ },
+ "rounds": {
+  "_note": "Goals in the new form: one approach each, due at the next month's goal check-in (Oct 9 for a goal set in September).",
+  "input": {
+   "year": 2026,
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ],
+   "settings": {
+    "round.dueBusinessDays": 5,
+    "round.midOpensDays": 14,
+    "due.graceUntil": "02-01"
+   },
+   "picOf": {
+    "P1": "E1"
+   },
+   "listed": [
+    {
+     "wbs1": "P1",
+     "pic": "E1",
+     "appeared": "2026-09-02"
+    }
+   ],
+   "cameOff": [],
+   "stillOn": [
+    "P1"
+   ],
+   "entries": [
+    {
+     "id": "g1",
+     "wbs1": "P1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "g1",
+     "data": {
+      "lever": "revenue"
+     }
+    },
+    {
+     "id": "d1",
+     "wbs1": "P1",
+     "kind": "done",
+     "date": "2026-10-08",
+     "commitmentId": "g1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "g2",
+     "wbs1": "P1",
+     "kind": "commitment",
+     "date": "2026-10-08",
+     "commitmentId": "g2",
+     "data": {
+      "lever": "cost"
+     }
+    }
+   ]
+  },
+  "expect": {
+   "money": {
+    "made": 1,
+    "kept": 1,
+    "keptRate": 1,
+    "improved": 1,
+    "avgLead": 35
+   },
+   "spend": {
+    "made": 1,
+    "open": 1,
+    "keptRate": null,
+    "avgLead": null
+   },
+   "actions": [
+    "cost",
+    "revenue"
+   ]
+  }
  }
 }

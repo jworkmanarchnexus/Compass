@@ -24,7 +24,7 @@ export function homeSummary(data) {
   }
   if (data.yours && data.yours.runLabel) {
     const n = data.yours.projects.filter(p => p.plan.status !== 'current').length;
-    bits.push(n ? `${n} of your projects ${n === 1 ? 'needs' : 'need'} a plan update` : 'Your project plans are up to date');
+    bits.push(n ? `${n} of your projects ${n === 1 ? 'needs' : 'need'} a check-in` : 'Your projects are done for this round');
   }
   return bits.join(' · ');
 }
@@ -77,7 +77,7 @@ function yours(ctx, y) {
   return card(ctx, 'Your projects', y.runLabel ? `${y.runLabel} run` : '',
     ...(rows.length ? rows.map(p => h('div', { class: 'att' },
       planChip(ctx, p.plan), h('div', { class: 'att-body' }, h('div', { class: 'strong', text: p.name })),
-      h('a', { class: 'btn', href: '#/turnaround/p/' + encodeURIComponent(p.wbs1), text: p.plan.status === 'current' ? 'Open plan' : 'Add to the log' })))
+      h('a', { class: 'btn', href: '#/turnaround/p/' + encodeURIComponent(p.wbs1), text: p.plan.status === 'current' ? 'Open project' : 'Check in' })))
       : [h('div', { class: 'empty-row', text: y.runLabel ? 'None of your projects are below break-even.' : 'Nothing has been published yet.' })]));
 }
 

@@ -12,12 +12,10 @@ const DEFAULTS = {
   'include.ytdProfitBelow': 0,
   'include.ignoreBilledUnder': 0,
   'include.noPic': 'leave-out-warn',
-  'due.newProjectDays': 14,
-  'due.afterEntryDays': 30,
-  'due.cadenceDays': 14,         // check-ins: every this many days from the project's first report, the PIC reports back and makes a new commitment
+  'round.dueBusinessDays': 5,    // each round (the goal check-in, the mid-month update) is due this many weekdays after it opens
+  'round.midOpensDays': 14,      // the mid-month update opens this many days after the month is published
   'due.graceUntil': '02-01',
-  'due.soonDays': 14,            // a plan shows "Update due" when its next update falls within this many days
-  'due.missedAfterDays': 14,     // an open commitment is recorded as Missed this many days after its date
+  'due.missedAfterDays': 14,     // a goal not reported on is recorded as Missed this many days after its goal check-in was due
   'ladder.reminder1Days': 3,     // reminder ladder, counted from each project's due date
   'ladder.reminder2Days': 10,
   'ladder.escalateDays': 21,
@@ -67,11 +65,9 @@ const VALIDATORS = {
   'include.ytdProfitBelow': v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e9,
   'include.ignoreBilledUnder': money,
   'include.noPic': oneOf(['leave-out-warn', 'unassigned']),
-  'due.newProjectDays': days,
-  'due.afterEntryDays': days,
-  'due.cadenceDays': v => Number.isInteger(v) && v >= 1 && v <= 90,
+  'round.dueBusinessDays': v => Number.isInteger(v) && v >= 1 && v <= 20,
+  'round.midOpensDays': v => Number.isInteger(v) && v >= 7 && v <= 25,
   'due.graceUntil': v => typeof v === 'string' && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
-  'due.soonDays': days,
   'due.missedAfterDays': days,
   'ladder.reminder1Days': days,
   'ladder.reminder2Days': days,

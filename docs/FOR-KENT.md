@@ -13,7 +13,7 @@ npm start          http://localhost:5281, this computer only
 npm test           76 tests, a few seconds
 npm run seed       reset the local database to the made-up demo (two published runs, plan logs)
 npm run run-month  the monthly job (build the last closed month's draft)
-npm run daily      the daily job (missed commitments, check-in drafts, the Admin's one email)
+npm run daily      the daily job (goals not reported on, check-in drafts, the Admin's one email)
 ```
 
 Environment variables: `PORT` (default 5281), `COMPASS_DB` (path of the SQLite file), `COMPASS_URL` (the address put in the Admin's email), and `COMPASS_TODAY=2026-10-07` (pins "today"; the demo data is written around that day, so statuses drift on any other day).
@@ -56,9 +56,10 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `GET /api/me` | signed in | the person, role, what they may open, Admin tab levels, the Admin's check-in count |
 | `GET /api/home` | signed in | Home, shaped by role |
 | `GET /api/turnaround/current` | Turnaround viewers | the page for the last published run (`{ run: null }` until one exists) |
-| `GET /api/projects/:wbs1/plan[?cycle=YYYY]` | Turnaround viewers | a project's plan, log, commitments, figures |
-| `POST /api/projects/:wbs1/plan/entries` | the project's PIC; Admin for `admin_note` | add an entry |
-| `POST /api/projects/:wbs1/plan/checkin` | the project's PIC | report back on every open commitment (`reports`: `[{ commitmentId, body, improved }]`) and make the next (`lever`, `otherText`, `body`); all or nothing. `POST .../commitments/:id/done` is kept as a building block (what happened, `improved`) |
+| `GET /api/projects/:wbs1/plan[?cycle=YYYY]` | Turnaround viewers | a project's page: status and round dates, the form's context, every goal, the history newest first, figures; for its PIC, their projects on the list (`steps`) |
+| `POST /api/projects/:wbs1/plan/entries` | the project's PIC (`update`, a comment); Admin (`admin_note`) | add a comment or an admin note |
+| `POST /api/projects/:wbs1/plan/checkin` | the project's PIC | the goal check-in: `{ cause?, helped?, comment?, keep?, approach?, how? }`. Writes the explanation (first of the year), the report on the open goal and the next goal; all or nothing |
+| `POST /api/projects/:wbs1/plan/midmonth` | the project's PIC | the mid-month update: `{ status: progress | done | stuck, comment }`\| done \| stuck, comment }` |
 | `GET /api/admin/settings`, `PUT /api/admin/settings` | Admin edit; System admin read | settings; save `{ changes: { key: value } }` |
 | `GET /api/admin/people`, `PUT /api/admin/people/:id` | Admin edit; System admin read | people; change role, active, draft name |
 | `GET /api/admin/audit` | Admin, System admin | the audit log |
@@ -68,7 +69,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `POST /api/admin/runs/:id/rebuild`, `/publish`, `/archive` | Admin | rebuild a draft; publish; archive (`{ reason, confirm: "RERUN" }`) and build the next draft |
 | `GET /api/admin/checkins`, `PUT /api/admin/checkins/:id`, `POST /api/admin/checkins/:id/send`, `/dismiss`, `/undo` | Admin | the queue; edit a waiting draft; mark sent; dismiss; undo |
 | `POST /api/admin/daily` | Admin | run the daily checks now |
-| `GET /api/admin/patterns[?year=YYYY]` | Admin | the commitment analysis for a year |
+| `GET /api/admin/patterns[?year=YYYY]` | Admin | the goal analysis for a year |
 | `GET /api/pipeline[?date=&kind=mwip\|forecast]` | Pipeline viewers | the table for one snapshot (default: latest) with alerts, conversions and the chart |
 | `GET /api/pipeline/detail?date=&kind=&pic=` | Pipeline viewers | one PIC's pursuits (or contracts); notes only for the Admin |
 | `GET /api/pipeline/export?date=&kind=` | Pipeline viewers | the table as CSV |
