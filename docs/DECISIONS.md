@@ -260,3 +260,19 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **The Admin always sees a preview** (otherwise nobody could try it before picking testers). A System admin does not: they are not an Admin and never see module content they are not given.
 - **Pages only.** Jobs and emails ignore the preview. A preview on the live server still uses real data, and plan-log entries are permanent, so a module that writes data should be tried on a test server first (Kent).
 - **Whole modules for now.** A smaller feature inside a page can use the same rule later by adding its key to `PREVIEWABLE` and the `release` default.
+
+## My dashboard scaffolding (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- **Its own module** (`modules/dashboard/`), as Josh asked, built on branch `dashboard` off `main` so it has the design refresh.
+- **Saved per person on the server** (`dashboard_layouts`, one row each), not in the browser, so it follows the person to another computer and Kent can see the shape. Replaced on every save; no history (it is a preference, not a record).
+- **Packing keeps the order** (each dashpart at or after the one before it) instead of filling every gap: with gap-filling, a small dashpart dragged past a big one jumped back into the earlier gap and the drag looked like it did nothing. Gaps can remain; the person drags something into them.
+- **Resize is one cell at a time with arrow buttons** on the right and bottom edges, not a drag handle: easy to hit while the tile jiggles, works by keyboard, and each arrow can say what the change will show before it is clicked.
+- **Sizes are min/max per dashpart** in the catalog; the server forces every saved size inside them.
+- **New dashparts start off** for people who already saved a layout, so the catalog can grow without changing anyone's page.
+- 2026-11-26 (Josh): **a new person starts with six dashparts on**: My projects below break-even, Revenue against goal, Pipeline, Portfolio bubble chart, Fee by phase, Unbilled work. Staff mix by role, Client scorecard and Where the fee goes start in Available.
+- 2026-11-26 (Josh): **two dashboards in the side bar, PIC and PM**, each shown only to people who are PIC (or PM) on something. I read "on anything" as at least one **active** project in the Vantagepoint copy, and it follows the projects, not the Compass role, so a PIC who manages one project also gets the PM dashboard. The Admin always has both (my default). The role-based `dashboard` area from the first build is gone; `/api/me` carries `dashboards` instead.
+- **One saved arrangement per person per dashboard** (`dashboard_layouts` keyed by person and board). Local databases from the first build drop the old table on start; it only held preferences made today.
+- 2026-11-26 (Josh): **the PM dashboard's dashparts** are Fee by phase, Unbilled work, Where the fee goes and Staff mix by role, all on for a new person.
+- **No seeded person is both PIC and PM**, and I did not change the seed because Billing's tests depend on who manages what. The test makes Tom Lindqvist PM on the Ogden Library Annex for the both-dashboards case.
+- 2026-11-26 (Josh): **the dashparts' real numbers come from Vantagepoint.**
+- **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.

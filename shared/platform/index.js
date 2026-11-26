@@ -7,3 +7,4 @@ export { Home } from './home.js';
 export { Bd } from './bd.js';
 export { Pipeline } from './pipeline.js';
 export { Billing } from './billing.js';
+export { Dashboard } from './dashboard.js';

@@ -15,6 +15,7 @@ const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
+const dashboard = require('./dashboard');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -112,8 +113,15 @@ function createServer(db, opts) {
     if (p === '/api/me' && method === 'GET') {
       const settingsNow = currentSettings();
       const me = Object.assign(userOut(user), roles.describeUser(user, settingsNow));
+      me.dashboards = dashboard.boardsOf(db, user); // ['pic', 'pm'], from the projects they are PIC or PM on
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
       return sendJson(res, 200, me);
+    }
+
+    const dm = /^\/api\/dashboards\/([a-z]+)$/.exec(p);
+    if (dm) {
+      if (method === 'GET') return sendJson(res, 200, dashboard.get(db, user, dm[1]));
+      if (method === 'PUT') return sendJson(res, 200, dashboard.save(db, user, dm[1], await readJson(req)));
     }
 
     if (p === '/api/admin/settings' && method === 'GET') {
