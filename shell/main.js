@@ -34,6 +34,7 @@ const NAV = [
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
 const flatNav = NAV.flatMap(n => [n].concat(n.sub || []));
+const AREA_LABEL = Object.assign({ billing: 'Billing' }, Object.fromEntries(flatNav.filter(n => n.area).map(n => [n.area, n.label]))); // Billing has no side bar item on this branch yet
 
 function mount(...nodes) { root.textContent = ''; root.append(...nodes); T.hydrateIcons(root); }
 
@@ -56,8 +57,9 @@ async function showSignIn(message) {
 }
 
 /* ---------- frame ---------- */
-function navItem(n, on, sub, badge) {
-  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null }, icon(n.icon, sub ? 16 : 18), h('span', { class: 'nav-label', text: n.label }),
+function navItem(n, on, sub, badge, preview) {
+  return h('a', { class: 'nav-item' + (sub ? ' nav-sub' : '') + (on ? ' on' : ''), href: n.href, 'aria-current': on ? 'page' : null, title: preview ? n.label + ' (preview: only some people see this)' : null }, icon(n.icon, sub ? 16 : 18), h('span', { class: 'nav-label', text: n.label }),
+    preview ? h('span', { class: 'chip blue nav-tag', text: 'Preview' }) : null,
     badge === undefined ? null : h('span', { class: 'cnt warn nav-cnt', 'data-badge': n.id, hidden: badge === 0, text: String(badge) }));
 }
 
@@ -74,7 +76,7 @@ function frame(routeId, crumbs, titleText, sub) {
   const nav = [h('div', { class: 'navh', text: 'Modules' })];
   for (const n of NAV) {
     if (n.area && !me.areas[n.area]) continue;
-    nav.push(navItem(n, routeId === n.id, false, n.id === 'pipeline' && me.badges ? me.badges.pipeline : undefined));
+    nav.push(navItem(n, routeId === n.id, false, n.id === 'pipeline' && me.badges ? me.badges.pipeline : undefined, !!(me.preview && me.preview[n.area])));
     for (const s of n.sub || []) if (me.areas[s.area]) nav.push(navItem(s, routeId === s.id, true, s.id === 'checkins' && me.badges ? me.badges.checkins : undefined));
   }
   const side = h('aside', { class: 'side', 'aria-label': 'Compass navigation' },
@@ -119,7 +121,7 @@ async function pageHome() {
     const mine = flatNav.filter(n => n.area && me.areas[n.area]);
     body.append(h('div', { class: 'section-h' }, h('h2', { text: 'Your pages' }), h('span', { class: 'muted', text: R.ROLE_LABEL[me.role] })),
       h('div', { class: 'recent' }, ...mine.map(n => h('a', { class: 'rcard', href: n.href },
-        h('span', { class: 'pn', text: n.phase ? `Arrives in phase ${n.phase}` : 'Ready' }), h('span', { class: 'pt', text: n.label }), h('span', { class: 'pm', text: n.blurb })))));
+        h('span', { class: 'pn', text: n.phase ? `Arrives in phase ${n.phase}` : (me.preview && me.preview[n.area]) ? 'Preview' : 'Ready' }), h('span', { class: 'pt', text: n.label }), h('span', { class: 'pm', text: n.blurb })))));
   }
   T.hydrateIcons(body);
 }
@@ -177,7 +179,7 @@ const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
-  'round.dueBusinessDays': 'Weekdays to answer each round', 'round.midOpensDays': 'Days until the mid-month update opens', 'due.graceUntil': 'January grace period ends', 'due.missedAfterDays': 'Days until a goal is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see',
+  'round.dueBusinessDays': 'Weekdays to answer each round', 'round.midOpensDays': 'Days until the mid-month update opens', 'due.graceUntil': 'January grace period ends', 'due.missedAfterDays': 'Days until a goal is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see', 'release': 'Modules in preview',
 };
 
 const fmtTime = ms => {
@@ -186,6 +188,8 @@ const fmtTime = ms => {
 };
 const fmtClock = v => { const [hh, mm] = v.split(':').map(Number); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a.m.' : 'p.m.'}`; };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/* "Billing in preview (2 testers)", or "all live" */
+const showRelease = v => { const on = Object.entries(v || {}).filter(([, r]) => r.stage === 'preview'); return on.length ? on.map(([a, r]) => `${AREA_LABEL[a] || a} in preview (${r.testers.length} ${r.testers.length === 1 ? 'tester' : 'testers'})`).join(', ') : 'all live'; };
 const showValue = v => typeof v === 'boolean' ? (v ? 'on' : 'off') : (v && typeof v === 'object') ? JSON.stringify(v) : String(v);
 
 async function pageAdmin(tab) {
@@ -214,7 +218,7 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
     } else if (tab === 'people') {
       const [people, s] = await Promise.all([Admin.people(), Admin.settings()]);
       slot.textContent = '';
-      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), accessCard(s, canEdit, rerender), rolesCard());
+      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), accessCard(s, canEdit, rerender), previewCard(s, people, canEdit, rerender), rolesCard());
     } else if (tab === 'reminders') {
       const s = await Admin.settings();
       slot.textContent = '';
@@ -367,6 +371,27 @@ function accessCard(s, canEdit, rerender) {
   ], 'Takes effect the next time the person opens a page.');
 }
 
+/* Preview (shared/rules/roles.js): a module open only to the Admin and the people picked here. A tester still needs a role that opens it,
+   so only those people are listed. The server checks again and records the change in the audit log. */
+function previewCard(s, people, canEdit, rerender) {
+  return settingsCard('Modules in preview', 'Try a module with a few people before everyone gets it. In preview, only you and the people you pick see it, with a "Preview" tag. Switch it to Live when it is ready.', s, ['release'], canEdit, rerender, ed => R.PREVIEWABLE.map(area => {
+    const r = ed.draft.release[area];
+    const who = people.filter(p => p.active && p.role !== 'admin' && R.canView(p.role, area, s.access.value));
+    const picks = h('div', { class: 'preview-picks', hidden: r.stage !== 'preview' },
+      who.length ? h('div', { class: 'help', text: `Only people whose role can open ${AREA_LABEL[area]} are listed. Admins always see it.` }) : h('div', { class: 'help', text: 'No other role can open this yet.' }),
+      ...who.map(p => {
+        const box = h('input', { type: 'checkbox', checked: r.testers.includes(p.id), disabled: !canEdit, onchange: () => {
+          r.testers = box.checked ? r.testers.concat(p.id) : r.testers.filter(x => x !== p.id);
+        } });
+        return h('label', { class: 'check' }, box, h('span', { text: p.name }), h('span', { class: 'muted small', text: R.ROLE_LABEL[p.role] }));
+      }));
+    const stage = h('select', { class: 'txt', disabled: !canEdit, 'aria-label': 'Release of ' + AREA_LABEL[area], onchange: () => { r.stage = stage.value; picks.hidden = r.stage !== 'preview'; } },
+      h('option', { value: 'live', text: 'Live for everyone its role allows', selected: r.stage === 'live' }),
+      h('option', { value: 'preview', text: 'Preview: you and the people you pick', selected: r.stage === 'preview' }));
+    return row(AREA_LABEL[area], null, h('div', { class: 'preview-ctl' }, stage, picks));
+  }), 'Takes effect the next time the person opens a page.');
+}
+
 function peopleCard(people, canEdit, rerender, onError) {
   const change = async (id, c) => { try { await Admin.changePerson(id, c); await rerender(); } catch (e) { onError(e); } };
   const trs = people.map(p => h('tr', {},
@@ -514,6 +539,7 @@ function archivePanel(run, act) {
 }
 
 function auditText(e) {
+  if (e.action === 'setting.change' && e.object === 'release') return [`Changed setting: ${SETTING_LABEL.release}`, `${showRelease(e.detail.from)} to ${showRelease(e.detail.to)}`];
   if (e.action === 'setting.change') return [`Changed setting: ${SETTING_LABEL[e.object] || e.object}`, `${showValue(e.detail.from)} to ${showValue(e.detail.to)}`];
   if (e.action === 'user.change') {
     const parts = Object.keys(e.detail.to).filter(k => JSON.stringify(e.detail.to[k]) !== JSON.stringify(e.detail.from[k]))

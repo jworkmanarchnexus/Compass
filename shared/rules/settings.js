@@ -49,6 +49,13 @@ const DEFAULTS = {
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
+  /* Preview (shared/rules/roles.js): each module is 'live' for everyone its role allows, or in 'preview' for the Admin and the testers picked here */
+  'release': {
+    turnaround: { stage: 'live', testers: [] },
+    bd: { stage: 'live', testers: [] },
+    pipeline: { stage: 'live', testers: [] },
+    billing: { stage: 'live', testers: [] },
+  },
 };
 
 const days = v => Number.isInteger(v) && v >= 0 && v <= 365;
@@ -101,6 +108,16 @@ VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
 const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
   && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;
+
+/* release: the same modules as the default, each { stage, testers } with testers a list of distinct user ids. Whether each id is a real person is checked by the server. */
+VALIDATORS['release'] = v => !!v && typeof v === 'object' && !Array.isArray(v)
+  && Object.keys(v).length === Object.keys(DEFAULTS.release).length
+  && Object.keys(DEFAULTS.release).every(a => {
+    const x = v[a];
+    return !!x && typeof x === 'object' && Object.keys(x).length === 2 && (x.stage === 'live' || x.stage === 'preview')
+      && Array.isArray(x.testers) && x.testers.length <= 200 && x.testers.every(id => typeof id === 'string' && id.length > 0 && id.length <= 64)
+      && new Set(x.testers).size === x.testers.length;
+  });
 
 const isKnown = key => Object.prototype.hasOwnProperty.call(DEFAULTS, key);
 const isValid = (key, value) => isKnown(key) && VALIDATORS[key](value);

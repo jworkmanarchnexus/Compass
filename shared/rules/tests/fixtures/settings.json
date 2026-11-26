@@ -273,6 +273,189 @@
         ]
       },
       "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "live",
+          "testers": []
+        }
+      },
+      "expect": true
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "preview",
+          "testers": [
+            "u-1",
+            "u-2"
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "beta",
+          "testers": []
+        }
+      },
+      "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "preview",
+          "testers": [
+            "u-1",
+            "u-1"
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "preview",
+          "testers": [
+            7
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "preview"
+        }
+      },
+      "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        },
+        "billing": {
+          "stage": "live",
+          "testers": []
+        },
+        "admin": {
+          "stage": "preview",
+          "testers": []
+        }
+      },
+      "expect": false
+    },
+    {
+      "key": "release",
+      "value": {
+        "turnaround": {
+          "stage": "live",
+          "testers": []
+        },
+        "bd": {
+          "stage": "live",
+          "testers": []
+        },
+        "pipeline": {
+          "stage": "live",
+          "testers": []
+        }
+      },
+      "expect": false
     }
   ],
   "crossCheck": [

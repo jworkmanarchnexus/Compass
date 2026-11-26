@@ -34,10 +34,39 @@ function adminTab(role, tab) {
   return null;
 }
 
+/* ===== Preview: a module released to a few people first =====
+   release = the Admin setting "release" (see settings.js): { area: { stage: 'live' | 'preview', testers: [userId] } }.
+   In preview, an area is open only to the Admin and the people the Admin picked. Preview never widens a role:
+   a tester still needs a role that opens the area. The Admin always sees a preview, so they can try it themselves.
+   Admin and the check-in drafts are never in preview (Admin must stay reachable; the drafts are the Admin's alone). */
+const PREVIEWABLE = ['turnaround', 'bd', 'pipeline', 'billing'];
+
+function inPreview(area, release) {
+  const r = release && release[area];
+  return !!r && r.stage === 'preview';
+}
+function released(user, area, release) {
+  if (!inPreview(area, release)) return true;
+  return user.role === 'admin' || release[area].testers.includes(user.id);
+}
+/* the one check the server makes: may this person open this area today? settings = all settings in force */
+function canUse(user, area, settings) {
+  const s = settings || {};
+  return canView(user.role, area, s.access) && released(user, area, s.release);
+}
+
 function describe(role, access) {
   const areas = Object.fromEntries(AREAS.map(a => [a, canView(role, a, access)]));
   const adminTabs = Object.fromEntries(ADMIN_TABS.map(t => [t, adminTab(role, t)]));
   return { areas, adminTabs };
+}
+/* describe() for a signed-in person: what they may open, and which of those are in preview (for the "Preview" tag) */
+function describeUser(user, settings) {
+  const s = settings || {};
+  const areas = Object.fromEntries(AREAS.map(a => [a, canUse(user, a, s)]));
+  const adminTabs = Object.fromEntries(ADMIN_TABS.map(t => [t, adminTab(user.role, t)]));
+  const preview = Object.fromEntries(PREVIEWABLE.map(a => [a, areas[a] && inPreview(a, s.release)]));
+  return { areas, adminTabs, preview };
 }
 
 /* the last active admin can never be removed or demoted, or nobody could change settings again */
@@ -54,6 +83,6 @@ function canChangeUser(users, targetId, change) {
   return { ok: true };
 }
 
-const rolesApi = { ROLES, ROLE_LABEL, AREAS, ADMIN_TABS, canView, adminTab, describe, canChangeUser };
+const rolesApi = { ROLES, ROLE_LABEL, AREAS, ADMIN_TABS, PREVIEWABLE, canView, adminTab, inPreview, canUse, describe, describeUser, canChangeUser };
 if (typeof module !== 'undefined' && module.exports) module.exports = rolesApi;
 else if (typeof window !== 'undefined') window.CompassRules = Object.assign(window.CompassRules || {}, rolesApi);

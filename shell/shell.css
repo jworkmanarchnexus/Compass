@@ -65,6 +65,13 @@ body.side-open .side-scrim { display: block; }
 :root { --c-prev: var(--line-strong); --c-bar: var(--text-2); --c-now: var(--accent); }
 .nav-cnt { margin-left: auto; }
 .nav-cnt[hidden] { display: none; }
+/* Preview tag on a module in the side bar, and the tester list in Admin, People */
+.nav-tag { margin-left: auto; height: 18px; padding: 0 6px; font-size: 10.5px; }
+.nav-tag + .nav-cnt { margin-left: var(--s2); }
+.preview-ctl { display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start; }
+.preview-picks { display: flex; flex-direction: column; gap: 0; }
+.preview-picks[hidden] { display: none; }
+.preview-picks .check .muted { margin-left: var(--s1); }
 .muted { color: var(--text-2); }
 .small { font-size: 13px; }
 .strong { font-weight: 700; }
@@ -212,7 +219,7 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 /* the design system hides every span in a collapsed nav item, which also hides the icon (it sits in a span): show it again, hide only the words */
 @media (min-width: 861px) {
   body.side-collapsed .nav-item span { display: inline-flex; }
-  body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt { display: none; }
+  body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt, body.side-collapsed .nav-item .nav-tag { display: none; }
 }
 
 /* ===== Every page on the canvas (design refresh): sections become separate cards. Colors unchanged. ===== */

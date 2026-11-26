@@ -21,7 +21,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
 function buildHome(db, user, { today, settings }) {
   const out = { today, role: user.role };
   const runs = runsDb.allRuns(db);
-  const canTurnaround = roles.canView(user.role, 'turnaround', settings.access);
+  const canTurnaround = roles.canUse(user, 'turnaround', settings);
   const isAdmin = user.role === 'admin';
   const sees = isAdmin || user.role === 'sysadmin';
   const dir = tdb.directory(db);
@@ -72,12 +72,14 @@ function buildHome(db, user, { today, settings }) {
   }
 
   // ---- recently published ----
-  const canBd = roles.canView(user.role, 'bd', settings.access);
+  const canBd = roles.canUse(user, 'bd', settings);
   if (canTurnaround || canBd) {
     const names = Object.fromEntries(db.all('SELECT id, display_name FROM users').map(u => [u.id, u.display_name]));
     const list = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
-    const whoTurn = ['PICs', 'Finance'].concat(settings.access.marketingTurnaround ? ['Marketing'] : []);
-    const whoBd = ['Finance', 'Marketing'].concat(settings.access.picBd ? ['PICs'] : []);
+    // in preview, only the picked testers see it (roles.canUse), so say that instead of the roles
+    const testers = area => { const n = settings.release[area].testers.length; return n ? [`your ${plural(n, 'preview tester')} (in preview)`] : ['nobody else yet (in preview)']; };
+    const whoTurn = roles.inPreview('turnaround', settings.release) ? testers('turnaround') : ['PICs', 'Finance'].concat(settings.access.marketingTurnaround ? ['Marketing'] : []);
+    const whoBd = roles.inPreview('bd', settings.release) ? testers('bd') : ['Finance', 'Marketing'].concat(settings.access.picBd ? ['PICs'] : []);
     out.published = runs.filter(r => r.status === 'published' && (r.kind === bdDb.KIND ? canBd : canTurnaround))
       .sort((a, b) => b.published_at - a.published_at).slice(0, 5).map(r => {
         const by = names[r.published_by] ? names[r.published_by].split(' ')[0] : null;
@@ -143,7 +145,7 @@ function buildHome(db, user, { today, settings }) {
     out.pull = latest ? { period: latest.period, label: schedule.periodLabel(latest.period), dataAsOf: schedule.lastDayOfPeriod(latest.period), builtAt: latest.created_at, current: latest.period >= latestClosed } : null;
   }
 
-  out.areas = roles.describe(user.role, settings.access).areas;
+  out.areas = roles.describeUser(user, settings).areas;
   void dir;
   return out;
 }
