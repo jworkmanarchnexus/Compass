@@ -214,3 +214,32 @@ ol.log { list-style: none; margin: 0; padding: 0; }
   body.side-collapsed .nav-item span { display: inline-flex; }
   body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt { display: none; }
 }
+
+/* ===== Every page on the canvas (design refresh): sections become separate cards. Colors unchanged. ===== */
+/* Turnaround headline figures: four cards instead of one divided strip */
+.on-canvas .kpis { background: transparent; border: 0; border-radius: 0; overflow: visible; gap: var(--s4); }
+.on-canvas .kpi { background: var(--surface); border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); padding: var(--s5); }
+.on-canvas .k-label { font: 700 14px/1.25 var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--text-strong); }
+.on-canvas .k-big { font: 700 32px/1.15 var(--f-ui); margin: var(--s2) 0 var(--s1); letter-spacing: -.01em; }
+.on-canvas .k-big.sm { font-size: 22px; }
+@media (max-width: 900px) { .on-canvas .kpi:nth-child(-n+2) { border-bottom: 0; } }
+@media (max-width: 520px) { .on-canvas .kpi { border-bottom: 0; } }
+/* chart panels */
+.on-canvas .chart-card { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); padding: var(--s5); }
+.on-canvas .chart-head h2 { font: 700 16px/1.25 var(--f-ui); }
+/* one card per PIC */
+.on-canvas .pic { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+.on-canvas .pic-head { padding: var(--s4) var(--s5); }
+/* tables inside cards: quieter header band, roomier rows */
+/* (not the Marketing Report and Pipeline tables: their navy heads are the report's own colors) */
+.on-canvas table.dt:not(.bd-t) th { background: transparent; border-bottom-color: var(--line); }
+.on-canvas table.dt td { border-bottom-color: var(--line-2); }
+/* plan page: the log and the side cards */
+.on-canvas .log-item { border-bottom-color: var(--line-2); }
+.on-canvas .report, .on-canvas .cm-form { border-radius: var(--r4); }
+/* BD and Pipeline boxes already float; match the shared card */
+.on-canvas .bd-box { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+.on-canvas .bd-drill { box-shadow: var(--shadow-soft), 0 0 0 1.5px var(--accent); }
+.on-canvas .pw-item { border-bottom-color: var(--line-2); }
+/* a PIC with nothing below break-even keeps its green panel, as a card */
+.on-canvas .great { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }

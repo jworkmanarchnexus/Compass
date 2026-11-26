@@ -97,7 +97,8 @@ function frame(routeId, crumbs, titleText, sub) {
       h('div', { class: 'crumbs' }, ...crumbs),
       titleText ? h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: titleText }), sub ? h('span', { class: 'sub', text: sub }) : null) : null),
     body);
-  mount(h('div', { class: 'shell' }, side, h('div', { class: 'mainwrap' }, mtop, page)), scrim);
+  // every page sits on the canvas: its sections are separate cards (design refresh, DECISIONS 2026-11-25)
+  mount(h('div', { class: 'shell' }, side, h('div', { class: 'mainwrap on-canvas' }, mtop, page)), scrim);
   T.applyTheme(themeBtn); T.applyCollapse(collapseBtn); T.applyDensity(densityBtn);
   document.body.classList.remove('side-open');
   return body;
@@ -111,7 +112,6 @@ async function pageHome() {
   const me = Session.me();
   const data = await Home.get();
   const body = frame('home', [], null);
-  body.closest('.mainwrap').classList.add('on-canvas'); // Home is the first page on the modern canvas (DECISIONS 2026-11-25)
   body.parentNode.querySelector('.phead').replaceChildren(homeHeader(ctx, data, me, new Date().getHours())); // a greeting, not a title
   renderHome(ctx, body, data);
   // a small "your pages" list for roles whose Home has little else on it
