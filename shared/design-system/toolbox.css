@@ -78,7 +78,7 @@
   --crit-bg: #FCECEB;
   --shadow-1: 0 1px 2px rgba(40, 46, 52, 0.08);
   --shadow-2: 0 8px 24px rgba(40, 46, 52, 0.14), 0 1px 3px rgba(40, 46, 52, 0.08);
-  --shadow-soft: 0 1px 2px rgba(30, 45, 60, 0.04), 0 6px 20px rgba(30, 45, 60, 0.06);
+  --shadow-soft: 0 2px 4px rgba(30, 45, 60, 0.10), 0 12px 32px rgba(30, 45, 60, 0.18);
   --focus: 0 0 0 3px rgba(0, 153, 216, 0.28);
   color-scheme: light;
 }
@@ -115,7 +115,7 @@ body.dense { --row-h: 27px; }
     --crit: #EF6F68;
     --crit-bg: #3A1D1C;
     --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+    --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
 }
@@ -150,7 +150,7 @@ body.dense { --row-h: 27px; }
   --crit: #EF6F68;
   --crit-bg: #3A1D1C;
   --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
 /* Toolbox shared component rules. Values come from tokens.css; never hard-code a color here. */
@@ -424,34 +424,41 @@ body.side-collapsed .nav-item.nav-sub { padding-left: 10px; }
 }
 
 /* ==========================================================================
-   Modern layer (2026-11): the shell sits on a tinted canvas. The side bar and
-   the page are floating white panels with soft depth instead of hairlines.
-   A page that opts in with .on-canvas (on .mainwrap) drops its sheet and shows
-   its sections as separate cards. Behavior is unchanged: the side bar still
-   expands, shrinks to icons, and becomes a slide-out menu below 860px.
+   Modern layer (2026-11): a white frame holding grey tiles. The side bar is a
+   grey tile; a page that opts in with .on-canvas (on .mainwrap) gets a short
+   grey header tile (title, page actions on the right in .pacts) and a large
+   grey tile under it, where its sections sit as white cards. Pages that have
+   not opted in keep a plain white sheet. Behavior is unchanged: the side bar
+   still expands, shrinks to icons, and becomes a slide-out menu below 860px.
    ========================================================================== */
-.shell { background: var(--canvas); }
-.side { background: var(--surface); }
+.shell { background: var(--bg); }
+.side { background: var(--canvas); }
 .side-nav .navh { padding-top: 14px; }
 .nav-item { height: 38px; border-radius: var(--r4); }
 .nav-item.on::before { display: none; }
 .nav-item.nav-sub { height: 34px; }
-.side-foot { margin: 8px 10px 10px; padding: 8px; border-top: 0; border-radius: var(--r5); background: var(--surface-2); }
+.side-foot { margin: 8px 10px 10px; padding: 8px; border-top: 0; border-radius: var(--r5); background: var(--surface); }
 .side-user .avatar { width: 30px; height: 30px; background: var(--accent-soft); color: var(--accent-text); border: 0; }
 .side-product { border-top-width: 2px; }
+/* page actions (Export and the like) at the right of the title row */
+.pacts { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pacts:empty { display: none; }
 
 @media (min-width: 861px) {
-  .shell { padding: 12px; gap: 12px; grid-template-rows: minmax(0, 1fr); }
+  .shell { padding: 10px; gap: 10px; grid-template-rows: minmax(0, 1fr); }
   body.side-collapsed { --side-w: 64px; }
-  .side { border-right: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
-  .mainwrap { background: var(--surface); border-radius: var(--r6); box-shadow: var(--shadow-soft); overflow: hidden; }
+  .side { border-right: 0; border-radius: var(--r6); }
+  .mainwrap { background: var(--surface); border-radius: var(--r6); border: 1px solid var(--line-2); overflow: hidden; }
   body.side-collapsed .side-foot { margin: 8px 6px 10px; padding: 6px 0; }
 }
 
-/* a page on the canvas: no sheet, sections are cards */
-.mainwrap.on-canvas { background: transparent; box-shadow: none; border-radius: 0; }
-.on-canvas .phead { padding-top: 14px; }
-.on-canvas .ptitle { border-bottom: 0; padding-bottom: 4px; }
+/* a page on the canvas: a header tile and a body tile, both grey; sections are white cards */
+.mainwrap.on-canvas { background: transparent; border: 0; border-radius: 0; }
+.on-canvas .page { display: flex; flex-direction: column; gap: 10px; }
+.on-canvas .phead { flex: none; background: var(--canvas); border-radius: var(--r6); padding: 14px 20px; }
+.on-canvas .phead .crumbs { margin-bottom: 6px; }
+.on-canvas .ptitle { border-bottom: 0; padding-bottom: 0; align-items: center; }
+.on-canvas .pbody { flex: 1 0 auto; background: var(--canvas); border-radius: var(--r6); padding: 16px; }
 .on-canvas .sec { border-color: transparent; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
 .on-canvas .sec-head { border-bottom-color: var(--line-2); }
 .on-canvas .rcard { border-color: transparent; border-radius: var(--r5); box-shadow: var(--shadow-soft); padding: 14px 16px; }
@@ -463,11 +470,24 @@ body.side-collapsed .nav-item.nav-sub { padding-left: 10px; }
 @media (max-width: 860px) {
   .side { border-radius: 0 var(--r6) var(--r6) 0; }
   .mtop { background: var(--surface); }
+  .on-canvas .page { padding: 8px; gap: 8px; }
+  .on-canvas .phead { padding: 12px 14px; }
+  .on-canvas .pbody { padding: 10px 10px 40px; }
   /* the slide-out menu is always the full menu, even if the person shrank the side bar to icons on a wide window */
   body.side-collapsed .side-nav { padding: 8px 10px; }
   body.side-collapsed .nav-item { justify-content: flex-start; padding: 0 10px; }
   body.side-collapsed .nav-item.nav-sub { padding-left: 36px; }
   body.side-collapsed .side-foot { flex-direction: row; }
   body.side-collapsed .side-user { justify-content: flex-start; }
+}
+
+/* printing (Export > PDF uses the browser's Save as PDF): only the page content, no frame, flat cards */
+@media print {
+  .side, .mtop, .side-scrim, .pacts, #toast { display: none !important; }
+  .shell { display: block; padding: 0; background: none; height: auto; }
+  .mainwrap, .mainwrap.on-canvas { border: 0; background: none; overflow: visible; }
+  .page { overflow: visible; }
+  .on-canvas .phead, .on-canvas .pbody { background: none; padding: 0 0 8px; }
+  .on-canvas .sec, .on-canvas .rcard { box-shadow: none; border: 1px solid var(--line); break-inside: avoid; }
 }
 

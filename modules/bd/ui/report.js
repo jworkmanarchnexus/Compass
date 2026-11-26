@@ -4,6 +4,7 @@ import { stackedBars } from '/shared/ui/charts.js';
 import { fmtDay, fmtDayYear, fmtWhen, plural } from '/shared/ui/format.js';
 import { Bd } from '/shared/platform/index.js';
 import { openExport } from './export.js';
+import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
 import { drillPanel } from './drill.js';
 
 const K = c => `$${Math.round(c / 100000).toLocaleString('en-US')}K`;
@@ -32,13 +33,15 @@ export async function renderBd(ctx, body, wantedId) {
   function paint(d) {
     holder.textContent = '';
     const r = d.run;
+    // Export at the right of the title row: Excel (both tabs) or the report's own PDF window
+    if (ctx.actions) ctx.actions(body, exportMenu(ctx, { excel: () => bdSheets(d), pdf: () => openExport(ctx, d) }));
     const status = { draft: 'Draft', published: 'Published, locked', archived: 'Archived' }[r.status];
     const pick = h('select', { class: 'txt', style: 'max-width:340px', 'aria-label': 'Report', onchange: e => go(e.target.value) },
       ...list.map(x => h('option', { value: x.id, text: x.label + (x.status === 'draft' ? ' (draft)' : x.status === 'archived' ? ' (archived)' : ''), selected: x.id === id })));
     const sub = `Period ${String(r.period).replace(/(\d{4})(\d{2})/, '$1-$2')} · Billing cutoff ${fmtDayYear(d.meta.cutoff)} · Version ${r.version} · ${status}`;
     holder.append(
       h('p', { class: 'muted', style: 'margin:0', text: sub }),
-      h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Report' }), pick), h('button', { class: 'btn', type: 'button', text: 'Export PDF', onclick: () => openExport(ctx, d) })),
+      h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Report' }), pick)),
       banner(ctx, d, isAdmin, load, go),
       ...(isAdmin && d.warnings && d.warnings.length ? [warningsCard(ctx, d, load)] : []));
     holder.append(h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Report tabs' },
@@ -172,3 +175,20 @@ function legend({ h }, items) {
   return h('div', { class: 'bd-keys' }, ...items.map(([k, t]) => h('span', { class: 'bd-key' }, h('i', { class: 'sw sb-' + k }), t)));
 }
 void plural;
+
+/* both tabs as two sheets, for Export > Excel: dollars as numbers, percentages as ratios (what this person can see; a PIC's view has no raw MWIP) */
+export function bdSheets(d) {
+  const ratio = (n, den) => (den ? n / den : null);
+  const status = r => (r.status && STATUS[r.status] ? STATUS[r.status][1] : null);
+  const dollars = c => (c === null || c === undefined ? null : Math.round(c / 100));
+  const line = r => [r.label, dollars(r.goal), dollars(r.ytdGoal), dollars(r.ytd), dollars(r.forecast), dollars(r.mwip), dollars(r.total),
+    ratio(r.ytd, r.ytdGoal), ratio(r.ytd + r.forecast, r.goal), ratio(r.total, r.goal), status(r)];
+  const cols = first => [{ title: first, width: 26 }, ...['Revenue goal', 'YTD goal (pace)', 'YTD revenue', 'Revenue forecast', 'MWIP backlog', 'Total projected'].map(t => ({ title: t, type: 'money', width: 15 })),
+    ...['% of pace billed', '% of goal YTD + forecast', '% of goal YTD + forecast + MWIP'].map(t => ({ title: t, type: 'pct', width: 16 })), { title: 'Status', width: 14 }];
+  const firm = Object.assign({}, d.firm, { label: 'Total firm' });
+  return {
+    file: `Marketing-Report-${fileSafe(d.run.label)}.xlsx`, // the label already names the version ("September 2026, version 1")
+    sheets: [{ name: 'By PIC', columns: cols('PIC'), rows: [line(firm), ...d.pic.map(line)] },
+      { name: 'By market sector', columns: cols('Market sector'), rows: [line(firm), ...d.sector.map(line)] }],
+  };
+}

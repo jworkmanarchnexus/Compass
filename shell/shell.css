@@ -252,3 +252,48 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 @media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .ov-top.no-chart .kpis { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .ov-top .kpis, .ov-top.no-chart .kpis { grid-template-columns: 1fr; } }
+/* tighter figure tiles (Josh, 2026-11-25): less padding, smaller numbers, so more of the page fits on screen */
+.on-canvas .kpis, .ov-top { gap: var(--s3); }
+.on-canvas .kpi { padding: var(--s3) var(--s4) var(--s4); }
+.on-canvas .k-label { font-size: 13px; }
+.on-canvas .k-big { font-size: 26px; margin: var(--s1) 0 2px; }
+.on-canvas .k-sub { font-size: 12.5px; line-height: 1.35; }
+.on-canvas .chart-card { padding: var(--s4) var(--s5); }
+.ov-top .ch-tick, .ov-top .ch-year { font-size: 13px; } /* the chart is drawn wider (640 units) here, so its labels need a larger size to stay readable at 1440px */
+/* PIC card header (Josh, 2026-11-25): no initials circle; a clear show/hide button first; the whole row toggles */
+.pic-head { cursor: pointer; }
+.pic-head:hover { background: var(--surface-2); }
+.pic-toggle { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--text-strong); cursor: pointer; transition: transform .15s, background-color .12s; }
+.pic-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
+.pic.closed .pic-toggle { transform: rotate(-90deg); }
+.pic.closed .pic-head { border-radius: inherit; }
+@media (prefers-reduced-motion: reduce) { .pic-toggle { transition: none; } }
+/* the plan status under the project name */
+.plan-under { margin-top: 6px; }
+/* Turnaround project tables wrap instead of scrolling sideways (Josh, 2026-11-26): rows get taller as the card narrows;
+   on a very narrow card (under 560px) each project stacks: name and profit, then the latest update, then the next commitment */
+.pic { container-type: inline-size; }
+table.ptab { min-width: 0; table-layout: auto; }
+table.ptab th, table.ptab td { white-space: normal; }
+table.ptab td:first-child { min-width: 170px; }
+table.ptab td.r { white-space: nowrap; }
+table.ptab .clamp, table.ptab td.latest .clamp { max-width: none; }
+.pic .tblwrap { overflow-x: visible; }
+@container (max-width: 560px) {
+  table.ptab thead { display: none; }
+  table.ptab, table.ptab tbody { display: block; }
+  table.ptab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2) var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-2); }
+  table.ptab tr:last-child { border-bottom: 0; }
+  table.ptab td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.ptab td:first-child { min-width: 0; }
+  table.ptab td.latest, table.ptab td:last-child { grid-column: 1 / -1; }
+  table.ptab td.latest::before { content: "Latest update"; }
+  table.ptab td:last-child::before { content: "Next commitment"; }
+  table.ptab td.latest::before, table.ptab td:last-child::before { display: block; font: 700 11px/1.4 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+}
+/* the same column shares on every PIC card, so the columns line up down the page */
+table.ptab { table-layout: fixed; }
+table.ptab th:nth-child(1) { width: 27%; } table.ptab th:nth-child(2) { width: 11%; } table.ptab th:nth-child(3) { width: 34%; } table.ptab th:nth-child(4) { width: 28%; }
+table.ptab td:first-child { min-width: 0; }
+/* a little more room between the figures-and-chart row and the PIC cards (Josh, 2026-11-26) */
+.stack > .ov-top + * { margin-top: 28px; }
