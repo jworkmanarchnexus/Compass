@@ -3,6 +3,7 @@
    What each person sees was already decided by the server; this file only draws it. */
 import { negativeBars } from '/shared/ui/charts.js';
 import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
+import { openTurnaroundExport } from './export.js';
 import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtM, fmtDay, fmtPeriod, monthLetter, plural } from '/shared/ui/format.js';
 
 export function planChip({ h }, plan) {
@@ -14,7 +15,7 @@ export function planChip({ h }, plan) {
     : h('span', { class: 'chip out', text: 'No plan yet', title: `A plan is due ${fmtDay(plan.dueDate)}` });
 }
 
-const STANDING = { good: ['ok', 'Good standing'], needs_attention: ['warn', 'Needs attention'], escalated: ['crit', 'Escalated'] };
+export const STANDING = { good: ['ok', 'Good standing'], needs_attention: ['warn', 'Needs attention'], escalated: ['crit', 'Escalated'] };
 
 const first = name => name.split(' ')[0];
 
@@ -53,10 +54,10 @@ export function renderOverview(ctx, container, data) {
   container.append(controls, holder);
   paint();
   // Export: what is on screen now (everyone, or the one PIC picked), never more than this person can already see
-  if (ctx.actions && data.pics.length) ctx.actions(container, exportMenu(ctx, { excel: () => turnaroundSheet(data, focus), pdf: () => window.print() }));
+  if (ctx.actions && data.pics.length) ctx.actions(container, exportMenu(ctx, { excel: () => turnaroundSheet(data, focus), pdf: () => openTurnaroundExport(ctx, data, focus, ctx.showStanding !== false) }));
 }
 
-const planText = plan => plan.status === 'current' ? 'Current'
+export const planText = plan => plan.status === 'current' ? 'Current'
   : plan.status === 'update_due' ? 'Update due'
     : plan.status === 'overdue' ? `Overdue ${plural(plan.daysOverdue, 'day')}`
       : plan.daysOverdue > 0 ? `No plan, ${plural(plan.daysOverdue, 'day')}` : 'No plan yet';
@@ -95,29 +96,35 @@ function kpi({ h }, label, big, sub, extra) {
   return h('div', { class: 'kpi' }, h('div', { class: 'k-label', text: label }), h('div', { class: 'k-big', text: big }), h('div', { class: 'k-sub' }, sub, extra || null));
 }
 
-function kpiStrip(ctx, data, mine, who) {
-  const { h } = ctx;
+/* the four figures as words: the page and the PDF both draw these, so they always say the same thing.
+   draftsReady (the admin's count of check-in drafts) is a link on the page and plain words in the PDF. */
+export function kpiItems(data, mine, who) {
   const k = data.kpis;
   if (mine) {
     const needs = mine.projects.filter(p => p.plan.status === 'overdue' || p.plan.status === 'no_plan').length;
     const r = mine.record;
-    return h('div', { class: 'kpis' },
-      kpi(ctx, `${who} negative YTD profit`, fmtCents(mine.totals.profit), `${fmtLoss(100 * mine.totals.profit / mine.totals.billed)} of ${fmtCents(mine.totals.billed)} billed, ${plural(mine.projects.length, 'project')}`),
-      kpi(ctx, 'Plans current', `${mine.plansCurrent.current} of ${mine.plansCurrent.total}`, 'Open commitment, entry in the last 30 days, nothing past due'),
-      kpi(ctx, 'Need action', String(needs), needs ? 'Past due or no plan yet' : 'Nothing is past due'),
-      r ? kpi(ctx, `${who} record`, r.pctOnTime === null ? 'No record yet' : `${fmtWholePct(r.pctOnTime)} on time`,
-        `${r.onTime.onTime} of ${r.onTime.total} updates on time, ${r.kept.kept} of ${r.kept.resolved} commitments kept`) : kpi(ctx, `${who} record`, '-', 'Not shown'));
+    return [
+      { label: `${who} negative YTD profit`, big: fmtCents(mine.totals.profit), sub: `${fmtLoss(100 * mine.totals.profit / mine.totals.billed)} of ${fmtCents(mine.totals.billed)} billed, ${plural(mine.projects.length, 'project')}` },
+      { label: 'Plans current', big: `${mine.plansCurrent.current} of ${mine.plansCurrent.total}`, sub: 'Open commitment, entry in the last 30 days, nothing past due' },
+      { label: 'Need action', big: String(needs), sub: needs ? 'Past due or no plan yet' : 'Nothing is past due' },
+      r ? { label: `${who} record`, big: r.pctOnTime === null ? 'No record yet' : `${fmtWholePct(r.pctOnTime)} on time`, sub: `${r.onTime.onTime} of ${r.onTime.total} updates on time, ${r.kept.kept} of ${r.kept.resolved} commitments kept` }
+        : { label: `${who} record`, big: '-', sub: 'Not shown' },
+    ];
   }
   const s = data.since;
-  const waiting = k.pastDue + k.noPlan;
-  const drafts = k.draftsReady !== null && k.draftsReady !== undefined
-    ? h('span', {}, ' ', h('a', { href: '#/turnaround/checkins', text: plural(k.draftsReady, 'check-in draft') + ' ready' }), '.') : null;
-  return h('div', { class: 'kpis' },
-    kpi(ctx, 'Total negative YTD profit', fmtCents(k.negativeYtd), `${fmtLoss(100 * k.negativeYtd / k.billedYtd)} of ${fmtM(k.billedYtd)} billed, ${plural(k.projectCount, 'project')}`),
-    kpi(ctx, 'Plans current', `${k.plansCurrent} of ${k.projectCount}`, 'Open commitment, entry in the last 30 days, nothing past due'),
-    kpi(ctx, 'Waiting on an update', String(waiting), `${k.pastDue} past due, ${k.noPlan} with no plan yet.`, drafts),
-    s ? kpi(ctx, `Since ${s.label.split(' ')[0]}`, `${s.off} off, ${s.added} new`, `${s.improved} improved, ${s.worse} got worse`)
-      : kpi(ctx, 'Since last month', '-', 'This is the first run'));
+  return [
+    { label: 'Total negative YTD profit', big: fmtCents(k.negativeYtd), sub: `${fmtLoss(100 * k.negativeYtd / k.billedYtd)} of ${fmtM(k.billedYtd)} billed, ${plural(k.projectCount, 'project')}` },
+    { label: 'Plans current', big: `${k.plansCurrent} of ${k.projectCount}`, sub: 'Open commitment, entry in the last 30 days, nothing past due' },
+    { label: 'Waiting on an update', big: String(k.pastDue + k.noPlan), sub: `${k.pastDue} past due, ${k.noPlan} with no plan yet.`, drafts: k.draftsReady !== null && k.draftsReady !== undefined ? k.draftsReady : null },
+    s ? { label: `Since ${s.label.split(' ')[0]}`, big: `${s.off} off, ${s.added} new`, sub: `${s.improved} improved, ${s.worse} got worse` }
+      : { label: 'Since last month', big: '-', sub: 'This is the first run' },
+  ];
+}
+
+function kpiStrip(ctx, data, mine, who) {
+  const { h } = ctx;
+  return h('div', { class: 'kpis' }, ...kpiItems(data, mine, who).map(it => kpi(ctx, it.label, it.big, it.sub,
+    it.drafts !== null && it.drafts !== undefined ? h('span', {}, ' ', h('a', { href: '#/turnaround/checkins', text: plural(it.drafts, 'check-in draft') + ' ready' }), '.') : null)));
 }
 
 function chartRow(ctx, data, mine, who) {

@@ -166,9 +166,15 @@ A change applies to the next run. A run records the settings it was built with, 
 
 See `docs/DATA-MODEL.md`. In short: `plan_entries` (append-only), `runs` with `run_projects`, `run_warnings`, `run_history`, `run_project_history` (all locked with the run), `checkin_drafts`, `settings`, `audit_log` (append-only). Commitments are not a table: their state is replayed from `plan_entries`.
 
+## 12a. Export (Josh, 2026-11-25 and 26)
+
+An **Export** button at the right of the title row, with two choices. Both export what is on screen: everyone, or the one PIC picked (a PIC on "Just mine" exports their own). Nothing is fetched that the person cannot already see.
+
+- **Excel:** one row per project (PIC, project number, project, PM, profit YTD, % of billed, plan, plan due, latest update date and text, next commitment due, text and status, earlier commitments missed). A real .xlsx: dollars and percentages are numbers.
+- **PDF:** an Export PDF window like the Marketing Report's: settings on the left (whose projects, include the four figures / the chart / the projects, paper Letter, Legal or Tabloid, landscape by default, logo first page / every page / none, print date, an optional description), the real pages on the right, Download PDF at the bottom. Settings are remembered per person. Page 1: the heading, the four figures beside the chart. Then each PIC: their header (loss, %, plans current, on time, kept, standing where visible) and their projects; updates and commitments print in full. Page breaks (logic/export-plan.js, tested): a project never splits across pages; a PIC's header never sits alone at the bottom of a page; a page that continues a PIC opens with "Name (continued)" and the column headings. Vector PDF with Lato and Roboto Condensed embedded.
+
 ## 13. Not built, and why
 
-- Export Excel (the mockup has the button).
 - Contract fee and "billed to date %" on the plan page: the validated SQL does not pull fees.
 - Market sector on the plan page: no source.
 - The ladder's "Repeat" step and the monthly summary.
