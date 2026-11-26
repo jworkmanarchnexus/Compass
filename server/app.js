@@ -113,6 +113,7 @@ function createServer(db, opts) {
       const access = currentSettings().access;
       const me = Object.assign(userOut(user), roles.describe(user.role, access));
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
+      if (o.dataMode) me.dataMode = o.dataMode; // 'live' when the Marketing Report reads Vantagepoint (server/live.js)
       return sendJson(res, 200, me);
     }
 

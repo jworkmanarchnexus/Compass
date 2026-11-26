@@ -84,7 +84,9 @@ function frame(routeId, crumbs, titleText, sub) {
     h('div', { class: 'side-brand' },
       h('img', { class: 'side-logo', alt: 'Arch Nexus', src: '/shared/design-system/arch-nexus-logo.png' }),
       h('div', { class: 'side-product' }, h('strong', { text: 'Compass' }), h('span', { text: 'Arch Nexus' })),
-      h('span', { class: 'chip warn side-tag', title: 'Everything here is made-up test data', text: 'Sample data' })),
+      me.dataMode === 'live'
+        ? h('span', { class: 'chip ok side-tag', title: 'The Marketing Report reads Vantagepoint (a pull saved on this computer). Everything else is made-up test data.', text: 'Live: Marketing Report' })
+        : h('span', { class: 'chip warn side-tag', title: 'Everything here is made-up test data', text: 'Sample data' })),
     h('nav', { class: 'side-nav', 'aria-label': 'Modules' }, ...nav),
     h('div', { class: 'side-foot' },
       h('div', { class: 'side-user', title: `${me.name} (${R.ROLE_LABEL[me.role]})` }, h('span', { class: 'avatar', text: initials(me.name) }), h('span', { class: 'nm', text: me.name })),

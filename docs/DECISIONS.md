@@ -275,3 +275,11 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Submit is disabled while anything blocks it, and the screen lists why.** Save Draft is always on. The Vantagepoint numbers changing under a request show a banner that must be acknowledged before submitting.
 - **Notes are a small rich-text box (bold, italic, list).** The server cleans them again; the browser only shows text the server has cleaned.
 - **Processors and the Admin can open every project but the screen is read-only for them until step 5** (queue, return, process).
+
+## Marketing Report on live Vantagepoint data (2026-11-26, Josh asked)
+
+- **A pull job writes a snapshot; the report build reads the snapshot.** Keeps "only a job reads Vantagepoint, browsers never do", keeps the build synchronous and testable, and is the record the forecast and MWIP need (Vantagepoint keeps no history for them). `server/jobs/vp-pull-bd.js`, `server/vp-snapshot.js`, `docs/LIVE-MODE.md`.
+- **The snapshot holds raw inputs, not finished numbers** (plan entries, pursuits, ledger totals, holidays, principals), so the Admin's settings still apply at build time and a setting change needs only a rebuild.
+- **The SQL lives once**, in `server/vp/bd-statements.js`, used by the pull job and `tools/bd-live-pull.js`.
+- **Live mode is separate from the demo**: own database, own port (5290; 5281 to 5289 are the demo and other worktrees), and the sidebar says "Live: Marketing Report". Only the Marketing Report is live; the other pages still show made-up data.
+- **Goals and sectors for the live database come from a local config** (`server/db/live/config.json`, git-ignored), first filled from the October 2026 workbook: 13 PICs at $1.5M keyed by Vantagepoint employee code, the six sector goals, Laboratory counted in Healthcare through 2026-12-31, factor 0.65. "Lisa Whoolery" in the workbook was matched to Lisa Ramidan (employee 00384) by first name; Josh to confirm.
