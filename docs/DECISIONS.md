@@ -258,4 +258,5 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Resize is one cell at a time with arrow buttons** on the right and bottom edges, not a drag handle: easy to hit while the tile jiggles, works by keyboard, and each arrow can say what the change will show before it is clicked.
 - **Sizes are min/max per dashpart** in the catalog; the server forces every saved size inside them.
 - **New dashparts start off** for people who already saved a layout, so the catalog can grow without changing anyone's page.
+- 2026-11-26 (Josh): **a new person starts with six dashparts on**: My projects below break-even, Revenue against goal, Pipeline, Portfolio bubble chart, Fee by phase, Unbilled work. Staff mix by role, Client scorecard and Where the fee goes start in Available.
 - **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.

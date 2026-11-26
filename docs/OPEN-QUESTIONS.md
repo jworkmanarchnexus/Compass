@@ -24,7 +24,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 |---|---|---|---|
 | D1 | Who has My dashboard? | Admin, PICs and project managers | `shared/rules/roles.js` (`dashboard`); could become an `access` setting |
 | D2 | Which dashparts to keep, and where each one's real numbers come from (several, like phase overrun, staff mix by role and client scorecard, need Vantagepoint data Compass does not pull yet) | nine dashparts on made-up data | `docs/SPEC-dashboard.md` |
-| D3 | Which dashparts a new person sees first, and at what size | six on, three in Available | `modules/dashboard/logic/catalog.js` |
+| D3 | Which dashparts a new person sees first, and at what size | **Resolved by Josh, 2026-11-26: the six as built** (below break-even, revenue, pipeline, portfolio bubble chart, fee by phase, unbilled work); staff mix, client scorecard and where the fee goes start in Available | `modules/dashboard/logic/catalog.js` |
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |
 | H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Resolved by Josh, 2026-10-16: the source supplies Vantagepoint's probability-weighted fee, spread by days (`docs/MWIP-METHOD.md`), and Compass applies ONE factor (the architectural share, consultants removed) from the existing Admin setting, to both the PIC and sector views.** The calculation is unchanged (amount x factor); only the meaning of the source amount changes from face value to probability-weighted | `docs/SPEC-bd.md` section 4 |
