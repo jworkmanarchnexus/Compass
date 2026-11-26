@@ -8,6 +8,8 @@ import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
 import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
 import { billingAdminCards } from '/modules/billing/ui/admin.js';
+import { renderBillingList } from '/modules/billing/ui/list.js';
+import { renderBillingProject } from '/modules/billing/ui/project.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
@@ -35,6 +37,7 @@ const NAV = [
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
+  { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
 const flatNav = NAV.flatMap(n => [n].concat(n.sub || []));
@@ -88,7 +91,9 @@ function frame(routeId, crumbs, titleText, sub) {
     h('div', { class: 'side-brand' },
       h('img', { class: 'side-logo', alt: 'Arch Nexus', src: '/shared/design-system/arch-nexus-logo.png' }),
       h('div', { class: 'side-product' }, h('strong', { text: 'Compass' }), h('span', { text: 'Arch Nexus' })),
-      h('span', { class: 'chip warn side-tag', title: 'Everything here is made-up test data', text: 'Sample data' })),
+      me.dataMode === 'live'
+        ? h('span', { class: 'chip ok side-tag', title: 'The Marketing Report reads Vantagepoint (a pull saved on this computer). Everything else is made-up test data.', text: 'Live: Marketing Report' })
+        : h('span', { class: 'chip warn side-tag', title: 'Everything here is made-up test data', text: 'Sample data' })),
     h('nav', { class: 'side-nav', 'aria-label': 'Modules' }, ...nav),
     h('div', { class: 'side-foot' },
       h('div', { class: 'side-user', title: `${me.name} (${R.ROLE_LABEL[me.role]})` }, h('span', { class: 'avatar', text: initials(me.name) }), h('span', { class: 'nm', text: me.name })),
@@ -165,6 +170,19 @@ async function pageBd(id) {
   await renderBd(ctx, body, id);
 }
 
+async function pageBilling() {
+  const me = Session.me();
+  const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing')], 'Billing', me.role === 'pm' || me.role === 'pic' ? 'Your projects this billing month. Tell accounting what to bill.' : 'Every project this billing month, and where each one stands.');
+  await renderBillingList(ctx, body);
+}
+
+async function pageBillingProject(wbs1, requestId) {
+  const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing', '#/billing'), sep(), crumb(wbs1)], null);
+  try { await renderBillingProject(ctx, body, wbs1, requestId); } catch (e) {
+    body.append(e.status === 404 || e.status === 403 ? h('div', { class: 'empty-note', text: 'That project is not one you can bill, or it does not exist.' }) : banner('circle-alert', e.message, 'err'));
+  }
+}
+
 async function pageCheckins() {
   const body = frame('checkins', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround', '#/turnaround'), sep(), crumb('Check-in drafts')], 'Check-in drafts', 'Short drafts for PICs who are overdue or have no plan. Nothing sends itself. You read each one, change it if you like, and send it from your own mailbox.');
   await renderCheckins(ctx, body);
@@ -186,6 +204,7 @@ function pageNoAccess() {
 const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
+  'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
@@ -201,7 +220,18 @@ const fmtClock = v => { const [hh, mm] = v.split(':').map(Number); return `${((h
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /* "Billing in preview (2 testers)", or "all live" */
 const showRelease = v => { const on = Object.entries(v || {}).filter(([, r]) => r.stage === 'preview'); return on.length ? on.map(([a, r]) => `${AREA_LABEL[a] || a} in preview (${r.testers.length} ${r.testers.length === 1 ? 'tester' : 'testers'})`).join(', ') : 'all live'; };
-const showValue = v => typeof v === 'boolean' ? (v ? 'on' : 'off') : (v && typeof v === 'object') ? JSON.stringify(v) : String(v);
+// plain words for settings stored as a code, so the audit log reads the way the Admin page does
+const CHOICE_LABEL = {
+  'bd.mwipBasis': { weighted: 'Weighted Fee', estimated: 'Estimated Fee' },
+  'bd.mwipAllocation': { spread: 'spread evenly', start: 'all to the estimated start date', completion: 'all to the estimated completion date' },
+  'bd.mwipPeriod': { daily: 'Daily', semimonthly: 'Semi-monthly', monthly: 'Monthly' },
+  'bd.mwipStart': { afterReportMonth: 'the first day after the report month', buildDay: 'the day the report is built' },
+  'bd.mwipThrough': { yearEnd: 'December 31', 3: '3 months', 6: '6 months', 12: '12 months' },
+  'bd.contractAmount': { feeConsult: 'fee + consultant fees', feeConsultReimb: 'fee + consultant fees + reimbursable allowance' },
+  'bd.noSector': { keep: 'keep in Unassigned', ask: 'ask before publishing', other: 'put in Other' },
+  'include.noPic': { 'leave-out-warn': 'leave out and warn', unassigned: 'show as Unassigned' },
+};
+const showValue = (v, key) => (CHOICE_LABEL[key] && typeof v !== 'object' && CHOICE_LABEL[key][v] !== undefined) ? CHOICE_LABEL[key][v] : typeof v === 'boolean' ? (v ? 'on' : 'off') : (v && typeof v === 'object') ? JSON.stringify(v) : String(v);
 
 async function pageAdmin(tab) {
   const me = Session.me();
@@ -227,9 +257,9 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       slot.textContent = '';
       slot.append(...turnaroundCards(s, canEdit, rerender));
     } else if (tab === 'people') {
-      const [people, s] = await Promise.all([Admin.people(), Admin.settings()]);
+      const [people, s, names] = await Promise.all([Admin.people(), Admin.settings(), Admin.names()]);
       slot.textContent = '';
-      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), accessCard(s, canEdit, rerender), previewCard(s, people, canEdit, rerender), rolesCard());
+      slot.append(peopleCard(people, canEdit, rerender, e => { fail(e); }), namesCard(names, canEdit), accessCard(s, canEdit, rerender), previewCard(s, people, canEdit, rerender), rolesCard());
     } else if (tab === 'reminders') {
       const s = await Admin.settings();
       slot.textContent = '';
@@ -298,7 +328,7 @@ function makeEditor(settings, keys, canEdit) {
     draft,
     select(key, options) {
       const el = h('select', { class: 'txt', disabled: !canEdit, onchange: () => { draft[key] = el.value; } },
-        ...options.map(([v, l]) => h('option', { value: v, text: l, selected: v === draft[key] })));
+        ...options.map(([v, l, o]) => h('option', { value: v, text: l, selected: v === draft[key], disabled: !!(o && o.disabled) })));
       if (!options.some(([v]) => v === draft[key])) el.append(h('option', { value: draft[key], text: String(draft[key]), selected: true }));
       return el;
     },
@@ -422,6 +452,44 @@ function peopleCard(people, canEdit, rerender, onError) {
     h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: 'min-width:1040px' },
       h('thead', {}, h('tr', {}, ...['Name', 'Login', 'Role', 'Name used in drafts', 'Status'].map(x => h('th', { text: x })), h('th', { class: 'r', text: 'Active projects as PIC' }))),
       h('tbody', {}, ...trs))));
+}
+
+/* the name Compass shows for each Vantagepoint person (PICs and PMs on every page, reports and exports). Vantagepoint is never changed. */
+function namesCard(rows, canEdit) {
+  const body = h('tbody', {});
+  const find = h('input', { class: 'txt', type: 'search', placeholder: 'Find a person', 'aria-label': 'Find a person', style: 'max-width:260px' });
+  const onlyChanged = h('input', { type: 'checkbox', id: 'names-only-changed' });
+  const paint = () => {
+    const q = find.value.trim().toLowerCase();
+    body.replaceChildren(...rows
+      .filter(r => (!onlyChanged.checked || r.displayName) && (!q || (r.vpName + ' ' + (r.displayName || '') + ' ' + r.code).toLowerCase().includes(q)))
+      .map(r => {
+        const msg = h('span', { class: 'muted small', role: 'status' });
+        const input = h('input', { class: 'txt', type: 'text', maxlength: '60', value: r.displayName || '', placeholder: r.vpName, disabled: !canEdit, 'aria-label': 'Name shown for ' + r.vpName });
+        input.addEventListener('change', async () => {
+          msg.textContent = '';
+          try {
+            const out = await Admin.setName(r.code, input.value);
+            const now = out.rows.find(x => x.code === r.code);
+            r.displayName = now ? now.displayName : null;
+            input.value = r.displayName || '';
+            msg.textContent = out.changed ? (r.displayName ? 'Saved.' : 'Back to the Vantagepoint name.') : 'Nothing changed.';
+          } catch (e) { msg.textContent = e.message; }
+        });
+        return h('tr', {}, h('td', { class: 'strong', text: r.vpName }), h('td', {}, input), h('td', {}, msg), h('td', { class: 'muted', text: r.code }));
+      }));
+  };
+  find.addEventListener('input', paint);
+  onlyChanged.addEventListener('change', paint);
+  paint();
+  return h('section', { class: 'sec' },
+    h('div', { class: 'sec-head' }, h('h2', { text: 'Names shown for Vantagepoint people' }),
+      h('p', { text: 'PICs and PMs show with their Vantagepoint name. Type another name to show it instead everywhere in Compass (pages, reports, exports); clear it to go back. Vantagepoint is not changed. Every change is in the audit log.' })),
+    h('div', { class: 'sec-body' }, h('div', { class: 'bd-tools' }, find, h('label', { class: 'check' }, onlyChanged, h('span', { text: 'Only names changed here' })))),
+    h('div', { class: 'tblwrap' }, h('table', { class: 'dt', style: 'min-width:640px' },
+      h('thead', {}, h('tr', {}, ...['Vantagepoint name', 'Name shown in Compass', '', 'Employee code'].map(x => h('th', { text: x })))),
+      body)),
+    canEdit ? null : h('div', { class: 'sec-foot' }, h('span', { class: 'chip', text: 'View only' })));
 }
 
 function rolesCard() {
@@ -551,7 +619,7 @@ function archivePanel(run, act) {
 
 function auditText(e) {
   if (e.action === 'setting.change' && e.object === 'release') return [`Changed setting: ${SETTING_LABEL.release}`, `${showRelease(e.detail.from)} to ${showRelease(e.detail.to)}`];
-  if (e.action === 'setting.change') return [`Changed setting: ${SETTING_LABEL[e.object] || e.object}`, `${showValue(e.detail.from)} to ${showValue(e.detail.to)}`];
+  if (e.action === 'setting.change') return [`Changed setting: ${SETTING_LABEL[e.object] || e.object}`, `${showValue(e.detail.from, e.object)} to ${showValue(e.detail.to, e.object)}`];
   if (e.action === 'user.change') {
     const parts = Object.keys(e.detail.to).filter(k => JSON.stringify(e.detail.to[k]) !== JSON.stringify(e.detail.from[k]))
       .map(k => `${{ role: 'role', active: 'status', draftName: 'name in drafts' }[k] || k}: ${k === 'active' ? (e.detail.from[k] ? 'active' : 'inactive') : showValue(e.detail.from[k])} to ${k === 'active' ? (e.detail.to[k] ? 'active' : 'inactive') : showValue(e.detail.to[k])}`);
@@ -564,6 +632,7 @@ function auditText(e) {
   if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
+  if (e.action === 'name.set') return [`Changed the name shown for ${e.object}`, `${e.detail.from} to ${e.detail.to}`];
   if (e.action === 'pipeline.snapshot') return ['Saved a pipeline snapshot', e.object];
   if (e.action === 'pipeline.clear') return ['Cleared a pipeline alert', e.object];
   if (e.action === 'pipeline.note') return ['Added a note on a pursuit', e.object];
@@ -601,6 +670,8 @@ function route() {
     const mine = me.dashboards || [], board = m[1] || mine[0];
     return board && mine.includes(board) ? pageDashboard(board) : pageNoAccess();
   }
+  if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
+  if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();

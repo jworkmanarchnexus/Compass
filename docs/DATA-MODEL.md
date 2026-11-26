@@ -12,6 +12,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 
 | Table | Holds | Notes |
 |---|---|---|
+| `employee_names` | Compass's own: the name to show for a Vantagepoint person (employee code, display name, who set it, when). Never written back to Vantagepoint | one override per code; removing it goes back to the Vantagepoint name |
 | `users` | People: login, name, role (`admin`, `pic`, `finance`, `marketing`, `sysadmin`), name used in drafts, VP employee code, active | how a PIC is matched to their projects |
 | `settings` | every Admin setting: key, JSON value, `effective_from`, who, when | rows only ever added; the value in force at a moment is the latest row at or before it |
 | `audit_log` | at, user (or `system`), action, object, detail | **append-only** (database triggers) |

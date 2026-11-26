@@ -235,6 +235,72 @@ test('the contract amount rule is an Admin setting: validated, defaulted, and re
   assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', rebuilt.run.id).r, 'feeConsultReimb', 'the report records the rule it was built with');
 }));
 
+/* ---- forecast: a source that supplies the plan entries themselves gets them spread by working days here ---- */
+test('a source with plan entries: the forecast is spread by working days, scaled to the architectural share, and undated entries are noted', async () => {
+  const local = require('../vp-local').createLocalSource();
+  const source = { name: 'test: plan entries', loadBd(period) {
+    const d = local.loadBd(period);
+    d.projects = d.projects.map(p => (p.wbs1 === '2025-1001' ? { ...p, fee: 7000000, consultFee: 3000000, reimbAllow: 0 } : p));
+    d.forecastEntries = [
+      { wbs1: '2025-1001', start: '2026-10-01', end: '2026-12-31', amount: 6200000 }, // Oct 22, Nov 19, Dec 21 working days = 62
+      { wbs1: '2025-1001', start: null, end: '2026-11-30', amount: 100000 },
+    ];
+    d.holidays = ['2026-11-26', '2026-11-27', '2026-12-24', '2026-12-25'];
+    delete d.forecast; delete d.forecastMonths;
+    return d;
+  } };
+  const t = await start({ source });
+  try {
+    const josh = t.api('j.workman');
+    const r = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
+    const firm = t.db.get("SELECT forecast FROM bd_rows WHERE run_id = ? AND scope = 'firm'", r.run.id);
+    assert.strictEqual(firm.forecast, 4340000, '62,000 gross x 70% (fee 70k, consultants 30k)');
+    const months = t.db.all("SELECT month, amount FROM bd_detail WHERE run_id = ? AND kind = 'forecast' ORDER BY month", r.run.id).map(x => [x.month, x.amount]);
+    assert.deepStrictEqual(months, [[202610, 1540000], [202611, 1330000], [202612, 1470000]], 'by working days: 22, 19 and 21 of 62');
+    assert.ok(t.db.get("SELECT 1 AS x FROM run_warnings WHERE run_id = ? AND wbs1 = '2025-1001' AND detail LIKE '%forecast entry with no date%'", r.run.id), 'an undated entry is noted, never guessed');
+  } finally { await t.close(); }
+});
+
+/* ---- MWIP options: a source that supplies the pursuits themselves gets MWIP worked out with the Admin's options ---- */
+function pursuitSource() {
+  const local = require('../vp-local').createLocalSource();
+  return { name: 'test: pursuits', loadBd(period) {
+    const d = local.loadBd(period);
+    d.pursuits = [
+      { id: 'Z9001', name: 'Test pursuit, all of October', pic: 'E101', sector: 'Civic', stage: '015', estFee: 10000000, weightedFee: 3000000, estStart: '2026-10-01', estCompletion: '2026-10-31' },
+      { id: 'Z9002', name: 'Test pursuit, no dates', pic: 'E101', sector: 'Civic', stage: '015', estFee: 500000, weightedFee: 100000, estStart: null, estCompletion: null },
+    ];
+    delete d.mwip; delete d.mwipMonths;
+    return d;
+  } };
+}
+
+test('MWIP options are Admin settings: validated, recorded on the report, and they change the MWIP', async () => {
+  const was = process.env.COMPASS_TODAY;
+  process.env.COMPASS_TODAY = '2026-10-07';
+  const t = await start({ source: pursuitSource() });
+  try {
+    const josh = t.api('j.workman');
+    for (const [k, v] of [['bd.mwipAllocation', 'closeDate'], ['bd.mwipPeriod', 'weekly'], ['bd.mwipThrough', '0'], ['bd.mwipStart', 'today']]) {
+      assert.strictEqual((await josh.put('/api/admin/settings', { changes: { [k]: v } })).status, 400, k + ' ' + v + ' is refused');
+    }
+    const d = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
+    const firm = id => ({ ...t.db.get("SELECT mwip_raw AS raw, mwip FROM bd_rows WHERE run_id = ? AND scope = 'firm'", id) });
+    // the default: the month after the report month (October) in full: $30,000 weighted, x 0.67
+    assert.deepStrictEqual(firm(d.run.id), { raw: 3000000, mwip: 2010000 });
+    assert.ok(t.db.get("SELECT 1 AS x FROM run_warnings WHERE run_id = ? AND wbs1 = 'Z9002' AND detail LIKE '%estimated dates are missing%'", d.run.id), 'a pursuit with no dates is left out and noted, never guessed');
+    assert.strictEqual(JSON.parse(t.db.get('SELECT settings_json AS s FROM runs WHERE id = ?', d.run.id).s)['bd.mwipStart'], 'afterReportMonth', 'the report records the options it was built with');
+    // counted as of the build day (Oct 7): 25 of 31 days of October left
+    await josh.put('/api/admin/settings', { changes: { 'bd.mwipStart': 'buildDay' } });
+    const r1 = (await josh.post(`/api/admin/bd/runs/${d.run.id}/rebuild`)).body;
+    assert.deepStrictEqual(firm(r1.run.id), { raw: 2419355, mwip: Math.round(2419355 * 6700 / 10000) });
+    // Estimated Fee, back to the full month
+    await josh.put('/api/admin/settings', { changes: { 'bd.mwipStart': 'afterReportMonth', 'bd.mwipBasis': 'estimated' } });
+    const r2 = (await josh.post(`/api/admin/bd/runs/${d.run.id}/rebuild`)).body;
+    assert.deepStrictEqual(firm(r2.run.id), { raw: 10000000, mwip: 6700000 });
+  } finally { await t.close(); if (was === undefined) delete process.env.COMPASS_TODAY; else process.env.COMPASS_TODAY = was; }
+});
+
 /* ---- drill-downs: what is behind each bar ---- */
 const sum = (xs, f) => xs.reduce((a, x) => a + f(x), 0);
 const detail = (api, id, kind, scope, key) => api.get(`/api/bd/reports/${id}/detail?kind=${kind}&scope=${scope}` + (key === undefined ? '' : '&key=' + encodeURIComponent(key)));

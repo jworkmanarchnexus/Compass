@@ -22,7 +22,7 @@ Each row (the firm, every PIC, every market sector) has:
 | YTD goal (pace) | goal × months elapsed ÷ 12, to the cent (month 9 of 12 is 9/12). |
 | YTD revenue | architectural revenue, **net of consultants**, billed from January through the **billing cutoff** (the last day of the report month). |
 | Revenue forecast | contracted revenue still to be billed through December 31. |
-| MWIP backlog | pursuits not yet contracted, through December 31, **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
+| MWIP backlog | pursuits not yet contracted, worked out the way Vantagepoint's MWIP report does it with the options in section 4b (by default: Weighted Fee, spread evenly, Daily, starting on the first day after the report month, through December 31), **weighted** by the MWIP factor in force at the cutoff (each pursuit is weighted and rounded to the cent, then added). |
 | Total projected | YTD + forecast + weighted MWIP. |
 | % of pace billed | YTD ÷ pace. |
 | % of goal (YTD + forecast) | (YTD + forecast) ÷ goal. |
@@ -49,11 +49,31 @@ The line under the title says what was done to the numbers, for everyone: "Labs 
 
 ## 3b. The architectural share of the contracted forecast
 
-The contracted forecast is entered gross by the PMs. For this report only, each project's month is scaled by **(full contract amount − consultant fees) ÷ full contract amount** (a $100k contract with $30k of consultants shows 0.7 of the month). **"Full contract amount" is the Admin setting `bd.contractAmount`**, decided 2026-10-17: `feeConsult` (the default: fee + consultant fees) or `feeConsultReimb` (also the reimbursable allowance). Each report records the rule it was built with (`bd_run_meta.contract_amount_rule`). A project with no contract fee, or with consultant fees above the contract amount, keeps its full forecast and gets a note on the draft. The source supplies, per project, the gross amount and the fee, consultant fee and reimbursable allowance from the project record (`docs/FORECAST-METHOD.md`); a source that still supplies only an already-architectural amount keeps working unchanged. The calculation is `modules/bd/logic/architectural.js`, with fixtures in `modules/bd/tests/fixtures/architectural.json`.
+The contracted forecast is entered gross by the PMs. For this report only, each project's month is scaled by **(full contract amount − consultant fees) ÷ full contract amount** (a $100k contract with $30k of consultants shows 0.7 of the month). **"Full contract amount" is the Admin setting `bd.contractAmount`**, decided 2026-10-17: `feeConsult` (the default: fee + consultant fees) or `feeConsultReimb` (also the reimbursable allowance). Each report records the rule it was built with (`bd_run_meta.contract_amount_rule`). A project with no contract fee, or with consultant fees above the contract amount, keeps its full forecast and gets a note on the draft. The source supplies the PMs' plan revenue entries with their own dates, the firm holiday calendar, and per project the fee, consultant fee and reimbursable allowance from the project record. Compass spreads each entry across its dates by **working days** (Monday to Friday, less the holidays), as Vantagepoint's forecast report does, keeps the months after the report month through December, then applies the share above (`modules/bd/logic/forecast.js`, fixtures in `modules/bd/tests/fixtures/forecast.json`; reproduced to the dollar for 144 of 144 projects against a same-day export, `docs/FORECAST-METHOD.md`). A source that supplies the gross amount per project, or an already-architectural amount, keeps working unchanged. The calculation is `modules/bd/logic/architectural.js`, with fixtures in `modules/bd/tests/fixtures/architectural.json`.
 
 ## 4. The MWIP factor
 
-Effective-dated and **append-only** (the database refuses to change or delete a past factor); the factor used is the latest one in force on the cutoff, and each report records it. The mockup's 0.67 (from Jan 1, 2026) and 0.65 (2025) are the seed. **Open question H4 is resolved this way:** the source supplies pursuits at face value (raw), and Compass applies the factor when it builds a report, so a changed factor never needs the source to change. If Vantagepoint already weights the column, the factor should be set to 1.
+**One factor, the same for the PIC view and the market sector view: 0.65** (Josh, 2026-11-25). The manual workbook used 0.67 for PICs and 0.65 for sectors; Compass uses 0.65 for both, so the firm total is the same on both tabs.
+
+It is the Admin setting on Admin > BD reports (`bd_mwip_factor`). It takes effect from a date and is **append-only**: the database refuses to change or delete a past factor. Each report uses the latest factor in force on its cutoff and records which one it used. To change the factor, the Admin adds a new one with the date it takes effect. The local demo seed still holds the mockup's 0.67 from Jan 1, 2026, so it reproduces the mockup; the real value is 0.65.
+
+**What the factor is applied to (open question H4, resolved 2026-10-16):** the source supplies each pursuit already weighted by probability and spread by days, as Vantagepoint's MWIP report does (`docs/MWIP-METHOD.md`). The factor is the architectural share (consultants removed), applied by Compass when it builds a report, so a changed factor never needs the source to change.
+
+## 4b. How MWIP is worked out (Admin > Marketing Reports > MWIP calculation)
+
+The same choices as the Options tab of Vantagepoint's MWIP report (VP-MWIP Marketing Master). They are ordinary Admin settings: only the Admin edits them (the System admin sees them read only), a change applies to the next report built, and each report records the choices it was built with (`runs.settings_json`). Rules: `modules/bd/logic/mwip.js`, fixture `modules/bd/tests/fixtures/mwip.json`.
+
+| Setting | Choices (default first) | Vantagepoint option |
+|---|---|---|
+| `bd.mwipBasis` | Weighted Fee (fee x win probability); Estimated Fee | Calculate Pursuit Forecast Using |
+| `bd.mwipAllocation` | spread evenly by days from estimated start to estimated completion; all to the estimated start month; all to the estimated completion month | Fee Allocation |
+| `bd.mwipPeriod` | Daily; Semi-monthly; Monthly. The fee is split into equal pieces per day, half-month or month; pieces that ended before the start date drop out, the one the start date falls in counts in full | Calculation Period |
+| `bd.mwipStart` | the first day after the report month (owner, 2026-11-25); the day the report is built ("Today") | Start Date |
+| `bd.mwipThrough` | December 31 of the report year; 3, 6 or 12 months | Duration |
+
+Shown but **not yet available** (they have not been checked against a Vantagepoint run, so they cannot be picked): Fee Allocation "close date" and "allocation method of the project" (the fields behind them are not found yet), and Calculation Period weekly and bi-weekly (within about a dollar of Daily, but not reproduced exactly). To add one: run Vantagepoint's MWIP report with that option, compare it to Compass the same day, then allow it.
+
+Only pursuits in a not-yet-awarded stage with a non-zero estimated fee count (`docs/MWIP-METHOD.md` rule 1). A pursuit missing a date its allocation needs is left out and listed on the draft as a note, never guessed. The default options reproduce the October 2026 workbook where pursuits had not changed since (Burbank, McBride, K-12, Higher Education exact). Daily, Semi-monthly and Monthly each reproduce a same-day Vantagepoint export exactly (2026-11-25, 109 of 109 pursuits).
 
 ## 5. Goals
 
@@ -65,7 +85,7 @@ Same as Project Turnaround: a scheduled job builds a **draft** on the first busi
 
 ## 7. What the source must provide (`loadBd(period)`)
 
-Projects (project number, name, principal code, market sector), monthly revenue net of consultants through the cutoff, contracted forecast through Dec 31, and pursuits, probability-weighted and spread by days as Vantagepoint's MWIP report does it (id, PIC, sector, amount, before the factor) as of the report month; Compass applies the single architectural factor (decided 2026-10-16, see `docs/MWIP-METHOD.md`). See `server/vp-local.js` and `docs/DATA-MODEL.md`. **Where these live in Vantagepoint, or in another system, is still handoff open question 3.** The local files (`server/db/seed/bd_*.csv`) are generated by `tools/make-seed-bd.js` and reproduce the mockup's September 2026 report exactly.
+Projects (project number, name, principal code, market sector, and for the forecast `fee`, `consultFee`, `reimbAllow`), monthly revenue net of consultants through the cutoff, the contracted forecast as the plan revenue entries themselves, `forecastEntries`: `[{ wbs1, start, end, amount }]` (cents; dates YYYY-MM-DD; `PNPlannedRevenueLabor.PeriodCost` with its `StartDate` and `EndDate`) with the firm holiday calendar `holidays`: `['YYYY-MM-DD', ...]` (`CFGHoliday`), from which Compass works out the forecast by month (section 3b; a source may instead supply `forecast` and `forecastMonths` already worked out, as the local made-up files do), and the pursuits themselves, as `pursuits`: `[{ id, name, pic, sector, stage, estFee, weightedFee, estStart, estCompletion }]` (cents; dates YYYY-MM-DD; read from the pursuit project records, `docs/MWIP-METHOD.md`). Compass works out the MWIP from them with the section 4b options and then applies the single architectural factor. A source may instead supply MWIP already worked out (`mwip` and `mwipMonths`, as the local made-up files do); then the section 4b options have no effect. See `server/vp-local.js` and `docs/DATA-MODEL.md`. **Where these live in Vantagepoint is answered** (2026-11-26): the five fixed statements in `server/vp/bd-statements.js`, each reconciled against a Vantagepoint export. A source may also pass `pulledAt` (ISO time); the report then notes when the data was pulled. **Live mode** (`docs/LIVE-MODE.md`) feeds the report from a Vantagepoint pull saved on this computer (`npm run vp:pull-bd`, `npm run live`); the demo keeps the made-up files. The local files (`server/db/seed/bd_*.csv`) are generated by `tools/make-seed-bd.js` and reproduce the mockup's September 2026 report exactly.
 
 ## 8. Not built
 
@@ -85,17 +105,18 @@ Each page's second line is "As of <billing cutoff> · Version N · Published" (t
 
 What can still be chosen: **paper** (Letter, Tabloid, A4, A3, default Letter), **orientation** (default Portrait: Letter portrait fits each page at full size), the **logo**, the **print date** in the footer, and a **description** under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). A page too tall for the paper shrinks to fit rather than spilling onto a third page, and the window says "small print" when that makes the type hard to read. Rules: `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing on paper, and PDF viewers other than the browser's.
 
-## Drill-downs (click a bar)
+## Drill-downs (click a PIC, a sector or the firm)
 
-Every dark green (YTD), light green (forecast) and gray (MWIP) segment of the two charts, for the firm, each PIC and each market sector, can be pointed at and clicked. Pointing lights that segment and mutes the rest (the dim also reaches the keyboard: Tab to a segment, Enter to open it). Clicking opens a panel under that chart; clicking the same segment again, or Close, shuts it. Switching between By PIC and By market sector closes it.
+Each group on the two charts (a PIC or market sector bar with its goal bar, or Total firm with the annual goal) is one target. Pointing at it fades in a soft gray band behind the whole group; nothing else on the chart changes. Keyboard: Tab to a group, Enter to open it. Clicking turns that chart, in place, into the projects behind the group (a smooth resize and cross-fade, the browser's view transition; none when the computer asks for reduced motion). A Back button at the top left returns to the chart. Switching between By PIC and By market sector also returns.
 
-| Segment | The panel shows |
-|---|---|
-| YTD revenue | each project with a bar for the revenue billed to date, biggest first |
-| Revenue forecast | the Vantagepoint-style forecast: a row per project, a column for each remaining month of the year, the amount in each, and totals |
-| MWIP backlog | the same, a row per pursuit, with the factored amounts |
+The drilled-in view shows:
 
-For a PIC or sector bar the panel is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
+- a line: how many projects and pursuits, and the total split into billed, forecast and MWIP;
+- a bar per project, biggest first: dark green the revenue billed to date, light green the contracted forecast;
+- then a gray bar per pursuit: the MWIP backlog, factored;
+- folded away under the chart: **Revenue forecast by month** and **MWIP backlog by month**, the Vantagepoint-style grid (a row per project or pursuit, a column for each remaining month, totals).
+
+For a PIC or sector the view is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
 
 How the months are made: each forecast project and each pursuit comes from the source with a monthly shape (`forecastMonths`, `mwipMonths`). That shape is only a set of weights: the amount the report counted (after the architectural share and the factor) is spread over the remaining months in those proportions, with the odd cents placed so every row adds to exactly what the report used (`logic/drill.js`, fixture `drill.json`).
 

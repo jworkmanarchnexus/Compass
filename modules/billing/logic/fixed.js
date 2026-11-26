@@ -7,8 +7,9 @@
    pendingCents   amounts in requests that are submitted but not yet processed (Vantagepoint cannot know them yet)
    An entry is how the person typed it: { amountCents } ("bill this much more") or { pctBp } ("bill through this %"), or null for blank.
    The two always mean the same thing: target (cumulative) = prior + amount, where prior = billed + pending. Neither is percent complete. */
+(function () {
 'use strict';
-const { bpToCents, centsToBp } = require('./money');
+const { bpToCents, centsToBp } = typeof require === 'function' ? require('./money') : window.CompassBilling; // the browser loads money.js first
 
 const isNum = v => typeof v === 'number' && Number.isFinite(v) && Number.isInteger(v);
 
@@ -74,4 +75,5 @@ function applyEdit(state, phaseId, entry) {
 
 const api = { phaseLine, evaluate, quickAction, applyEdit };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
-else if (typeof window !== 'undefined') window.CompassBilling = Object.assign(window.CompassBilling || {}, api);
+else if (typeof window !== 'undefined') window.CompassBillingFixed = api; // fixed and hourly both have evaluate and quickAction, so each keeps its own name
+})();

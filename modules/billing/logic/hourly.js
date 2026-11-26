@@ -5,6 +5,7 @@
    line:    { id, name, kind: 'labor' | 'expense' | 'consultant', availableCents, projectionCents }
    availableCents is what is unbilled and eligible on that line, already net of amounts pending in other requests.
    entry:   { amountCents } or null for blank. A hold or special instruction is a note, never an amount. */
+(function () {
 'use strict';
 
 const isNum = v => typeof v === 'number' && Number.isFinite(v) && Number.isInteger(v);
@@ -50,4 +51,5 @@ function quickAction(lines, action) {
 
 const api = { evaluate, quickAction };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
-else if (typeof window !== 'undefined') window.CompassBilling = Object.assign(window.CompassBilling || {}, api);
+else if (typeof window !== 'undefined') window.CompassBillingHourly = api;
+})();

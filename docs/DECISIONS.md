@@ -148,6 +148,25 @@
 - **The factor is the architectural share (consultants removed), applied to the probability-weighted amount.** Vantagepoint's MWIP report already weights each pursuit by probability (`PR.WeightedRevenue`) and spreads it by days from start to completion with the current month reduced by elapsed days. The source supplies that; Compass multiplies by the factor. No change to the BD calculation code, only to what the source amount means (open question H4 resolved). Pursuits carry no consultant fee in Vantagepoint, so the factor cannot be derived and stays a setting.
 - **MWIP and the contracted forecast are live plan data with no history.** Month-end figures must come from a snapshot Compass takes at report time (Pipeline watch already snapshots weekly); Vantagepoint cannot reproduce a past month.
 
+## 2026-11-25: MWIP factor is 0.65 for both views (owner decision)
+
+- **The MWIP architectural factor is 0.65 for the PIC view and the market sector view alike.** The manual workbook's 0.67 for PICs is no longer used. It stays the existing Admin setting (`bd_mwip_factor`, effective-dated, append-only), so a later change is a new entry with its date, not a code change. The local demo seed keeps the mockup's 0.67 for 2026 only so the demo still reproduces the mockup; the real value is entered in Admin.
+- **MWIP and the contracted forecast always run through Dec 31 of the report year** (restating open question M1). Never the workbook's six months of MWIP.
+- **MWIP counts the first month after the report month in full.** Vantagepoint's MWIP report cuts the current month by the days already gone, for the date it is run for; the BD report applies that rule as of the day after the report month (the October report as of Nov 1), so a report built on Nov 5 or Nov 12 shows the same MWIP. Matches the workbook's ReadMe ("change prior period to be the end of the previous month"). Pursuit data is still the latest on the day the report is built.
+
+## 2026-11-25: How Vantagepoint's Calculation Period spreads MWIP (from five same-day exports)
+
+- **One rule covers every period:** equal shares per calculation period from estimated start to completion (partial periods count whole), periods that ended before the start date drop out, the current one counts in full. Daily, Semi-monthly and Monthly reproduce the exports exactly; Weekly and Bi-weekly do not (within about a dollar) and are not offered.
+- **The earlier "current month decay" formula is replaced.** It was Daily seen through one export, and it was wrong for pursuits starting partway through a month.
+- **Default Daily**, because the October export and the Nov 12 workbook were made with it. Josh can change it in Admin.
+
+## 2026-11-25: MWIP options are Admin settings, mirroring Vantagepoint's MWIP report
+
+- **Josh asked for the report's options to be settings** so the method can change without code. Built: basis (Weighted or Estimated Fee), fee allocation (spread, start month, completion month), calculation period (monthly), count from, count through. Admin only, like every other BD setting.
+- **Options not yet checked against Vantagepoint are shown but cannot be picked** (close date, the project's allocation method, periods other than monthly). An unchecked option would produce numbers that silently disagree with Vantagepoint. Each is turned on after a same-day comparison.
+- **Compass works out MWIP from the pursuit records**, not from a source that already did it, so the options apply. The pursuit filter (not-yet-awarded stages, non-zero fee) is in the pure rule, not only in the SQL, so a rebuild in another language keeps it. The local made-up source still supplies finished MWIP, so the demo's numbers (and the mockup match) do not move; the options are tested with a test source.
+- **The live pull script uses the same rule**, so the local Vantagepoint test and the report cannot drift apart.
+
 ## 2026-10-17: Contracted forecast and the architectural ratio
 
 - **The forecast is gross.** PMs type revenue into the plan; Compass reads the plan's period revenue entries (`PNPlannedRevenueLabor.PeriodCost`) by month. The Consultants % column in the Vantagepoint export is not used (owner).
@@ -249,6 +268,27 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Status names (technical).** The four status keys stay (`current`, `update_due`, `overdue`, `no_plan`) so Home, the drafts ladder and the exports keep working; the words change: Done for this round, Goal check-in / Mid-month update due, ... late, First goal due / No goal yet. `owes` says which round is owed.
 - **Comments between rounds stay** (default; Josh did not decide). Kept as "Add a comment" in the History card. Easy to remove.
 - **Mark done and the separate explanation and commitment entries are gone from the API.** The page never offered Mark done; the goal check-in writes the explanation, the report and the goal in one transaction.
+
+## Billing PM and PIC screens, step 4 (2026-11-03)
+
+- **The pure rules run in the browser too, for instant feedback.** `money`, `fixed`, `hourly`, `review` and `status` load as plain scripts (each wrapped in its own function so their private names do not clash; the tests are unchanged). `fixed` and `hourly` both have `evaluate`, so the browser keeps them apart as `CompassBillingFixed` and `CompassBillingHourly`. The server still runs every rule again on save and submit.
+- **Submit is disabled while anything blocks it, and the screen lists why.** Save Draft is always on. The Vantagepoint numbers changing under a request show a banner that must be acknowledged before submitting.
+- **Notes are a small rich-text box (bold, italic, list).** The server cleans them again; the browser only shows text the server has cleaned.
+- **Processors and the Admin can open every project but the screen is read-only for them until step 5** (queue, return, process).
+
+## Marketing Report on live Vantagepoint data (2026-11-26, Josh asked)
+
+- **A pull job writes a snapshot; the report build reads the snapshot.** Keeps "only a job reads Vantagepoint, browsers never do", keeps the build synchronous and testable, and is the record the forecast and MWIP need (Vantagepoint keeps no history for them). `server/jobs/vp-pull-bd.js`, `server/vp-snapshot.js`, `docs/LIVE-MODE.md`.
+- **The snapshot holds raw inputs, not finished numbers** (plan entries, pursuits, ledger totals, holidays, principals), so the Admin's settings still apply at build time and a setting change needs only a rebuild.
+- **The SQL lives once**, in `server/vp/bd-statements.js`, used by the pull job and `tools/bd-live-pull.js`.
+- **Live mode is separate from the demo**: own database, own port (5290; 5281 to 5289 are the demo and other worktrees), and the sidebar says "Live: Marketing Report". Only the Marketing Report is live; the other pages still show made-up data.
+- **Goals and sectors for the live database come from a local config** (`server/db/live/config.json`, git-ignored), first filled from the October 2026 workbook: 13 PICs at $1.5M keyed by Vantagepoint employee code, the six sector goals, Laboratory counted in Healthcare through 2026-12-31, factor 0.65. "Lisa Whoolery" in the workbook was matched to Lisa Ramidan (employee 00384) by first name; **confirmed by Josh (2026-11-26): the same person.**
+
+## Names shown for Vantagepoint people (2026-11-26, Josh)
+
+- **The Admin can set the name Compass shows for any Vantagepoint person** (Admin > People, "Names shown for Vantagepoint people"), for someone who goes by another name than the one in Vantagepoint. Clearing it goes back to the Vantagepoint name. The System admin sees it read only.
+- **Applied everywhere at once.** Every page, report and export that showed a person from the employees table now asks one place (`server/names.js`, `employeeNames`); seven copies of the same lookup were replaced. Published reports show the current name (they store the employee code, not the name), so a rename does not need a rerun.
+- **Vantagepoint is never changed.** The name lives in Compass's own table `employee_names`, keyed by employee code; the nightly copy of employees can replace that table without losing it. Every change is in the audit log with the old and new name.
 
 ## Modules in preview (2026-11-26, Josh: "yes, go ahead")
 

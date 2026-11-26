@@ -3,11 +3,12 @@
    The arithmetic and the rules are modules/pipeline/logic/watch.js (pure, tested). Snapshots are never changed or deleted.
    The only automatic email goes to the Admin, with a count and a link; a PIC is never emailed. */
 const { HttpError } = require('./errors');
+const { employeeNames } = require('./names');
 const watch = require('../modules/pipeline/logic/watch');
 
 const WEEKS = 8;
 
-const picNames = db => Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+const picNames = db => employeeNames(db);
 
 /* every snapshot up to `upto` (default: all), oldest first, in the shape the logic wants */
 function history(db, upto) {

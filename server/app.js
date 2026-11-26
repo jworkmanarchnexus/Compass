@@ -16,6 +16,7 @@ const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
 const dashboard = require('./dashboard');
+const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -115,6 +116,7 @@ function createServer(db, opts) {
       const me = Object.assign(userOut(user), roles.describeUser(user, settingsNow));
       me.dashboards = dashboard.boardsOf(db, user); // ['pic', 'pm'], from the projects they are PIC or PM on
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
+      if (o.dataMode) me.dataMode = o.dataMode; // 'live' when the Marketing Report reads Vantagepoint (server/live.js)
       return sendJson(res, 200, me);
     }
 
@@ -161,6 +163,23 @@ function createServer(db, opts) {
         }
       });
       return sendJson(res, 200, { saved });
+    }
+
+    /* the names shown for Vantagepoint people (server/names.js): Admin edits, System admin reads */
+    if (p === '/api/admin/names' && method === 'GET') {
+      requireTab(user, 'people', 'view');
+      return sendJson(res, 200, names.nameRows(db));
+    }
+    const nm = /^\/api\/admin\/names\/([^/]+)$/.exec(p);
+    if (nm && method === 'PUT') {
+      requireTab(user, 'people', 'edit');
+      const body = await readJson(req);
+      const changed = db.tx(() => {
+        const c = names.setName(db, decodeURIComponent(nm[1]), body.name === undefined ? null : body.name, user.id);
+        if (c) audit(user, 'name.set', c.vpName, { from: c.from, to: c.to });
+        return c;
+      });
+      return sendJson(res, 200, { changed: !!changed, rows: names.nameRows(db) });
     }
 
     if (p === '/api/admin/people' && method === 'GET') {

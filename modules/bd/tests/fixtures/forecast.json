@@ -1,0 +1,47 @@
+{
+ "_note": "Money is whole cents. Hand-worked from docs/FORECAST-METHOD.md: each plan entry is spread across its dates by working days (Monday to Friday, less the holidays listed), each month's piece is the rounded running total minus the one before (half to even), and the report counts the months after the report month through December. Safe to reuse in another language.",
+ "holidays": ["2026-11-26", "2026-11-27", "2026-12-24", "2026-12-25", "2027-01-01", "2027-01-18"],
+ "cases": [
+  {
+   "name": "one entry from Nov 1 to Mar 4: 19 + 21 + 19 + 20 + 4 = 83 working days (Thanksgiving, Dec 24-25, Jan 1 and MLK Day off); the October report keeps Nov and Dec",
+   "period": 202610,
+   "entries": [{ "wbs1": "P1", "start": "2026-11-01", "end": "2027-03-04", "amount": 5282300 }],
+   "expect": {
+    "months": [202611, 202612],
+    "gross": { "P1": 2545687 },
+    "forecastMonths": [{ "id": "P1", "month": 202611, "amount": 1209201 }, { "id": "P1", "month": 202612, "amount": 1336486 }],
+    "skipped": []
+   },
+   "why": "52,823.00 x 19/83 = 12,092.01; x 40/83 = 25,456.87, so Dec = 13,364.86 (the export shows 12,092 and 13,365)"
+  },
+  {
+   "name": "an entry with no working day (a weekend) stays in its start month; one on a holiday too",
+   "period": 202610,
+   "entries": [{ "wbs1": "P2", "start": "2026-11-28", "end": "2026-11-29", "amount": 10000 }, { "wbs1": "P2", "start": "2026-12-25", "end": "2026-12-25", "amount": 500 }],
+   "expect": {
+    "months": [202611, 202612],
+    "gross": { "P2": 10500 },
+    "forecastMonths": [{ "id": "P2", "month": 202611, "amount": 10000 }, { "id": "P2", "month": 202612, "amount": 500 }],
+    "skipped": []
+   }
+  },
+  {
+   "name": "October (already billed) and next year are outside the October report",
+   "period": 202610,
+   "entries": [{ "wbs1": "P3", "start": "2026-10-01", "end": "2026-10-30", "amount": 900000 }, { "wbs1": "P3", "start": "2027-02-01", "end": "2027-02-26", "amount": 400000 }],
+   "expect": { "months": [202611, 202612], "gross": {}, "forecastMonths": [], "skipped": [] }
+  },
+  {
+   "name": "an entry with no start date is left out and reported, never guessed",
+   "period": 202610,
+   "entries": [{ "wbs1": "P4", "start": null, "end": "2026-12-31", "amount": 100000 }],
+   "expect": { "months": [202611, 202612], "gross": {}, "forecastMonths": [], "skipped": ["P4"] }
+  },
+  {
+   "name": "the December report has no months left",
+   "period": 202612,
+   "entries": [{ "wbs1": "P1", "start": "2026-11-01", "end": "2027-03-04", "amount": 5282300 }],
+   "expect": { "months": [], "gross": {}, "forecastMonths": [], "skipped": [] }
+  }
+ ]
+}

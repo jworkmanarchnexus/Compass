@@ -1,0 +1,532 @@
+{
+ "_note": "Money is whole cents. Hand-worked from docs/MWIP-METHOD.md: the dates from estimated start to estimated completion are split into calculation periods (days, half-months or months; a partial period at either end counts as a whole one), each gets an equal share (each piece is the rounded running total minus the one before, so they add back exactly), periods that ended before the report's start date drop out and the period the start date falls in counts in full. Safe to reuse in another language.",
+ "pursuits": {
+  "nov": {
+   "id": "Z1",
+   "name": "All in November",
+   "pic": "E1",
+   "sector": "Civic",
+   "stage": "015",
+   "estFee": 20000000,
+   "weightedFee": 6000000,
+   "estStart": "2026-11-01",
+   "estCompletion": "2026-11-30"
+  },
+  "span": {
+   "id": "Z2",
+   "name": "Nov 16 to Jan 15",
+   "pic": "E1",
+   "sector": "Civic",
+   "stage": "010",
+   "estFee": 12200000,
+   "weightedFee": 6100000,
+   "estStart": "2026-11-16",
+   "estCompletion": "2027-01-15"
+  },
+  "odd": {
+   "id": "Z3",
+   "name": "Three days, odd cents",
+   "pic": "E2",
+   "sector": "Healthcare",
+   "stage": "001",
+   "estFee": 1000,
+   "weightedFee": 100,
+   "estStart": "2026-11-30",
+   "estCompletion": "2026-12-02"
+  },
+  "past": {
+   "id": "Z4",
+   "name": "All in October",
+   "pic": "E2",
+   "sector": "Healthcare",
+   "stage": "002",
+   "estFee": 500000,
+   "weightedFee": 250000,
+   "estStart": "2026-10-01",
+   "estCompletion": "2026-10-31"
+  },
+  "awarded": {
+   "id": "Z5",
+   "name": "Awarded stage",
+   "pic": "E2",
+   "sector": "Healthcare",
+   "stage": "004",
+   "estFee": 500000,
+   "weightedFee": 450000,
+   "estStart": "2026-11-01",
+   "estCompletion": "2026-12-31"
+  },
+  "nofee": {
+   "id": "Z6",
+   "name": "No fee",
+   "pic": "E2",
+   "sector": "Healthcare",
+   "stage": "011",
+   "estFee": 0,
+   "weightedFee": 0,
+   "estStart": "2026-11-01",
+   "estCompletion": "2026-12-31"
+  },
+  "noend": {
+   "id": "Z7",
+   "name": "No completion date",
+   "pic": "E2",
+   "sector": "Healthcare",
+   "stage": "009",
+   "estFee": 900000,
+   "weightedFee": 300000,
+   "estStart": "2026-12-01",
+   "estCompletion": null
+  }
+ },
+ "cases": [
+  {
+   "name": "owner example: $60k in November, October report, November counted in full",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-05",
+   "options": {},
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 6000000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "owner example, Daily: built on Nov 5 and counted from that day: 26 of 30 days left, $52k",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-05",
+   "options": {
+    "start": "buildDay"
+   },
+   "expect": {
+    "asOf": "2026-11-05",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 5200000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "owner example, Daily, on Nov 4: 27 of 30 days left, $54k",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-04",
+   "options": {
+    "start": "buildDay"
+   },
+   "expect": {
+    "asOf": "2026-11-04",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 5400000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "Estimated Fee instead of Weighted Fee",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-05",
+   "options": {
+    "basis": "estimated"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 20000000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "Daily: 15 + 31 + 15 of 61 days; through Dec 31 keeps Nov and Dec",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {},
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z2",
+      "amount": 4600000
+     }
+    ],
+    "mwipMonths": [
+     {
+      "id": "Z2",
+      "month": 202611,
+      "amount": 1500000
+     },
+     {
+      "id": "Z2",
+      "month": 202612,
+      "amount": 3100000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "three months instead of through Dec 31 keeps January too",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "through": "3"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612,
+     202701
+    ],
+    "mwip": [
+     {
+      "id": "Z2",
+      "amount": 6100000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "all to the estimated start month",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "allocation": "start"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z2",
+      "amount": 6100000
+     }
+    ],
+    "mwipMonths": [
+     {
+      "id": "Z2",
+      "month": 202611,
+      "amount": 6100000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "all to the estimated completion month: January is after Dec 31, so nothing counts",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "allocation": "completion"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "odd cents, Daily: 100 over 3 days is 33 + 34 + 33; Nov 30 is the start date, so its day counts in full",
+   "pursuits": [
+    "odd"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-30",
+   "options": {
+    "start": "buildDay"
+   },
+   "expect": {
+    "asOf": "2026-11-30",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z3",
+      "amount": 100
+     }
+    ],
+    "mwipMonths": [
+     {
+      "id": "Z3",
+      "month": 202611,
+      "amount": 33
+     },
+     {
+      "id": "Z3",
+      "month": 202612,
+      "amount": 67
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "left out: past months, an awarded stage, no fee, and no completion date for a spread (never guessed)",
+   "pursuits": [
+    "past",
+    "awarded",
+    "nofee",
+    "noend"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {},
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [],
+    "leftOut": [
+     {
+      "id": "Z5",
+      "reason": "stage"
+     },
+     {
+      "id": "Z6",
+      "reason": "no-fee"
+     },
+     {
+      "id": "Z7",
+      "reason": "no-dates"
+     }
+    ]
+   }
+  },
+  {
+   "name": "no completion date is fine when everything goes to the start month",
+   "pursuits": [
+    "noend"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "allocation": "start"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z7",
+      "amount": 300000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "December report through Dec 31: no months are left, so no MWIP",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202612,
+   "buildDate": "2027-01-05",
+   "options": {},
+   "expect": {
+    "asOf": "2027-01-01",
+    "months": [],
+    "mwip": [],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "owner example, Monthly: built on Nov 5, November is the start date's month, so it counts in full",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-05",
+   "options": {
+    "period": "monthly",
+    "start": "buildDay"
+   },
+   "expect": {
+    "asOf": "2026-11-05",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 6000000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "owner example, Semi-monthly: built on Nov 20, the first half of November has ended, the second half counts in full",
+   "pursuits": [
+    "nov"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-20",
+   "options": {
+    "period": "semimonthly",
+    "start": "buildDay"
+   },
+   "expect": {
+    "asOf": "2026-11-20",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z1",
+      "amount": 3000000
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "Monthly: Nov 16 to Jan 15 touches 3 months, a third each (2,033,333 + 2,033,334 + 2,033,333), partial months count as whole ones",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "period": "monthly"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z2",
+      "amount": 4066667
+     }
+    ],
+    "mwipMonths": [
+     {
+      "id": "Z2",
+      "month": 202611,
+      "amount": 2033333
+     },
+     {
+      "id": "Z2",
+      "month": 202612,
+      "amount": 2033334
+     }
+    ],
+    "leftOut": []
+   }
+  },
+  {
+   "name": "Semi-monthly: Nov 16 to Jan 15 is 4 half-months of 1,525,000; Nov has one, Dec two",
+   "pursuits": [
+    "span"
+   ],
+   "period": 202610,
+   "buildDate": "2026-11-12",
+   "options": {
+    "period": "semimonthly"
+   },
+   "expect": {
+    "asOf": "2026-11-01",
+    "months": [
+     202611,
+     202612
+    ],
+    "mwip": [
+     {
+      "id": "Z2",
+      "amount": 4575000
+     }
+    ],
+    "mwipMonths": [
+     {
+      "id": "Z2",
+      "month": 202611,
+      "amount": 1525000
+     },
+     {
+      "id": "Z2",
+      "month": 202612,
+      "amount": 3050000
+     }
+    ],
+    "leftOut": []
+   }
+  }
+ ]
+}
