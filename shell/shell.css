@@ -295,3 +295,5 @@ table.ptab .clamp, table.ptab td.latest .clamp { max-width: none; }
 table.ptab { table-layout: fixed; }
 table.ptab th:nth-child(1) { width: 27%; } table.ptab th:nth-child(2) { width: 11%; } table.ptab th:nth-child(3) { width: 34%; } table.ptab th:nth-child(4) { width: 28%; }
 table.ptab td:first-child { min-width: 0; }
+/* a little more room between the figures-and-chart row and the PIC cards (Josh, 2026-11-26) */
+.stack > .ov-top + * { margin-top: 28px; }
