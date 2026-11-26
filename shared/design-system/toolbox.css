@@ -78,7 +78,7 @@
   --crit-bg: #FCECEB;
   --shadow-1: 0 1px 2px rgba(40, 46, 52, 0.08);
   --shadow-2: 0 8px 24px rgba(40, 46, 52, 0.14), 0 1px 3px rgba(40, 46, 52, 0.08);
-  --shadow-soft: 0 1px 2px rgba(30, 45, 60, 0.04), 0 6px 20px rgba(30, 45, 60, 0.06);
+  --shadow-soft: 0 2px 4px rgba(30, 45, 60, 0.10), 0 12px 32px rgba(30, 45, 60, 0.18);
   --focus: 0 0 0 3px rgba(0, 153, 216, 0.28);
   color-scheme: light;
 }
@@ -115,7 +115,7 @@ body.dense { --row-h: 27px; }
     --crit: #EF6F68;
     --crit-bg: #3A1D1C;
     --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+    --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
 }
@@ -150,7 +150,7 @@ body.dense { --row-h: 27px; }
   --crit: #EF6F68;
   --crit-bg: #3A1D1C;
   --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
 /* Toolbox shared component rules. Values come from tokens.css; never hard-code a color here. */
