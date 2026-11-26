@@ -260,3 +260,13 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .on-canvas .k-sub { font-size: 12.5px; line-height: 1.35; }
 .on-canvas .chart-card { padding: var(--s4) var(--s5); }
 .ov-top .ch-tick, .ov-top .ch-year { font-size: 13px; } /* the chart is drawn wider (640 units) here, so its labels need a larger size to stay readable at 1440px */
+/* PIC card header (Josh, 2026-11-25): no initials circle; a clear show/hide button first; the whole row toggles */
+.pic-head { cursor: pointer; }
+.pic-head:hover { background: var(--surface-2); }
+.pic-toggle { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--text-strong); cursor: pointer; transition: transform .15s, background-color .12s; }
+.pic-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
+.pic.closed .pic-toggle { transform: rotate(-90deg); }
+.pic.closed .pic-head { border-radius: inherit; }
+@media (prefers-reduced-motion: reduce) { .pic-toggle { transition: none; } }
+/* the plan status under the project name */
+.plan-under { margin-top: 6px; }

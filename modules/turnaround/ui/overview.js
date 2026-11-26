@@ -3,7 +3,7 @@
    What each person sees was already decided by the server; this file only draws it. */
 import { negativeBars } from '/shared/ui/charts.js';
 import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
-import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtM, fmtDay, fmtPeriod, monthLetter, initials, plural } from '/shared/ui/format.js';
+import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtM, fmtDay, fmtPeriod, monthLetter, plural } from '/shared/ui/format.js';
 
 export function planChip({ h }, plan) {
   if (plan.status === 'current') return h('span', { class: 'chip ok', text: 'Current' });
@@ -153,30 +153,37 @@ function topRow(ctx, data, mine, who) {
 function picCard(ctx, pic) {
   const { h, icon } = ctx;
   if (!pic.projects.length) {
-    return h('section', { class: 'pic' }, h('header', { class: 'pic-head' }, h('span', { class: 'avatar', text: initials(pic.name) }), h('h2', { text: pic.name }),
+    return h('section', { class: 'pic' }, h('header', { class: 'pic-head' }, h('h2', { text: pic.name }),
       h('span', { class: 'muted', text: '0 projects below break-even' }), h('span', { class: 'chip ok', style: 'margin-left:auto', text: 'All projects profitable' })),
       h('div', { class: 'great-row', text: `${first(pic.name)} has no projects below break-even this year. Doing a great job!` }));
   }
   const body = h('div', { class: 'tblwrap' }, projectTable(ctx, pic));
   const r = pic.record;
-  const chevron = h('button', { class: 'ib', type: 'button', 'aria-label': `Show or hide ${pic.name}'s projects`, 'aria-expanded': 'true' }, icon('chevron-down'));
-  const sec = h('section', { class: 'pic' },
-    h('header', { class: 'pic-head' },
-      h('span', { class: 'avatar', text: initials(pic.name) }),
+  // the show/hide toggle sits first, as a clear button; the whole header row also toggles (Josh, 2026-11-25)
+  const label = open => `${open ? 'Hide' : 'Show'} ${first(pic.name)}'s projects`;
+  const chevron = h('button', { class: 'pic-toggle', type: 'button', 'aria-label': label(true), title: label(true), 'aria-expanded': 'true' }, icon('chevron-down', 18));
+  const head = h('header', { class: 'pic-head' },
+      chevron,
       h('h2', { text: pic.name }),
-      h('span', { class: 'muted', text: plural(pic.projects.length, 'project') }),
       h('span', { class: 'pic-total', text: fmtCents(pic.totals.profit) }),
-      h('span', { class: 'muted', text: `${fmtLoss(100 * pic.totals.profit / pic.totals.billed)} of ${fmtCents(pic.totals.billed)} billed` }),
+      h('span', { class: 'muted', title: `of ${fmtCents(pic.totals.billed)} billed`, text: fmtLoss(100 * pic.totals.profit / pic.totals.billed) }),
       h('span', { class: 'pic-rec' },
         h('span', { class: 'muted', text: 'Plans current' }),
         h('span', { class: 'pbar', role: 'img', 'aria-label': `${pic.plansCurrent.current} of ${pic.plansCurrent.total} plans current` }, h('span', { style: `width:${pic.plansCurrent.total ? 100 * pic.plansCurrent.current / pic.plansCurrent.total : 0}%` })),
         h('strong', { text: `${pic.plansCurrent.current} of ${pic.plansCurrent.total}` }),
         r ? h('span', { class: 'muted' }, 'On time ', h('strong', { text: r.pctOnTime === null ? '-' : fmtWholePct(r.pctOnTime) })) : null,
         r ? h('span', { class: 'muted' }, 'Kept ', h('strong', { text: `${r.kept.kept} of ${r.kept.resolved}` })) : null,
-        r && STANDING[r.standing] && ctx.showStanding !== false ? h('span', { class: 'chip ' + STANDING[r.standing][0], text: STANDING[r.standing][1] }) : null),
-      chevron),
-    body);
-  chevron.addEventListener('click', () => { const open = body.hidden; body.hidden = !open; chevron.setAttribute('aria-expanded', String(open)); chevron.style.transform = open ? '' : 'rotate(-90deg)'; });
+        r && STANDING[r.standing] && ctx.showStanding !== false ? h('span', { class: 'chip ' + STANDING[r.standing][0], text: STANDING[r.standing][1] }) : null));
+  const sec = h('section', { class: 'pic' }, head, body);
+  const toggle = () => {
+    const open = body.hidden;
+    body.hidden = !open;
+    sec.classList.toggle('closed', !open);
+    chevron.setAttribute('aria-expanded', String(open));
+    chevron.setAttribute('aria-label', label(open)); chevron.title = label(open);
+  };
+  chevron.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  head.addEventListener('click', e => { if (!e.target.closest('a, button')) toggle(); });
   return sec;
 }
 
@@ -184,11 +191,12 @@ function projectTable(ctx, pic) {
   const { h } = ctx;
   const go = wbs1 => { location.hash = '#/turnaround/p/' + encodeURIComponent(wbs1); };
   return h('table', { class: 'dt ptab' },
-    h('thead', {}, h('tr', {}, h('th', { text: 'Project' }), h('th', { class: 'r', text: 'Profit YTD' }), h('th', { text: 'Plan' }), h('th', { text: 'Latest update' }), h('th', { text: 'Next commitment' }))),
+    h('thead', {}, h('tr', {}, h('th', { text: 'Project' }), h('th', { class: 'r', text: 'Profit YTD' }), h('th', { text: 'Latest update' }), h('th', { text: 'Next commitment' }))),
     h('tbody', {}, ...pic.projects.map(p => h('tr', { tabindex: '0', class: 'clickable', onclick: () => go(p.wbs1), onkeydown: e => { if (e.key === 'Enter') go(p.wbs1); } },
-      h('td', {}, h('a', { class: 'strong plink', href: '#/turnaround/p/' + encodeURIComponent(p.wbs1), text: p.name, onclick: e => e.stopPropagation() }), h('div', { class: 'muted', text: `${p.wbs1} · PM ${p.pm.name}` })),
+      // the plan status sits under the project name rather than in a column of its own (Josh, 2026-11-25)
+      h('td', {}, h('a', { class: 'strong plink', href: '#/turnaround/p/' + encodeURIComponent(p.wbs1), text: p.name, onclick: e => e.stopPropagation() }), h('div', { class: 'muted', text: `${p.wbs1} · PM ${p.pm.name}` }),
+        h('div', { class: 'plan-under' }, planChip(ctx, p.plan))),
       h('td', { class: 'r' }, h('div', { class: 'strong', text: fmtCents(p.profit.ytd) }), h('div', { class: 'muted', text: fmtLoss(p.pctYtd) })),
-      h('td', {}, planChip(ctx, p.plan)),
       h('td', { class: 'latest' }, p.latest ? h('div', {}, h('strong', { text: fmtDay(p.latest.date) }), h('div', { class: 'clamp', text: p.latest.text })) : h('em', { class: 'muted', text: 'Nothing logged yet.' })),
       h('td', {}, nextCell(ctx, p))))));
 }
