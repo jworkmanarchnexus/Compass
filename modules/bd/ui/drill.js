@@ -8,9 +8,9 @@ import { Bd } from '/shared/platform/index.js';
 
 const money = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US');
 const K = c => `$${Math.round(c / 100000).toLocaleString('en-US')}K`;
+const KL = c => (c > 0 && c < 50000 ? '<$1K' : K(c)); // a bar's amount: under $500 would round to $0K, so it reads <$1K (the exact figure is on hover and in the month table)
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthLabel = m => `${MON[(m % 100) - 1]} ${Math.floor(m / 100)}`;
-const shortName = n => (n.length > 30 ? n.slice(0, 29) + '…' : n);
 
 /* the three pieces of detail behind one bar, fetched together before the chart turns */
 export async function loadDrill(runId, drill) {
@@ -42,10 +42,10 @@ export function drillCard(ctx, drill, data, onBack, legend) {
   card.append(h('p', { class: 'bd-drill-sub', text: `${plural(proj.length, 'project')} and ${plural(purs.length, 'pursuit')}, ${K(total)} in all: ${K(ytd.totals.total)} billed, ${K(forecast.totals.total)} forecast, ${K(mwip.totals.total)} MWIP.` }));
   if (!proj.length && !purs.length) { card.append(h('p', { class: 'muted', style: 'padding:12px 16px', text: 'Nothing here: no projects or pursuits are counted in this bar.' })); return card; }
   const rows = [
-    ...proj.map(p => ({ label: shortName(p.name), segs: [{ v: p.ytd, kind: 'ytd', title: `${p.name} (${p.id}), YTD revenue` }, { v: p.forecast, kind: 'forecast', title: `${p.name} (${p.id}), revenue forecast` }], endText: K(p.ytd + p.forecast) })),
-    ...purs.map((p, i) => ({ label: shortName(p.name), gapBefore: i === 0 && proj.length > 0, segs: [{ v: p.total, kind: 'mwip', title: `${p.name} (${p.id}), MWIP backlog` }], endText: K(p.total) })),
+    ...proj.map(p => ({ label: p.name, labelTitle: `${p.name} (${p.id})`, segs: [{ v: p.ytd, kind: 'ytd', text: KL(p.ytd), title: `${p.name} (${p.id}), YTD revenue` }, { v: p.forecast, kind: 'forecast', text: KL(p.forecast), title: `${p.name} (${p.id}), revenue forecast` }], endText: KL(p.ytd + p.forecast) })),
+    ...purs.map((p, i) => ({ label: p.name, labelTitle: `${p.name} (${p.id})`, gapBefore: i === 0 && proj.length > 0, segs: [{ v: p.total, kind: 'mwip', title: `${p.name} (${p.id}), MWIP backlog` }], endText: KL(p.total) })),
   ];
-  const svg = stackedBars(rows, { fmt: K, rowHeight: 26, aria: `${drill.label}: each project's revenue to date and forecast, then each pursuit's MWIP backlog` });
+  const svg = stackedBars(rows, { fmt: K, rowHeight: 34, labelWidth: 260, wrapLabels: true, smallAtEnd: true, aria: `${drill.label}: each project's revenue to date and forecast, then each pursuit's MWIP backlog` });
   card.append(h('div', { class: 'bd-svgwrap' }, svg), legend(ctx, [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog']]));
   const fold = (title, d) => (d.items.length ? h('details', { class: 'bd-fold' }, h('summary', { text: title }), table(ctx, d, drill)) : null);
   card.append(...[fold('Revenue forecast by month', forecast), fold('MWIP backlog by month', mwip)].filter(Boolean));
