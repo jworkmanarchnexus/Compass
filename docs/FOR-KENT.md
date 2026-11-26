@@ -14,6 +14,8 @@ npm test           76 tests, a few seconds
 npm run seed       reset the local database to the made-up demo (two published runs, plan logs)
 npm run run-month  the monthly job (build the last closed month's draft)
 npm run daily      the daily job (goals not reported on, check-in drafts, the Admin's one email)
+npm run vp:pull-bd the Marketing Report's Vantagepoint pull (read only) into a local snapshot
+npm run live       http://localhost:5290: the Marketing Report on that snapshot, own database (docs/LIVE-MODE.md)
 ```
 
 Environment variables: `PORT` (default 5281), `COMPASS_DB` (path of the SQLite file), `COMPASS_URL` (the address put in the Admin's email), and `COMPASS_TODAY=2026-10-07` (pins "today"; the demo data is written around that day, so statuses drift on any other day).

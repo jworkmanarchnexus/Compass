@@ -10,6 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loadConfig, missing } = require('../server/vp/config');
 const { open } = require('../server/vp/connection');
+const { statements } = require('../server/vp/bd-statements');
 const { computeMwip, DEFAULT_OPTIONS } = require('../modules/bd/logic/mwip');
 const { computeForecast } = require('../modules/bd/logic/forecast');
 const { architecturalAmount } = require('../modules/bd/logic/architectural');
@@ -17,49 +18,11 @@ const { architecturalAmount } = require('../modules/bd/logic/architectural');
 const period = Number(process.argv[2] || 202610);
 const factor = Number(process.argv[3] || 0.65);
 const asOf = new Date().toISOString().slice(0, 10); // the day the data was pulled (no history exists)
-const year = Math.floor(period / 100), yearStart = year * 100 + 1;
+const year = Math.floor(period / 100);
 const OUT = path.join(__dirname, '..', 'discovery', 'data', 'protected');
 
-const PIC = "LTRIM(RTRIM(ISNULL(e.LastName, ''))) + ', ' + LTRIM(RTRIM(ISNULL(e.FirstName, '')))";
-const SECTOR_JOIN = 'LEFT JOIN (SELECT Code, MIN(Description) AS Description FROM dbo.CFGProjectTypeDescriptions GROUP BY Code) t ON t.Code = p.ProjectType';
-
-const REVENUE = `SELECT COALESCE(g.WBS1, k.WBS1) AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic,
-       ISNULL(t.Description, p.ProjectType) AS sector, ISNULL(g.gross, 0) AS gross, ISNULL(k.consultant, 0) AS consultant
-FROM (SELECT WBS1, -SUM(Amount) AS gross FROM dbo.LedgerAR
-      WHERE TransType = 'IN' AND ISNULL(SubType, '') <> 'R' AND Period BETWEEN ${yearStart} AND ${period} GROUP BY WBS1) g
-FULL JOIN (SELECT x.WBS1, SUM(x.Amount) AS consultant
-           FROM (SELECT WBS1, Account, Amount FROM dbo.LedgerAP WHERE Period BETWEEN ${yearStart} AND ${period}
-                 UNION ALL SELECT WBS1, Account, Amount FROM dbo.LedgerEX WHERE Period BETWEEN ${yearStart} AND ${period}
-                 UNION ALL SELECT WBS1, Account, Amount FROM dbo.LedgerMisc WHERE Period BETWEEN ${yearStart} AND ${period}) x
-           JOIN (SELECT Account, MIN(Type) AS Type FROM dbo.CA GROUP BY Account) a ON a.Account = x.Account
-           WHERE a.Type IN (8) GROUP BY x.WBS1) k ON k.WBS1 = g.WBS1
-JOIN dbo.PR p ON p.WBS1 = COALESCE(g.WBS1, k.WBS1) AND p.WBS2 = '' AND p.WBS3 = ''
-LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
-${SECTOR_JOIN}`;
-
-// forecast: every plan revenue entry (amount and its own dates) of an active project that reaches into the report year after the
-// report month; spread by working days in JS (modules/bd/logic/forecast.js, docs/FORECAST-METHOD.md)
-const FORECAST = `SELECT p.WBS1 AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic, ISNULL(t.Description, p.ProjectType) AS sector,
-       ISNULL(p.Fee, 0) AS fee, ISNULL(p.ConsultFee, 0) AS consult_fee, ISNULL(p.ReimbAllow, 0) AS reimb_allow,
-       CONVERT(varchar(10), r.StartDate, 120) AS start_date, CONVERT(varchar(10), r.EndDate, 120) AS end_date, r.PeriodCost AS amount
-FROM dbo.PR p
-JOIN dbo.PNTask k ON k.WBS1 = p.WBS1
-JOIN dbo.PNPlannedRevenueLabor r ON r.PlanID = k.PlanID AND r.TaskID = k.TaskID
-LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
-${SECTOR_JOIN}
-WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-z]%' AND r.PeriodCost <> 0
-  AND r.EndDate >= '${String(period % 100 === 12 ? (year + 1) * 10000 + 101 : year * 10000 + (period % 100 + 1) * 100 + 1)}' AND r.StartDate < '${year + 1}0101'`;
-
-// the firm holiday calendar (working days leave these out)
-const HOLIDAYS = `SELECT DISTINCT CONVERT(varchar(10), HolidayDate, 120) AS d FROM dbo.CFGHoliday`;
-
-const MWIP = `SELECT p.WBS1 AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic, ISNULL(t.Description, p.ProjectType) AS sector,
-       ISNULL(p.Revenue, 0) AS revenue, ISNULL(p.WeightedRevenue, 0) AS weighted, p.Stage AS stage, p.Probability AS probability,
-       CONVERT(varchar(10), p.EstStartDate, 120) AS est_start, CONVERT(varchar(10), p.EstCompletionDate, 120) AS est_completion
-FROM dbo.PR p
-LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
-${SECTOR_JOIN}
-WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.WBS1 LIKE '[A-Za-z]%' AND p.Status = 'A' AND p.Probability > 0 AND p.Probability < 100`;
+// the same fixed statements the pull job uses (server/vp/bd-statements.js)
+const SQL = statements(period);
 
 const cents = v => Math.round(Number(v || 0) * 100);
 const $ = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -72,7 +35,7 @@ async function main() {
   const vp = await open(cfg);
   const q = async (name, sql) => { const r = await vp.query(sql); if (r.truncated) throw new Error(name + ': row limit hit'); console.error(`${name}: ${r.rows.length} rows`); return r.rows; };
   let rev, fc, mw, hol;
-  try { rev = await q('revenue', REVENUE); fc = await q('forecast', FORECAST); hol = await q('holidays', HOLIDAYS); mw = await q('mwip', MWIP); } finally { await vp.close(); }
+  try { rev = await q('revenue', SQL.revenue); fc = await q('forecast', SQL.forecast); hol = await q('holidays', SQL.holidays); mw = await q('mwip', SQL.pursuits); } finally { await vp.close(); }
   fs.mkdirSync(OUT, { recursive: true });
   const file = path.join(OUT, `bd-live-${period}-asof-${asOf}.json`);
   fs.writeFileSync(file, JSON.stringify({ period, asOf, pulledAt: new Date().toISOString(), revenue: rev, forecast: fc, holidays: hol, mwip: mw }, null, 1));
