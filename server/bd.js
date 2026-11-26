@@ -11,6 +11,7 @@ const schedule = require('../modules/turnaround/logic/schedule');
 const { isValid } = require('../modules/turnaround/logic/dates');
 const drill = require('../modules/bd/logic/drill');
 const mwipRule = require('../modules/bd/logic/mwip');
+const forecastRule = require('../modules/bd/logic/forecast');
 
 // the day a report is built, local time (COMPASS_TODAY pins it for a demo, as the app does)
 const buildDay = () => { if (process.env.COMPASS_TODAY) return process.env.COMPASS_TODAY; const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
@@ -52,16 +53,27 @@ function compute(db, source, period, settings) {
     data.mwip = m.mwip; data.mwipMonths = m.mwipMonths;
     mwipLeftOut = m.leftOut.filter(x => x.reason === 'no-dates').map(x => ({ id: x.id, name: (data.pursuits.find(p => p.id === x.id) || {}).name || x.id }));
   }
+  /* a source that supplies the plan revenue entries themselves (amount, start and end date) and the firm holiday calendar gets the
+     contracted forecast worked out here, spread by working days as Vantagepoint does (logic/forecast.js). The gross amount then goes
+     to the architectural share with the project's fee, consultant fee and reimbursable allowance. */
+  let forecastSkipped = [];
+  if (data.forecastEntries) {
+    const f = forecastRule.computeForecast({ entries: data.forecastEntries, holidays: data.holidays || [], period });
+    const fees = Object.fromEntries(data.projects.map(p => [p.wbs1, p]));
+    data.forecast = Object.entries(f.gross).map(([wbs1, gross]) => ({ wbs1, gross, fee: (fees[wbs1] || {}).fee || 0, consultFee: (fees[wbs1] || {}).consultFee || 0, reimbAllow: (fees[wbs1] || {}).reimbAllow || 0 }));
+    data.forecastMonths = f.forecastMonths;
+    forecastSkipped = f.skipped;
+  }
   const projects = Object.fromEntries(data.projects.map(p => [p.wbs1, { pic: p.principal, sector: p.sector, name: p.name }]));
   const th = { onPace: settings['bd.onPacePct'], onTrack: settings['bd.onTrackPct'] };
   const out = report.computeBd({ period, goals: own.goals, projects, revenue: data.revenue, forecast: data.forecast, mwip: data.mwip, factorBp: own.factorBp, thresholds: th, sectors: own.sectors, overrides: own.overrides, unknownTo: settings['bd.noSector'] === 'other' ? 'Other' : undefined, contractAmount: settings['bd.contractAmount'] });
   const names = Object.fromEntries(data.projects.map(p => [p.wbs1, p.name]).concat(data.mwip.map(m => [m.id, m.name || m.id])));
   const detail = drill.buildDetail({ period, lines: out.lines, forecastMonths: data.forecastMonths || [], mwipMonths: data.mwipMonths || [], names });
-  return { out, own, projects, th, detail, mwipLeftOut };
+  return { out, own, projects, th, detail, mwipLeftOut, forecastSkipped };
 }
 
 function fill(db, runId, period, settings, c) {
-  const { out, own, projects, th, detail, mwipLeftOut } = c;
+  const { out, own, projects, th, detail, mwipLeftOut, forecastSkipped } = c;
   for (const d of detail) db.run('INSERT INTO bd_detail (run_id, kind, item_id, name, pic, sector, month, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', runId, d.kind, d.id, d.name, d.pic, d.sector, d.month, d.amount);
   db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule, contract_amount_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector'], settings['bd.contractAmount']);
   const put = (scope, r, sort) => db.run('INSERT INTO bd_rows (run_id, scope, key, label, sort, goal, ytd_goal, ytd, forecast, mwip_raw, mwip, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, scope, r.key, r.label, sort, r.goal, r.ytdGoal, r.ytd, r.forecast, r.mwipRaw, r.mwip, r.total, r.status);
@@ -75,6 +87,7 @@ function fill(db, runId, period, settings, c) {
   for (const u of out.unassignedPic) warn('no_pic', u.wbs1, `${name(u.wbs1)}: no PIC in Vantagepoint`, u.amount);
   for (const n of out.forecastNotes) warn('note', n.wbs1, n.issue === 'no-contract-fee' ? `${name(n.wbs1)}: forecast kept at its full amount (no contract fee on the project record)` : `${name(n.wbs1)}: forecast kept at its full amount (consultant fee is above the contract amount)`, n.amount);
   for (const p of mwipLeftOut || []) warn('note', p.id, `${p.name}: pursuit left out of MWIP (its estimated dates are missing in Vantagepoint)`, 0);
+  for (const w of forecastSkipped || []) warn('note', w, `${name(w)}: a forecast entry with no date was left out`, 0);
   for (const r of out.rolled) warn('note', '', `${r.from} counted in ${r.into}`, r.ytd + r.forecast + r.mwip);
   for (const a of out.assigned) warn('note', a.wbs1, `${name(a.wbs1)}: unassigned revenue went to ${a.sector}`, a.amount);
   for (const d of out.defaulted) warn('note', d.wbs1, `${name(d.wbs1)}: revenue with no market sector went to Other`, d.amount);

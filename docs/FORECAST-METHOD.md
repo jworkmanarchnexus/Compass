@@ -19,6 +19,10 @@ Like MWIP, the forecast has no history and is not tied to a reporting period: PM
 - Ruled out: plan task fees spread by dates (192 variants), planned hours x billing rate, `PR` fee fields, the empty `PRRevenue` table, custom fields, and a scan of 41 project and planning tables for any single column equal to the report.
 - Adding consultant, expense and unit plan entries changes nothing.
 
+## In Compass
+
+The rule is `modules/bd/logic/forecast.js` (fixtures `modules/bd/tests/fixtures/forecast.json`), used by the report build when the source supplies the plan entries (`docs/SPEC-bd.md` sections 3b and 7) and by `tools/bd-live-pull.js`. Checked 2026-11-26 against the Nov 25 export with plan entries read a day later: 144 of 144 projects within about a dollar in every month (whole-dollar rounding in the export).
+
 ## Evidence (live, 2026-11-25): "CFO-Nexus Contracted Revenue Forecast for MC Reports", Nov 2026 to Oct 2027
 
 - **Population:** 144 projects in the export; no active project with plan entries in the window is missing from it.

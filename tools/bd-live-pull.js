@@ -11,6 +11,8 @@ const path = require('node:path');
 const { loadConfig, missing } = require('../server/vp/config');
 const { open } = require('../server/vp/connection');
 const { computeMwip, DEFAULT_OPTIONS } = require('../modules/bd/logic/mwip');
+const { computeForecast } = require('../modules/bd/logic/forecast');
+const { architecturalAmount } = require('../modules/bd/logic/architectural');
 
 const period = Number(process.argv[2] || 202610);
 const factor = Number(process.argv[3] || 0.65);
@@ -35,17 +37,21 @@ JOIN dbo.PR p ON p.WBS1 = COALESCE(g.WBS1, k.WBS1) AND p.WBS2 = '' AND p.WBS3 = 
 LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
 ${SECTOR_JOIN}`;
 
-// gross forecast by start-date month, every month from January of the report year through December of the next (filtered in JS)
+// forecast: every plan revenue entry (amount and its own dates) of an active project that reaches into the report year after the
+// report month; spread by working days in JS (modules/bd/logic/forecast.js, docs/FORECAST-METHOD.md)
 const FORECAST = `SELECT p.WBS1 AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic, ISNULL(t.Description, p.ProjectType) AS sector,
        ISNULL(p.Fee, 0) AS fee, ISNULL(p.ConsultFee, 0) AS consult_fee, ISNULL(p.ReimbAllow, 0) AS reimb_allow,
-       YEAR(r.StartDate) * 100 + MONTH(r.StartDate) AS month, SUM(r.PeriodCost) AS gross
+       CONVERT(varchar(10), r.StartDate, 120) AS start_date, CONVERT(varchar(10), r.EndDate, 120) AS end_date, r.PeriodCost AS amount
 FROM dbo.PR p
 JOIN dbo.PNTask k ON k.WBS1 = p.WBS1
 JOIN dbo.PNPlannedRevenueLabor r ON r.PlanID = k.PlanID AND r.TaskID = k.TaskID
 LEFT JOIN dbo.EMMain e ON e.Employee = p.Principal
 ${SECTOR_JOIN}
-WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-z]%' AND r.StartDate >= '${year}0101' AND r.StartDate < '${year + 2}0101'
-GROUP BY p.WBS1, p.Name, p.Principal, e.LastName, e.FirstName, t.Description, p.ProjectType, p.Fee, p.ConsultFee, p.ReimbAllow, YEAR(r.StartDate), MONTH(r.StartDate)`;
+WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-z]%' AND r.PeriodCost <> 0
+  AND r.EndDate >= '${String(period % 100 === 12 ? (year + 1) * 10000 + 101 : year * 10000 + (period % 100 + 1) * 100 + 1)}' AND r.StartDate < '${year + 1}0101'`;
+
+// the firm holiday calendar (working days leave these out)
+const HOLIDAYS = `SELECT DISTINCT CONVERT(varchar(10), HolidayDate, 120) AS d FROM dbo.CFGHoliday`;
 
 const MWIP = `SELECT p.WBS1 AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic, ISNULL(t.Description, p.ProjectType) AS sector,
        ISNULL(p.Revenue, 0) AS revenue, ISNULL(p.WeightedRevenue, 0) AS weighted, p.Stage AS stage, p.Probability AS probability,
@@ -65,11 +71,11 @@ async function main() {
   cfg.rowLimit = 100000; cfg.queryTimeoutSeconds = 120;
   const vp = await open(cfg);
   const q = async (name, sql) => { const r = await vp.query(sql); if (r.truncated) throw new Error(name + ': row limit hit'); console.error(`${name}: ${r.rows.length} rows`); return r.rows; };
-  let rev, fc, mw;
-  try { rev = await q('revenue', REVENUE); fc = await q('forecast', FORECAST); mw = await q('mwip', MWIP); } finally { await vp.close(); }
+  let rev, fc, mw, hol;
+  try { rev = await q('revenue', REVENUE); fc = await q('forecast', FORECAST); hol = await q('holidays', HOLIDAYS); mw = await q('mwip', MWIP); } finally { await vp.close(); }
   fs.mkdirSync(OUT, { recursive: true });
   const file = path.join(OUT, `bd-live-${period}-asof-${asOf}.json`);
-  fs.writeFileSync(file, JSON.stringify({ period, asOf, pulledAt: new Date().toISOString(), revenue: rev, forecast: fc, mwip: mw }, null, 1));
+  fs.writeFileSync(file, JSON.stringify({ period, asOf, pulledAt: new Date().toISOString(), revenue: rev, forecast: fc, holidays: hol, mwip: mw }, null, 1));
   console.error('saved ' + file);
 
   // ---- totals ----
@@ -81,14 +87,16 @@ async function main() {
   };
   for (const r of rev) { const g = cents(r.gross), k = cents(r.consultant); add(r.pic, r.sector, 'gross', g); add(r.pic, r.sector, 'consult', k); add(r.pic, r.sector, 'ytd', g - k); }
 
-  // forecast: months after the report month through December; architectural share = (fee) / (fee + consultFee)
-  const fcFrom = period + 1;
-  for (const r of fc) {
-    const m = Number(r.month); if (m < fcFrom || m > year * 100 + 12) continue;
-    const g = cents(r.gross), fee = cents(r.fee), con = cents(r.consult_fee), den = fee + con;
-    const arch = den > 0 && con >= 0 && con <= den ? Math.round(g * (den - con) / den) : g;
+  // forecast: the report's own rules. Spread each entry by working days (logic/forecast.js), months after the report month through
+  // December, then the architectural share with fee + consultant fees as the full contract amount (logic/architectural.js, the default)
+  const f = computeForecast({ entries: fc.map(r => ({ wbs1: String(r.project).trim(), start: r.start_date, end: r.end_date, amount: cents(r.amount) })), holidays: hol.map(h => h.d), period });
+  const proj = Object.fromEntries(fc.map(r => [String(r.project).trim(), r]));
+  for (const [wbs1, g] of Object.entries(f.gross)) {
+    const r = proj[wbs1];
+    const arch = architecturalAmount({ gross: g, fee: cents(r.fee), consultFee: cents(r.consult_fee), reimbAllow: cents(r.reimb_allow) }, 'feeConsult').amount;
     add(r.pic, r.sector, 'fcGross', g); add(r.pic, r.sector, 'fcArch', arch);
   }
+  const fcFrom = f.months.length ? f.months[0] : '-';
 
   // MWIP: the report's own calculation (modules/bd/logic/mwip.js) with the default options (Weighted Fee, spread evenly, monthly,
   // the month after the report month in full, through Dec 31). The source supplies pursuits exactly as Compass's source would.
