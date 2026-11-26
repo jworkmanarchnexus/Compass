@@ -1,5 +1,5 @@
 /* What every Compass PDF export needs: the fonts loaded in the browser, the logo as an image, the PDF library, and text helpers.
-   Same approach as the Marketing Report's export (modules/bd/ui/export-draw.js, which still has its own copy of these):
+   Used by the Marketing Report's export (modules/bd/ui/export-draw.js) and Project Turnaround's (modules/turnaround/ui/export-draw.js):
    pages are painted through a 2D-context interface, on a canvas for the preview and on jsPDF's context2d for the PDF. */
 import { LOGO, PDF_FONTS } from '/shared/export/assets.js';
 
