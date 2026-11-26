@@ -77,9 +77,10 @@ export function lineChart(points, { fmt, aria, zero, ticks, height }) {
    Values are cents; fmt(v) writes an axis tick.
    Options: guides [{ v, kind, title }] draw a dashed line down the whole chart (class sb-guide-<kind>); a row's gapBefore starts a new group;
    rowHeight sets the row height; tight makes each bar fill its row (no space between the bars of a pair).
-   A segment with `pick: true` can be hovered (everything else is muted) and clicked: onPick({ rowKey, kind }) is called with the row's `key`
-   and the segment's kind. `picked` ({ rowKey, kind }) keeps one segment lit while a drill-down is open. Keyboard: Tab and Enter. */
-export function stackedBars(rows, { fmt, aria, max, onPick, picked, guides, rowHeight, tight }) {
+   Drill-downs: rows that share a `group` key (a PIC's bar and its goal bar) are one target. With onPick, pointing anywhere in a group fades in
+   a soft band behind the whole group; clicking it calls onPick({ rowKey: group }). Keyboard: Tab to a group, Enter to open it.
+   `groupLabel` on a group's first row names it for screen readers. */
+export function stackedBars(rows, { fmt, aria, max, onPick, guides, rowHeight, tight }) {
   const W = 1100, L = 170, R = 80, T = 8, B = 30, RH = rowHeight || (rows.length > 2 ? 38 : 44), GAP = tight ? 20 : 16;
   // a row with gapBefore starts a new group (a bar and its goal bar sit together); guides are dashed lines down the whole chart
   const ys = []; let yy = T;
@@ -89,41 +90,48 @@ export function stackedBars(rows, { fmt, aria, max, onPick, picked, guides, rowH
   const step = niceStep(top, 5);
   const axisMax = Math.ceil(top / step) * step;
   const x = v => L + v / axisMax * (W - L - R);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': aria, class: 'chart sb' + (picked ? ' sb-has-pick' : '') });
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: onPick ? 'group' : 'img', 'aria-label': aria, class: 'chart sb' });
   for (let v = 0; v <= axisMax + 1; v += step) {
     svg.append(el('line', { x1: x(v), x2: x(v), y1: T, y2: H - B, class: 'ch-grid' }));
     svg.append(el('text', { x: x(v), y: H - 10, 'text-anchor': 'middle', class: 'ch-tick' }, fmt(v)));
   }
+  // one <g> per clickable group, its band drawn first so it sits behind the bars (and catches the pointer between them)
+  const groups = new Map();
+  if (onPick) {
+    rows.forEach((r, i) => {
+      if (!r.group) return;
+      const g = groups.get(r.group) || { top: ys[i], label: r.groupLabel || r.label };
+      g.bottom = ys[i] + RH; groups.set(r.group, g);
+    });
+    const pad = tight ? 9 : 0;
+    for (const [key, g] of groups) {
+      g.node = el('g', { class: 'sb-grp', tabindex: '0', role: 'button', 'aria-label': `Show the projects behind ${g.label}` },
+        el('title', {}, `${g.label}: click to see the projects behind it`),
+        el('rect', { x: 4, y: g.top - pad, width: W - 8, height: g.bottom - g.top + 2 * pad, rx: 8, class: 'sb-band' }));
+      g.node.addEventListener('click', () => onPick({ rowKey: key }));
+      g.node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick({ rowKey: key }); } });
+      svg.append(g.node);
+    }
+  }
   rows.forEach((r, i) => {
+    const into = (groups.get(r.group) || {}).node || svg;
     // tight: the bar fills its row, so a bar and its goal bar sit flush together; the space is only between pairs
     const y = ys[i], bh = tight ? RH : RH * 0.62, by = tight ? y : y + (RH - bh) / 2;
-    svg.append(el('text', { x: L - 8, y: by + bh / 2 + 4, 'text-anchor': 'end', class: 'sb-label' }, r.label));
+    into.append(el('text', { x: L - 8, y: by + bh / 2 + 4, 'text-anchor': 'end', class: 'sb-label' }, r.label));
     let acc = 0;
     for (const s of r.segs) {
       if (s.v <= 0) continue;
-      const live = onPick && s.pick;
-      const isPicked = !!(picked && live && picked.rowKey === r.key && picked.kind === s.kind);
-      const rect = el('rect', { x: x(acc), y: by, width: Math.max(1, x(acc + s.v) - x(acc)), height: bh, class: 'sb-' + s.kind + (live ? ' sb-click' : '') + (isPicked ? ' sb-picked' : ''),
-        tabindex: live ? '0' : null, role: live ? 'button' : null, 'aria-pressed': live ? String(isPicked) : null,
-        'aria-label': live ? `Show what is behind ${s.title || s.kind} for ${r.label}: ${fmt(s.v)}` : null }, el('title', {}, `${s.title || s.kind}: ${fmt(s.v)}${live ? '. Click for the detail.' : ''}`));
-      if (live) {
-        const on = () => { svg.classList.add('sb-hover'); rect.classList.add('sb-hot'); };
-        const off = () => { svg.classList.remove('sb-hover'); rect.classList.remove('sb-hot'); };
-        rect.addEventListener('mouseenter', on); rect.addEventListener('mouseleave', off); rect.addEventListener('focus', on); rect.addEventListener('blur', off);
-        rect.addEventListener('click', () => onPick({ rowKey: r.key, kind: s.kind }));
-        rect.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick({ rowKey: r.key, kind: s.kind }); } });
-      }
-      svg.append(rect);
+      into.append(el('rect', { x: x(acc), y: by, width: Math.max(1, x(acc + s.v) - x(acc)), height: bh, class: 'sb-' + s.kind }, el('title', {}, `${s.title || s.kind}: ${fmt(s.v)}`)));
       if (s.text) {
         const cx = (x(acc) + x(acc + s.v)) / 2, fits = x(acc + s.v) - x(acc) >= s.text.length * 6.4 + 8;
         // too narrow for its words: inside if it fits, otherwise just above the bar (where there is room: not on a goal bar tucked under its pair)
-        if (fits) svg.append(el('text', { x: cx, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
-        else if (!tight || r.gapBefore) svg.append(el('text', { x: cx, y: by - 4, 'text-anchor': 'middle', class: 'sb-out' }, s.text));
+        if (fits) into.append(el('text', { x: cx, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
+        else if (!tight || r.gapBefore) into.append(el('text', { x: cx, y: by - 4, 'text-anchor': 'middle', class: 'sb-out' }, s.text));
       }
       acc += s.v;
     }
-    for (const m of r.marks || []) svg.append(el('line', { x1: x(m.v), x2: x(m.v), y1: by - 4, y2: by + bh + 4, class: 'sb-mark-' + m.kind }, el('title', {}, m.title || '')));
-    if (r.endText) svg.append(el('text', { x: x(acc) + 6, y: by + bh / 2 + 4, class: 'sb-end' }, r.endText));
+    for (const m of r.marks || []) into.append(el('line', { x1: x(m.v), x2: x(m.v), y1: by - 4, y2: by + bh + 4, class: 'sb-mark-' + m.kind }, el('title', {}, m.title || '')));
+    if (r.endText) into.append(el('text', { x: x(acc) + 6, y: by + bh / 2 + 4, class: 'sb-end' }, r.endText));
   });
   for (const g of guides || []) svg.append(el('line', { x1: x(g.v), x2: x(g.v), y1: T, y2: H - B, class: 'sb-guide sb-guide-' + g.kind }, el('title', {}, g.title || '')));
   svg.append(el('line', { x1: L, x2: L, y1: T, y2: H - B, class: 'ch-zero' }));

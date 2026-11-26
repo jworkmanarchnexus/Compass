@@ -105,17 +105,18 @@ Each page's second line is "As of <billing cutoff> · Version N · Published" (t
 
 What can still be chosen: **paper** (Letter, Tabloid, A4, A3, default Letter), **orientation** (default Portrait: Letter portrait fits each page at full size), the **logo**, the **print date** in the footer, and a **description** under the title. The footer always says Draft for an unpublished report and carries page numbers. Choices are remembered on the device (the description is not). A page too tall for the paper shrinks to fit rather than spilling onto a third page, and the window says "small print" when that makes the type hard to read. Rules: `modules/bd/logic/export-plan.js`, tested from `modules/bd/tests/fixtures/export-plan.json`. Not tested: printing on paper, and PDF viewers other than the browser's.
 
-## Drill-downs (click a bar)
+## Drill-downs (click a PIC, a sector or the firm)
 
-Every dark green (YTD), light green (forecast) and gray (MWIP) segment of the two charts, for the firm, each PIC and each market sector, can be pointed at and clicked. Pointing lights that segment and mutes the rest (the dim also reaches the keyboard: Tab to a segment, Enter to open it). Clicking opens a panel under that chart; clicking the same segment again, or Close, shuts it. Switching between By PIC and By market sector closes it.
+Each group on the two charts (a PIC or market sector bar with its goal bar, or Total firm with the annual goal) is one target. Pointing at it fades in a soft gray band behind the whole group; nothing else on the chart changes. Keyboard: Tab to a group, Enter to open it. Clicking turns that chart, in place, into the projects behind the group (a smooth resize and cross-fade, the browser's view transition; none when the computer asks for reduced motion). A Back button at the top left returns to the chart. Switching between By PIC and By market sector also returns.
 
-| Segment | The panel shows |
-|---|---|
-| YTD revenue | each project with a bar for the revenue billed to date, biggest first |
-| Revenue forecast | the Vantagepoint-style forecast: a row per project, a column for each remaining month of the year, the amount in each, and totals |
-| MWIP backlog | the same, a row per pursuit, with the factored amounts |
+The drilled-in view shows:
 
-For a PIC or sector bar the panel is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
+- a line: how many projects and pursuits, and the total split into billed, forecast and MWIP;
+- a bar per project, biggest first: dark green the revenue billed to date, light green the contracted forecast;
+- then a gray bar per pursuit: the MWIP backlog, factored;
+- folded away under the chart: **Revenue forecast by month** and **MWIP backlog by month**, the Vantagepoint-style grid (a row per project or pursuit, a column for each remaining month, totals).
+
+For a PIC or sector the view is limited to that PIC's projects (or pursuits), or that sector's (a project coded Labs is shown under Healthcare while Labs rolls into it). The pieces always add up to the bar: they were frozen with the report (`bd_detail`), so a published report's detail never changes. The MWIP factor itself is not shown to PICs; the amounts are the weighted ones already in their totals. A report built before this existed has no detail and says so (archive and rerun it to get it).
 
 How the months are made: each forecast project and each pursuit comes from the source with a monthly shape (`forecastMonths`, `mwipMonths`). That shape is only a set of weights: the amount the report counted (after the architectural share and the factor) is spread over the remaining months in those proportions, with the odd cents placed so every row adds to exactly what the report used (`logic/drill.js`, fixture `drill.json`).
 
