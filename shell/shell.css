@@ -270,3 +270,28 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 @media (prefers-reduced-motion: reduce) { .pic-toggle { transition: none; } }
 /* the plan status under the project name */
 .plan-under { margin-top: 6px; }
+/* Turnaround project tables wrap instead of scrolling sideways (Josh, 2026-11-26): rows get taller as the card narrows;
+   on a very narrow card (under 560px) each project stacks: name and profit, then the latest update, then the next commitment */
+.pic { container-type: inline-size; }
+table.ptab { min-width: 0; table-layout: auto; }
+table.ptab th, table.ptab td { white-space: normal; }
+table.ptab td:first-child { min-width: 170px; }
+table.ptab td.r { white-space: nowrap; }
+table.ptab .clamp, table.ptab td.latest .clamp { max-width: none; }
+.pic .tblwrap { overflow-x: visible; }
+@container (max-width: 560px) {
+  table.ptab thead { display: none; }
+  table.ptab, table.ptab tbody { display: block; }
+  table.ptab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2) var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-2); }
+  table.ptab tr:last-child { border-bottom: 0; }
+  table.ptab td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.ptab td:first-child { min-width: 0; }
+  table.ptab td.latest, table.ptab td:last-child { grid-column: 1 / -1; }
+  table.ptab td.latest::before { content: "Latest update"; }
+  table.ptab td:last-child::before { content: "Next commitment"; }
+  table.ptab td.latest::before, table.ptab td:last-child::before { display: block; font: 700 11px/1.4 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+}
+/* the same column shares on every PIC card, so the columns line up down the page */
+table.ptab { table-layout: fixed; }
+table.ptab th:nth-child(1) { width: 27%; } table.ptab th:nth-child(2) { width: 11%; } table.ptab th:nth-child(3) { width: 34%; } table.ptab th:nth-child(4) { width: 28%; }
+table.ptab td:first-child { min-width: 0; }
