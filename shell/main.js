@@ -12,6 +12,7 @@ import { renderOverview } from '/modules/turnaround/ui/overview.js';
 import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
+import { renderDashboard } from '/modules/dashboard/ui/page.js';
 
 const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Billing, ApiError } = platform;
 const T = window.Toolbox;
@@ -27,6 +28,7 @@ const displayChanged = () => window.dispatchEvent(new Event('compass:display'));
 /* ---------- side bar. `phase` says when the page gets real content. ---------- */
 const NAV = [
   { id: 'home', href: '#/', icon: 'house', label: 'Home' },
+  { id: 'dashboard', area: 'dashboard', href: '#/dashboard', icon: 'layout-grid', label: 'My dashboard', blurb: 'Your own page of dashparts. Choose which ones, their size and their order.' },
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
@@ -140,6 +142,11 @@ async function pageTurnaround() {
   }
   body.append(h('p', { class: 'muted', style: 'margin:0', text: `${data.run.label} run, published ${fmtTime(data.run.publishedAt)}. Plan status is as of today.` }));
   renderOverview(ctx, body, data);
+}
+
+async function pageDashboard() {
+  const body = frame('dashboard', [crumb('Compass', '#/'), sep(), crumb('My dashboard')], 'My dashboard', 'Sample data: every dashpart shows made-up numbers for now.');
+  await renderDashboard(ctx, body);
 }
 
 async function pagePipeline() {
@@ -560,6 +567,7 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
+  if (hash === '#/dashboard') return me.areas.dashboard ? pageDashboard() : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();

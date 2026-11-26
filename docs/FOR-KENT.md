@@ -55,6 +55,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `GET /api/dev/users` | anyone (local only) | the sign-in-as list |
 | `GET /api/me` | signed in | the person, role, what they may open, Admin tab levels, the Admin's check-in count |
 | `GET /api/home` | signed in | Home, shaped by role |
+| `GET /api/dashboard`, `PUT /api/dashboard` | Admin, PIC, PM (their own only) | My dashboard: the catalog and this person's layout; save `{ layout }` (normalized first) or `{ reset: true }` |
 | `GET /api/turnaround/current` | Turnaround viewers | the page for the last published run (`{ run: null }` until one exists) |
 | `GET /api/projects/:wbs1/plan[?cycle=YYYY]` | Turnaround viewers | a project's page: status and round dates, the form's context, every goal, the history newest first, figures; for its PIC, their projects on the list (`steps`) |
 | `POST /api/projects/:wbs1/plan/entries` | the project's PIC (`update`, a comment); Admin (`admin_note`) | add a comment or an admin note |

@@ -15,6 +15,7 @@ const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
+const dashboard = require('./dashboard');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -114,6 +115,12 @@ function createServer(db, opts) {
       const me = Object.assign(userOut(user), roles.describe(user.role, access));
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
       return sendJson(res, 200, me);
+    }
+
+    if (p === '/api/dashboard') {
+      if (!roles.canView(user.role, 'dashboard', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      if (method === 'GET') return sendJson(res, 200, dashboard.get(db, user));
+      if (method === 'PUT') return sendJson(res, 200, dashboard.save(db, user, await readJson(req)));
     }
 
     if (p === '/api/admin/settings' && method === 'GET') {

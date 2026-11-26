@@ -530,6 +530,13 @@ CREATE TABLE IF NOT EXISTS billing_notifications (   -- what the email rules say
   delivery_json TEXT NOT NULL DEFAULT '[]'           -- for each: how their email settings say to deliver it [{ userId, mode, sendAt }]
 );
 
+-- My dashboard: each person's own arrangement of the curated dashparts (modules/dashboard/logic/layout.js). One row per person; saving replaces it.
+CREATE TABLE IF NOT EXISTS dashboard_layouts (
+  user_id     TEXT PRIMARY KEY REFERENCES users(id),
+  layout_json TEXT NOT NULL,     -- { version, items: [{ id, w, h, on }] }, always normalized against the catalog before it is stored
+  updated_at  INTEGER NOT NULL
+);
+
 CREATE TRIGGER IF NOT EXISTS billing_revisions_no_update BEFORE UPDATE ON billing_revisions BEGIN SELECT RAISE(ABORT, 'billing revisions are never changed'); END;
 CREATE TRIGGER IF NOT EXISTS billing_revisions_no_delete BEFORE DELETE ON billing_revisions BEGIN SELECT RAISE(ABORT, 'billing revisions are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_events_no_update BEFORE UPDATE ON billing_events BEGIN SELECT RAISE(ABORT, 'billing events are never changed'); END;

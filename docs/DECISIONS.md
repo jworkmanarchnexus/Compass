@@ -249,3 +249,13 @@ Josh: the old reporting was too complicated (a 14-day check-in counted per proje
 - **Status names (technical).** The four status keys stay (`current`, `update_due`, `overdue`, `no_plan`) so Home, the drafts ladder and the exports keep working; the words change: Done for this round, Goal check-in / Mid-month update due, ... late, First goal due / No goal yet. `owes` says which round is owed.
 - **Comments between rounds stay** (default; Josh did not decide). Kept as "Add a comment" in the History card. Easy to remove.
 - **Mark done and the separate explanation and commitment entries are gone from the API.** The page never offered Mark done; the goal check-in writes the explanation, the report and the goal in one transaction.
+
+## My dashboard scaffolding (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- **Its own module** (`modules/dashboard/`), as Josh asked, built on branch `dashboard` off `main` so it has the design refresh.
+- **Saved per person on the server** (`dashboard_layouts`, one row each), not in the browser, so it follows the person to another computer and Kent can see the shape. Replaced on every save; no history (it is a preference, not a record).
+- **Packing keeps the order** (each dashpart at or after the one before it) instead of filling every gap: with gap-filling, a small dashpart dragged past a big one jumped back into the earlier gap and the drag looked like it did nothing. Gaps can remain; the person drags something into them.
+- **Resize is one cell at a time with arrow buttons** on the right and bottom edges, not a drag handle: easy to hit while the tile jiggles, works by keyboard, and each arrow can say what the change will show before it is clicked.
+- **Sizes are min/max per dashpart** in the catalog; the server forces every saved size inside them.
+- **New dashparts start off** for people who already saved a layout, so the catalog can grow without changing anyone's page.
+- **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.
