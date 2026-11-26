@@ -1,7 +1,7 @@
-/* The Project Turnaround page: KPI strip, two charts, and a card per PIC.
+/* The Project Turnaround page: four figures beside the profit chart, then a card per PIC.
    Same page for the admin (any run, draft included) and for everyone else (the last published run).
    What each person sees was already decided by the server; this file only draws it. */
-import { negativeBars, lineChart } from '/shared/ui/charts.js';
+import { negativeBars } from '/shared/ui/charts.js';
 import { fmtCents, fmtK, fmtLoss, fmtWholePct, fmtM, fmtDay, fmtPeriod, monthLetter, initials, plural } from '/shared/ui/format.js';
 
 export function planChip({ h }, plan) {
@@ -41,9 +41,9 @@ export function renderOverview(ctx, container, data) {
     const self = !!pic && me.role === 'pic' && pic.code === me.picCode;
     const who = self ? 'Your' : pic ? `${first(pic.name)}'s` : null;
     if (pic && !pic.projects.length) holder.append(greatJob(ctx, pic, self));
-    else if (pic) holder.append(kpiStrip(ctx, data, pic, who), chartRow(ctx, data, pic, who), picCard(ctx, pic));
+    else if (pic) holder.append(topRow(ctx, data, pic, who), picCard(ctx, pic));
     else {
-      holder.append(kpiStrip(ctx, data, null), chartRow(ctx, data, null));
+      holder.append(topRow(ctx, data, null));
       for (const p of data.pics) holder.append(picCard(ctx, p));
     }
     if (!data.pics.length) holder.append(h('div', { class: 'empty-note', text: 'No projects are below break-even.' }));
@@ -102,21 +102,22 @@ function chartRow(ctx, data, mine, who) {
   void years;
   const last = hist[hist.length - 1], prev = hist[hist.length - 2];
   const deeper = prev ? last.negativeYtd - prev.negativeYtd : 0;
-  const fewer = prev ? last.belowCount - prev.belowCount : 0;
   const prevName = prev ? fmtPeriod(prev.period).split(' ')[0] : '';
   const bars = negativeBars(pts.map(p => ({ label: p.label, yearLabel: p.yearLabel, value: p.value, kind: p.kind, tip: `${fmtPeriod(p.period)}: ${fmtCents(p.value)} (${plural(p.count, 'project')} below break-even)` })),
     { fmt: v => fmtK(v), aria: 'Total negative year-to-date profit at each month end, last 12 months' });
-  const line = lineChart(pts.map(p => ({ label: p.label, yearLabel: p.yearLabel, value: p.count, kind: p.kind, tip: `${fmtPeriod(p.period)}: ${plural(p.count, 'project')} below break-even` })),
-    { fmt: v => String(v), aria: 'Projects below break-even at each month end, last 12 months', ticks: 4 });
-  return h('div', { class: 'charts' },
-    h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? `${who} negative YTD profit` : 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
-        h('div', { class: 'chart-num' }, h('strong', { text: fmtK(last.negativeYtd).replace('+', '') }), prev ? h('span', { class: 'muted', text: `${fmtK(Math.abs(deeper)).replace('+', '')} ${deeper <= 0 ? 'deeper' : 'shallower'} than ${prevName}` }) : null)),
-      bars),
-    h('div', { class: 'chart-card' },
-      h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? `${who} projects below break-even` : 'Projects below break-even' }), h('p', { class: 'muted', text: mine ? 'Active projects below $0 YTD at each month end.' : 'Active projects below $0 YTD at each month end.' })),
-        h('div', { class: 'chart-num' }, h('strong', { text: String(last.belowCount) }), prev ? h('span', { class: 'muted', text: fewer === 0 ? `Same as ${prevName}` : `${plural(Math.abs(fewer), 'project')} ${fewer < 0 ? 'fewer' : 'more'} than ${prevName}` }) : null)),
-      line));
+  // The count of projects below break-even is no longer charted (Josh, 2026-11-25): the bar tooltips and the
+  // "Since" figure still give it, and the history still carries belowCount for anyone who wants it back.
+  return h('div', { class: 'chart-card' },
+    h('div', { class: 'chart-head' }, h('div', {}, h('h2', { text: mine ? `${who} negative YTD profit` : 'Total negative YTD profit' }), h('p', { class: 'muted', text: 'In thousands. Gray is last year.' })),
+      h('div', { class: 'chart-num' }, h('strong', { text: fmtK(last.negativeYtd).replace('+', '') }), prev ? h('span', { class: 'muted', text: `${fmtK(Math.abs(deeper)).replace('+', '')} ${deeper <= 0 ? 'deeper' : 'shallower'} than ${prevName}` }) : null)),
+    bars);
+}
+
+/* the top of the page: the four figures as a 2x2 block beside the profit chart */
+function topRow(ctx, data, mine, who) {
+  const chart = chartRow(ctx, data, mine, who);
+  const hasChart = chart.classList.contains('chart-card');
+  return ctx.h('div', { class: 'ov-top' + (hasChart ? '' : ' no-chart') }, kpiStrip(ctx, data, mine, who), chart);
 }
 
 function picCard(ctx, pic) {
