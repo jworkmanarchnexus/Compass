@@ -107,10 +107,11 @@ Situations: **overdue** (has a plan, something is past due) and **no plan** (no 
 
 One page for everyone (the server removes what a viewer may not see). The Admin can open any run, draft included, on the same page before publishing.
 
-- **KPI strip:** total negative YTD profit and % of billed (with project count); plans current X of N; waiting on an update (past due + no plan, with the count of check-in drafts ready for the Admin); and since last month (projects off, new, improved, worse against the previous published run).
-- **Charts:** total negative YTD profit at each month end for 12 months (last year's months in grey) and the count of projects below break-even. Under "Just mine" both charts show that PIC's own projects (stored per run), not the firm's.
+- **Top row:** the four numbers as a 2x2 block beside the chart (stacked under 1100px wide).
+- **The four numbers:** total negative YTD profit and % of billed (with project count); plans current X of N; waiting on an update (past due + no plan, with the count of check-in drafts ready for the Admin); and since last month (projects off, new, improved, worse against the previous published run).
+- **Chart:** total negative YTD profit at each month end for 12 months (last year's months in grey). Under "Just mine" it shows that PIC's own projects (stored per run), not the firm's. The chart of the count of projects below break-even was removed (Josh, 2026-11-25); each bar's tooltip still gives that month's count, and the run history still stores it.
 - **A card per PIC**, ordered by the PIC's total YTD profit, biggest loss first: projects, total YTD profit and %, plans current (bar), on time %, kept x of y, standing (per visibility); a table of projects with profit YTD, plan chip, latest narrative update, next commitment (open / past due N days / date moved) and "N earlier commitments missed".
-- **PIC viewers** get a Just mine / Everyone toggle (default Just mine); "Just mine" shows their own four numbers and their own two charts.
+- **PIC viewers** get a Just mine / Everyone toggle (default Just mine); "Just mine" shows their own four numbers and their own chart.
 - **The Admin** gets Everyone, or a drop-down of the PICs; picking one shows that PIC's numbers and charts the way "Just mine" shows a PIC's own.
 - **Every active PIC is on the page.** A PIC with no project below break-even has a card that says they have none and are doing a great job; on "Just mine" they see a congratulation instead of numbers. Cards are ordered by total loss, so these come last.
 - **Plan page** (one project): add to the log (PIC: the explanation first, then updates and commitments) or an admin note (Admin); the log newest first; commitments with Mark done and Change date; the year-to-date profit by month; project facts; a legend. Past cycles are read-only.

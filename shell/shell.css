@@ -243,3 +243,12 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .on-canvas .pw-item { border-bottom-color: var(--line-2); }
 /* a PIC with nothing below break-even keeps its green panel, as a card */
 .on-canvas .great { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+/* Turnaround top row: the four figures as a 2x2 block beside the profit chart (Josh, 2026-11-25); stacks below 1100px */
+.ov-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s4); align-items: stretch; }
+.ov-top .kpis { grid-template-columns: 1fr 1fr; }
+.ov-top .chart-card { display: flex; flex-direction: column; justify-content: space-between; }
+.ov-top.no-chart { grid-template-columns: minmax(0, 1fr); }
+.ov-top.no-chart .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .ov-top.no-chart .kpis { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .ov-top .kpis, .ov-top.no-chart .kpis { grid-template-columns: 1fr; } }
