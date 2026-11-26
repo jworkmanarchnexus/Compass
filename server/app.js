@@ -260,20 +260,20 @@ function createServer(db, opts) {
     }
 
     /* a project's plan page and its log. Reading: anyone who may see Turnaround. Writing: the PIC on that project, or an admin note. */
-    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries|checkin)|\/commitments\/([^/]+)\/(done))?$/.exec(p);
+    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries|checkin|midmonth))?$/.exec(p);
     if (pp) {
       if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
       const wbs1 = decodeURIComponent(pp[1]);
-      if (!pp[2] && !pp[3] && method === 'GET') {
+      if (!pp[2] && method === 'GET') {
         const cycle = Number(url.searchParams.get('cycle')) || undefined;
         return sendJson(res, 200, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings: currentSettings(), cycle }));
       }
       if (method === 'POST') {
         const body = await readJson(req);
         const settings = currentSettings();
-        if (pp[2] === 'entries') planDb.addEntry(db, user, wbs1, body, today(), settings);
-        else if (pp[2] === 'checkin') planDb.checkIn(db, user, wbs1, body, today(), settings);
-        else planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
+        if (pp[2] === 'entries') planDb.addEntry(db, user, wbs1, body, today());
+        else if (pp[2] === 'checkin') planDb.goalCheckin(db, user, wbs1, body, today(), settings);
+        else planDb.midUpdate(db, user, wbs1, body, today(), settings);
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
       }
     }
@@ -397,7 +397,7 @@ function createServer(db, opts) {
     }
     if (p === '/api/admin/patterns' && method === 'GET') {
       requireTab(user, 'patterns', 'edit');
-      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), year: Number(url.searchParams.get('year')) || undefined }));
+      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), settings: currentSettings(), year: Number(url.searchParams.get('year')) || undefined }));
     }
 
     /* ---- Billing: PMs and PICs for their own projects; processors and the Admin for everything. Every rule is re-checked in server/billing.js. ---- */

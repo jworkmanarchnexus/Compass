@@ -80,6 +80,10 @@ test('commitment patterns: every number in the hand-worked case', () => {
   check(out.responsiveness, e.responsiveness, 'responsiveness');
   check(out.offList, e.offList, 'offList');
   assert.deepStrictEqual(out.others, e.others);
+  const r = analyze(patFx.rounds.input);
+  check(r.groups.money, patFx.rounds.expect.money, 'new-form goals: money');
+  check(r.groups.spend, patFx.rounds.expect.spend, 'new-form goals: spend');
+  assert.deepStrictEqual(r.actions.map(x => x.lever), patFx.rounds.expect.actions, 'only the two approaches when no older action was used');
   const none = analyze(patFx.empty);
   assert.strictEqual(none.total, 0);
   assert.strictEqual(none.groups.money.keptRate, null, 'no rate invented from nothing');
@@ -92,27 +96,34 @@ const drafts = require('../logic/drafts');
 const planFx = require('./fixtures/plan.json');
 const draftFx = require('./fixtures/drafts.json');
 
-test('plan status: every fixture case', () => {
-  for (const c of planFx.planStatus) {
-    const got = plan.planStatus({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, settings: planFx.settings });
-    for (const [k, v] of Object.entries(c.expect)) assert.strictEqual(got[k], v, `${c.name}: ${k}`);
+test('rounds: the goal check-in and the mid-month update dates', () => {
+  for (const c of planFx.roundDates) {
+    const got = plan.roundDates(c.start, planFx.settings);
+    for (const [k, v] of Object.entries(c.expect)) assert.strictEqual(got[k], v, `${c.start}: ${k}`);
   }
 });
-test('the next check-in date: every cadence days from the first report, always after today', () => {
-  for (const c of planFx.nextDue) assert.strictEqual(plan.nextDue(c.appeared, c.today, c.cadence), c.expect, c.name);
+test('plan status: every fixture case', () => {
+  for (const c of planFx.planStatus) {
+    const got = plan.planStatus({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, rounds: c.rounds, settings: planFx.settings });
+    for (const [k, v] of Object.entries(c.expect)) assert.deepStrictEqual(k === 'owes' ? got.owes.join(',') : got[k], v, `${c.name}: ${k}`);
+  }
 });
-
-test('commitments: replayed from the log', () => {
+test('goals: replayed from the log', () => {
   for (const c of planFx.commitmentStates) {
-    const got = plan.commitmentStates(c.entries).map(s => ({ id: s.id, status: s.status, dueDate: s.dueDate, promisedBy: s.promisedBy, revisions: s.revisions.length, kept: s.kept }));
+    const got = plan.commitmentStates(c.entries, planFx.rounds, planFx.settings).map(s => Object.assign({}, s, { mid: s.mid ? s.mid.status : null }));
     assert.strictEqual(got.length, c.expect.length, c.name);
     c.expect.forEach((e, i) => { for (const [k, v] of Object.entries(e)) assert.strictEqual(got[i][k], v, `${c.name}: ${k}`); });
   }
-  for (const c of planFx.commitmentsToMiss) assert.deepStrictEqual(plan.commitmentsToMiss(c.entries, c.today, 14).map(s => s.id), c.expect, c.name);
+  for (const c of planFx.commitmentsToMiss) assert.deepStrictEqual(plan.commitmentsToMiss(c.entries, c.today, 14, planFx.rounds, planFx.settings).map(s => s.id), c.expect, c.name);
 });
 test('on time and kept', () => {
-  for (const c of planFx.onTimeStats) assert.deepStrictEqual(plan.onTimeStats({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, settings: planFx.settings }), c.expect, c.name);
+  for (const c of planFx.onTimeStats) assert.deepStrictEqual(plan.onTimeStats({ today: c.today, firstAppeared: c.firstAppeared, entries: c.entries, rounds: c.rounds, settings: planFx.settings }), c.expect, c.name);
   for (const c of planFx.keptStats) assert.deepStrictEqual(plan.keptStats(c.states), c.expect, c.name);
+});
+test('goal check-in and mid-month update: what is still missing, in plain words', () => {
+  const check = (got, c) => (c.expect === null ? assert.strictEqual(got, null, c.name) : assert.ok(got && got.includes(c.expect), `${c.name}: got ${got}`));
+  for (const c of planFx.goalCheckinProblem) check(plan.goalCheckinProblem(c.input, c.state), c);
+  for (const c of planFx.midProblem) check(plan.midProblem(c.input, c.state), c);
 });
 test('standing labels', () => {
   for (const c of planFx.standing) assert.strictEqual(plan.standing({ onTime: c.onTime, kept: c.kept }, Object.assign({}, planFx.settings, c.settings)).label, c.expect, c.name);

@@ -1,226 +1,294 @@
-/* A project's plan page: add to the log, the log itself (newest first, nothing edited or deleted), the commitments, the facts.
-   The PIC on the project writes; everyone else reads; the Admin may add a clearly labeled note.
-   A commitment's action and number are in the data only when the viewer is the Admin (the server removes them otherwise). */
+/* A project's page: the goal check-in or mid-month update (for its PIC, when one is owed), the full history of goals and comments,
+   the project's numbers and every goal so far. One project at a time: the PIC steps through their projects on the list from the
+   header tile ("Save and next"). Everyone who may see Turnaround reads it; the Admin may add a labeled note.
+   The rules (what is owed, what is required) are the server's; this file draws the page and shows the server's plain-words answer. */
 import { lineChart } from '/shared/ui/charts.js';
-import { fmtCents, fmtK, fmtLoss, fmtPctNum, fmtDay, fmtClock, monthLetter, fmtPeriod, plural } from '/shared/ui/format.js';
+import { fmtCents, fmtK, fmtPctNum, fmtDay, monthLetter, fmtPeriod, plural } from '/shared/ui/format.js';
 import { Plan } from '/shared/platform/index.js';
-import { planChip } from '/modules/turnaround/ui/overview.js';
+import { planChip, MID_LABEL, MID_TONE } from '/modules/turnaround/ui/overview.js';
 
-const KIND_LABEL = { explanation: 'Explanation', commitment: 'Commitment', update: 'Update', correction: 'Correction', admin_note: 'Admin note', done: 'Done', date_revised: 'Date revised', missed: 'Missed' };
-const KIND_CHIP = { explanation: 'blue', commitment: 'warn', update: '', correction: 'out', admin_note: 'out', done: 'ok', date_revised: '', missed: 'crit' };
-const PROMPT = { explanation: 'What is driving the loss?', commitment: 'What specific action will you take?', update: 'What has happened since your last entry?', correction: 'What was wrong, and what is correct?', admin_note: 'A question or comment for the PIC. It is public and always labeled as yours.' };
-const REVISED = n => (n === 1 ? 'Revised once' : `Revised ${n === 2 ? 'twice' : n + ' times'}`);
-const yesNo = v => (v === true ? 'Yes' : v === false ? 'No' : '');
+const HELPED_TONE = { yes: 'ok', no: 'crit', early: 'out' };
+const link = wbs1 => '#/turnaround/p/' + encodeURIComponent(wbs1);
+const signed = c => `${c >= 0 ? 'better' : 'worse'} by ${fmtCents(Math.abs(c))}`;
 
 export async function renderPlan(ctx, body, wbs1, cycleArg) {
-  const { h } = ctx;
-  let data;
-  const load = async () => { data = await Plan.get(wbs1, cycleArg); };
-  await load();
-  const holder = h('div', {});
-  body.append(holder);
-  const paint = () => { holder.textContent = ''; draw(ctx, holder, data, { reload: async () => { await load(); paint(); }, cycle: cycleArg }); ctx.T.hydrateIcons(holder); };
+  let data = await Plan.get(wbs1, cycleArg);
+  // the answers being written stay put while the page redraws (picking a pill, a refused save)
+  const st = { a: fresh(), error: null, saved: false };
+  const paint = () => {
+    header(ctx, body, data, st);
+    body.textContent = '';
+    draw(ctx, body, data, st, paint, async next => {
+      data = next; st.a = fresh(); st.error = null; paint();
+    });
+    ctx.T.hydrateIcons(body);
+  };
   paint();
   return data;
 }
 
-function draw(ctx, root, data, st) {
+function fresh() { return { cause: '', helped: null, comment: '', keep: null, approach: null, how: '', mid: null, midComment: '' }; }
+
+/* ---- the header tile: the project's name, who leads it, and (for its PIC) their projects on the list, one at a time ---- */
+function header(ctx, body, data, st) {
   const { h } = ctx;
+  const head = body.parentNode && body.parentNode.querySelector('.phead');
+  if (!head) return;
   const p = data.project;
-  const me = ctx.Session.me();
-  const picName = p.pic.draftName || p.pic.name.split(' ')[0];
-  root.append(...[
-    h('div', { class: 'plan-title' },
-      h('h1', { text: p.name }), h('span', { class: 'muted strong', text: p.wbs1 }), data.status ? planChip(ctx, data.status) : null),
-    h('p', { class: 'muted plan-meta', text: `PIC ${p.pic.name} · PM ${p.pm.name} · Plan cycle ${data.cycle}${data.opened ? `, opened ${fmtDay(data.opened)}` : ', not opened yet'}` }),
-    data.cycles.length > 1 ? cycleSwitch(ctx, data) : null,
-    h('div', { class: 'who' }, h('span', { class: 'lbl', text: 'Who sees this' }),
-      h('span', { class: 'chip blue', text: `${picName} adds entries` }), h('span', { class: 'chip', text: 'Other PICs read' }), h('span', { class: 'chip', text: 'Admin reads, adds admin notes' }), h('span', { class: 'chip', text: 'Marketing director reads (if allowed)' }))].filter(Boolean)); // native append() would print a null as the word "null"
+  head.querySelectorAll('.ptitle, .ck-steps').forEach(n => n.remove());
+  const sub = [p.wbs1, `PIC ${p.pic.name}`, `PM ${p.pm.name}`, p.firstAppeared ? `On the list since ${fmtDay(p.firstAppeared)}` : null].filter(Boolean).join(' · ');
+  head.append(h('div', { class: 'ptitle' }, h('h1', { class: 'brand', text: p.name }), h('span', { class: 'sub', text: sub }),
+    h('div', { class: 'pacts' }, data.status ? planChip(ctx, data.status) : !data.onList && data.cycle === data.cycles[0] ? h('span', { class: 'chip out', text: 'Not on the list this month' }) : null)));
+  if (data.steps.length > 1) {
+    head.append(h('nav', { class: 'ck-steps', 'aria-label': 'Your projects on the list' },
+      ...data.steps.map((s, i) => h('a', { class: 'ck-step', href: link(s.wbs1), 'aria-current': s.wbs1 === p.wbs1 ? 'page' : null },
+        h('span', { class: 'ck-step-n', text: `${i + 1} of ${data.steps.length}` }), h('span', { class: 'strong ck-step-name', text: s.name }), stepChip(ctx, s.plan)))));
+  }
+  ctx.T.hydrateIcons(head);
+  void st;
+}
+
+function stepChip({ h }, plan) {
+  if (plan.status === 'current') return h('span', { class: 'chip ok', text: 'Done' });
+  if (plan.status === 'overdue' || plan.daysOverdue > 0) return h('span', { class: 'chip crit', text: 'Late' });
+  return h('span', { class: 'chip warn', text: 'To do' });
+}
+
+function draw(ctx, root, data, st, paint, replace) {
+  const { h } = ctx;
   const left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
-  if (data.can.addEntry) left.append(addForm(ctx, data, st, false));
-  else if (data.can.adminNote && data.cycle === data.cycles[0]) left.append(addForm(ctx, data, st, true));
-  else if (data.cycle !== data.cycles[0] || data.project.status !== 'A') left.append(ctx.banner('archive', 'This is a past cycle. Nothing can be added to it, and nothing in it can be changed.'));
-  left.append(logCard(ctx, data));
-  right.append(commitmentsCard(ctx, data, st), chartCard(ctx, data), factsCard(ctx, data), legendCard(ctx));
+  const live = data.cycle === data.cycles[0];
+  if (data.cycles.length > 1) root.append(cycleSwitch(ctx, data));
+  if (data.can.goalCheckin) left.append(goalCard(ctx, data, st, paint, replace));
+  else if (data.can.mid) left.append(midCard(ctx, data, st, paint, replace));
+  else if (data.steps.length && live) left.append(doneCard(ctx, data, st));
+  if (data.can.adminNote) left.append(noteCard(ctx, data, replace));
+  if (!live || data.project.status !== 'A') left.append(ctx.banner('archive', 'This is a past cycle. Nothing can be added to it, and nothing in it can be changed.'));
+  left.append(historyCard(ctx, data, replace));
+  right.append(numbersCard(ctx, data), goalsCard(ctx, data), chartCard(ctx, data), legendCard(ctx));
   root.append(h('div', { class: 'plan-grid' }, left, right));
-  void me;
 }
 
 function cycleSwitch({ h }, data) {
-  return h('div', { class: 'seg', role: 'group', 'aria-label': 'Plan cycle' }, ...data.cycles.map(y => h('button', { type: 'button', 'aria-pressed': String(y === data.cycle), text: String(y), onclick: () => { location.hash = `#/turnaround/p/${encodeURIComponent(data.project.wbs1)}${y === data.cycles[0] ? '' : '?cycle=' + y}`; } })));
+  return h('div', { class: 'seg', role: 'group', 'aria-label': 'Plan cycle' }, ...data.cycles.map(y => h('button', { type: 'button', 'aria-pressed': String(y === data.cycle), text: String(y), onclick: () => { location.hash = link(data.project.wbs1) + (y === data.cycles[0] ? '' : '?cycle=' + y); } })));
 }
 
-/* ---- add to the log ----
-   Kinds: explanation (first, once), then a check-in (when a commitment is open: report back on it and make the next one, in one step)
-   or a commitment (when none is open), and an update (any time between due dates). */
-function addForm(ctx, data, st, adminOnly) {
+/* ---- the forms ---- */
+function area(ctx, label, value, set, rows, placeholder) {
+  const t = ctx.h('textarea', { class: 'txt', rows: String(rows), style: 'height:auto;padding:8px 10px', 'aria-label': label, placeholder });
+  t.value = value;
+  t.addEventListener('input', () => set(t.value));
+  return ctx.h('div', {}, ctx.h('label', { class: 'fl', text: label }), t);
+}
+const pills = (ctx, opts, value, pick, label) => ctx.h('div', { class: 'pills', role: 'group', 'aria-label': label }, ...opts.map(([k, t]) => ctx.h('button', { type: 'button', class: 'pill', 'aria-pressed': String(value === k), text: t, onclick: () => pick(k) })));
+const goalLine = (ctx, g) => ctx.h('div', {}, ctx.h('span', { class: 'chip', text: g.approach }), ' ', ctx.h('span', { class: 'strong', text: g.text }));
+
+/* where to go after saving: the next of the PIC's projects that still needs something, after this one, then from the top */
+function nextStep(data) {
+  const i = data.steps.findIndex(s => s.wbs1 === data.project.wbs1);
+  const after = data.steps.slice(i + 1).concat(data.steps.slice(0, Math.max(0, i))).find(s => s.plan.status !== 'current');
+  return after || null;
+}
+
+function formCard(ctx, data, st, { title, sub, fields, save }) {
   const { h } = ctx;
-  const open = data.commitments.filter(c => c.status === 'open');
-  const base = adminOnly ? ['admin_note'] : data.can.kinds;
-  // the PIC's two ways to move forward: with something open it is a check-in, with nothing open it is a new commitment
-  const kinds = adminOnly ? base : base.map(k => (k === 'commitment' && open.length ? 'checkin' : k));
-  const first = kinds.length === 1 && kinds[0] === 'explanation'; // nothing else is possible until the explanation is written
-  const order = ['checkin', 'commitment', 'update'];
-  const tabKinds = kinds.slice().sort((x, y) => order.indexOf(x) - order.indexOf(y));
-  const s = { kind: tabKinds[0], lever: null };
-  const card = h('section', { class: 'sec form-card' });
-  const msg = h('div', { role: 'alert' });
-  const fields = h('div', { class: 'stack' });
-  const tabs = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Kind of entry' });
-  const text = h('textarea', { class: 'txt', rows: '4', style: 'height:auto;padding:8px 10px', 'aria-label': 'Entry text' });
-  const leverBox = h('div', { class: 'levers' });
-  const leverHelp = h('div', { class: 'lever-help muted small', 'aria-live': 'polite' });
-  const otherText = h('input', { class: 'txt', type: 'text', maxlength: '120', style: 'max-width:420px', 'aria-label': 'What is the other action?', placeholder: 'In a few words, what will you do?' });
-  const prompt = h('label', { class: 'fl' });
-  const submit = h('button', { class: 'btn primary', type: 'button', text: adminOnly ? 'Add admin note' : 'Add to log' });
-  let reports = []; // one per open commitment: { c, what, improved }
-  const TAB = { checkin: 'Check in', commitment: 'Make a commitment', update: 'Update' };
-
-  const refresh = () => {
-    tabs.textContent = '';
-    if (!adminOnly && tabKinds.length > 1) for (const k of tabKinds) tabs.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': String(s.kind === k), 'aria-selected': String(s.kind === k), text: TAB[k] || KIND_LABEL[k], onclick: () => { s.kind = k; msg.textContent = ''; refresh(); } }));
-    prompt.textContent = s.kind === 'checkin' ? 'What specific action will you take next?' : PROMPT[s.kind];
-    fields.textContent = '';
-    if (s.kind === 'checkin') {
-      reports = open.map(c => ({ c, what: h('textarea', { class: 'txt', rows: '3', style: 'height:auto;padding:8px 10px', 'aria-label': `What happened with: ${c.text}` }), improved: null }));
-      fields.append(h('div', { class: 'fl', text: 'Report back' }), ...reports.map(r => reportBlock(ctx, r)),
-        h('div', { class: 'fl', text: 'Your next commitment' }), h('div', {}, h('div', { class: 'fl', text: 'What will it change? Pick one.' }), leverBox, leverHelp), prompt, text);
-      if (data.nextDue) fields.append(ctx.banner('info', `Next due date: ${fmtDay(data.nextDue.date)}. On that date you will give an update on this commitment and make a new one.`));
-      drawLevers();
-    } else if (s.kind === 'commitment') {
-      // the kind of action first, then what you will do in your own words, then when it is due (not chosen by the PIC)
-      fields.append(h('div', {}, h('div', { class: 'fl', text: 'What will this commitment change? Pick one.' }), leverBox, leverHelp), prompt, text);
-      if (data.nextDue) fields.append(ctx.banner('info', `Next due date: ${fmtDay(data.nextDue.date)}. On that date you will give an update on this commitment and make a new one.`));
-      drawLevers();
-    } else fields.append(prompt, text);
-    submit.textContent = adminOnly ? 'Add admin note' : first ? 'Save explanation' : s.kind === 'checkin' ? 'Submit check-in' : s.kind === 'commitment' ? 'Save commitment' : 'Add to log';
-    ctx.T.hydrateIcons(card);
-  };
-  st.openCheckin = () => { if (tabKinds.includes('checkin')) { s.kind = 'checkin'; msg.textContent = ''; refresh(); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
-
-  function drawLevers() {
-    leverBox.textContent = '';
-    const current = data.levers.find(l => l.key === s.lever);
-    const hint = () => { leverHelp.textContent = current ? current.help : 'Point at an action to see what it means.'; };
-    for (const [group, title] of [['money', 'Bring in money'], ['spend', 'Spend less']]) {
-      leverBox.append(h('div', { class: 'lever-group' }, h('div', { class: 'muted small strong', text: title }),
-        h('div', { class: 'pills' }, ...data.levers.filter(l => l.group === group).map(l => h('button', {
-          type: 'button', class: 'pill', title: l.help, 'aria-pressed': String(s.lever === l.key), 'aria-describedby': 'lever-help', text: l.label,
-          onmouseenter: () => { leverHelp.textContent = l.help; }, onfocus: () => { leverHelp.textContent = l.help; }, onmouseleave: hint, onblur: hint,
-          onclick: () => { s.lever = l.key; s.other = !!l.other; drawLevers(); } })))));
-    }
-    leverHelp.id = 'lever-help';
-    hint();
-    if (s.other) leverBox.append(h('div', {}, h('label', { class: 'fl', text: 'Other: what is it?' }), otherText));
-  }
-  const needLever = () => {
-    if (!s.lever) return 'Pick the kind of action.';
-    if (s.other && !otherText.value.trim()) return 'Fill in the line for Other: say in a few words what you will do.';
-    return null;
-  };
-  submit.addEventListener('click', async () => {
-    msg.textContent = '';
+  const next = nextStep(data);
+  const i = data.steps.findIndex(s => s.wbs1 === data.project.wbs1);
+  const prev = i > 0 ? data.steps[i - 1] : null;
+  const button = h('button', { class: 'btn primary', type: 'button', text: next ? 'Save and next' : 'Save' });
+  button.addEventListener('click', async () => {
+    button.disabled = true;
     try {
-      if (s.kind === 'checkin') {
-        for (const r of reports) {
-          if (!r.what.value.trim()) return fail('Say what happened on each commitment you are reporting back on.');
-          if (r.improved === null) return fail('Answer yes or no: did this action improve the financial state of the project during this period?');
-        }
-        const bad = needLever(); if (bad) return fail(bad);
-        submit.disabled = true;
-        await Plan.checkIn(data.project.wbs1, { reports: reports.map(r => ({ commitmentId: r.c.id, body: r.what.value, improved: r.improved })), lever: s.lever, otherText: s.other ? otherText.value : undefined, body: text.value });
-      } else {
-        const entry = { kind: s.kind, body: text.value };
-        if (s.kind === 'commitment') {
-          const bad = needLever(); if (bad) return fail(bad);
-          entry.lever = s.lever;
-          if (s.other) entry.otherText = otherText.value;
-        }
-        submit.disabled = true;
-        await Plan.add(data.project.wbs1, entry);
-      }
-      await st.reload();
-    } catch (e) { submit.disabled = false; fail(e.message); }
+      const out = await save();
+      if (next) location.hash = link(next.wbs1); else await st.done(out);
+    } catch (e) { st.error = e.message; button.disabled = false; st.repaint(); }
   });
-  const fail = t => { msg.textContent = ''; msg.append(ctx.banner('circle-alert', t, 'err')); };
-  const headline = adminOnly ? 'Add an admin note' : first ? 'Start with an explanation' : tabKinds.includes('checkin') ? 'Check in' : 'Add to the log';
-  const sub = adminOnly ? 'Admin notes are public and always labeled. They never count toward a PIC\'s record.'
-    : first ? 'Say what is driving the loss on this project. You do this once for the year; after it, you check in and add updates. Entries are permanent.'
-      : tabKinds.includes('checkin') ? 'At each due date, report back on your open commitment and make the next one. An update can go in any time between. Entries are permanent.'
-        : 'Make your first commitment, or add an update. Entries are permanent.';
-  card.append(h('div', { class: 'sec-head' }, h('h2', { text: headline }), h('p', { text: sub })),
-    h('div', { class: 'sec-body', style: 'padding:14px 20px' }, h('div', { class: 'stack' }, adminOnly || tabKinds.length < 2 ? null : tabs, fields, msg)),
-    h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: adminOnly ? `Posted as ${ctx.Session.me().name}, labeled Admin note.` : `Posted as ${ctx.Session.me().name}. Josh gets no email; he sees it in the next review.` }), h('div', { class: 'acts' }, submit)));
-  refresh();
-  return card;
+  return h('section', { class: 'sec form-card' + (st.error ? ' ck-missing' : '') },
+    h('div', { class: 'sec-head' }, h('h2', { text: title }), h('p', { text: sub })),
+    h('div', { class: 'sec-body ck-form' }, fields, st.error ? h('div', { role: 'alert' }, ctx.banner('circle-alert', st.error, 'err')) : null),
+    h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: `Posted as ${ctx.Session.me().name}. Entries are permanent. Josh gets no email; he sees it in the next review.` }),
+      h('div', { class: 'acts' }, prev ? h('a', { class: 'btn', href: link(prev.wbs1), text: 'Previous' }) : null, button)));
 }
 
-/* one open commitment, and the two things asked about it when reporting back */
-function reportBlock(ctx, r) {
+function goalCard(ctx, data, st, paint, replace) {
   const { h } = ctx;
-  const radios = ['Yes', 'No'].map(label => h('label', { class: 'check' }, h('input', { type: 'radio', name: 'improved-' + r.c.id, value: label, onchange: () => { r.improved = label === 'Yes'; } }), h('span', { text: label })));
-  return h('div', { class: 'report stack' },
-    h('div', {}, h('span', { class: 'chip warn', text: `Due ${fmtDay(r.c.dueDate)}` }), ' ', h('span', { class: 'strong', text: r.c.text })),
-    h('label', { class: 'fl', text: 'What happened?' }), r.what,
-    h('div', { class: 'fl', text: 'Did this action improve the financial state of the project during this period?' }), h('div', { class: 'cm-acts' }, ...radios));
+  const a = st.a, f = data.form;
+  st.repaint = paint; st.done = out => replace(out);
+  const fields = h('div', { class: 'stack' });
+  if (!f.explained) {
+    fields.append(h('div', { class: 'report stack' }, area(ctx, 'New this year: what is driving the loss?', a.cause, v => { a.cause = v; }, 3, 'One or two sentences.'),
+      h('div', { class: 'muted small', text: 'Once a year per project. It stays at the start of the history.' })));
+  }
+  if (f.openGoal) {
+    const c = data.facts && data.facts.change;
+    fields.append(h('div', { class: 'report stack' },
+      h('div', { class: 'fl', text: 'Your last goal' }), goalLine(ctx, f.openGoal),
+      f.openGoal.mid ? h('div', { class: 'muted small', text: `Mid-month you said: ${MID_LABEL[f.openGoal.mid.status]}.` }) : null,
+      data.facts ? h('div', {}, h('span', { class: 'chip out', text: `Profit YTD ${fmtCents(data.facts.profitYtd)}${c === null ? '' : `, ${signed(c)} since last month`}` })) : null,
+      h('div', { class: 'fl', text: 'Did it help?' }), pills(ctx, Object.entries(data.helped), a.helped, k => { a.helped = k; paint(); }, 'Did it help?'),
+      area(ctx, 'Comment', a.comment, v => { a.comment = v; }, 2, 'What happened? Why did it help, or not?')));
+  }
+  // the next goal sits in its own grey card, like the last one (Josh, 2026-11-26)
+  const next = h('div', { class: 'report stack' });
+  fields.append(next);
+  if (f.lastGoal) {
+    next.append(h('div', {}, h('div', { class: 'fl', text: 'Your next goal' }),
+      h('div', { class: 'seg', role: 'group', 'aria-label': 'Your next goal' }, ...[[true, 'Keep the same goal'], [false, 'Set a new goal']].map(([k, t]) => h('button', { type: 'button', 'aria-pressed': String(a.keep === k), text: t, onclick: () => { a.keep = k; paint(); } })))));
+    if (a.keep === true) next.append(h('div', { class: 'muted', text: `Carried forward: ${f.lastGoal.approach}. ${f.lastGoal.text}` }));
+  } else {
+    next.append(h('div', { class: 'fl', text: 'Your first goal' }));
+    a.keep = false;
+  }
+  if (a.keep === false) {
+    next.append(h('div', {}, h('div', { class: 'fl', text: 'Approach (pick one)' }), pills(ctx, data.approaches.map(x => [x.key, x.label]), a.approach, k => { a.approach = k; paint(); }, 'Approach')));
+    const chosen = data.approaches.find(x => x.key === a.approach);
+    if (chosen) {
+      next.append(h('div', { class: 'ck-ideas' }, h('div', { class: 'fl', text: 'Potential Approaches' }),
+        h('ul', {}, ...chosen.ideas.map(([t, d]) => h('li', {}, h('span', { class: 'strong', text: t }), h('span', { class: 'muted', text: `: ${d}` }))))),
+        area(ctx, 'How, specifically?', a.how, v => { a.how = v; }, 2, 'What will you do?'));
+    }
+  }
+  return formCard(ctx, data, st, {
+    title: 'Goal check-in',
+    sub: f.openGoal ? `Say how your last goal went, then set the next one. Due ${fmtDay(data.status.dueDate)}.` : `Say what is driving the loss and set a first goal. Due ${fmtDay(data.status.dueDate)}.`,
+    fields,
+    save: () => Plan.goalCheckin(data.project.wbs1, { cause: a.cause, helped: a.helped, comment: a.comment, keep: a.keep, approach: a.approach, how: a.how }),
+  });
 }
 
-/* ---- the log ---- */
-function logCard(ctx, data) {
+function midCard(ctx, data, st, paint, replace) {
   const { h } = ctx;
-  const byId = new Map(data.entries.map(e => [e.id, e]));
-  const items = data.entries.map(e => {
-    const chips = [];
-    if (e.kind === 'commitment') { chips.push(h('span', { class: 'chip', text: `Promised by ${fmtDay(e.promisedBy)}` })); if (e.leverLabel) chips.push(h('span', { class: 'chip', text: e.leverLabel })); }
-    if (e.correctedOn) chips.push(h('span', { class: 'chip out', text: `Corrected ${fmtDay(e.correctedOn)}` }));
-    if (e.planOpened) chips.push(h('span', { class: 'chip out', text: 'Plan opened' }));
-    let who = e.author ? e.author.name : 'Recorded by the system';
-    let text = e.body;
-    if (e.kind === 'correction') who = `${e.author.name} · corrects the ${fmtDay(e.correctsDate)} ${(KIND_LABEL[e.correctsKind] || 'entry').toLowerCase()}`;
-    if (e.kind === 'done') { who = `Marked by ${e.author.name.split(' ')[0]}${e.daysEarly > 0 ? `, ${plural(e.daysEarly, 'day')} early` : e.daysEarly < 0 ? `, ${plural(-e.daysEarly, 'day')} late` : ', on the day'}`; if (e.improved !== undefined) chips.push(h('span', { class: 'chip ' + (e.improved ? 'ok' : 'out'), text: `Improved the project: ${yesNo(e.improved)}` })); }
-    if (e.kind === 'date_revised') { who = `${e.author.name} · ${e.commitmentText}`; text = `${fmtDay(e.from)} moved to ${fmtDay(e.to)}. Reason given: ${e.body} Earlier dates stay on record.`; }
-    if (e.kind === 'missed') { const c = byId.get(e.commitmentId); text = `Commitment${c ? ` from ${fmtDay(c.date)}` : ''}, ${(e.commitmentText || '').replace(/\.$/, '')} by ${fmtDay(e.dueDate)}, passed with no update logged.`; }
-    return h('li', { class: 'log-item' + (e.kind === 'admin_note' ? ' note' : '') },
-      h('div', { class: 'log-when' }, h('strong', { text: fmtDay(e.date) }), h('div', { class: 'muted', text: fmtClock(e.at) })),
-      h('div', { class: 'log-body' }, h('div', { class: 'log-head' }, h('span', { class: 'chip ' + KIND_CHIP[e.kind], text: KIND_LABEL[e.kind] }), h('span', { class: e.author ? '' : 'muted', text: who }), ...chips), h('div', { class: 'log-text', text: text })));
+  const a = st.a, g = data.form.openGoal;
+  st.repaint = paint; st.done = out => replace(out);
+  const fields = h('div', { class: 'stack' },
+    h('div', { class: 'report stack' }, h('div', { class: 'fl', text: 'Your goal this month' }), goalLine(ctx, g), h('div', { class: 'muted small', text: `Set ${fmtDay(g.setDate)}.` })),
+    h('div', {}, h('div', { class: 'fl', text: 'Where it stands' }), pills(ctx, Object.entries(data.midStatus), a.mid, k => { a.mid = k; paint(); }, 'Where it stands')),
+    area(ctx, 'Comment', a.midComment, v => { a.midComment = v; }, 2, 'What has happened since you set the goal?'));
+  return formCard(ctx, data, st, {
+    title: 'Mid-month update', sub: `Where your goal stands, two weeks in. No new goal this time. Due ${fmtDay(data.status.dueDate)}.`, fields,
+    save: () => Plan.midUpdate(data.project.wbs1, { status: a.mid, comment: a.midComment }),
+  });
+}
+
+/* the PIC's own project with nothing owed this round */
+function doneCard(ctx, data) {
+  const { h } = ctx;
+  const next = nextStep(data);
+  const left = data.steps.filter(s => s.plan.status !== 'current').length;
+  const R = data.status && data.status.round;
+  const when = R ? (data.status.owes && data.status.owes.length ? '' : (data.today < R.midOpens ? ` The mid-month update opens ${fmtDay(R.midOpens)}.` : ' The next goal check-in opens when next month\'s numbers are published.')) : '';
+  return h('section', { class: 'sec form-card ck-done' },
+    h('div', { class: 'sec-head' }, h('h2', { text: data.status ? 'Done for this round' : 'Nothing to do here' }),
+      h('p', { text: (left ? `${plural(left, 'project')} of yours still ${left === 1 ? 'needs' : 'need'} a check-in.` : 'All of your projects are done for this round.') + when })),
+    next ? h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: `Next: ${next.name}` }), h('div', { class: 'acts' }, h('a', { class: 'btn primary', href: link(next.wbs1), text: 'Go to the next project' }))) : null);
+}
+
+function noteCard(ctx, data, replace) {
+  const { h } = ctx;
+  let text = '';
+  const msg = h('div', { role: 'alert' });
+  const t = area(ctx, 'A question or comment for the PIC', '', v => { text = v; }, 2, 'It is public and always labeled as yours.');
+  const btn = h('button', { class: 'btn', type: 'button', text: 'Add admin note' });
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; msg.textContent = '';
+    try { replace(await Plan.add(data.project.wbs1, { kind: 'admin_note', body: text })); } catch (e) { btn.disabled = false; msg.append(ctx.banner('circle-alert', e.message, 'err')); }
+  });
+  return h('section', { class: 'sec form-card' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Add an admin note' }), h('p', { text: 'Admin notes are public and always labeled. They never count toward a PIC\'s record.' })),
+    h('div', { class: 'sec-body ck-form' }, t, msg), h('div', { class: 'sec-foot' }, h('span', { class: 'note', text: `Posted as ${ctx.Session.me().name}, labeled Admin note.` }), h('div', { class: 'acts' }, btn)));
+}
+
+/* ---- the history: every goal, check-in, comment and note, newest first. A goal check-in (the report on the last goal, the next goal,
+   and on a first one the explanation) shows as one item. ---- */
+function historyItems(entries) {
+  const items = [];
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    if (e.kind === 'commitment') {
+      const it = { kind: 'checkin', date: e.date, author: e.author, goal: e, parts: [] };
+      while (entries[i + 1] && ['done', 'explanation'].includes(entries[i + 1].kind) && entries[i + 1].date === e.date && entries[i + 1].author && e.author && entries[i + 1].author.id === e.author.id) it.parts.push(entries[++i]);
+      items.push(it);
+    } else items.push({ kind: e.kind, date: e.date, author: e.author, e });
+  }
+  return items;
+}
+
+function historyCard(ctx, data, replace) {
+  const { h } = ctx;
+  const items = historyItems(data.entries).map(it => {
+    const head = [], body = [];
+    const text = (t, cls) => h('div', { class: 'log-text' + (cls ? ' ' + cls : ''), text: t });
+    if (it.kind === 'checkin') {
+      const done = it.parts.find(p => p.kind === 'done'), ex = it.parts.find(p => p.kind === 'explanation');
+      head.push(h('span', { class: 'chip warn', text: 'Goal check-in' }));
+      if (ex) body.push(h('div', { class: 'log-text' }, h('span', { class: 'muted', text: 'What is driving the loss: ' }), h('span', { text: ex.body })));
+      if (done) body.push(h('div', { class: 'log-text' }, h('span', { class: 'chip ' + (HELPED_TONE[done.helped] || 'out'), text: `Last goal helped: ${data.helped[done.helped] || '-'}` }), ' ', h('span', { text: done.body })));
+      body.push(h('div', { class: 'log-text' }, h('span', { class: 'muted', text: it.goal.kept ? 'Kept the same goal: ' : done ? 'Next goal: ' : 'Goal: ' }), h('span', { class: 'chip', text: it.goal.approach }), ' ', h('span', { class: 'strong', text: it.goal.body })));
+    } else {
+      const e = it.e;
+      if (e.kind === 'explanation') { head.push(h('span', { class: 'chip blue', text: 'What is driving the loss' })); body.push(text(e.body)); }
+      else if (e.kind === 'update' && e.midStatus) { head.push(h('span', { class: 'chip', text: 'Mid-month update' }), h('span', { class: 'chip ' + MID_TONE[e.midStatus], text: MID_LABEL[e.midStatus] })); body.push(text(e.body)); }
+      else if (e.kind === 'update') { head.push(h('span', { class: 'chip', text: 'Comment' })); body.push(text(e.body)); }
+      else if (e.kind === 'admin_note') { head.push(h('span', { class: 'chip out', text: 'Admin note' })); body.push(text(e.body)); }
+      else if (e.kind === 'missed') { head.push(h('span', { class: 'chip crit', text: 'Not reported on' })); body.push(text(`The goal "${(e.goalText || '').replace(/\.$/, '')}" was not reported on at the goal check-in due ${fmtDay(e.dueDate)}. Recorded by the system.`, 'muted')); }
+      else if (e.kind === 'done') { head.push(h('span', { class: 'chip', text: 'Reported on' }), e.helped ? h('span', { class: 'chip ' + HELPED_TONE[e.helped], text: `Helped: ${data.helped[e.helped]}` }) : null); body.push(text(e.body)); }
+      else { head.push(h('span', { class: 'chip out', text: { correction: 'Correction', date_revised: 'Date revised' }[e.kind] || e.kind })); body.push(text(e.kind === 'date_revised' ? `${fmtDay(e.from)} moved to ${fmtDay(e.to)}. ${e.body}` : e.body)); }
+    }
+    return h('li', { class: 'log-item' + (it.kind === 'admin_note' ? ' note' : '') },
+      h('div', { class: 'log-when' }, h('strong', { text: fmtDay(it.date) })),
+      h('div', { class: 'log-body' }, h('div', { class: 'log-head' }, ...head.filter(Boolean), h('span', { class: 'muted small', text: it.author ? it.author.name : 'Compass' })), ...body));
   });
   return h('section', { class: 'sec' },
-    h('div', { class: 'sec-head log-title' }, h('h2', { text: 'Plan log' }), h('span', { class: 'muted', text: `Newest first. ${data.cycle} cycle. Nothing here is edited or deleted.` })),
-    items.length ? h('ol', { class: 'log' }, ...items) : h('div', { class: 'empty-row', text: 'Nothing has been logged this year.' }));
+    h('div', { class: 'sec-head log-title' }, h('h2', { text: 'History' }), h('span', { class: 'muted', text: `Every goal and comment this year, newest first. Nothing here is edited or deleted.` })),
+    data.can.comment ? commentBox(ctx, data, replace) : null,
+    items.length ? h('ol', { class: 'log' }, ...items) : h('div', { class: 'empty-row', text: 'Nothing yet this year.' }));
 }
 
-/* ---- commitments ---- */
-function commitmentsCard(ctx, data, st) {
+/* a comment between rounds: something worth saying that is not the check-in */
+function commentBox(ctx, data, replace) {
   const { h } = ctx;
-  const cs = data.commitments;
-  const kept = cs.filter(c => c.kept).length, missed = cs.filter(c => c.status === 'missed').length, open = cs.filter(c => c.status === 'open').length;
-  const late = cs.filter(c => c.status === 'done' && !c.kept).length;
-  const moved = cs.filter(c => c.revisions.length).length;
-  const sum = `Kept ${kept}, missed ${missed}, open ${open}.${late ? ` ${late} done late.` : ''}${moved ? ` ${plural(moved, 'date')} revised.` : ''}`;
-  const list = cs.map(c => commitmentRow(ctx, c, data, st));
-  return h('section', { class: 'sec side-card' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Commitments' }), h('p', { text: cs.length ? sum : 'No commitments yet this year.' })),
-    h('div', { class: 'sec-body' }, ...list));
-}
-
-function commitmentRow(ctx, c, data, st) {
-  const { h } = ctx;
-  const chips = [];
-  if (c.status === 'open') chips.push(h('span', { class: 'chip warn', text: `Open, due ${fmtDay(c.dueDate)}` }));
-  if (c.status === 'done') chips.push(h('span', { class: 'chip ' + (c.kept ? 'ok' : 'warn'), text: c.kept ? 'Kept' : 'Done late' }));
-  if (c.status === 'missed') chips.push(h('span', { class: 'chip crit', text: 'Missed' }));
-  if (c.revisions.length) chips.push(h('span', { class: 'chip out', text: REVISED(c.revisions.length) }));
-  const dates = c.revisions.length
-    ? `Promised ${fmtDay(c.promisedBy)}, ${c.revisions.map(r => `moved to ${fmtDay(r.to)}`).join(', ')}${c.status === 'done' ? `, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? ', no update logged' : `, now ${fmtDay(c.dueDate)}`}`
-    : c.status === 'done' ? `Promised ${fmtDay(c.promisedBy)}, done ${fmtDay(c.closedDate)}` : c.status === 'missed' ? `Promised ${fmtDay(c.promisedBy)}, no update logged` : `Promised ${fmtDay(c.promisedBy)}`;
-  const row = h('div', { class: 'cm' }, h('div', { class: 'chips' }, ...chips), h('div', { class: 'strong', text: c.text }), h('div', { class: 'muted small', text: dates }),
-    c.leverLabel ? h('div', { class: 'muted small', text: `${c.leverLabel}${c.improved === null || c.improved === undefined ? '' : `. Improved the project: ${yesNo(c.improved).toLowerCase()}`}` }) : null);
-  if (c.status === 'open' && data.can.addEntry) {
-    row.append(h('div', { class: 'cm-acts' }, h('button', { class: 'btn primary sm', type: 'button', text: 'Check in', onclick: () => st.openCheckin && st.openCheckin() })));
-  }
-  return row;
+  let text = '';
+  const msg = h('div', { role: 'alert' });
+  const btn = h('button', { class: 'btn', type: 'button', text: 'Add comment' });
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; msg.textContent = '';
+    try { replace(await Plan.add(data.project.wbs1, { kind: 'update', body: text })); } catch (e) { btn.disabled = false; msg.append(ctx.banner('circle-alert', e.message, 'err')); }
+  });
+  return h('details', { class: 'ck-comment' }, h('summary', { text: 'Add a comment' }),
+    h('div', { class: 'stack' }, area(ctx, 'Comment', '', v => { text = v; }, 2, 'Anything worth saying between check-ins. Permanent, like every entry.'), msg, h('div', {}, btn)));
 }
 
 /* ---- right column ---- */
+function numbersCard(ctx, data) {
+  const { h } = ctx;
+  const f = data.facts;
+  const cell = (label, value) => h('div', { class: 'fact' }, h('div', { class: 'k-label', text: label }), h('div', { class: 'k-big sm', text: value }));
+  return h('section', { class: 'sec side-card' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Project numbers' }), f ? h('p', { text: `As of the ${f.label} run.` }) : null),
+    f ? h('div', { class: 'facts-grid' }, cell('Profit YTD', fmtCents(f.profitYtd)), cell('Since last month', f.change === null ? '-' : `${f.change >= 0 ? '+' : '-'}${fmtCents(Math.abs(f.change))}`),
+      cell('Billed YTD', fmtCents(f.billedYtd)), cell('Profit % YTD', fmtPctNum(f.pctYtd)))
+      : h('div', { class: 'empty-row', text: 'This project is not on a published run yet.' }));
+}
+
+/* each goal once, oldest kept goals folded in: its approach, when it was set, how many rounds it was kept, and what was said about it */
+function goalsCard(ctx, data) {
+  const { h } = ctx;
+  const chains = []; // a goal kept for another round is the same goal: one row, with what was said about it each time
+  for (const g of data.goals.slice().reverse()) {
+    const last = chains[chains.length - 1];
+    if (g.kept && last) { last.members.push(g); last.latest = g; } else chains.push({ first: g, latest: g, members: [g] });
+  }
+  const helpedOf = c => c.members.filter(g => g.helped).map(g => g.helped);
+  const rows = chains.reverse().map(c => {
+    const g = c.latest;
+    const state = g.status === 'open' ? h('span', { class: 'chip warn', text: 'Current goal' }) : g.status === 'missed' ? h('span', { class: 'chip crit', text: 'Not reported on' }) : null;
+    return h('div', { class: 'cm' },
+      h('div', { class: 'chips' }, h('span', { class: 'chip', text: g.approach }), state, ...helpedOf(c).map(x => h('span', { class: 'chip ' + HELPED_TONE[x], text: `Helped: ${data.helped[x]}` }))),
+      h('div', { class: 'strong', text: g.text }),
+      h('div', { class: 'muted small', text: `Set ${fmtDay(c.first.setDate)}${c.members.length > 1 ? `, kept for ${c.members.length} rounds` : ''}` }));
+  });
+  return h('section', { class: 'sec side-card' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Goals so far' }), h('p', { text: chains.length ? `${plural(chains.length, 'goal')} this year.` : 'None yet this year.' })),
+    rows.length ? h('div', { class: 'sec-body' }, ...rows) : null);
+}
+
 function chartCard(ctx, data) {
   const { h } = ctx;
   if (!data.series.length) return h('div', {});
@@ -229,31 +297,17 @@ function chartCard(ctx, data) {
     h('div', { style: 'padding:8px 12px' }, lineChart(pts, { fmt: v => fmtK(v), aria: `Year-to-date profit on ${data.project.name} at each month end`, zero: true, ticks: 4, height: 200 })));
 }
 
-function factsCard(ctx, data) {
-  const { h } = ctx;
-  const f = data.facts;
-  const cell = (label, value) => h('div', { class: 'fact' }, h('div', { class: 'k-label', text: label }), h('div', { class: 'k-big sm', text: value }));
-  return h('section', { class: 'sec side-card' }, h('div', { class: 'sec-head' }, h('h2', { text: 'Project facts' }), f ? h('p', { text: `As of the ${f.label} run.` }) : null),
-    f ? h('div', { class: 'facts-grid' }, cell('Billed YTD', fmtCents(f.billedYtd)), cell('Profit YTD', fmtCents(f.profitYtd)), cell('Profit % YTD', fmtPctNum(f.pctYtd)), cell('Profit % JTD', fmtPctNum(f.pctJtd)))
-      : h('div', { class: 'empty-row', text: 'This project is not on a published run yet.' }));
-}
-
 function legendCard(ctx) {
   const { h } = ctx;
   const rows = [
-    ['Explanation', 'The PIC, once a year per project. Why it is below break-even. It comes first; updates and commitments can only follow it.'],
-    ['Commitment', 'The PIC. One kind of action and a few words about it. The system sets the due date: the next check-in, every 14 days from the project\'s first report. Everyone who can read the plan sees the action.'],
-    ['Update', 'The PIC. What has happened since the last entry, including anything that needs setting right.'],
-    ['Check-in', 'The PIC, at each due date (or earlier): reports back on the open commitment, says whether it improved the project\'s finances, and makes the next commitment. Reporting on or before the date counts as kept.'],
-    ['Date revised', 'Older plans only. Dates are no longer changed; the system sets them.'],
-    ['Missed', 'The system. A date passed and nobody pressed Done.'],
-    ['Admin note', 'The Admin. A question or comment, always labeled.'],
-    ['Current', 'An open commitment and an entry in the last 30 days, nothing past due.'],
-    ['Update due', 'The next update comes due within 14 days.'],
-    ['Overdue', 'The due date passed with no new entry.'],
-    ['No plan', 'No commitment yet this year. An explanation alone does not count.'],
+    ['Goal check-in', 'When a month\'s numbers are published. Say whether the last goal helped, with a comment, then set the next goal or keep the same one. A project new to the list first says what is driving the loss.'],
+    ['Mid-month update', 'Two weeks after the numbers are published. Where the goal stands: In progress, Done or Stuck, with a comment. No new goal.'],
+    ['Goal', 'One approach, Lower costs or Bring in additional revenue, and a few words on how. No numbers.'],
+    ['Comment', 'Anything worth saying between check-ins.'],
+    ['Admin note', 'A question or comment from the Admin, always labeled.'],
+    ['Not reported on', 'Nobody reported on a goal at the next goal check-in. The system records it.'],
+    ['Done for this round', 'The goal check-in is done, and the mid-month update too once it has opened.'],
   ];
   return h('details', { class: 'sec side-card legend' }, h('summary', { text: 'What the labels mean' }),
     h('dl', {}, ...rows.flatMap(([k, v]) => [h('dt', { text: k }), h('dd', { text: v })])));
 }
-void fmtLoss;

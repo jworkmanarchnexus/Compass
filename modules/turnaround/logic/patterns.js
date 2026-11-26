@@ -10,8 +10,10 @@
      keptRate   kept / resolved (blank until something resolves)
      improved   done commitments the PIC said improved the project's finances in the period (yes), and notImproved (no)
      improvedRate  improved / (improved + notImproved); blank until a done commitment has been answered
-     lead       days from writing the commitment to its promised date      moved  how often a date was changed
-   There are no amounts: a commitment is a kind of action and some words, so the numbers count actions and outcomes.
+     lead       days from setting the goal to the goal check-in it is reported at   moved  how often a date was changed (older entries)
+   A goal is one approach (Lower costs: spend; Bring in additional revenue: money) and some words; there are no amounts.
+   Older entries name one of the earlier actions; each still counts on its side.
+   rounds, settings: the round start dates and settings, so a goal's due date can be worked out (plan.commitmentStates).
 
    input: { year, entries, listed, cameOff, stillOn, picOf }
      entries   plan entries dated in the year: { id, wbs1, kind, date, commitmentId, data }
@@ -21,7 +23,7 @@
 const plan = require('./plan');
 const { daysBetween } = require('./dates');
 
-const mean = xs => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const mean = list => { const xs = list.filter(x => x !== null && x !== undefined); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
 const sum = xs => xs.reduce((a, b) => a + b, 0);
 
 function metrics(list) {
@@ -43,13 +45,13 @@ function metrics(list) {
   };
 }
 
-function analyze({ year, entries, listed, cameOff, stillOn, picOf }) {
+function analyze({ year, entries, listed, cameOff, stillOn, picOf, rounds, settings }) {
   const byProject = new Map();
   for (const e of entries) { if (!byProject.has(e.wbs1)) byProject.set(e.wbs1, []); byProject.get(e.wbs1).push(e); }
 
   const commits = [];
   for (const [wbs1, list] of byProject) {
-    for (const s of plan.commitmentStates(list)) {
+    for (const s of plan.commitmentStates(list, rounds, settings)) {
       const made = list.find(e => e.id === s.id);
       const lever = made.data.lever, L = plan.LEVERS[lever];
       if (!L) continue;
@@ -57,7 +59,7 @@ function analyze({ year, entries, listed, cameOff, stillOn, picOf }) {
       commits.push({
         id: s.id, wbs1, pic: picOf[wbs1] || '', lever, group: L.group, otherText: made.data.otherText || null,
         madeDate: made.date, promisedBy: s.promisedBy, dueDate: s.dueDate, moves: s.revisions.length, status: s.status, kept: s.kept, closedDate: s.closedDate,
-        improved: doneE && typeof doneE.data.improved === 'boolean' ? doneE.data.improved : null, lead: daysBetween(made.date, s.promisedBy), early: s.status === 'done' ? daysBetween(s.closedDate, s.dueDate) : null,
+        improved: doneE && typeof doneE.data.improved === 'boolean' ? doneE.data.improved : null, lead: s.promisedBy || s.dueDate ? daysBetween(made.date, s.promisedBy || s.dueDate) : null, early: s.status === 'done' && s.dueDate ? daysBetween(s.closedDate, s.dueDate) : null,
       });
     }
   }

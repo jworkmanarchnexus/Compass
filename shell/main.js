@@ -177,7 +177,7 @@ const SETTING_LABEL = {
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
-  'due.newProjectDays': 'Days to a first plan', 'due.afterEntryDays': 'Days to the next update', 'due.cadenceDays': 'Days between check-ins', 'due.graceUntil': 'January grace period ends', 'due.soonDays': 'Update-due window', 'due.missedAfterDays': 'Days until a commitment is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see',
+  'round.dueBusinessDays': 'Weekdays to answer each round', 'round.midOpensDays': 'Days until the mid-month update opens', 'due.graceUntil': 'January grace period ends', 'due.missedAfterDays': 'Days until a goal is recorded as missed', 'ladder.reminder1Days': 'Reminder 1 day', 'ladder.reminder2Days': 'Reminder 2 day', 'ladder.escalateDays': 'Escalate day', 'drafts.emailAdmin': 'Email when drafts are waiting', 'drafts.skipIfEntryDays': 'Skip a PIC who just added an entry', 'drafts.skipIfSentDays': 'Skip a PIC who was just sent a reminder', 'standing.goodOnTime': 'Good standing: on time', 'standing.goodKept': 'Good standing: kept', 'standing.escalatedOnTime': 'Escalated below: on time', 'standing.escalatedKept': 'Escalated below: kept', 'standing.minSample': 'Items needed before a measure counts', 'visibility.picRecords': 'Who sees PIC records', 'access': 'What narrower roles can see',
 };
 
 const fmtTime = ms => {
@@ -351,13 +351,11 @@ function turnaroundCards(s, canEdit, rerender) {
       row('Ignore projects billed under', 'Leave at $0 to include everything. Raise it to hide tiny jobs.', ed.num('include.ignoreBilledUnder', { money: true, narrow: true })),
       row('Projects with no PIC', 'Projects whose Vantagepoint record has no principal in charge.', ed.select('include.noPic', [['leave-out-warn', 'Leave out and warn me on Home'], ['unassigned', 'Show them as "Unassigned"']])),
     ]),
-    settingsCard('Plan due dates', 'The dates the accountability ladder counts from.', s, ['due.newProjectDays', 'due.cadenceDays', 'due.afterEntryDays', 'due.soonDays', 'due.missedAfterDays', 'due.graceUntil'], canEdit, rerender, ed => [
-      row('A new turnaround project needs a plan within', null, ed.num('due.newProjectDays', { narrow: true }), h('span', { class: 'muted', text: 'days of first appearing' })),
-      row('Check-ins: every', 'A new commitment is due at the next check-in: this many days after the project first showed on a published report, and again each time. On that day the PIC updates the commitment and makes a new one. The PIC does not pick the date.', ed.num('due.cadenceDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
-      row('After any entry, the next update is due in', 'Every update, explanation or commitment resets the clock for that project.', ed.num('due.afterEntryDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
-      row('Show "Update due" when the next update is within', 'The yellow label on a plan. Past the date, it turns to Overdue.', ed.num('due.soonDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
-      row('Record a commitment as missed', 'When its date has passed by this many days and nobody pressed Done or moved the date. The system writes it in the log.', ed.num('due.missedAfterDays', { narrow: true }), h('span', { class: 'muted', text: 'days after its date' })),
-      row('January grace period', 'On January 1 every project starts clean. Plans opened last year stay readable.', ed.monthDay('due.graceUntil'), h('span', { class: 'muted', text: 'no plans are due until this date each year' })),
+    settingsCard('Check-in rounds', 'Two rounds a month, counted from the day the month is published. The dates the reminder ladder counts from.', s, ['round.dueBusinessDays', 'round.midOpensDays', 'due.missedAfterDays', 'due.graceUntil'], canEdit, rerender, ed => [
+      row('Each round is due', 'The goal check-in counts from the day the month is published; the mid-month update from the day it opens. A project new to the list has the same time for its first goal.', ed.num('round.dueBusinessDays', { narrow: true }), h('span', { class: 'muted', text: 'weekdays after it opens' })),
+      row('The mid-month update opens', 'Only for a goal set before it opens. No new goal: where the goal stands, and a comment.', ed.num('round.midOpensDays', { narrow: true }), h('span', { class: 'muted', text: 'days after the month is published' })),
+      row('Record a goal as missed', 'When nobody reported on it at the next goal check-in, this many days after that check-in was due. The system writes it in the log.', ed.num('due.missedAfterDays', { narrow: true }), h('span', { class: 'muted', text: 'days' })),
+      row('January grace period', 'On January 1 every project starts clean. Plans from last year stay readable.', ed.monthDay('due.graceUntil'), h('span', { class: 'muted', text: 'nothing is due until this date each year' })),
     ]),
   ];
 }
@@ -525,7 +523,7 @@ function auditText(e) {
   if (e.action === 'checkin.send') return ['Marked a check-in draft as sent', ''];
   if (e.action === 'checkin.dismiss') return ['Dismissed a check-in draft', ''];
   if (e.action === 'checkin.undo') return ['Put a check-in draft back in the queue', ''];
-  if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} commitments recorded as missed`];
+  if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} goals recorded as missed`];
   if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];

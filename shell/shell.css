@@ -297,3 +297,22 @@ table.ptab th:nth-child(1) { width: 27%; } table.ptab th:nth-child(2) { width: 1
 table.ptab td:first-child { min-width: 0; }
 /* a little more room between the figures-and-chart row and the PIC cards (Josh, 2026-11-26) */
 .stack > .ov-top + * { margin-top: 28px; }
+
+/* the project page: the PIC's projects in the header tile, the check-in form (modules/turnaround/ui/plan.js) */
+.ck-steps { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.ck-step { display: grid; gap: 2px; justify-items: start; min-width: 190px; max-width: 260px; padding: var(--s2) var(--s3); border-radius: var(--r4); background: var(--surface); color: var(--text-strong); text-decoration: none; box-shadow: inset 0 0 0 1px var(--line); }
+.ck-step:hover { box-shadow: inset 0 0 0 1px var(--text-3); }
+.ck-step[aria-current="page"] { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.ck-step-n { font: 700 11.5px/1.2 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); }
+.ck-step-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ck-form { padding: var(--s4) var(--s5); }
+.on-canvas .ck-form { padding: var(--s4) var(--s6); }
+.ck-ideas ul { margin: var(--s1) 0 0; padding-left: 18px; line-height: 1.45; font-size: 14px; }
+.ck-ideas li + li { margin-top: var(--s1); }
+.ck-missing { box-shadow: inset 3px 0 var(--crit); }
+.on-canvas .ck-missing { box-shadow: var(--shadow-soft), inset 3px 0 var(--crit); }
+.ck-comment { padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line-2); }
+.ck-comment summary { cursor: pointer; font-weight: 700; color: var(--accent-text); }
+.ck-comment[open] summary { margin-bottom: var(--s3); }
+.log-text + .log-text { margin-top: var(--s2); }
+.log-head .muted.small { margin-left: auto; }

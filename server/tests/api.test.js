@@ -56,18 +56,18 @@ test('system admin can read Admin but never change it', () => withApp(async ({ a
 test('settings: saving adds a dated row, is audited, and an unchanged value does nothing', () => withApp(async ({ api, db }) => {
   const josh = api('j.workman');
   const before = (await josh.get('/api/admin/settings')).body;
-  assert.strictEqual(before['due.newProjectDays'].value, 14);
-  assert.strictEqual(before['due.newProjectDays'].effectiveFrom, null, 'still the default');
+  assert.strictEqual(before['round.midOpensDays'].value, 14);
+  assert.strictEqual(before['round.midOpensDays'].effectiveFrom, null, 'still the default');
 
-  assert.deepStrictEqual((await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 10, 'due.afterEntryDays': 30 } })).body, { saved: 1 });
+  assert.deepStrictEqual((await josh.put('/api/admin/settings', { changes: { 'round.midOpensDays': 10, 'due.missedAfterDays': 14 } })).body, { saved: 1 });
   const after = (await josh.get('/api/admin/settings')).body;
-  assert.strictEqual(after['due.newProjectDays'].value, 10);
-  assert.ok(after['due.newProjectDays'].effectiveFrom > 0);
-  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'due.newProjectDays'").n, 1);
+  assert.strictEqual(after['round.midOpensDays'].value, 10);
+  assert.ok(after['round.midOpensDays'].effectiveFrom > 0);
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'round.midOpensDays'").n, 1);
 
   // changing it again keeps the old row, so a run built earlier can still be reproduced
-  await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 21 } });
-  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'due.newProjectDays'").n, 2);
+  await josh.put('/api/admin/settings', { changes: { 'round.midOpensDays': 21 } });
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'round.midOpensDays'").n, 2);
 
   const log = (await josh.get('/api/admin/audit')).body;
   assert.strictEqual(log.filter(e => e.action === 'setting.change').length, 2);
@@ -130,7 +130,7 @@ test('people: a deactivated person can no longer use the app but keeps their his
 }));
 
 test('the audit log is append-only: the database itself refuses changes and deletes', () => withApp(async ({ api, db }) => {
-  await api('j.workman').put('/api/admin/settings', { changes: { 'due.newProjectDays': 9 } });
+  await api('j.workman').put('/api/admin/settings', { changes: { 'round.midOpensDays': 9 } });
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM audit_log').n, 1);
   assert.throws(() => db.run("UPDATE audit_log SET action = 'x'"), /append-only/);
   assert.throws(() => db.run('DELETE FROM audit_log'), /append-only/);

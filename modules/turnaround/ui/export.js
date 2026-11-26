@@ -54,7 +54,7 @@ export function openTurnaroundExport(ctx, d, focus, showStanding) {
       h('p', { class: 'xo-note', text: pic ? `${pic.name}'s projects, as on the page. Pick Everyone on the page to export them all.` : 'Everyone\'s projects, as on the page. Pick one PIC on the page to export only theirs.' })),
     h('fieldset', {}, h('legend', { text: 'Include' }),
       check('figures', 'The four figures'), check('chart', 'The negative YTD profit chart'), check('tables', 'The projects, by PIC'),
-      h('p', { class: 'xo-note', text: 'Updates and commitments print in full. A project never splits across pages, and each PIC starts with at least one of their projects.' })),
+      h('p', { class: 'xo-note', text: 'Comments and goals print in full. A project never splits across pages, and each PIC starts with at least one of their projects.' })),
     h('fieldset', {}, h('legend', { text: 'Pages' }),
       h('div', { class: 'xo-field' }, h('label', { text: 'Paper' }), select('paper', Object.entries(X.PAPER).map(([k, p]) => [k, p.label]), 'Paper')),
       h('div', { class: 'xo-field' }, h('label', { text: 'Orientation' }), seg('orientation', [['landscape', 'Landscape'], ['portrait', 'Portrait']]))),
