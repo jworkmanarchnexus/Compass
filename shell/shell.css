@@ -252,3 +252,11 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 @media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .ov-top.no-chart .kpis { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .ov-top .kpis, .ov-top.no-chart .kpis { grid-template-columns: 1fr; } }
+/* tighter figure tiles (Josh, 2026-11-25): less padding, smaller numbers, so more of the page fits on screen */
+.on-canvas .kpis, .ov-top { gap: var(--s3); }
+.on-canvas .kpi { padding: var(--s3) var(--s4) var(--s4); }
+.on-canvas .k-label { font-size: 13px; }
+.on-canvas .k-big { font-size: 26px; margin: var(--s1) 0 2px; }
+.on-canvas .k-sub { font-size: 12.5px; line-height: 1.35; }
+.on-canvas .chart-card { padding: var(--s4) var(--s5); }
+.ov-top .ch-tick, .ov-top .ch-year { font-size: 13px; } /* the chart is drawn wider (640 units) here, so its labels need a larger size to stay readable at 1440px */

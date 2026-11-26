@@ -104,7 +104,7 @@ function chartRow(ctx, data, mine, who) {
   const deeper = prev ? last.negativeYtd - prev.negativeYtd : 0;
   const prevName = prev ? fmtPeriod(prev.period).split(' ')[0] : '';
   const bars = negativeBars(pts.map(p => ({ label: p.label, yearLabel: p.yearLabel, value: p.value, kind: p.kind, tip: `${fmtPeriod(p.period)}: ${fmtCents(p.value)} (${plural(p.count, 'project')} below break-even)` })),
-    { fmt: v => fmtK(v), aria: 'Total negative year-to-date profit at each month end, last 12 months' });
+    { fmt: v => fmtK(v), aria: 'Total negative year-to-date profit at each month end, last 12 months', width: 640, height: 200 }); // wider and shorter, so it sits beside the 2x2 figures
   // The count of projects below break-even is no longer charted (Josh, 2026-11-25): the bar tooltips and the
   // "Since" figure still give it, and the history still carries belowCount for anyone who wants it back.
   return h('div', { class: 'chart-card' },
