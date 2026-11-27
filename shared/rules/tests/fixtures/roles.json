@@ -308,5 +308,421 @@
         "ok": true
       }
     }
+  ],
+  "canUse": [
+    {
+      "name": "everything live: same as the role rule",
+      "user": {
+        "id": "u-pic-1",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "billing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "no release setting at all: same as the role rule",
+      "user": {
+        "id": "u-pic-1",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {}
+      },
+      "see": [
+        "turnaround",
+        "billing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "billing in preview: a picked PIC still sees it, tagged",
+      "user": {
+        "id": "u-pic-1",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1",
+              "u-proc-1"
+            ]
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "billing"
+      ],
+      "preview": [
+        "billing"
+      ]
+    },
+    {
+      "name": "billing in preview: a PIC who was not picked does not see it",
+      "user": {
+        "id": "u-pic-2",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1",
+              "u-proc-1"
+            ]
+          }
+        }
+      },
+      "see": [
+        "turnaround"
+      ],
+      "preview": []
+    },
+    {
+      "name": "billing in preview: a picked processor sees it",
+      "user": {
+        "id": "u-proc-1",
+        "role": "processor"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1",
+              "u-proc-1"
+            ]
+          }
+        }
+      },
+      "see": [
+        "billing"
+      ],
+      "preview": [
+        "billing"
+      ]
+    },
+    {
+      "name": "billing in preview: the Admin always sees it, tagged",
+      "user": {
+        "id": "u-admin",
+        "role": "admin"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1",
+              "u-proc-1"
+            ]
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "checkins",
+        "bd",
+        "accountability",
+        "pipeline",
+        "billing",
+        "admin"
+      ],
+      "preview": [
+        "billing"
+      ]
+    },
+    {
+      "name": "preview never widens a role: a picked Finance user still cannot open Billing",
+      "user": {
+        "id": "u-fin",
+        "role": "finance"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "preview",
+            "testers": [
+              "u-fin"
+            ]
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "bd",
+        "accountability",
+        "pipeline"
+      ],
+      "preview": []
+    },
+    {
+      "name": "preview never widens a role: a picked PIC needs the access setting for the Marketing Report",
+      "user": {
+        "id": "u-pic-1",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1"
+            ]
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "billing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "access widened and picked: the PIC sees the Marketing Report in preview",
+      "user": {
+        "id": "u-pic-1",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {
+          "picBd": true
+        },
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "preview",
+            "testers": [
+              "u-pic-1"
+            ]
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "bd",
+        "billing"
+      ],
+      "preview": [
+        "bd"
+      ]
+    },
+    {
+      "name": "turnaround in preview with nobody picked: only the Admin",
+      "user": {
+        "id": "u-fin",
+        "role": "finance"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "preview",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        }
+      },
+      "see": [
+        "bd",
+        "accountability",
+        "pipeline"
+      ],
+      "preview": []
+    },
+    {
+      "name": "a System admin is not an Admin: a preview hides the area unless picked (Admin pages stay open)",
+      "user": {
+        "id": "u-sys",
+        "role": "sysadmin"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "preview",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        }
+      },
+      "see": [
+        "admin"
+      ],
+      "preview": []
+    },
+    {
+      "name": "a tester list on a live module changes nothing",
+      "user": {
+        "id": "u-pic-2",
+        "role": "pic"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": [
+              "u-pic-1"
+            ]
+          }
+        }
+      },
+      "see": [
+        "turnaround",
+        "billing"
+      ],
+      "preview": []
+    }
   ]
 }

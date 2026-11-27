@@ -5,7 +5,9 @@
    Only these context calls are used, because jsPDF supports them: save/restore, translate, scale, beginPath/moveTo/lineTo/
    closePath/rect, fill/stroke, fillRect, strokeRect, fillText, measureText, setLineDash, and solid colors (no alpha).
    Where things go (page cut, section heights) is decided by logic/export-plan.js; this file only paints. */
-import { LOGO, PDF_FONTS } from '/shared/export/assets.js';
+import { LOGO, PDF_FONTS, FONTS_CANVAS, FONTS_PDF, fnt, fontsReady, loadLogo, logo, loadJsPdf, fitText, wrap, longDay } from '/shared/export/pdf-kit.js';
+
+export { FONTS_CANVAS, FONTS_PDF, fontsReady, loadLogo }; // export.js loads them from here
 
 const X = window.BdExportPlan;
 
@@ -21,9 +23,6 @@ export const LOOKS = {
   },
 };
 
-export const FONTS_CANVAS = { ui: 'Lato, Arial, sans-serif', cond: '"Roboto Condensed", "Arial Narrow", Arial, sans-serif' };
-export const FONTS_PDF = { ui: 'Lato', cond: 'RobotoCondensed' };
-const fnt = (F, kind, size, bold) => (bold ? 'bold ' : '') + size + 'px ' + F[kind];
 const STATUS_TEXT = { on_track: 'On Track', on_pace: 'On Pace', behind: 'Behind Pace' };
 
 /* white text where it reads, the dark gray otherwise */
@@ -31,46 +30,6 @@ const hexRGB = hx => { const n = parseInt(hx.slice(1), 16); return [n >> 16, (n 
 const lum = hx => { const [r, g, b] = hexRGB(hx).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const inkOn = hx => (1.05 / (lum(hx) + 0.05) >= 4.5 ? '#FFFFFF' : '#1E2428');
 
-let fontsP = null;
-export function fontsReady() {
-  if (!fontsP) {
-    const fs = document.fonts;
-    fontsP = fs && fs.load ? Promise.all(['12px Lato', 'bold 12px Lato', '12px "Roboto Condensed"', 'bold 12px "Roboto Condensed"'].map(f => fs.load(f).catch(() => null))).catch(() => null) : Promise.resolve();
-  }
-  return fontsP;
-}
-let logoImg = null;
-export function loadLogo() {
-  if (logoImg) return Promise.resolve(logoImg);
-  return new Promise(res => {
-    const im = new Image();
-    im.onload = () => { logoImg = im; res(im); };
-    im.onerror = () => res(null);
-    im.src = LOGO.src;
-    setTimeout(() => res(logoImg), 4000);
-  });
-}
-
-function fitText(c, text, maxW) {
-  if (maxW <= 0) return '';
-  if (c.measureText(text).width <= maxW) return text;
-  let s = text;
-  while (s.length > 1 && c.measureText(s + '…').width > maxW) s = s.slice(0, -1);
-  return s.length > 1 ? s + '…' : '';
-}
-/* wrap a paragraph to a width (used for the description under the title) */
-function wrap(c, text, maxW, maxLines) {
-  const words = String(text).split(/\s+/).filter(Boolean);
-  const lines = [];
-  let cur = '';
-  for (const w of words) {
-    const t = cur ? cur + ' ' + w : w;
-    if (c.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
-  }
-  if (cur) lines.push(cur);
-  if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = fitText(c, lines[maxLines - 1] + '…', maxW); }
-  return lines;
-}
 const dashed = (c, on) => { if (c.setLineDash) c.setLineDash(on ? [2, 3] : []); };
 
 /* ---------- table ---------- */
@@ -247,7 +206,7 @@ const TITLES = ['Marketing Report: By Principal-in-Charge', 'Marketing Report: B
 function paintHeading(c, F, pal, o) {
   const { W, page, hd, d, O, logoAt } = o;
   const full = page === 0 || O.logo === 'all';
-  const showLogo = O.logo !== 'none' && full && logoImg;
+  const showLogo = O.logo !== 'none' && full && logo();
   const rx = W - (showLogo ? hd.logoW + hd.clear : 0);
   c.textAlign = 'left';
   c.fillStyle = pal.title;
@@ -282,7 +241,6 @@ function paintFooter(c, F, pal, o) {
 }
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const periodName = p => { const s = String(p); return MONTHS[Number(s.slice(4, 6)) - 1] + ' ' + s.slice(0, 4); };
-const longDay = ymd => { const [y, m, dd] = String(ymd).split('-').map(Number); return MONTHS[m - 1] + ' ' + dd + ', ' + y; };
 
 /* ---------- a job: page geometry and a paint function ---------- */
 export function buildJob(d, O, today) {
@@ -323,20 +281,8 @@ export function pageCanvas(job, k, pxW) {
   const c = cv.getContext('2d');
   c.scale(z, z);
   c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, job.P.w, job.P.h);
-  job.paint(c, FONTS_CANVAS, k, (x, y, w, h0) => { if (!logoImg) return; c.save(); c.setTransform(z, 0, 0, z, 0, 0); c.drawImage(logoImg, x, y, w, h0); c.restore(); });
+  job.paint(c, FONTS_CANVAS, k, (x, y, w, h0) => { if (!logo()) return; c.save(); c.setTransform(z, 0, 0, z, 0, 0); c.drawImage(logo(), x, y, w, h0); c.restore(); });
   return cv;
-}
-
-let libP = null;
-function loadJsPdf() {
-  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf);
-  if (!libP) libP = new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = '/shared/vendor/jspdf.umd.min.js';
-    s.onload = () => res(window.jspdf); s.onerror = () => { libP = null; rej(new Error('The PDF library did not load.')); };
-    document.head.append(s);
-  });
-  return libP;
 }
 
 /* vector PDF: the same painting on jsPDF's context2d, with Lato and Roboto Condensed embedded. */

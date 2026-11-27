@@ -34,19 +34,24 @@ function seedDemo(db) {
     const project = db.get('SELECT * FROM projects WHERE wbs1 = ?', story.wbs1);
     const picId = picByCode[project.principal];
     const ids = {}; // label -> entry id
-    for (const e of story.entries) {
-      const when = at(e.at);
+    story.entries.forEach((e, k) => {
+      const when = at(e.at) + k; // entries written together (a report and the next goal) keep their order
       const date = planDb.localDate(when);
-      const base = { wbs1: story.wbs1, authorId: picId, kind: e.kind, body: e.body, date, at: when };
-      if (e.kind === 'commitment') { base.id = crypto.randomUUID(); base.commitmentId = base.id; base.data = { promisedBy: e.promisedBy, lever: e.lever }; }
+      // story kinds: explanation, goal (approach + words, or keep: an earlier goal), report (on a goal: helped + comment),
+      // mid (the mid-month update on a goal), comment, admin_note
+      const base = { wbs1: story.wbs1, authorId: picId, kind: e.kind, body: e.body || '', date, at: when };
+      if (e.kind === 'goal') {
+        const from = e.keep ? db.get('SELECT * FROM plan_entries WHERE id = ?', ids[e.keep]) : null;
+        Object.assign(base, { kind: 'commitment', id: crypto.randomUUID(), body: from ? from.body : e.body, data: from ? { lever: JSON.parse(from.data_json).lever, keptFrom: from.id } : { lever: e.approach } });
+        base.commitmentId = base.id;
+      }
+      if (e.kind === 'report') Object.assign(base, { kind: 'done', commitmentId: ids[e.c], data: { helped: e.helped, improved: e.helped === 'yes' ? true : e.helped === 'no' ? false : null } });
+      if (e.kind === 'mid') Object.assign(base, { kind: 'update', commitmentId: ids[e.c], data: { midStatus: e.status } });
+      if (e.kind === 'comment') base.kind = 'update';
       if (e.kind === 'admin_note') base.authorId = admin.id;
-      if (e.kind === 'missed') { base.authorId = null; base.commitmentId = ids[e.c]; base.data = { dueDate: dueOf(db, ids[e.c]) }; }
-      if (e.kind === 'done') { base.commitmentId = ids[e.c]; base.data = { improved: e.improved }; }
-      if (e.kind === 'date_revised') { base.commitmentId = ids[e.c]; base.data = { from: dueOf(db, ids[e.c]), to: e.to }; }
-      if (e.kind === 'correction') base.correctsEntryId = ids[e.corrects];
       const id = planDb.insert(db, base);
       if (e.l) ids[e.l] = id;
-    }
+    });
   }
   // BD reports for August and September, built after the plan logs so Principal Accountability (built with them) reads each plan as it stood on the build day. The one project with no market sector was assigned to Civic by the Admin (as in the mockup).
   const bd = require('./bd');
@@ -61,13 +66,6 @@ function seedDemo(db) {
 
   // the daily job's first look, on the demo day, so the check-in queue starts with what it would hold
   require('./turnaround').dailyChecks(db, { today: '2026-10-07', settings, mailer: null, baseUrl: '', adminEmails: [] });
-}
-
-/* the commitment's current due date as the log stands, for the entries that refer to it */
-function dueOf(db, commitmentId) {
-  const plan = require('../modules/turnaround/logic/plan');
-  const row = db.get('SELECT wbs1 FROM plan_entries WHERE id = ?', commitmentId);
-  return plan.commitmentStates(planDb.entriesFor(db, row.wbs1)).find(c => c.id === commitmentId).dueDate;
 }
 
 module.exports = { seedDemo };

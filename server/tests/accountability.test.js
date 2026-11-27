@@ -29,7 +29,9 @@ test('the September demo report: each PIC\'s columns, the order, the response to
   assert.deepStrictEqual(d.rows.map(r => r.label), ['Jordan Ames', 'Elena Castellanos', 'Riley Chen', 'Tom Lindqvist', 'Ben Okafor', 'Marcus Oyelaran', 'Priya Raman', 'Dana Whitfield', 'Unassigned'], 'the Admin\'s goal order, then Unassigned');
   const elena = d.rows.find(r => r.key === 'E105');
   assert.deepStrictEqual({ ...elena }, { key: 'E105', label: 'Elena Castellanos', goal: 100000000, billedYtd: 33853900, profitYtd: -4352000, negativeYtd: -4352000, unevaluated: 0, listed: 2,
-    response: 'no', utilizationBp: 6900, backlog: 16000000, mwip: 9500000, arOver90: 2695000 });
+    response: 'yes', utilizationBp: 6900, backlog: 16000000, mwip: 9500000, arOver90: 2695000 });
+  // both of Elena's listed projects have a Current plan under the two-rounds rules; Dana's do not all
+  assert.strictEqual(d.rows.find(r => r.label === 'Dana Whitfield').response, 'no', 'any project without a Current plan is No');
   const jordan = d.rows.find(r => r.key === 'E107');
   assert.deepStrictEqual([jordan.goal, jordan.billedYtd, jordan.response, jordan.utilizationBp], [100000000, 0, null, 3400], 'a goal and nothing billed still gets a row; nothing on the Turnaround run is a dash, not No');
   const riley = d.rows.find(r => r.key === 'E108');

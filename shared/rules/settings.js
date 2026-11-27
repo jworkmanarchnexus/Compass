@@ -12,12 +12,10 @@ const DEFAULTS = {
   'include.ytdProfitBelow': 0,
   'include.ignoreBilledUnder': 0,
   'include.noPic': 'leave-out-warn',
-  'due.newProjectDays': 14,
-  'due.afterEntryDays': 30,
-  'due.cadenceDays': 14,         // check-ins: every this many days from the project's first report, the PIC reports back and makes a new commitment
+  'round.dueBusinessDays': 5,    // each round (the goal check-in, the mid-month update) is due this many weekdays after it opens
+  'round.midOpensDays': 14,      // the mid-month update opens this many days after the month is published
   'due.graceUntil': '02-01',
-  'due.soonDays': 14,            // a plan shows "Update due" when its next update falls within this many days
-  'due.missedAfterDays': 14,     // an open commitment is recorded as Missed this many days after its date
+  'due.missedAfterDays': 14,     // a goal not reported on is recorded as Missed this many days after its goal check-in was due
   'ladder.reminder1Days': 3,     // reminder ladder, counted from each project's due date
   'ladder.reminder2Days': 10,
   'ladder.escalateDays': 21,
@@ -44,6 +42,12 @@ const DEFAULTS = {
   'billing.varianceThreshold': 3000000, // a request whose total differs from the project's monthly projection by MORE than this needs a note to accounting ($30,000)
   'billing.rolloverDay': 12,            // the "clock reset": from this day of the month the next billing month starts and every project is unbilled again
   'billing.businessHours': { start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }, // routine immediate emails to processors wait for these hours (days: Sunday is 0)
+  /* Dashboards: the fee burn's projected spend = planned hours x billing rate x this percent (modules/dashboard/logic/burn.js).
+     Never actual pay or cost rates (Josh, 2026-11-26). 85 is a made-up starting value; Josh sets the real one. */
+  'dashboard.projectedSpendPct': 85,
+  /* Dashboards: a project's status on the tabs (modules/dashboard/logic/portfolio.js). Below zero is always Needs a look. */
+  'dashboard.watchProfitPct': 10,  // year-to-date profit under this % of billed (and not below zero) is Watch
+  'dashboard.endingSoonDays': 90,  // the Ending soon chip: projects whose end date is within this many days
   /* Pipeline watch alert rules. sev: 'alert' (counts toward the menu badge), 'watch' (shown only) or 'off'. Amounts are dollars. */
   'pipeline.rules': {
     mwipDrop: { sev: 'alert', amount: 75000, days: 7 },          // a PIC's MWIP falls by this much within this many days
@@ -59,6 +63,13 @@ const DEFAULTS = {
   'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false, picAccountability: false },
+  /* Preview (shared/rules/roles.js): each module is 'live' for everyone its role allows, or in 'preview' for the Admin and the testers picked here */
+  'release': {
+    turnaround: { stage: 'live', testers: [] },
+    bd: { stage: 'live', testers: [] },
+    pipeline: { stage: 'live', testers: [] },
+    billing: { stage: 'live', testers: [] },
+  },
 };
 
 const days = v => Number.isInteger(v) && v >= 0 && v <= 365;
@@ -75,11 +86,9 @@ const VALIDATORS = {
   'include.ytdProfitBelow': v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e9,
   'include.ignoreBilledUnder': money,
   'include.noPic': oneOf(['leave-out-warn', 'unassigned']),
-  'due.newProjectDays': days,
-  'due.afterEntryDays': days,
-  'due.cadenceDays': v => Number.isInteger(v) && v >= 1 && v <= 90,
+  'round.dueBusinessDays': v => Number.isInteger(v) && v >= 1 && v <= 20,
+  'round.midOpensDays': v => Number.isInteger(v) && v >= 7 && v <= 25,
   'due.graceUntil': v => typeof v === 'string' && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
-  'due.soonDays': days,
   'due.missedAfterDays': days,
   'ladder.reminder1Days': days,
   'ladder.reminder2Days': days,
@@ -117,9 +126,22 @@ VALIDATORS['acct.projectSizes'] = v => Array.isArray(v) && v.length >= 1 && v.le
   && typeof x.label === 'string' && x.label.trim().length >= 1 && x.label.length <= 40 && Number.isInteger(x.fee) && x.fee >= 1000 && x.fee <= 1e8);
 VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);
 VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
+VALIDATORS['dashboard.projectedSpendPct'] = intIn(1, 200);
+VALIDATORS['dashboard.watchProfitPct'] = intIn(0, 100);
+VALIDATORS['dashboard.endingSoonDays'] = intIn(30, 365);
 const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
   && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;
+
+/* release: the same modules as the default, each { stage, testers } with testers a list of distinct user ids. Whether each id is a real person is checked by the server. */
+VALIDATORS['release'] = v => !!v && typeof v === 'object' && !Array.isArray(v)
+  && Object.keys(v).length === Object.keys(DEFAULTS.release).length
+  && Object.keys(DEFAULTS.release).every(a => {
+    const x = v[a];
+    return !!x && typeof x === 'object' && Object.keys(x).length === 2 && (x.stage === 'live' || x.stage === 'preview')
+      && Array.isArray(x.testers) && x.testers.length <= 200 && x.testers.every(id => typeof id === 'string' && id.length > 0 && id.length <= 64)
+      && new Set(x.testers).size === x.testers.length;
+  });
 
 const isKnown = key => Object.prototype.hasOwnProperty.call(DEFAULTS, key);
 const isValid = (key, value) => isKnown(key) && VALIDATORS[key](value);

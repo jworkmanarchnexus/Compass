@@ -1,0 +1,10 @@
+{
+  "cases": [
+    { "why": "a PIC on projects, PM on none", "person": { "role": "pic", "picProjects": 4, "pmProjects": 0 }, "expect": ["pic"] },
+    { "why": "a PM on projects, PIC on none", "person": { "role": "pm", "picProjects": 0, "pmProjects": 3 }, "expect": ["pm"] },
+    { "why": "PIC on some and PM on another: both", "person": { "role": "pic", "picProjects": 2, "pmProjects": 1 }, "expect": ["pic", "pm"] },
+    { "why": "it follows the projects, not the Compass role", "person": { "role": "finance", "picProjects": 0, "pmProjects": 1 }, "expect": ["pm"] },
+    { "why": "a PIC with no active projects has none", "person": { "role": "pic", "picProjects": 0, "pmProjects": 0 }, "expect": [] },
+    { "why": "the Admin always has both", "person": { "role": "admin", "picProjects": 0, "pmProjects": 0 }, "expect": ["pic", "pm"] }
+  ]
+}

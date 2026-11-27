@@ -237,12 +237,103 @@
 - **System admin sees the three rules read-only, and a note instead of deadlines and project lists.** They are not a Billing user, so the app does not ask for project data on their behalf.
 - **A left-out month names the month the project is currently in** (so before the reset day it reads "Leave out of September 2026"). It stays out until someone puts it back.
 
+## Design refresh (2026-11-25)
+
+- **(Josh) A more modern look, shared with the Toolbox.** The Toolbox is the master: tokens `canvas`, `shadow-soft`, `r5`, `r6` in `../ToolBox/design-system/project/tokens.json` and the "Modern layer" block in its `components/bundle.css`. Compass copies the generated `shared/design-system/toolbox.css` from the Toolbox, so the two files are identical (copied 2026-11-25).
+- **(Josh) Keep the left side bar and the branding.** Expanded with labels, shrinkable to icons, a slide-out menu below 860px, all as before. The Arch Nexus logo and the Compass product line stay at the top. Only the styling changed: the shell sits on a tinted canvas (`--canvas`), and the side bar and page are floating white panels with soft shadows (`--shadow-soft`, `--r5`, `--r6`).
+- **Pages opt in one at a time.** A page that adds `.on-canvas` to `.mainwrap` drops its white sheet and shows its sections as separate cards with dot status chips. Home is the first. Pages that have not opted in sit on a white sheet and look as they did. No logic, API or test changed.
+- **Not adopted from the inspiration shots:** bright red/green money amounts (non-punitive tone), top-bar navigation, emoji. Headline tiles with icon, change badge and trend line are for pages whose figures already exist; Home has none yet.
+- **Fixed in passing:** shrinking the side bar to icons on a wide window and then narrowing it left the slide-out menu centered like the icon bar. The slide-out menu is now always the full menu.
+- **Open:** whether the X alone may stand for the logo in the icon bar (the logo rule says never under 96px wide; the icon bar shrinks the whole logo to 38px, as before).
+- **Home header (2026-11-25, Josh).** Home greets instead of showing a title ("Good afternoon, Josh"; the side bar already says where you are). Under it: the date and a one-line summary of what the cards hold (things that need you, data checks to look at, or for a PIC how many of their projects need a plan update). On the right, tags: "Data through Sep 30" (green when the latest run covers the last closed month, amber when it does not; the server sends this as `pull.current`, the same rule as the Monthly Vantagepoint pull check), the period, and for the admin "PICs see published runs only". The greeting uses the browser's clock.
+- **Every page on the canvas (2026-11-25, Josh).** All pages now opt in (`frame()` puts `.on-canvas` on `.mainwrap`), so each section is its own card, as in Josh's Turnaround mockup. Turnaround's four headline figures are four cards with larger numbers and sentence-case labels; its charts and each PIC group are cards. BD and Pipeline boxes use the shared card. **Colors unchanged** at Josh's request ("don't mess with the accent colors just yet"): the blue page titles, the BD report's navy table heads and bar colors stay as they were; plain tables only lose their grey header band. The dark navy side bar in the mockup was not adopted (the white branded side bar stays, as decided).
+- **Turnaround: denser top row (2026-11-25, Josh).** The "projects below break-even" count chart is gone ("not necessary"). The four numbers sit as a 2x2 block beside the negative YTD profit chart, which stays large; under 1100px wide the block sits above the chart. On a 1920px screen the first PIC's projects now show without scrolling. The server still sends `belowCount` in the history (the bar tooltips use it), so the API is unchanged.
+- **Tighter figure tiles (2026-11-25, Josh).** Less padding, 26px numbers, smaller notes; the Turnaround profit chart is drawn wider and shorter (`negativeBars` now takes optional `width`/`height`, default unchanged) so the 2x2 block and chart row is shorter.
+- **Grey tiles on a white frame (2026-11-25, Josh).** Like his Donezo example: the side bar is a grey tile, each page has a short grey header tile (title on the left, page actions on the right) and one large grey tile under it holding the white cards. Less space between the side bar and the cards (10px gap, 16px inside the tile, was 12px + 32px). Done in the Toolbox's master `components/bundle.css`, copied here; Toolbox pages that have not opted in keep a white sheet next to the grey side bar.
+- **Page actions in the header tile; an Export menu (2026-11-25, Josh).** `ctx.actions(body, ...buttons)` puts buttons at the right of the title row. Export offers **Excel** (a real .xlsx from `shared/export/xlsx.js`, a small dependency-free writer with tests; dollars and percentages are numbers with formats, header row frozen, filters on) and **PDF**. Turnaround: one row per project of what is on screen (everyone, or the PIC picked); PDF is the browser's Save as PDF with a print style that hides the frame. Marketing Report: Excel has both tabs as two sheets; PDF is its existing export window. Pipeline: Excel is the table on screen (same columns as the CSV the API still serves); PDF prints the page. Nothing extra is fetched: an export holds only what the person can already see.
+- **Later (Josh liked, not built):** a row of view tabs in the header tile for future dashboards (Overview / Growth style); mixed card sizes where it makes sense.
+- **Turnaround PIC cards (2026-11-25, Josh).** No initials circle; the show/hide button comes first and is a clear round button (the header row also toggles); no project count; total billed only in a tooltip; the plan chip moved under the project name and its column is gone.
+- **Turnaround project tables never scroll sideways (2026-11-26, Josh).** The 860px minimum width is gone: columns keep fixed shares (so they line up from card to card) and rows grow taller as the card narrows; under 560px of card width each project stacks (name and profit, then latest update, then next commitment, each labeled).
+- **Turnaround Export PDF window (2026-11-26, Josh: "yes, as proposed").** Same pattern as the Marketing Report: settings left, live page preview right, vector PDF (jsPDF, Lato and Roboto Condensed embedded). Page-break rules are pure and tested (`modules/turnaround/logic/export-plan.js`, fixtures in `tests/fixtures/export-plan.json`). The shared loaders (fonts, logo, jsPDF, text wrap) are in `shared/export/pdf-kit.js`; the Marketing Report uses them too since 2026-11-26 (its own copies removed). The four figures\x27 wording moved to `kpiItems()` so the page and the PDF say the same thing. Pipeline still uses the browser\x27s Save as PDF; its window comes next.
+
+## Turnaround check-ins: two rounds a month (2026-11-26, Josh)
+
+Josh: the old reporting was too complicated (a 14-day check-in counted per project, a 30-day update clock, an "update due" window, a missed rule: four clocks); PICs will not do homework before filling it in, but the data is worth keeping. Tried as a mockup first, then built.
+
+- **Two rounds a month, tied to the run.** A round starts the day a month is first published (a rerun of the month does not start a new one). *Goal check-in*: did the last goal help (Yes, No, Too early to tell) with a required comment, then the next goal, or keep the same goal. *Mid-month update*: `round.midOpensDays` (14) days after publishing, In progress / Done / Stuck with a required comment; no new goal; owed only when this round's goal was set before it opened. Each round is due `round.dueBusinessDays` (5) weekdays after it opens. These two settings replace `due.newProjectDays`, `due.afterEntryDays`, `due.cadenceDays` and `due.soonDays`. A project new to the list has the same five weekdays for its first goal; January still waits for the grace period.
+- **A goal is one approach** (Lower costs or Bring in additional revenue, never both) **and a few words on how. No numbers.** Picking an approach shows its four ideas under "Potential Approaches", as guidance only: Josh gave up per-idea data ("for now just want them thinking about the how specifically"). The ten actions of October become `legacy` so old entries keep their names. Lower costs counts as "spend", revenue as "money", so the cost-versus-revenue analysis carries on.
+- **Every comment is required:** "Did it help?" needs a comment, and so does the mid-month status.
+- **One project at a time, merged with the plan page.** The project page is the check-in: the form when something is owed, the full history of goals and comments, the project's numbers and "Goals so far". The PIC steps through their projects on the list from the header tile ("Save and next"); "Start my check-in" on the Turnaround page opens the first one still owed. Matches the header-tile and grey-canvas design.
+- **What is stored (technical).** No new table and no schema change: a goal is a `commitment` entry (`data.lever` = `cost` or `revenue`, `keptFrom` when carried forward); the report on it is a `done` entry (`data.helped`, and `improved` true/false/null so the analysis keeps working); the mid-month update is an `update` entry with `data.midStatus` and the goal's `commitment_id`; a plain `update` is a comment. The explanation is written by the first goal check-in of the year. A goal's due date is the next month's goal check-in due date, worked out from the run dates (`plan.commitmentStates(entries, rounds, settings)`), so it is never stored and cannot drift. "Kept" now means reported on at that check-in by its due date.
+- **Status names (technical).** The four status keys stay (`current`, `update_due`, `overdue`, `no_plan`) so Home, the drafts ladder and the exports keep working; the words change: Done for this round, Goal check-in / Mid-month update due, ... late, First goal due / No goal yet. `owes` says which round is owed.
+- **Comments between rounds stay** (default; Josh did not decide). Kept as "Add a comment" in the History card. Easy to remove.
+- **Mark done and the separate explanation and commitment entries are gone from the API.** The page never offered Mark done; the goal check-in writes the explanation, the report and the goal in one transaction.
+
 ## Billing PM and PIC screens, step 4 (2026-11-03)
 
 - **The pure rules run in the browser too, for instant feedback.** `money`, `fixed`, `hourly`, `review` and `status` load as plain scripts (each wrapped in its own function so their private names do not clash; the tests are unchanged). `fixed` and `hourly` both have `evaluate`, so the browser keeps them apart as `CompassBillingFixed` and `CompassBillingHourly`. The server still runs every rule again on save and submit.
 - **Submit is disabled while anything blocks it, and the screen lists why.** Save Draft is always on. The Vantagepoint numbers changing under a request show a banner that must be acknowledged before submitting.
 - **Notes are a small rich-text box (bold, italic, list).** The server cleans them again; the browser only shows text the server has cleaned.
 - **Processors and the Admin can open every project but the screen is read-only for them until step 5** (queue, return, process).
+
+## Marketing Report on live Vantagepoint data (2026-11-26, Josh asked)
+
+- **A pull job writes a snapshot; the report build reads the snapshot.** Keeps "only a job reads Vantagepoint, browsers never do", keeps the build synchronous and testable, and is the record the forecast and MWIP need (Vantagepoint keeps no history for them). `server/jobs/vp-pull-bd.js`, `server/vp-snapshot.js`, `docs/LIVE-MODE.md`.
+- **The snapshot holds raw inputs, not finished numbers** (plan entries, pursuits, ledger totals, holidays, principals), so the Admin's settings still apply at build time and a setting change needs only a rebuild.
+- **The SQL lives once**, in `server/vp/bd-statements.js`, used by the pull job and `tools/bd-live-pull.js`.
+- **Live mode is separate from the demo**: own database, own port (5290; 5281 to 5289 are the demo and other worktrees), and the sidebar says "Live: Marketing Report". Only the Marketing Report is live; the other pages still show made-up data.
+- **Goals and sectors for the live database come from a local config** (`server/db/live/config.json`, git-ignored), first filled from the October 2026 workbook: 13 PICs at $1.5M keyed by Vantagepoint employee code, the six sector goals, Laboratory counted in Healthcare through 2026-12-31, factor 0.65. "Lisa Whoolery" in the workbook was matched to Lisa Ramidan (employee 00384) by first name; **confirmed by Josh (2026-11-26): the same person.**
+
+## Names shown for Vantagepoint people (2026-11-26, Josh)
+
+- **The Admin can set the name Compass shows for any Vantagepoint person** (Admin > People, "Names shown for Vantagepoint people"), for someone who goes by another name than the one in Vantagepoint. Clearing it goes back to the Vantagepoint name. The System admin sees it read only.
+- **Applied everywhere at once.** Every page, report and export that showed a person from the employees table now asks one place (`server/names.js`, `employeeNames`); seven copies of the same lookup were replaced. Published reports show the current name (they store the employee code, not the name), so a rename does not need a rerun.
+- **Vantagepoint is never changed.** The name lives in Compass's own table `employee_names`, keyed by employee code; the nightly copy of employees can replace that table without losing it. Every change is in the audit log with the old and new name.
+
+## Modules in preview (2026-11-26, Josh: "yes, go ahead")
+
+Josh asked how to let a few people try a module before everyone gets it.
+
+- **An Admin setting, not a code switch.** One effective-dated setting, `release`, so it is dated, audited and changed without a new version, like every other setting. Kent keeps it if he rebuilds the screens: the rule is pure (`roles.canUse`) and the fixtures carry it.
+- **Per module, with its own testers.** The people trying Billing are not the people trying a Marketing Report change, so each module has its own list.
+- **Narrows, never widens.** Preview only takes people away from what their role opens. Who may see what stays the job of the role rules and the `access` setting, so a preview can never show someone data their role should not see.
+- **The Admin always sees a preview** (otherwise nobody could try it before picking testers). A System admin does not: they are not an Admin and never see module content they are not given.
+- **Pages only.** Jobs and emails ignore the preview. A preview on the live server still uses real data, and plan-log entries are permanent, so a module that writes data should be tried on a test server first (Kent).
+- **Whole modules for now.** A smaller feature inside a page can use the same rule later by adding its key to `PREVIEWABLE` and the `release` default.
+
+## My dashboard scaffolding (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- **Its own module** (`modules/dashboard/`), as Josh asked, built on branch `dashboard` off `main` so it has the design refresh.
+- **Saved per person on the server** (`dashboard_layouts`, one row each), not in the browser, so it follows the person to another computer and Kent can see the shape. Replaced on every save; no history (it is a preference, not a record).
+- **Packing keeps the order** (each dashpart at or after the one before it) instead of filling every gap: with gap-filling, a small dashpart dragged past a big one jumped back into the earlier gap and the drag looked like it did nothing. Gaps can remain; the person drags something into them.
+- **Resize is one cell at a time with arrow buttons** on the right and bottom edges, not a drag handle: easy to hit while the tile jiggles, works by keyboard, and each arrow can say what the change will show before it is clicked.
+- **Sizes are min/max per dashpart** in the catalog; the server forces every saved size inside them.
+- **New dashparts start off** for people who already saved a layout, so the catalog can grow without changing anyone's page.
+- 2026-11-26 (Josh): **a new person starts with six dashparts on**: My projects below break-even, Revenue against goal, Pipeline, Portfolio bubble chart, Fee by phase, Unbilled work. Staff mix by role, Client scorecard and Where the fee goes start in Available.
+- 2026-11-26 (Josh): **two dashboards in the side bar, PIC and PM**, each shown only to people who are PIC (or PM) on something. I read "on anything" as at least one **active** project in the Vantagepoint copy, and it follows the projects, not the Compass role, so a PIC who manages one project also gets the PM dashboard. The Admin always has both (my default). The role-based `dashboard` area from the first build is gone; `/api/me` carries `dashboards` instead.
+- **One saved arrangement per person per dashboard** (`dashboard_layouts` keyed by person and board). Local databases from the first build drop the old table on start; it only held preferences made today.
+- 2026-11-26 (Josh): **the PM dashboard's dashparts** are Fee by phase, Unbilled work, Where the fee goes and Staff mix by role, all on for a new person.
+- **No seeded person is both PIC and PM**, and I did not change the seed because Billing's tests depend on who manages what. The test makes Tom Lindqvist PM on the Ogden Library Annex for the both-dashboards case.
+- 2026-11-26 (Josh): **the dashparts' real numbers come from Vantagepoint.**
+- **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.
+
+## Fee burn and one-project page (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- 2026-11-26 (Josh): **a fee burn chart**, billed and spent as running totals by month, with forecast billing and projected spend in other styles, a current-month line, a fee line, and a **This year / Full project** switch.
+- 2026-11-26 (Josh): **projected spend never uses actual pay or cost rates** (a PM could put one hour in a plan and back out a salary). I made it planned hours x billing rate x one Admin percent, so it lands near actual cost without touching anyone's rate (open D6).
+- **Fee line on This year = fee less what was billed before Jan 1**, because the totals start at zero on Jan 1; the whole fee would sit far above the lines and mean nothing.
+- **Built as a dashpart plus a one-project page**, on the same made-up data approach as the other dashparts, but with the math in tested pure rules (`logic/burn.js`) so real data only has to fill the same input shape.
+- **Admin > Dashboards** is a new Admin tab, for the one setting.
+- **Off for a new person**, so Josh's starting set (D3, D5) is unchanged (open D9).
+
+## Dashboard tabs (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- 2026-11-26 (Josh): **fixed tabs, and keep the customizable dashboards.** Overview is the existing grid; Profit, Revenue forecast, Hours and (PIC only) Billing & AR are the same for everyone. Dashparts are the summary and their arrows open the matching tab, the way some already open Turnaround or the Marketing Report.
+- **Tabs are links with their own address** (`#/dashboard/pic/profit`), so Back, bookmarks and a link in an email all work, and the one-project page uses the same pattern (`.../project/<WBS1>/profit`).
+- **The status and chip rules are pure and tested** (`logic/portfolio.js`), with the two cutoffs as Admin settings, because every threshold is a setting.
+- **Chips are kept in the page, not saved**, and only on the fixed tabs (open D12).
+- **`portfolio.js` wraps itself in a function** because the browser loads the logic files as plain scripts that share one global scope, and it uses names `burn.js` also declares.
+- **Sample data** for the tabs extends `ui/burn-sample.js` (PM names, hours, receivables), so every tab and the fee burn agree with each other.
 
 ## Principal Accountability (2026-11-26)
 

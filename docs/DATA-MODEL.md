@@ -12,6 +12,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 
 | Table | Holds | Notes |
 |---|---|---|
+| `employee_names` | Compass's own: the name to show for a Vantagepoint person (employee code, display name, who set it, when). Never written back to Vantagepoint | one override per code; removing it goes back to the Vantagepoint name |
 | `users` | People: login, name, role (`admin`, `pic`, `finance`, `marketing`, `sysadmin`), name used in drafts, VP employee code, active | how a PIC is matched to their projects |
 | `settings` | every Admin setting: key, JSON value, `effective_from`, who, when | rows only ever added; the value in force at a moment is the latest row at or before it |
 | `audit_log` | at, user (or `system`), action, object, detail | **append-only** (database triggers) |
@@ -21,7 +22,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `run_history` | firm-wide month-end negative YTD profit and below-break-even count, 12 months | locked with the run; feeds the charts |
 | `run_pic_history` | the same month-end figures for each PIC's own listed projects | locked with the run; feeds "Just mine" charts. Runs built before this table existed have none, and the page says so |
 | `run_project_history` | each listed project's YTD profit at each month end this year | locked with the run |
-| `plan_entries` | the plan log: project, author (null = system), kind, text, created, entry date, the entry it corrects, the commitment it concerns, data (a commitment: due date and lever, plus the words for Other; a done entry: `improved` yes or no; a date revision: from and to) | **append-only** (database triggers) |
+| `plan_entries` | the plan log: project, author (null = system), kind, text, created, entry date, the entry it corrects, the commitment it concerns, data (a goal (`commitment`): `lever` = `cost` or `revenue`, `keptFrom` when carried forward, older ones a due date and one of the earlier actions; a `done` entry, the report on a goal: `helped` yes / no / early and `improved`; an `update` with `midStatus` is the mid-month update, without it a comment; a date revision (older): from and to) | **append-only** (database triggers) |
 | `checkin_drafts` | PIC, situation, step, tone, subject, text, the projects it is about, status (`waiting`, `sent`, `dismissed`, `withdrawn`), when resolved | the only plan-related table that is edited (a waiting draft's wording; its status) |
 | `bd_goals` | annual revenue goals by PIC (VP employee code) and by market sector, in cents | edited in Admin > BD reports |
 | `bd_sectors` | market sectors, with an optional roll-up (`rolls_into` until `rolls_until`: Labs into Healthcare through 2026-12-31) | |
@@ -35,6 +36,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 | `pipeline_projects` | project numbers that exist (copied each snapshot), to tell a converted pursuit from a vanished one | grows only |
 | `pipeline_alerts` | what the rules found each Monday (rule, Alert or Watch, PIC, plain-language message) | only the Admin clearing one changes a row; never deleted |
 | `pursuit_notes` | the Admin's notes on a pursuit | **append-only** |
+| `dashboard_layouts` | PIC and PM dashboards: one row per person per dashboard (`board` = `pic` or `pm`), their layout JSON (`{ version, items: [{ id, w, h, on }] }`), when saved | replaced on save; always normalized against the catalog first (`modules/dashboard/logic/layout.js`) |
 | `system_state` | small job state (the day the Admin was last emailed) | |
 
 ## Invariants the database enforces (so a bug in the code cannot break them)

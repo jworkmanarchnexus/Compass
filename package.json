@@ -14,6 +14,9 @@
     "pipeline-snapshot": "node server/jobs/weekly-snapshot.js",
     "test": "node --test \"server/**/*.test.js\" \"shared/**/*.test.js\" \"modules/**/*.test.js\" \"discovery/**/*.test.js\"",
     "vp:check": "node server/vp/check.js",
+    "vp:pull-bd": "node server/jobs/vp-pull-bd.js",
+    "live": "node server/live.js",
+    "live:setup": "node server/live-setup.js",
     "discovery": "node discovery/cli.js"
   },
   "dependencies": {

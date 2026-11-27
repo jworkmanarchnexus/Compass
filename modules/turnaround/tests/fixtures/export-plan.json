@@ -1,0 +1,53 @@
+{
+  "about": "Page breaks for the Project Turnaround PDF. Heights in points; gap between blocks is 10 in every case. 'pages' lists the ids on each page, in order; 'repeat:<group>' is the continued header that opens a page in the middle of a PIC.",
+  "cases": [
+    {
+      "name": "everything fits on one page",
+      "first": 500, "later": 600, "gap": 10,
+      "blocks": [{ "id": "top", "h": 200 }, { "id": "picA", "h": 40, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 50, "group": "A" }, { "id": "a2", "h": 50, "group": "A" }],
+      "pages": [["top", "picA", "a1", "a2"]],
+      "tooTall": []
+    },
+    {
+      "name": "a row that does not fit moves whole to the next page, which opens with the PIC's continued header",
+      "first": 300, "later": 300, "gap": 10,
+      "blocks": [{ "id": "top", "h": 150 }, { "id": "picA", "h": 30, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 50, "group": "A" }, { "id": "a2", "h": 60, "group": "A" }],
+      "repeatH": { "A": 20 },
+      "pages": [["top", "picA", "a1"], ["repeat:A", "a2"]],
+      "tooTall": []
+    },
+    {
+      "name": "a PIC's header never sits alone at the bottom: it moves down with its first row (and no repeat, since the PIC starts there)",
+      "first": 300, "later": 300, "gap": 10,
+      "blocks": [{ "id": "top", "h": 220 }, { "id": "picA", "h": 30, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 60, "group": "A" }],
+      "repeatH": { "A": 20 },
+      "pages": [["top"], ["picA", "a1"]],
+      "tooTall": []
+    },
+    {
+      "name": "the next PIC starts on the same page when its header and first row fit",
+      "first": 400, "later": 400, "gap": 10,
+      "blocks": [{ "id": "picA", "h": 30, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 100, "group": "A" }, { "id": "picB", "h": 30, "keepWithNext": true, "group": "B" }, { "id": "b1", "h": 100, "group": "B" }, { "id": "b2", "h": 110, "group": "B" }],
+      "repeatH": { "A": 20, "B": 20 },
+      "pages": [["picA", "a1", "picB", "b1"], ["repeat:B", "b2"]],
+      "tooTall": []
+    },
+    {
+      "name": "the first page can be shorter than the rest (it carries the heading)",
+      "first": 100, "later": 400, "gap": 10,
+      "blocks": [{ "id": "picA", "h": 30, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 80, "group": "A" }, { "id": "a2", "h": 80, "group": "A" }, { "id": "a3", "h": 80, "group": "A" }],
+      "repeatH": { "A": 20 },
+      "pages": [[], ["picA", "a1", "a2", "a3"]],
+      "tooTall": [],
+      "note": "picA + a1 (120) does not fit the 100 of page 1, and nothing else is there, so page 1 holds only the heading"
+    },
+    {
+      "name": "a row taller than a page is placed alone and flagged, never dropped",
+      "first": 200, "later": 200, "gap": 10,
+      "blocks": [{ "id": "picA", "h": 30, "keepWithNext": true, "group": "A" }, { "id": "a1", "h": 50, "group": "A" }, { "id": "a2", "h": 260, "group": "A" }, { "id": "a3", "h": 40, "group": "A" }],
+      "repeatH": { "A": 20 },
+      "pages": [["picA", "a1"], ["repeat:A", "a2"], ["repeat:A", "a3"]],
+      "tooTall": ["a2"]
+    }
+  ]
+}

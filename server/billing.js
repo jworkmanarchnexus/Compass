@@ -5,6 +5,7 @@
 
    ctx = { today: 'YYYY-MM-DD', settings, audit(action, object, detail) } where settings is the current Admin settings. */
 const crypto = require('node:crypto');
+const { employeeNames } = require('./names');
 const { HttpError } = require('./errors');
 const Mo = require('../modules/billing/logic/months');
 const F = require('../modules/billing/logic/fixed');
@@ -63,7 +64,6 @@ function queueNotification(db, ctx, event, wbs1, requestId, involved) {
 const userRef = u => ({ role: u.role, employeeCode: u.employee_code });
 const codesOf = p => ({ picCode: p.principal, pmCode: p.proj_mgr });
 const projectRow = (db, wbs1) => db.get('SELECT p.*, v.billing_type FROM projects p JOIN vp_billing_projects v ON v.wbs1 = p.wbs1 WHERE p.wbs1 = ?', wbs1);
-const employeeNames = db => Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
 const userNames = db => Object.fromEntries(db.all('SELECT id, display_name FROM users').map(u => [u.id, u.display_name]));
 const processors = db => db.all("SELECT id, display_name AS name FROM users WHERE active = 1 AND role IN ('processor','admin') ORDER BY display_name");
 const currentAssigned = (db, wbs1) => { const r = db.get('SELECT processor_id FROM billing_assignments WHERE wbs1 = ? ORDER BY id DESC LIMIT 1', wbs1); return r ? r.processor_id : null; };

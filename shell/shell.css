@@ -65,6 +65,13 @@ body.side-open .side-scrim { display: block; }
 :root { --c-prev: var(--line-strong); --c-bar: var(--text-2); --c-now: var(--accent); }
 .nav-cnt { margin-left: auto; }
 .nav-cnt[hidden] { display: none; }
+/* Preview tag on a module in the side bar, and the tester list in Admin, People */
+.nav-tag { margin-left: auto; height: 18px; padding: 0 6px; font-size: 10.5px; }
+.nav-tag + .nav-cnt { margin-left: var(--s2); }
+.preview-ctl { display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start; }
+.preview-picks { display: flex; flex-direction: column; gap: 0; }
+.preview-picks[hidden] { display: none; }
+.preview-picks .check .muted { margin-left: var(--s1); }
 .muted { color: var(--text-2); }
 .small { font-size: 13px; }
 .strong { font-weight: 700; }
@@ -175,6 +182,22 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 .chk:last-child { border-bottom: 0; }
 .nx { display: flex; justify-content: space-between; gap: var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .nx:last-child { border-bottom: 0; }
+/* Home on the canvas: roomier rows, quieter dividers, cards spaced by the grid */
+.on-canvas .home-grid { gap: var(--s4); }
+.on-canvas .att { padding: var(--s4) var(--s6); border-bottom-color: var(--line-2); }
+.on-canvas .home-head { padding: var(--s5) var(--s6) var(--s3); }
+.on-canvas .sec-body { padding: 0 var(--s6) var(--s2); }
+.on-canvas .chk, .on-canvas .nx { border-bottom-color: var(--line-2); }
+/* Home header: greeting and summary on the left, data tags on the right */
+.home-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s3) var(--s6); padding: var(--s2) 0 var(--s1); }
+.home-hero .hello { min-width: 0; flex: 1 1 360px; }
+.home-hero h1 { font: 700 30px/1.15 var(--f-ui); color: var(--text-strong); letter-spacing: -.005em; text-transform: none; }
+.home-hero p { margin-top: var(--s1); color: var(--text-2); font-size: 15px; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: flex-end; }
+.hero-tags .chip { height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12.5px; background: var(--surface); box-shadow: var(--shadow-soft); }
+.hero-tags .chip:not(.ok):not(.warn):not(.blue) { color: var(--text); }
+.on-canvas .home-hero + * { margin-top: 0; }
+@media (max-width: 640px) { .home-hero h1 { font-size: 24px; } .hero-tags { justify-content: flex-start; } }
 
 /* a PIC with nothing below break-even */
 .great { display: flex; gap: var(--s4); align-items: center; background: var(--ok-bg); color: var(--ok); border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s5); }
@@ -196,5 +219,107 @@ ol.log { list-style: none; margin: 0; padding: 0; }
 /* the design system hides every span in a collapsed nav item, which also hides the icon (it sits in a span): show it again, hide only the words */
 @media (min-width: 861px) {
   body.side-collapsed .nav-item span { display: inline-flex; }
-  body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt { display: none; }
+  body.side-collapsed .nav-item .nav-label, body.side-collapsed .nav-item .nav-cnt, body.side-collapsed .nav-item .nav-tag { display: none; }
 }
+
+/* ===== Every page on the canvas (design refresh): sections become separate cards. Colors unchanged. ===== */
+/* Turnaround headline figures: four cards instead of one divided strip */
+.on-canvas .kpis { background: transparent; border: 0; border-radius: 0; overflow: visible; gap: var(--s4); }
+.on-canvas .kpi { background: var(--surface); border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); padding: var(--s5); }
+.on-canvas .k-label { font: 700 14px/1.25 var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--text-strong); }
+.on-canvas .k-big { font: 700 32px/1.15 var(--f-ui); margin: var(--s2) 0 var(--s1); letter-spacing: -.01em; }
+.on-canvas .k-big.sm { font-size: 22px; }
+@media (max-width: 900px) { .on-canvas .kpi:nth-child(-n+2) { border-bottom: 0; } }
+@media (max-width: 520px) { .on-canvas .kpi { border-bottom: 0; } }
+/* chart panels */
+.on-canvas .chart-card { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); padding: var(--s5); }
+.on-canvas .chart-head h2 { font: 700 16px/1.25 var(--f-ui); }
+/* one card per PIC */
+.on-canvas .pic { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+.on-canvas .pic-head { padding: var(--s4) var(--s5); }
+/* tables inside cards: quieter header band, roomier rows */
+/* (not the Marketing Report and Pipeline tables: their navy heads are the report's own colors) */
+.on-canvas table.dt:not(.bd-t) th { background: transparent; border-bottom-color: var(--line); }
+.on-canvas table.dt td { border-bottom-color: var(--line-2); }
+/* plan page: the log and the side cards */
+.on-canvas .log-item { border-bottom-color: var(--line-2); }
+.on-canvas .report, .on-canvas .cm-form { border-radius: var(--r4); }
+/* BD and Pipeline boxes already float; match the shared card */
+.on-canvas .bd-box { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+.on-canvas .bd-drill { box-shadow: var(--shadow-soft), 0 0 0 1.5px var(--accent); }
+.on-canvas .pw-item { border-bottom-color: var(--line-2); }
+/* a PIC with nothing below break-even keeps its green panel, as a card */
+.on-canvas .great { border: 0; border-radius: var(--r6); box-shadow: var(--shadow-soft); }
+/* Turnaround top row: the four figures as a 2x2 block beside the profit chart (Josh, 2026-11-25); stacks below 1100px */
+.ov-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s4); align-items: stretch; }
+.ov-top .kpis { grid-template-columns: 1fr 1fr; }
+.ov-top .chart-card { display: flex; flex-direction: column; justify-content: space-between; }
+.ov-top.no-chart { grid-template-columns: minmax(0, 1fr); }
+.ov-top.no-chart .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .ov-top.no-chart .kpis { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .ov-top .kpis, .ov-top.no-chart .kpis { grid-template-columns: 1fr; } }
+/* tighter figure tiles (Josh, 2026-11-25): less padding, smaller numbers, so more of the page fits on screen */
+.on-canvas .kpis, .ov-top { gap: var(--s3); }
+.on-canvas .kpi { padding: var(--s3) var(--s4) var(--s4); }
+.on-canvas .k-label { font-size: 13px; }
+.on-canvas .k-big { font-size: 26px; margin: var(--s1) 0 2px; }
+.on-canvas .k-sub { font-size: 12.5px; line-height: 1.35; }
+.on-canvas .chart-card { padding: var(--s4) var(--s5); }
+.ov-top .ch-tick, .ov-top .ch-year { font-size: 13px; } /* the chart is drawn wider (640 units) here, so its labels need a larger size to stay readable at 1440px */
+/* PIC card header (Josh, 2026-11-25): no initials circle; a clear show/hide button first; the whole row toggles */
+.pic-head { cursor: pointer; }
+.pic-head:hover { background: var(--surface-2); }
+.pic-toggle { display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--text-strong); cursor: pointer; transition: transform .15s, background-color .12s; }
+.pic-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
+.pic.closed .pic-toggle { transform: rotate(-90deg); }
+.pic.closed .pic-head { border-radius: inherit; }
+@media (prefers-reduced-motion: reduce) { .pic-toggle { transition: none; } }
+/* the plan status under the project name */
+.plan-under { margin-top: 6px; }
+/* Turnaround project tables wrap instead of scrolling sideways (Josh, 2026-11-26): rows get taller as the card narrows;
+   on a very narrow card (under 560px) each project stacks: name and profit, then the latest update, then the next commitment */
+.pic { container-type: inline-size; }
+table.ptab { min-width: 0; table-layout: auto; }
+table.ptab th, table.ptab td { white-space: normal; }
+table.ptab td:first-child { min-width: 170px; }
+table.ptab td.r { white-space: nowrap; }
+table.ptab .clamp, table.ptab td.latest .clamp { max-width: none; }
+.pic .tblwrap { overflow-x: visible; }
+@container (max-width: 560px) {
+  table.ptab thead { display: none; }
+  table.ptab, table.ptab tbody { display: block; }
+  table.ptab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2) var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-2); }
+  table.ptab tr:last-child { border-bottom: 0; }
+  table.ptab td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.ptab td:first-child { min-width: 0; }
+  table.ptab td.latest, table.ptab td:last-child { grid-column: 1 / -1; }
+  table.ptab td.latest::before { content: "Latest update"; }
+  table.ptab td:last-child::before { content: "Next commitment"; }
+  table.ptab td.latest::before, table.ptab td:last-child::before { display: block; font: 700 11px/1.4 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+}
+/* the same column shares on every PIC card, so the columns line up down the page */
+table.ptab { table-layout: fixed; }
+table.ptab th:nth-child(1) { width: 27%; } table.ptab th:nth-child(2) { width: 11%; } table.ptab th:nth-child(3) { width: 34%; } table.ptab th:nth-child(4) { width: 28%; }
+table.ptab td:first-child { min-width: 0; }
+/* a little more room between the figures-and-chart row and the PIC cards (Josh, 2026-11-26) */
+.stack > .ov-top + * { margin-top: 28px; }
+
+/* the project page: the PIC's projects in the header tile, the check-in form (modules/turnaround/ui/plan.js) */
+.ck-steps { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.ck-step { display: grid; gap: 2px; justify-items: start; min-width: 190px; max-width: 260px; padding: var(--s2) var(--s3); border-radius: var(--r4); background: var(--surface); color: var(--text-strong); text-decoration: none; box-shadow: inset 0 0 0 1px var(--line); }
+.ck-step:hover { box-shadow: inset 0 0 0 1px var(--text-3); }
+.ck-step[aria-current="page"] { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.ck-step-n { font: 700 11.5px/1.2 var(--f-cond); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); }
+.ck-step-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ck-form { padding: var(--s4) var(--s5); }
+.on-canvas .ck-form { padding: var(--s4) var(--s6); }
+.ck-ideas ul { margin: var(--s1) 0 0; padding-left: 18px; line-height: 1.45; font-size: 14px; }
+.ck-ideas li + li { margin-top: var(--s1); }
+.ck-missing { box-shadow: inset 3px 0 var(--crit); }
+.on-canvas .ck-missing { box-shadow: var(--shadow-soft), inset 3px 0 var(--crit); }
+.ck-comment { padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line-2); }
+.ck-comment summary { cursor: pointer; font-weight: 700; color: var(--accent-text); }
+.ck-comment[open] summary { margin-bottom: var(--s3); }
+.log-text + .log-text { margin-top: var(--s2); }
+.log-head .muted.small { margin-left: auto; }

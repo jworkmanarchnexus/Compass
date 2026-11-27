@@ -1,0 +1,80 @@
+{
+  "about": "Dashboard tabs (modules/dashboard/logic/portfolio.js). Money in cents. when and rules apply to every case.",
+  "when": { "current": "2026-11", "lastClosed": "2026-10" },
+  "rules": { "watchProfitPct": 10, "endingSoonDays": 90 },
+  "cases": [
+    {
+      "why": "year to date counts January through the last closed month; job to date counts everything closed; spent = labor x (1 + overhead %) + expenses",
+      "project": {
+        "wbs1": "2025-0001", "name": "Library", "pic": "Pat", "pm": "Lee", "fee": 1000000, "start": "2025-11", "end": "2027-06", "overheadPct": 100,
+        "actuals": [
+          { "month": "2025-12", "billed": 100000, "labor": 20000, "expenses": 0 },
+          { "month": "2026-03", "billed": 200000, "labor": 50000, "expenses": 10000 },
+          { "month": "2026-11", "billed": 999999, "labor": 999999, "expenses": 0 }
+        ],
+        "forecast": [{ "month": "2026-10", "billed": 55555 }, { "month": "2026-11", "billed": 30000 }, { "month": "2027-01", "billed": 40000 }, { "month": "2027-05", "billed": 70000 }],
+        "plannedHours": [],
+        "hours": { "planYtd": 400, "actualYtd": 430 },
+        "ar": { "current": 5000, "d31": 2000, "d61": 1000, "d91": 500 }
+      },
+      "expect": {
+        "ytd": { "billed": 200000, "spent": 110000, "profit": 90000, "profitPct": 45 },
+        "jtd": { "billed": 300000, "spent": 150000 },
+        "billedPctOfFee": 30, "spentPctOfFee": 15,
+        "forecast": [
+          { "month": "2026-11", "billed": 30000 }, { "month": "2026-12", "billed": 0 }, { "month": "2027-01", "billed": 40000 },
+          { "month": "2027-02", "billed": 0 }, { "month": "2027-03", "billed": 0 }, { "month": "2027-04", "billed": 0 }
+        ],
+        "forecastNext3": 70000,
+        "hours": { "plan": 400, "actual": 430 },
+        "ar": { "current": 5000, "d31": 2000, "d61": 1000, "d91": 500, "total": 8500, "over60": 1500 },
+        "status": "ok",
+        "chips": { "all": true, "look": false, "below": false, "ending": false }
+      }
+    },
+    {
+      "why": "profit below zero is Needs a look, and it is in both the Needs a look and Below zero chips",
+      "project": {
+        "wbs1": "2026-0002", "name": "Clinic", "pic": "Pat", "pm": "Lee", "fee": 300000, "start": "2026-01", "end": "2027-01", "overheadPct": 0,
+        "actuals": [{ "month": "2026-02", "billed": 100000, "labor": 120000, "expenses": 0 }],
+        "forecast": [], "plannedHours": []
+      },
+      "expect": {
+        "ytd": { "billed": 100000, "spent": 120000, "profit": -20000, "profitPct": -20 },
+        "status": "look",
+        "chips": { "all": true, "look": true, "below": true, "ending": true }
+      }
+    },
+    {
+      "why": "profit above zero but under the Watch percent is Watch: in Needs a look, not in Below zero; ending soon counts three months from the current one",
+      "project": {
+        "wbs1": "2026-0003", "name": "Station", "pic": "Pat", "pm": "Lee", "fee": 300000, "start": "2026-01", "end": "2027-02", "overheadPct": 0,
+        "actuals": [{ "month": "2026-02", "billed": 100000, "labor": 95000, "expenses": 0 }],
+        "forecast": [], "plannedHours": []
+      },
+      "expect": {
+        "ytd": { "billed": 100000, "spent": 95000, "profit": 5000, "profitPct": 5 },
+        "status": "watch",
+        "chips": { "all": true, "look": true, "below": false, "ending": false }
+      }
+    },
+    {
+      "why": "nothing billed or spent this year is On track, and has no profit percent; a project past its end date is in Ending soon",
+      "project": {
+        "wbs1": "2025-0004", "name": "Annex", "pic": "Pat", "pm": "Lee", "fee": 0, "start": "2025-01", "end": "2026-06", "overheadPct": null,
+        "actuals": [{ "month": "2025-05", "billed": 10000, "labor": 1000, "expenses": 0 }],
+        "forecast": [], "plannedHours": []
+      },
+      "expect": {
+        "ytd": { "billed": 0, "spent": 0, "profit": 0, "profitPct": null },
+        "billedPctOfFee": null,
+        "status": "ok",
+        "chips": { "all": true, "look": false, "below": false, "ending": true }
+      }
+    }
+  ],
+  "totals": {
+    "why": "totals add every project; the profit percent is the total profit over the total billed; Needs a look counts Watch too",
+    "expect": { "count": 4, "fee": 1600000, "billed": 400000, "spent": 325000, "profit": 75000, "profitPct": 18.8, "forecastNext3": 70000, "hoursPlan": 400, "hoursActual": 430, "ar": 8500, "over60": 1500, "needLook": 2 }
+  }
+}

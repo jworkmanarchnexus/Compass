@@ -16,6 +16,8 @@ const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
+const dashboard = require('./dashboard');
+const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
 
@@ -111,10 +113,18 @@ function createServer(db, opts) {
     if (p === '/api/home' && method === 'GET') return sendJson(res, 200, buildHome(db, user, { today: today(), settings: currentSettings() }));
 
     if (p === '/api/me' && method === 'GET') {
-      const access = currentSettings().access;
-      const me = Object.assign(userOut(user), roles.describe(user.role, access));
+      const settingsNow = currentSettings();
+      const me = Object.assign(userOut(user), roles.describeUser(user, settingsNow));
+      me.dashboards = dashboard.boardsOf(db, user); // ['pic', 'pm'], from the projects they are PIC or PM on
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
+      if (o.dataMode) me.dataMode = o.dataMode; // 'live' when the Marketing Report reads Vantagepoint (server/live.js)
       return sendJson(res, 200, me);
+    }
+
+    const dm = /^\/api\/dashboards\/([a-z]+)$/.exec(p);
+    if (dm) {
+      if (method === 'GET') return sendJson(res, 200, dashboard.get(db, user, dm[1], currentSettings()));
+      if (method === 'PUT') return sendJson(res, 200, dashboard.save(db, user, dm[1], await readJson(req), currentSettings()));
     }
 
     if (p === '/api/admin/settings' && method === 'GET') {
@@ -135,6 +145,10 @@ function createServer(db, opts) {
         if (!settingsRules.isKnown(k)) throw new HttpError(400, `Unknown setting: ${k}`);
         if (!settingsRules.isValid(k, v)) throw new HttpError(400, `That value is not allowed for ${k}.`);
       }
+      if (changes.release) { // preview testers must be real people
+        const known = new Set(db.all('SELECT id FROM users').map(u => u.id));
+        if (Object.values(changes.release).some(r => r.testers.some(id => !known.has(id)))) throw new HttpError(400, 'One of the preview testers is not in People.');
+      }
       const before = currentSettings();
       const merged = Object.assign({}, before, changes);
       const problem = settingsRules.crossCheck(merged);
@@ -150,6 +164,23 @@ function createServer(db, opts) {
         }
       });
       return sendJson(res, 200, { saved });
+    }
+
+    /* the names shown for Vantagepoint people (server/names.js): Admin edits, System admin reads */
+    if (p === '/api/admin/names' && method === 'GET') {
+      requireTab(user, 'people', 'view');
+      return sendJson(res, 200, names.nameRows(db));
+    }
+    const nm = /^\/api\/admin\/names\/([^/]+)$/.exec(p);
+    if (nm && method === 'PUT') {
+      requireTab(user, 'people', 'edit');
+      const body = await readJson(req);
+      const changed = db.tx(() => {
+        const c = names.setName(db, decodeURIComponent(nm[1]), body.name === undefined ? null : body.name, user.id);
+        if (c) audit(user, 'name.set', c.vpName, { from: c.from, to: c.to });
+        return c;
+      });
+      return sendJson(res, 200, { changed: !!changed, rows: names.nameRows(db) });
     }
 
     if (p === '/api/admin/people' && method === 'GET') {
@@ -252,7 +283,7 @@ function createServer(db, opts) {
 
     /* what PICs, Finance and others may see: the last published run, never a draft */
     const viewerOf = u => ({ role: u.role, userId: u.id, employeeCode: u.employee_code });
-    const canSee = () => roles.canView(user.role, 'turnaround', currentSettings().access);
+    const canSee = () => roles.canUse(user, 'turnaround', currentSettings());
     if (p === '/api/turnaround/current' && method === 'GET') {
       if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
       const cur = lifecycleLogic.currentPublished(runsDb.allRuns(db), runsDb.KIND);
@@ -261,26 +292,26 @@ function createServer(db, opts) {
     }
 
     /* a project's plan page and its log. Reading: anyone who may see Turnaround. Writing: the PIC on that project, or an admin note. */
-    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries|checkin)|\/commitments\/([^/]+)\/(done))?$/.exec(p);
+    const pp = /^\/api\/projects\/([^/]+)\/plan(?:\/(entries|checkin|midmonth))?$/.exec(p);
     if (pp) {
       if (!canSee()) throw new HttpError(403, 'You do not have access to this.');
       const wbs1 = decodeURIComponent(pp[1]);
-      if (!pp[2] && !pp[3] && method === 'GET') {
+      if (!pp[2] && method === 'GET') {
         const cycle = Number(url.searchParams.get('cycle')) || undefined;
         return sendJson(res, 200, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings: currentSettings(), cycle }));
       }
       if (method === 'POST') {
         const body = await readJson(req);
         const settings = currentSettings();
-        if (pp[2] === 'entries') planDb.addEntry(db, user, wbs1, body, today(), settings);
-        else if (pp[2] === 'checkin') planDb.checkIn(db, user, wbs1, body, today(), settings);
-        else planDb.markDone(db, user, wbs1, decodeURIComponent(pp[3]), body, today());
+        if (pp[2] === 'entries') planDb.addEntry(db, user, wbs1, body, today());
+        else if (pp[2] === 'checkin') planDb.goalCheckin(db, user, wbs1, body, today(), settings);
+        else planDb.midUpdate(db, user, wbs1, body, today(), settings);
         return sendJson(res, 201, tdb.buildPlanPage(db, wbs1, viewerOf(user), { today: today(), settings }));
       }
     }
 
     /* ---- Pipeline watch: weekly snapshots. Everyone who may see it sees every PIC; notes and clearing alerts are the Admin's. ---- */
-    const canPipe = () => { if (!roles.canView(user.role, 'pipeline', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.'); };
+    const canPipe = () => { if (!roles.canUse(user, 'pipeline', currentSettings())) throw new HttpError(403, 'You do not have access to this.'); };
     if (p === '/api/pipeline' && method === 'GET') {
       canPipe();
       return sendJson(res, 200, pipeDb.view(db, { role: user.role }, { date: url.searchParams.get('date'), kind: url.searchParams.get('kind') }));
@@ -334,17 +365,17 @@ function createServer(db, opts) {
 
     /* ---- BD report: read (BD viewers), and the Admin's own data and runs ---- */
     if (p === '/api/bd/reports' && method === 'GET') {
-      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'bd', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       return sendJson(res, 200, bdDb.listReports(db, { role: user.role }));
     }
     const bd2 = /^\/api\/bd\/reports\/([^/]+)\/detail$/.exec(p);
     if (bd2 && method === 'GET') {
-      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'bd', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       return sendJson(res, 200, bdDb.drillDetail(db, bd2[1], { role: user.role }, { kind: url.searchParams.get('kind'), scope: url.searchParams.get('scope'), key: url.searchParams.get('key') }));
     }
     const bm = /^\/api\/bd\/reports\/([^/]+)$/.exec(p);
     if (bm && method === 'GET') {
-      if (!roles.canView(user.role, 'bd', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'bd', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       return sendJson(res, 200, bdDb.reportDetail(db, bm[1], { role: user.role }));
     }
     if (p === '/api/admin/bd/inputs' && method === 'GET') { requireTab(user, 'bd', 'view'); return sendJson(res, 200, bdDb.adminInputs(db)); }
@@ -387,12 +418,12 @@ function createServer(db, opts) {
 
     /* ---- check-in drafts and the daily job: the admin's alone ---- */
     if (p === '/api/admin/checkins' && method === 'GET') {
-      if (!roles.canView(user.role, 'checkins')) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'checkins', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       return sendJson(res, 200, tdb.listCheckins(db, { today: today(), settings: currentSettings() }));
     }
     const cm = /^\/api\/admin\/checkins\/([^/]+)(?:\/(send|dismiss|undo))?$/.exec(p);
     if (cm) {
-      if (!roles.canView(user.role, 'checkins')) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'checkins', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       if (!cm[2] && method === 'PUT') {
         const body = await readJson(req);
         tdb.editDraft(db, cm[1], body);
@@ -412,7 +443,7 @@ function createServer(db, opts) {
     }
     if (p === '/api/admin/patterns' && method === 'GET') {
       requireTab(user, 'patterns', 'edit');
-      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), year: Number(url.searchParams.get('year')) || undefined }));
+      return sendJson(res, 200, tdb.commitmentPatterns(db, { today: today(), settings: currentSettings(), year: Number(url.searchParams.get('year')) || undefined }));
     }
 
     /* ---- Billing: PMs and PICs for their own projects; processors and the Admin for everything. Every rule is re-checked in server/billing.js. ---- */
@@ -423,7 +454,7 @@ function createServer(db, opts) {
         requireTab(user, 'billing', 'edit');
         return sendJson(res, 200, billing.setCalendar(db, user, await readJson(req), bctx));
       }
-      if (!roles.canView(user.role, 'billing')) throw new HttpError(403, 'You do not have access to this.');
+      if (!roles.canUse(user, 'billing', currentSettings())) throw new HttpError(403, 'You do not have access to this.');
       if (p === '/api/billing/portfolio' && method === 'GET') return sendJson(res, 200, billing.portfolio(db, user, bctx, { month, scope: url.searchParams.get('scope') || undefined }));
       if (p === '/api/billing/calendar' && method === 'GET') return sendJson(res, 200, billing.calendar(db));
       if (p === '/api/billing/assignments' && method === 'GET') return sendJson(res, 200, billing.assignments(db, user));

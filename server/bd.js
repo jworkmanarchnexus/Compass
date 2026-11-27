@@ -4,6 +4,7 @@
    The arithmetic is modules/bd/logic/report.js (pure, tested). The run lifecycle rules are the same ones Project Turnaround
    uses (modules/turnaround/logic/lifecycle.js): draft, published and locked, archived with a reason and the word RERUN. */
 const crypto = require('node:crypto');
+const { employeeNames } = require('./names');
 const { HttpError } = require('./errors');
 const report = require('../modules/bd/logic/report');
 const lifecycle = require('../modules/turnaround/logic/lifecycle');
@@ -72,11 +73,11 @@ function compute(db, source, period, settings, today) {
   const detail = drill.buildDetail({ period, lines: out.lines, forecastMonths: data.forecastMonths || [], mwipMonths: data.mwipMonths || [], names });
   // Principal Accountability is built from the same pull, with this report, and locked with it (server/accountability.js)
   const accountability = acct.compute(db, source, period, settings, { out, data }, today || buildDay());
-  return { out, own, projects, th, detail, mwipLeftOut, forecastSkipped, accountability };
+  return { out, own, projects, th, detail, mwipLeftOut, forecastSkipped, pulledAt: data.pulledAt || null, accountability };
 }
 
 function fill(db, runId, period, settings, c) {
-  const { out, own, projects, th, detail, mwipLeftOut, forecastSkipped } = c;
+  const { out, own, projects, th, detail, mwipLeftOut, forecastSkipped, pulledAt } = c;
   acct.fill(db, runId, c.accountability);
   for (const d of detail) db.run('INSERT INTO bd_detail (run_id, kind, item_id, name, pic, sector, month, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', runId, d.kind, d.id, d.name, d.pic, d.sector, d.month, d.amount);
   db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule, contract_amount_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector'], settings['bd.contractAmount']);
@@ -92,6 +93,8 @@ function fill(db, runId, period, settings, c) {
   for (const n of out.forecastNotes) warn('note', n.wbs1, n.issue === 'no-contract-fee' ? `${name(n.wbs1)}: forecast kept at its full amount (no contract fee on the project record)` : `${name(n.wbs1)}: forecast kept at its full amount (consultant fee is above the contract amount)`, n.amount);
   for (const p of mwipLeftOut || []) warn('note', p.id, `${p.name}: pursuit left out of MWIP (its estimated dates are missing in Vantagepoint)`, 0);
   for (const w of forecastSkipped || []) warn('note', w, `${name(w)}: a forecast entry with no date was left out`, 0);
+  // a report built from a Vantagepoint pull says when the pull was: the forecast and MWIP are what Vantagepoint said at that moment
+  if (pulledAt) warn('note', '', `Vantagepoint data pulled ${new Date(pulledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}`, 0);
   for (const r of out.rolled) warn('note', '', `${r.from} counted in ${r.into}`, r.ytd + r.forecast + r.mwip);
   for (const a of out.assigned) warn('note', a.wbs1, `${name(a.wbs1)}: unassigned revenue went to ${a.sector}`, a.amount);
   for (const d of out.defaulted) warn('note', d.wbs1, `${name(d.wbs1)}: revenue with no market sector went to Other`, d.amount);
@@ -165,7 +168,7 @@ function reportDetail(db, id, viewer) {
   const run = getRun(db, id);
   if (viewer.role !== 'admin' && run.status !== 'published') throw new HttpError(404, 'Report not found.');
   const meta = db.get('SELECT * FROM bd_run_meta WHERE run_id = ?', id);
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const hideFactor = viewer.role === 'pic';
   const rows = scope => db.all('SELECT * FROM bd_rows WHERE run_id = ? AND scope = ? ORDER BY sort', id, scope).map(r => ({
     key: r.key, label: scope === 'pic' ? (emp[r.key] || r.label || 'Unassigned') : r.label, goal: r.goal, ytdGoal: r.ytd_goal, ytd: r.ytd, forecast: r.forecast,
@@ -193,7 +196,7 @@ function drillDetail(db, id, viewer, { kind, scope, key }) {
   if (!['firm', 'pic', 'sector'].includes(scope)) throw new HttpError(400, 'Pick the firm, a PIC or a market sector.');
   if (scope !== 'firm' && typeof key !== 'string') throw new HttpError(400, 'Which one?');
   if (!db.get('SELECT 1 AS x FROM bd_detail WHERE run_id = ? LIMIT 1', id)) return { available: false, kind, scope, key: key || null };
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const where = scope === 'pic' ? ' AND pic = ?' : scope === 'sector' ? ' AND sector = ?' : '';
   const rows = db.all(`SELECT * FROM bd_detail WHERE run_id = ? AND kind = ?${where} ORDER BY item_id, month`, ...[id, kind].concat(scope === 'firm' ? [] : [key]));
   const items = new Map();
@@ -211,7 +214,7 @@ function drillDetail(db, id, viewer, { kind, scope, key }) {
 
 /* ---- the Admin's own BD data ---- */
 function adminInputs(db) {
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const goals = db.all('SELECT * FROM bd_goals ORDER BY year DESC, scope, sort, key').map(g => ({ year: g.year, scope: g.scope, key: g.key, name: g.scope === 'pic' ? emp[g.key] || g.key : g.key, amount: g.amount }));
   return {
     years: [...new Set(goals.map(g => g.year))],

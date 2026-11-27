@@ -13,3 +13,6 @@ vp-findings/
 
 # Discovery agent: local stores, originals and raw reference rows never leave this computer
 discovery/data/
+
+# Live mode (Marketing Report on Vantagepoint data): snapshots, the live database and the goals config are real firm data
+server/db/live/

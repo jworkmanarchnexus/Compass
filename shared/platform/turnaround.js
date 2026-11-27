@@ -13,11 +13,12 @@ export const Turnaround = {
 
 export const Plan = {
   get(wbs1, cycle) { return request('GET', `/api/projects/${enc(wbs1)}/plan` + (cycle ? '?cycle=' + cycle : '')); },
-  /* kind: explanation | update | commitment | correction | admin_note */
+  /* kind: update (a comment) | admin_note */
   add(wbs1, entry) { return request('POST', `/api/projects/${enc(wbs1)}/plan/entries`, entry); },
-  markDone(wbs1, commitmentId, { body, improved }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/commitments/${enc(commitmentId)}/done`, { body, improved }); },
-  /* the check-in: report back on every open commitment and make the next one, in one step */
-  checkIn(wbs1, { reports, lever, otherText, body }) { return request('POST', `/api/projects/${enc(wbs1)}/plan/checkin`, { reports, lever, otherText, body }); },
+  /* the goal check-in, in one step: { cause?, helped?, comment?, keep?, approach?, how? } */
+  goalCheckin(wbs1, input) { return request('POST', `/api/projects/${enc(wbs1)}/plan/checkin`, input); },
+  /* the mid-month update: { status: track | done | stuck, comment } */
+  midUpdate(wbs1, input) { return request('POST', `/api/projects/${enc(wbs1)}/plan/midmonth`, input); },
 };
 
 export const Checkins = {
