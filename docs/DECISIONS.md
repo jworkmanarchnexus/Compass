@@ -345,3 +345,9 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **The PDF reuses the Marketing Report's fonts, logo, paper sizes and jsPDF**, with its own one-page layout that shrinks to fit.
 - **PICs see it through a switch, not a code rule** (`access.picAccountability`, beside `picBd`), so Josh can turn it off without a change. An `access` value saved before the switch existed reads it as off (`settingAt` fills it in), so older saved settings and the Admin form keep working.
 - **A source with no profit pull or no `loadAccountability` still builds the Marketing Report**; those columns are blank. Accountability never blocks the Marketing Report.
+
+## Sidebar logo at half size (2026-11-26, Josh)
+
+- **48px wide instead of 96px** in the Compass sidebar, to leave room for more modules (the brand block is 74px shorter). Josh asked for half.
+- **Compass only** (`shell/shell.css`), not the shared stylesheet, so the Toolbox keeps its look until Josh says otherwise. The sign-in page keeps the full size.
+- **Below the brand's 1-inch (96px) minimum** noted in the shared stylesheet; at 48px the "ARCH | NEXUS" words under the X are too small to read. Worth checking with whoever owns the brand guide.
