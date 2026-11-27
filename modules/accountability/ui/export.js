@@ -42,7 +42,7 @@ function wrapWords(c, text, maxW, maxLines) {
 }
 
 /* design units: the table is laid out at a fixed width and scaled to the page, smaller if it would be too tall */
-const BASE_W = 1000, ROW = 17, HEAD = 40, GROUP = 16, FIRM_ROW = 14;
+const BASE_W = 1000, ROW = 17, HEAD = 48, GROUP = 16, FIRM_ROW = 14;
 const widths = cols => cols.map(c => (c.id === 'label' ? 2.1 : c.group === 'projects' ? 0.85 : c.id === 'response' || c.id === 'utilization' || c.id === 'profitPct' ? 0.9 : 1.15));
 
 function paintBody(c, F, s, y0) {
@@ -65,7 +65,7 @@ function paintBody(c, F, s, y0) {
   c.fillStyle = PAL.headBg; c.fillRect(0, y, BASE_W, HEAD);
   c.fillStyle = PAL.headInk; c.font = fnt(F, 'ui', 8.2, true); c.textAlign = 'center';
   s.columns.forEach((col, k) => {
-    const lines = wrapWords(c, col.head, xs[k + 1] - xs[k] - 6, 3);
+    const lines = wrapWords(c, col.head, xs[k + 1] - xs[k] - 6, 4);
     const top = y + (HEAD - lines.length * 9.5) / 2 + 7.5;
     lines.forEach((t, n) => c.fillText(t, (xs[k] + xs[k + 1]) / 2, top + n * 9.5));
   });

@@ -23,6 +23,9 @@
      projects      per project size: how many projects of that fee it would take to close the shortfall,
                    ceil(shortfall / fee), 0 when there is no shortfall (Josh, 2026-11-26) */
 
+(function () {
+'use strict';
+/* wrapped in its own function: in the browser this loads as a plain script beside others, and top-level names would clash */
 const sum = (list, f) => list.reduce((a, x) => a + (f(x) || 0), 0);
 
 /* input:
@@ -223,3 +226,4 @@ function toCsv(report) {
 const api = { computeRows, totals, derive, projectsNeeded, pace, firmFigures, dollars, percent, columns, groups, sheet, toCsv, MONTHS };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else if (typeof window !== 'undefined') window.AcctRules = api;
+})();
