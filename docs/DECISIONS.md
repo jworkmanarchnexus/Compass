@@ -252,4 +252,5 @@
 - **One `sheet()` makes the page, the PDF and the CSV**, so all three always say the same thing; the CSV is tested line by line against a row of the October 2026 workbook.
 - **Money is shown the workbook's way** (whole dollars, brackets, "$-" for zero), unlike the Marketing Report's thousands, because the workbook is what people compare it with.
 - **The PDF reuses the Marketing Report's fonts, logo, paper sizes and jsPDF**, with its own one-page layout that shrinks to fit.
+- **PICs see it through a switch, not a code rule** (`access.picAccountability`, beside `picBd`), so Josh can turn it off without a change. An `access` value saved before the switch existed reads it as off (`settingAt` fills it in), so older saved settings and the Admin form keep working.
 - **A source with no profit pull or no `loadAccountability` still builds the Marketing Report**; those columns are blank. Accountability never blocks the Marketing Report.

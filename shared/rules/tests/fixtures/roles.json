@@ -83,6 +83,17 @@
       "see": [
         "billing"
       ]
+    },
+    {
+      "role": "pic",
+      "access": {
+        "picAccountability": true
+      },
+      "see": [
+        "turnaround",
+        "accountability",
+        "billing"
+      ]
     }
   ],
   "adminTab": [

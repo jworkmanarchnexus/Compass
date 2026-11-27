@@ -16,7 +16,7 @@ test('who may read it: the Admin and Finance; not the Marketing director, PICs (
     assert.strictEqual((await api(who).get('/api/accountability/reports')).status, 200, who);
     assert.strictEqual((await api(who).get(`/api/accountability/reports/${id}`)).status, 200, who);
   }
-  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: true, picPipeline: true } } });
+  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: true, picPipeline: true, picAccountability: false } } });
   for (const who of ['c.brandt', 'd.whitfield', 'kent', 'a.ruiz', 'karen.acct']) {
     assert.strictEqual((await api(who).get('/api/accountability/reports')).status, 403, who);
     assert.strictEqual((await api(who).get(`/api/accountability/reports/${id}`)).status, 403, who);
@@ -118,3 +118,22 @@ test('project sizes are an Admin setting, checked before saving', () => withApp(
   }
   assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'acct.projectSizes': [{ label: 'Projects $1M', fee: 75000 }] } })).status, 200);
 }));
+
+test('with "PICs can see Accountability" on, every PIC reads the published reports (every PIC\'s row), never a draft', () => withApp(async ({ api }) => {
+  const id = await septId(api);
+  assert.strictEqual((await api('d.whitfield').get(`/api/accountability/reports/${id}`)).status, 403, 'off by default');
+  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: false, picBd: false, picPipeline: false, picAccountability: true } } });
+  assert.strictEqual((await api('d.whitfield').get('/api/me')).body.areas.accountability, true);
+  const d = (await api('d.whitfield').get(`/api/accountability/reports/${id}`)).body;
+  assert.ok(d.rows.some(r => r.key === 'E104'), 'sees the other PICs too');
+  assert.strictEqual((await api('c.brandt').get(`/api/accountability/reports/${id}`)).status, 403, 'the Marketing director still does not');
+  const draft = (await api('j.workman').post('/api/admin/runs', { kind: 'bd', period: 202607 })).body;
+  assert.ok(!(await api('d.whitfield').get('/api/accountability/reports')).body.some(r => r.id === draft.run.id));
+  assert.strictEqual((await api('d.whitfield').get(`/api/accountability/reports/${draft.run.id}`)).status, 404);
+}, demo));
+
+test('an access value saved before the Accountability switch existed reads it as off', () => {
+  const settings = require('../../shared/rules/settings');
+  const v = settings.settingAt([{ key: 'access', value: { marketingTurnaround: true, picBd: true, picPipeline: false }, effectiveFrom: 1 }], 'access', 2);
+  assert.deepStrictEqual(v, { marketingTurnaround: true, picBd: true, picPipeline: false, picAccountability: false });
+});

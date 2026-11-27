@@ -136,7 +136,8 @@
       "value": {
         "marketingTurnaround": true,
         "picBd": false,
-        "picPipeline": false
+        "picPipeline": false,
+        "picAccountability": false
       },
       "expect": true
     },

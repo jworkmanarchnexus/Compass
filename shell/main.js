@@ -404,7 +404,7 @@ function turnaroundCards(s, canEdit, rerender) {
 function accessCard(s, canEdit, rerender) {
   return settingsCard('What narrower roles can see', 'Not everything in the spec is settled. These start at the safest answer; turn one on to widen it.', s, ['access'], canEdit, rerender, ed => [
     row('Marketing director', 'The decided rule is Marketing Report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
-    row('PICs', 'PICs always see Project Turnaround. Marketing Report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
+    row('PICs', 'PICs always see Project Turnaround. The others are off until you turn them on. PICs never see the MWIP factor.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Accountability', 'picAccountability'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
   ], 'Takes effect the next time the person opens a page.');
 }
 

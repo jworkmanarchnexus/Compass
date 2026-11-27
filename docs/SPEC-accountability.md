@@ -6,11 +6,11 @@ The first tab of the firm's "2026 Project Improvement (Accountability)" workbook
 
 | | Admin | Finance | Marketing director | PIC | System admin |
 |---|---|---|---|---|---|
-| Read a published report | yes | yes | no | no | no |
+| Read a published report | yes | yes | no | only if the Admin turns it on (`access.picAccountability`, default off) | no |
 | See a draft or an archived version | yes | no | no | no | no |
 | Edit goals and project sizes (Admin > Accountability) | yes | no | no | no | read only |
 
-Every PIC's profit sits side by side, so it starts with the Admin and Finance only (open question A3).
+Every PIC's profit sits side by side, so it starts with the Admin and Finance; Admin > People > "What narrower roles can see" opens it to every PIC (Josh, 2026-11-26: all Principals see it). A PIC sees every PIC's row, published reports only.
 
 ## 2. Built with the Marketing Report
 

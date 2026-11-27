@@ -85,7 +85,7 @@ test('settings: bad or unknown values are refused and nothing is written', () =>
 }));
 
 test('settings: widening the access setting changes what that role sees', () => withApp(async ({ api }) => {
-  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: false, picPipeline: false } } });
+  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: false, picPipeline: false, picAccountability: false } } });
   assert.strictEqual((await api('c.brandt').get('/api/me')).body.areas.turnaround, true);
 }));
 

@@ -50,7 +50,7 @@ test('who may read the BD report, and what a PIC is not shown', () => withApp(as
   assert.strictEqual((await api('d.whitfield').get('/api/bd/reports')).status, 403, 'PICs are off by default');
   assert.strictEqual((await api('kent').get('/api/bd/reports')).status, 403);
   assert.strictEqual((await api().get('/api/bd/reports')).status, 401);
-  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: false, picBd: true, picPipeline: false } } });
+  await api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: false, picBd: true, picPipeline: false, picAccountability: false } } });
   const pic = await api('d.whitfield').get(`/api/bd/reports/${id}`);
   assert.strictEqual(pic.status, 200);
   const text = JSON.stringify(pic.body);
