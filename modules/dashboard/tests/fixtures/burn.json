@@ -1,0 +1,98 @@
+{
+  "about": "Fee burn (modules/dashboard/logic/burn.js). Money in cents. Each case: projects + opts in, the listed parts of the result out.",
+  "cases": [
+    {
+      "why": "one project, whole job: actuals through October, forecast and planned hours after; spent = labor x (1 + 150%) + expenses; projected spend = hours x billing rate x 85%",
+      "projects": [{
+        "wbs1": "2026-0001", "fee": 1000000, "start": "2026-09", "end": "2026-12", "overheadPct": 150,
+        "actuals": [
+          { "month": "2026-09", "billed": 200000, "labor": 50000, "expenses": 10000 },
+          { "month": "2026-10", "billed": 300000, "labor": 60000, "expenses": 0 }
+        ],
+        "forecast": [{ "month": "2026-11", "billed": 250000 }, { "month": "2026-12", "billed": 250000 }],
+        "plannedHours": [{ "month": "2026-11", "hours": 10, "billRate": 15000 }, { "month": "2026-12", "hours": 20, "billRate": 15000 }]
+      }],
+      "opts": { "window": "full", "current": "2026-11", "lastClosed": "2026-10", "projectedSpendPct": 85 },
+      "expect": {
+        "months": ["2026-09", "2026-10", "2026-11", "2026-12"],
+        "billed": [200000, 500000, 750000, 1000000],
+        "spent": [135000, 285000, 412500, 667500],
+        "projected": [false, false, true, true],
+        "lastActualIndex": 1, "currentIndex": 2,
+        "feeLine": 1000000, "feeLineKind": "total",
+        "toDate": { "billed": 500000, "spent": 285000 },
+        "atEnd": { "billed": 1000000, "spent": 667500 },
+        "spentPassesFee": null
+      }
+    },
+    {
+      "why": "this year: January to December, totals start at zero on Jan 1, and the fee line is the fee less what was billed before Jan 1",
+      "projects": [{
+        "wbs1": "2025-0002", "fee": 400000, "start": "2025-11", "end": "2026-06", "overheadPct": 100,
+        "actuals": [
+          { "month": "2025-11", "billed": 100000, "labor": 20000, "expenses": 0 },
+          { "month": "2025-12", "billed": 100000, "labor": 20000, "expenses": 0 },
+          { "month": "2026-01", "billed": 50000, "labor": 10000, "expenses": 0 }
+        ],
+        "forecast": [{ "month": "2026-03", "billed": 50000 }],
+        "plannedHours": []
+      }],
+      "opts": { "window": "year", "current": "2026-03", "lastClosed": "2026-02", "projectedSpendPct": 85 },
+      "expect": {
+        "months": ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"],
+        "billed": [50000, 50000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000],
+        "spent": [20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000],
+        "lastActualIndex": 1, "currentIndex": 2,
+        "fee": 400000, "feeLine": 200000, "feeLineKind": "leftAtYearStart",
+        "toDate": { "billed": 50000, "spent": 20000 }
+      }
+    },
+    {
+      "why": "the first month spent goes over the fee is named",
+      "projects": [{
+        "wbs1": "2026-0003", "fee": 300000, "start": "2026-01", "end": "2026-03", "overheadPct": 100,
+        "actuals": [
+          { "month": "2026-01", "billed": 100000, "labor": 100000, "expenses": 0 },
+          { "month": "2026-02", "billed": 100000, "labor": 100000, "expenses": 0 }
+        ],
+        "forecast": [], "plannedHours": []
+      }],
+      "opts": { "window": "full", "current": "2026-03", "lastClosed": "2026-02", "projectedSpendPct": 85 },
+      "expect": { "spent": [200000, 400000, 400000], "spentPassesFee": "2026-02" }
+    },
+    {
+      "why": "several projects add up month by month; the whole-job window runs from the earliest start to the latest end and the fee line is the sum of the fees",
+      "projects": [
+        { "wbs1": "A", "fee": 100000, "start": "2026-01", "end": "2026-02", "overheadPct": 0,
+          "actuals": [{ "month": "2026-01", "billed": 50000, "labor": 0, "expenses": 0 }], "forecast": [], "plannedHours": [] },
+        { "wbs1": "B", "fee": 200000, "start": "2026-02", "end": "2026-03", "overheadPct": 0,
+          "actuals": [{ "month": "2026-02", "billed": 70000, "labor": 0, "expenses": 0 }], "forecast": [{ "month": "2026-03", "billed": 130000 }], "plannedHours": [] }
+      ],
+      "opts": { "window": "full", "current": "2026-03", "lastClosed": "2026-02", "projectedSpendPct": 85 },
+      "expect": { "months": ["2026-01", "2026-02", "2026-03"], "billed": [50000, 120000, 250000], "feeLine": 300000 }
+    },
+    {
+      "why": "a month not yet closed uses the forecast and plan, never actuals; a forecast for a closed month is ignored",
+      "projects": [{
+        "wbs1": "2026-0005", "fee": 500000, "start": "2026-10", "end": "2026-11", "overheadPct": 0,
+        "actuals": [
+          { "month": "2026-10", "billed": 100000, "labor": 10000, "expenses": 0 },
+          { "month": "2026-11", "billed": 999999, "labor": 999999, "expenses": 0 }
+        ],
+        "forecast": [{ "month": "2026-10", "billed": 777777 }, { "month": "2026-11", "billed": 40000 }],
+        "plannedHours": [{ "month": "2026-10", "hours": 100, "billRate": 10000 }, { "month": "2026-11", "hours": 2, "billRate": 10000 }]
+      }],
+      "opts": { "window": "full", "current": "2026-11", "lastClosed": "2026-10", "projectedSpendPct": 50 },
+      "expect": { "billed": [100000, 140000], "spent": [10000, 20000] }
+    },
+    {
+      "why": "a project with no overhead plan still draws, with labor alone, and says so",
+      "projects": [{
+        "wbs1": "2026-0006", "fee": 100000, "start": "2026-10", "end": "2026-10", "overheadPct": null,
+        "actuals": [{ "month": "2026-10", "billed": 10000, "labor": 5000, "expenses": 100 }], "forecast": [], "plannedHours": []
+      }],
+      "opts": { "window": "full", "current": "2026-11", "lastClosed": "2026-10", "projectedSpendPct": 85 },
+      "expect": { "spent": [5100], "warnings": [{ "wbs1": "2026-0006", "code": "no-overhead-plan" }], "currentIndex": null }
+    }
+  ]
+}

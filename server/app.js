@@ -122,8 +122,8 @@ function createServer(db, opts) {
 
     const dm = /^\/api\/dashboards\/([a-z]+)$/.exec(p);
     if (dm) {
-      if (method === 'GET') return sendJson(res, 200, dashboard.get(db, user, dm[1]));
-      if (method === 'PUT') return sendJson(res, 200, dashboard.save(db, user, dm[1], await readJson(req)));
+      if (method === 'GET') return sendJson(res, 200, dashboard.get(db, user, dm[1], currentSettings()));
+      if (method === 'PUT') return sendJson(res, 200, dashboard.save(db, user, dm[1], await readJson(req), currentSettings()));
     }
 
     if (p === '/api/admin/settings' && method === 'GET') {

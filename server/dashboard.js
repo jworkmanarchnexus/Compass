@@ -17,18 +17,20 @@ function requireBoard(db, user, board) {
   if (!boardsOf(db, user).includes(board)) throw new HttpError(403, 'You do not have access to this.');
 }
 
-function get(db, user, board) {
+/* settings = the Admin settings in force; the page needs the fee burn's projected-spend percent */
+function get(db, user, board, settings) {
   requireBoard(db, user, board);
+  const burn = { projectedSpendPct: (settings || {})['dashboard.projectedSpendPct'] };
   const row = db.get('SELECT layout_json, updated_at FROM dashboard_layouts WHERE user_id = ? AND board = ?', user.id, board);
-  return { board, label: B.BOARD_LABEL[board], catalog: CATALOGS[board], layout: L.normalize(row ? JSON.parse(row.layout_json) : null, CATALOGS[board]), saved: !!row, updatedAt: row ? row.updated_at : null };
+  return { board, label: B.BOARD_LABEL[board], catalog: CATALOGS[board], layout: L.normalize(row ? JSON.parse(row.layout_json) : null, CATALOGS[board]), saved: !!row, updatedAt: row ? row.updated_at : null, burn };
 }
 
 /* body: { layout } saves it (normalized first, so a bad id or size can never be stored); { reset: true } goes back to the default */
-function save(db, user, board, body) {
+function save(db, user, board, body, settings) {
   requireBoard(db, user, board);
   if (body && body.reset === true) {
     db.run('DELETE FROM dashboard_layouts WHERE user_id = ? AND board = ?', user.id, board);
-    return get(db, user, board);
+    return get(db, user, board, settings);
   }
   if (!body || !body.layout || !Array.isArray(body.layout.items)) throw new HttpError(400, 'Nothing to save.');
   const layout = L.normalize(body.layout, CATALOGS[board]);
@@ -36,7 +38,7 @@ function save(db, user, board, body) {
     db.run('DELETE FROM dashboard_layouts WHERE user_id = ? AND board = ?', user.id, board);
     db.run('INSERT INTO dashboard_layouts (user_id, board, layout_json, updated_at) VALUES (?, ?, ?, ?)', user.id, board, JSON.stringify(layout), db.now());
   });
-  return get(db, user, board);
+  return get(db, user, board, settings);
 }
 
 module.exports = { boardsOf, get, save };
