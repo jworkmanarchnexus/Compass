@@ -316,3 +316,12 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **No seeded person is both PIC and PM**, and I did not change the seed because Billing's tests depend on who manages what. The test makes Tom Lindqvist PM on the Ogden Library Annex for the both-dashboards case.
 - 2026-11-26 (Josh): **the dashparts' real numbers come from Vantagepoint.**
 - **All dashpart numbers are made up** and live in `ui/parts.js`; the page subtitle says so.
+
+## Fee burn and one-project page (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- 2026-11-26 (Josh): **a fee burn chart**, billed and spent as running totals by month, with forecast billing and projected spend in other styles, a current-month line, a fee line, and a **This year / Full project** switch.
+- 2026-11-26 (Josh): **projected spend never uses actual pay or cost rates** (a PM could put one hour in a plan and back out a salary). I made it planned hours x billing rate x one Admin percent, so it lands near actual cost without touching anyone's rate (open D6).
+- **Fee line on This year = fee less what was billed before Jan 1**, because the totals start at zero on Jan 1; the whole fee would sit far above the lines and mean nothing.
+- **Built as a dashpart plus a one-project page**, on the same made-up data approach as the other dashparts, but with the math in tested pure rules (`logic/burn.js`) so real data only has to fill the same input shape.
+- **Admin > Dashboards** is a new Admin tab, for the one setting.
+- **Off for a new person**, so Josh's starting set (D3, D5) is unchanged (open D9).

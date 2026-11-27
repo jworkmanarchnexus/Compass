@@ -26,6 +26,10 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | D4 | Should the Admin always have both dashboards, even when not PIC or PM on anything? | yes, to see what people see | `boards.js` |
 | D5 | Which dashparts belong on the PM dashboard? | **Resolved by Josh, 2026-11-26: Fee by phase, Unbilled work, Where the fee goes, Staff mix by role, all on to start** | `catalog.js` (`PM`) |
 | D2 | Exactly which Vantagepoint tables and fields each dashpart needs. **Source decided by Josh, 2026-11-26: Vantagepoint.** Several (phase overrun, staff mix by role, client scorecard, write-offs, days to pay) need data the scheduled copy does not pull yet | made-up data | `docs/SPEC-dashboard.md`; Kent for the pull |
+| D6 | Projected spend on the fee burn: planned hours x billing rate x a firm-wide percent. Is that the method, and what percent? | 85% of billing value (made up) | Admin > Dashboards (`dashboard.projectedSpendPct`) |
+| D7 | Does the fee burn's **actual** spent line reveal pay on a small job (one person charging in a month)? Should it use billing value x the same percent instead? | actual cost with overhead, as Project Turnaround | `modules/dashboard/logic/burn.js` |
+| D8 | On real data, who may open one project's page: only its PIC and PM (and the Admin)? | anyone with that dashboard (sample data) | `ui/project.js`, `server/dashboard.js` |
+| D9 | Should Fee burn be on for a new person? | off (the starting set in D3 and D5 is unchanged) | `catalog.js` |
 | D3 | Which dashparts a new person sees first, and at what size | **Resolved by Josh, 2026-11-26: the six as built** (below break-even, revenue, pipeline, portfolio bubble chart, fee by phase, unbilled work); staff mix, client scorecard and where the fee goes start in Available | `modules/dashboard/logic/catalog.js` |
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |

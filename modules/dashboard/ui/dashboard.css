@@ -175,3 +175,35 @@ body.dash-dragging, body.dash-dragging * { cursor: grabbing !important; user-sel
   .editing .dp-in { animation: none; outline: 1.5px dashed var(--line-strong); outline-offset: 3px; }
 }
 @media (max-width: 860px) { :root { --dash-row: 160px; --dash-gap: 10px; } }
+
+/* ---------- Fee burn (burn-chart.js): billed in blue, spent in dark gray; forecast and projection dashed; fee in orange ---------- */
+.burn-part { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.burn-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 6px; min-height: 32px; }
+.burn-seg { height: 28px; }
+.burn-seg > button { height: 24px; font-size: 12.5px; padding: 0 10px; }
+.burn-pick { height: 28px; max-width: 260px; font-size: 12.5px; }
+.burn-open { font-size: 13px; font-weight: 700; color: var(--accent-text); }
+.burn-mini { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; height: 100%; }
+.burn-says { margin: 4px 0 0; font-size: 12.5px; color: var(--text-2); }
+.dp-svg .burn-future { fill: var(--accent-softer); }
+.dp-svg .burn-fee { stroke: var(--warn-fill); stroke-width: 1.6; stroke-dasharray: 9 4; }
+.dp-svg .burn-feet { fill: var(--warn); font-weight: 700; }
+.dp-svg .burn-now { stroke: var(--text-strong); stroke-width: 1.2; stroke-dasharray: 2 3; }
+.dp-svg .burn-b { stroke: var(--dp-c2); stroke-width: 2.6; fill: none; stroke-linejoin: round; }
+.dp-svg .burn-bf { stroke: var(--dp-c3); stroke-width: 2.2; fill: none; stroke-dasharray: 6 4; }
+.dp-svg .burn-s { stroke: var(--text-strong); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+.dp-svg .burn-sp { stroke: var(--text-3); stroke-width: 2.2; fill: none; stroke-dasharray: 6 4; }
+.dp-svg .burn-db { fill: var(--dp-c2); } .dp-svg .burn-dbf { fill: var(--dp-c3); }
+.dp-svg .burn-ds { fill: var(--text-strong); } .dp-svg .burn-dsp { fill: var(--text-3); }
+.burn-legend .kb { background: var(--dp-c2); }
+.burn-legend .kbf { background: none; border-top: 2px dashed var(--dp-c3); height: 0; border-radius: 0; width: 14px; }
+.burn-legend .ks { background: var(--text-strong); }
+.burn-legend .ksp { background: none; border-top: 2px dashed var(--text-3); height: 0; border-radius: 0; width: 14px; }
+.burn-legend .kfee { background: none; border-top: 2px dashed var(--warn-fill); height: 0; border-radius: 0; width: 14px; }
+
+/* one project's page */
+.dproj-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--dash-gap); }
+.dproj-fig { background: var(--surface); border-radius: var(--r6); box-shadow: var(--shadow-soft); padding: 14px 16px; }
+.dproj-card { height: auto; }
+.dproj-card .dp-head { justify-content: space-between; }
+.dproj-chart { margin-top: 10px; min-width: 0; }

@@ -7,7 +7,7 @@
    - Done saves for this person only; Cancel (or Escape) puts everything back; "Reset to default" starts over (saved on Done)
    The layout rules (packing, limits, order) are in ../logic/layout.js and tested there; this file only draws and listens. */
 import { Dashboard } from '/shared/platform/index.js';
-import { drawPart, partSays, partLink } from './parts.js';
+import { drawPart, partSays, partLink, setBurnContext } from './parts.js';
 
 const D = window.CompassDashboard;
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -18,6 +18,7 @@ export async function renderDashboard(ctx, body, board) {
   const { h, T, icon, actions, banner, Session } = ctx;
   const me = Session.me();
   const data = await Dashboard.get(board);
+  setBurnContext({ board, projectedSpendPct: data.burn && data.burn.projectedSpendPct });
   const catalog = data.catalog;
   const info = new Map(catalog.map(c => [c.id, c]));
 
@@ -197,7 +198,7 @@ export async function renderDashboard(ctx, body, board) {
   /* ---------- drag to move ---------- */
   let drag = null;
   grid.addEventListener('pointerdown', e => {
-    if (!editing || e.button !== 0 || e.target.closest('button, a')) return;
+    if (!editing || e.button !== 0 || e.target.closest('button, a, select')) return;
     const el = e.target.closest('.dp');
     if (!el) return;
     e.preventDefault();
