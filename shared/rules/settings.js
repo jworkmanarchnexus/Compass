@@ -59,6 +59,18 @@ const DEFAULTS = {
     noNew: { sev: 'watch', days: 30 },                           // a PIC has added no pursuit in this many days
   },
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
+  /* Projects in Pursuit (docs/SPEC-pip.md). The probabilities each intake stage allows, from the PiP worksheet's Data Points tab
+     (the same default as modules/pip/logic/form.js DEFAULT_STAGE_PROBS; a test keeps them equal). */
+  'pip.stageProbabilities': {
+    'Research': [10], 'Go NoGo Process': [20], 'Fee Proposal Only (No Marketing)': [20], 'Marketing Proposal': [20],
+    'Shortlisted': [30, 40], 'Negotiation': [50, 60, 70], 'Awarded': [80, 90], 'Awarded with Interview': [80, 90],
+  },
+  'pip.cfoThreshold': 1000000, // whole dollars: a fee at or over this shows a warning and the CFO is told on submission
+  'pip.recentDays': 30,        // the PiP home lists what was created or withdrawn in this many days (waiting ones always show)
+  'pip.admins': [],            // user ids: the PiP admins, who review, return and mark PiPs created in Vantagepoint
+  'pip.viewers': [],           // user ids: people who may see the module without being a PIC, PM or PiP admin (for example the sustainability team)
+  'pip.primaryAdmin': '',      // user id: the PiP admin told about every submission ('' = nobody)
+  'pip.cfo': '',               // user id: the CFO, told about submissions at or over the threshold ('' = nobody)
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
   /* Preview (shared/rules/roles.js): each module is 'live' for everyone its role allows, or in 'preview' for the Admin and the testers picked here */
@@ -125,6 +137,17 @@ VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
 VALIDATORS['dashboard.projectedSpendPct'] = intIn(1, 200);
 VALIDATORS['dashboard.watchProfitPct'] = intIn(0, 100);
 VALIDATORS['dashboard.endingSoonDays'] = intIn(30, 365);
+const PIP_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+VALIDATORS['pip.stageProbabilities'] = v => !!v && typeof v === 'object' && !Array.isArray(v)
+  && Object.keys(v).length === Object.keys(DEFAULTS['pip.stageProbabilities']).length
+  && Object.keys(DEFAULTS['pip.stageProbabilities']).every(s => Array.isArray(v[s]) && v[s].length >= 1 && v[s].every((p, i) => PIP_STEPS.includes(p) && (i === 0 || p > v[s][i - 1])));
+VALIDATORS['pip.cfoThreshold'] = intIn(1, 1e10);
+VALIDATORS['pip.recentDays'] = intIn(7, 365);
+const userIds = v => Array.isArray(v) && v.length <= 200 && v.every(id => typeof id === 'string' && id.length > 0 && id.length <= 64) && new Set(v).size === v.length;
+VALIDATORS['pip.admins'] = userIds;
+VALIDATORS['pip.viewers'] = userIds;
+VALIDATORS['pip.primaryAdmin'] = v => typeof v === 'string' && v.length <= 64;
+VALIDATORS['pip.cfo'] = v => typeof v === 'string' && v.length <= 64;
 const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
   && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;

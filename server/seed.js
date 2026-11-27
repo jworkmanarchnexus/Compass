@@ -11,16 +11,21 @@ const SEED = path.join(__dirname, 'db', 'seed');
 const read = f => parseCsv(fs.readFileSync(path.join(SEED, f), 'utf8'));
 // children first. Everything is cleared, including the append-only and locked tables: a reset is a developer action,
 // not something the app can do, so it drops the guard triggers, empties the tables, and recreates the triggers.
-const TABLES = ['dashboard_layouts', 'billing_notifications', 'billing_email_prefs', 'billing_assignments', 'billing_project_adjust', 'billing_project_notes', 'billing_events', 'billing_revisions', 'billing_requests', 'billing_calendar', 'vp_billing_lines', 'vp_billing_projects', 'pursuit_notes', 'pipeline_alerts', 'forecast_snapshots', 'pursuit_snapshots', 'pipeline_projects', 'pipeline_snapshots', 'bd_detail', 'bd_rows', 'bd_run_meta', 'bd_goals', 'bd_sectors', 'bd_mwip_factor', 'bd_sector_overrides', 'run_pic_history', 'run_project_history', 'run_history', 'run_projects', 'run_warnings', 'runs', 'plan_entries', 'checkin_drafts', 'system_state', 'audit_log', 'settings', 'users', 'projects', 'employee_names', 'employees'];
+const TABLES = ['pip_notifications', 'pip_events', 'pip_revisions', 'pip_requests', 'vp_contacts', 'vp_clients', 'dashboard_layouts', 'billing_notifications', 'billing_email_prefs', 'billing_assignments', 'billing_project_adjust', 'billing_project_notes', 'billing_events', 'billing_revisions', 'billing_requests', 'billing_calendar', 'vp_billing_lines', 'vp_billing_projects', 'pursuit_notes', 'pipeline_alerts', 'forecast_snapshots', 'pursuit_snapshots', 'pipeline_projects', 'pipeline_snapshots', 'bd_detail', 'bd_rows', 'bd_run_meta', 'bd_goals', 'bd_sectors', 'bd_mwip_factor', 'bd_sector_overrides', 'run_pic_history', 'run_project_history', 'run_history', 'run_projects', 'run_warnings', 'runs', 'plan_entries', 'checkin_drafts', 'system_state', 'audit_log', 'settings', 'users', 'projects', 'employee_names', 'employees'];
 
 /* the VP copy: replaces both tables, like a nightly copy would */
 function loadVantagepointCopy(db) {
   db.tx(() => {
     db.run('DELETE FROM projects');
     db.run('DELETE FROM employees');
+    db.run('DELETE FROM vp_contacts');
+    db.run('DELETE FROM vp_clients');
     for (const e of read('employees.csv')) {
-      db.run('INSERT INTO employees (code, first_name, last_name, email) VALUES (?, ?, ?, ?)', e.Employee, e.FirstName, e.LastName, e.Email);
+      // Licensed: 1 or 0 when Vantagepoint tracks licensed architects (open question PIP3); empty = not known
+      db.run('INSERT INTO employees (code, first_name, last_name, email, licensed) VALUES (?, ?, ?, ?, ?)', e.Employee, e.FirstName, e.LastName, e.Email, e.Licensed === '1' ? 1 : e.Licensed === '0' ? 0 : null);
     }
+    for (const c of read('clients.csv')) db.run('INSERT INTO vp_clients (id, name, address) VALUES (?, ?, ?)', c.ClientID, c.Name, c.Address);
+    for (const c of read('contacts.csv')) db.run('INSERT INTO vp_contacts (id, client_id, name, email, phone) VALUES (?, ?, ?, ?, ?)', c.ContactID, c.ClientID, c.Name, c.Email, c.Phone);
     for (const p of read('projects.csv')) {
       db.run('INSERT INTO projects (wbs1, name, principal, proj_mgr, status) VALUES (?, ?, ?, ?, ?)', p.WBS1, p.Name, p.Principal, p.ProjMgr, p.Status);
     }
@@ -52,7 +57,8 @@ function seed(db, opts) {
   });
   loadBdData(db);
   require('./billing').seedBilling(db, require('./vp-local').createLocalSource());
-  if (!opts || opts.demo !== false) require('./seed-demo').seedDemo(db);
+  require('./pip').seedPipSettings(db);
+  if (!opts || opts.demo !== false) { require('./seed-demo').seedDemo(db); require('./pip').seedPipDemo(db); }
 }
 
 module.exports = { seed, loadVantagepointCopy };

@@ -23,6 +23,8 @@ function open(file) {
     if (dash && !raw.prepare('PRAGMA table_info(dashboard_layouts)').all().some(c => c.name === 'board')) raw.exec('DROP TABLE dashboard_layouts');
     raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
     if (rebuildUsers) raw.exec('INSERT INTO users SELECT * FROM users_old; DROP TABLE users_old');
+    // older local files: the employees copy had no licensed-architect column (Projects in Pursuit)
+    if (!raw.prepare('PRAGMA table_info(employees)').all().some(c => c.name === 'licensed')) raw.exec('ALTER TABLE employees ADD COLUMN licensed INTEGER');
     // older local files: a published report's record of the contract amount rule (reports built before it used the default)
     if (!raw.prepare('PRAGMA table_info(bd_run_meta)').all().some(c => c.name === 'contract_amount_rule')) raw.exec("ALTER TABLE bd_run_meta ADD COLUMN contract_amount_rule TEXT NOT NULL DEFAULT 'feeConsult'");
   };

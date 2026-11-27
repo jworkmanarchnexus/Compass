@@ -29,9 +29,9 @@ test('sign-in: the picker lists active people only; every other call needs a sig
 test('me: carries the role and what that role may see', () => withApp(async ({ api }) => {
   const josh = (await api('j.workman').get('/api/me')).body;
   assert.strictEqual(josh.role, 'admin');
-  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, pipeline: true, billing: true, admin: true });
+  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, pipeline: true, billing: true, admin: true, pip: true });
   const casey = (await api('c.brandt').get('/api/me')).body;
-  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, pipeline: true, billing: false, admin: false }, 'marketing sees BD and Pipeline only by default');
+  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, pipeline: true, billing: false, admin: false, pip: true }, 'marketing sees BD and Pipeline only by default (and Projects in Pursuit, as a PiP admin in the seed)');
   const dana = (await api('d.whitfield').get('/api/me')).body;
   assert.strictEqual(dana.areas.checkins, false);
   assert.strictEqual(dana.adminTabs.people, null);
@@ -81,7 +81,7 @@ test('settings: bad or unknown values are refused and nothing is written', () =>
   assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'nope': 1 } })).status, 400);
   assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'due.afterEntryDays': 20, 'due.newProjectDays': 'x' } })).status, 400);
   assert.strictEqual((await josh.put('/api/admin/settings', {})).status, 400);
-  assert.strictEqual(db.get('SELECT COUNT(*) n FROM settings').n, 0);
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE set_by <> 'seed'").n, 0); // the seed sets who the PiP admins are
 }));
 
 test('settings: widening the access setting changes what that role sees', () => withApp(async ({ api }) => {

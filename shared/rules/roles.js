@@ -24,7 +24,7 @@ function canView(role, area, access) {
 }
 
 /* Admin tabs, in display order. 'edit' = may change it, 'view' = may read it, null = hidden. */
-const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'billing', 'dashboards', 'people', 'runs', 'patterns', 'audit'];
+const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'billing', 'pip', 'dashboards', 'people', 'runs', 'patterns', 'audit'];
 function adminTab(role, tab) {
   if (role === 'admin') return 'edit';
   if (role === 'sysadmin') {

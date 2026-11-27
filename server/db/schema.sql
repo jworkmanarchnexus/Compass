@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS employees (
   code        TEXT PRIMARY KEY,           -- VP employee code (EMMain.Employee)
   first_name  TEXT NOT NULL,
   last_name   TEXT NOT NULL,
-  email       TEXT NOT NULL DEFAULT ''
+  email       TEXT NOT NULL DEFAULT '',
+  licensed    INTEGER                     -- 1 = licensed architect, 0 = not, NULL = Vantagepoint does not say (PiP: only architects may be project architect)
 );
 -- Compass's own: the name to show for a Vantagepoint person instead of the Vantagepoint name (Admin > People). Never written back.
 CREATE TABLE IF NOT EXISTS employee_names (
@@ -558,3 +559,65 @@ CREATE TRIGGER IF NOT EXISTS billing_assignments_no_update BEFORE UPDATE ON bill
 CREATE TRIGGER IF NOT EXISTS billing_assignments_no_delete BEFORE DELETE ON billing_assignments BEGIN SELECT RAISE(ABORT, 'assignments are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_requests_no_delete BEFORE DELETE ON billing_requests BEGIN SELECT RAISE(ABORT, 'billing requests are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_requests_processed BEFORE UPDATE ON billing_requests WHEN OLD.status = 'processed' BEGIN SELECT RAISE(ABORT, 'a processed request takes no more changes'); END;
+
+-- ---- Projects in Pursuit (docs/SPEC-pip.md) ----
+-- VP copy: clients (Firms) and their contacts, for the PiP form's pickers. Replaced by the nightly copy; never written back.
+CREATE TABLE IF NOT EXISTS vp_clients (
+  id       TEXT PRIMARY KEY,                       -- VP client id (CL.ClientID)
+  name     TEXT NOT NULL,
+  address  TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS vp_contacts (
+  id        TEXT PRIMARY KEY,                      -- VP contact id
+  client_id TEXT NOT NULL,
+  name      TEXT NOT NULL,
+  email     TEXT NOT NULL DEFAULT '',
+  phone     TEXT NOT NULL DEFAULT ''
+);
+-- one PiP. The fields live in pip_revisions (the latest one is current); this row holds where it stands.
+CREATE TABLE IF NOT EXISTS pip_requests (
+  id            TEXT PRIMARY KEY,
+  seq           INTEGER NOT NULL UNIQUE,           -- the number people use ("PiP 12")
+  submitted_by  TEXT NOT NULL,                     -- users.id
+  submitted_at  INTEGER NOT NULL,
+  status        TEXT NOT NULL CHECK (status IN ('new','review','returned','created','withdrawn')),
+  rev           INTEGER NOT NULL,                  -- the current revision
+  decided_at    INTEGER,                           -- when it was created in VP or withdrawn
+  vp_number     TEXT NOT NULL DEFAULT '',          -- the VP project number the admin typed when it was created
+  updated_at    INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS pip_revisions (         -- every version of the form as submitted; never changed
+  request_id  TEXT NOT NULL REFERENCES pip_requests(id),
+  rev         INTEGER NOT NULL,
+  fields_json TEXT NOT NULL,                       -- modules/pip/logic/form.js clean(), plus urgency as worked out that day
+  at          INTEGER NOT NULL,
+  by          TEXT NOT NULL,
+  PRIMARY KEY (request_id, rev)
+);
+CREATE TABLE IF NOT EXISTS pip_events (            -- what happened, in order; never changed
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id  TEXT NOT NULL REFERENCES pip_requests(id),
+  at          INTEGER NOT NULL,
+  user_id     TEXT NOT NULL,
+  action      TEXT NOT NULL,                       -- submit | review | return | resubmit | created | withdraw
+  from_status TEXT NOT NULL DEFAULT '',
+  to_status   TEXT NOT NULL,
+  note        TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS pip_notifications (     -- the emails the rules say to send; sending is a later step (Kent's mail automation)
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id  TEXT NOT NULL REFERENCES pip_requests(id),
+  at          INTEGER NOT NULL,
+  event       TEXT NOT NULL,
+  to_json     TEXT NOT NULL,                       -- [{ name, email, why }]
+  subject     TEXT NOT NULL,
+  body        TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS pip_revisions_no_update BEFORE UPDATE ON pip_revisions BEGIN SELECT RAISE(ABORT, 'PiP revisions are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS pip_revisions_no_delete BEFORE DELETE ON pip_revisions BEGIN SELECT RAISE(ABORT, 'PiP revisions are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS pip_events_no_update BEFORE UPDATE ON pip_events BEGIN SELECT RAISE(ABORT, 'PiP events are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS pip_events_no_delete BEFORE DELETE ON pip_events BEGIN SELECT RAISE(ABORT, 'PiP events are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS pip_notifications_no_update BEFORE UPDATE ON pip_notifications BEGIN SELECT RAISE(ABORT, 'PiP notifications are never changed'); END;
+CREATE TRIGGER IF NOT EXISTS pip_notifications_no_delete BEFORE DELETE ON pip_notifications BEGIN SELECT RAISE(ABORT, 'PiP notifications are never deleted'); END;
+CREATE TRIGGER IF NOT EXISTS pip_requests_no_delete BEFORE DELETE ON pip_requests BEGIN SELECT RAISE(ABORT, 'PiPs are never deleted; withdraw one instead'); END;
+CREATE TRIGGER IF NOT EXISTS pip_requests_final BEFORE UPDATE ON pip_requests WHEN OLD.status IN ('created','withdrawn') BEGIN SELECT RAISE(ABORT, 'a created or withdrawn PiP takes no more changes'); END;

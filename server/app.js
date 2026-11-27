@@ -16,6 +16,7 @@ const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
 const dashboard = require('./dashboard');
+const pip = require('./pip');
 const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
@@ -115,6 +116,9 @@ function createServer(db, opts) {
       const settingsNow = currentSettings();
       const me = Object.assign(userOut(user), roles.describeUser(user, settingsNow));
       me.dashboards = dashboard.boardsOf(db, user); // ['pic', 'pm'], from the projects they are PIC or PM on
+      // Projects in Pursuit follows the projects and the PiP settings, not the role alone (modules/pip/logic/workflow.js)
+      me.pip = pip.permsOf(db, user, settingsNow);
+      me.areas.pip = me.pip.see;
       if (user.role === 'admin') me.badges = { checkins: tdb.waitingCount(db), pipeline: pipeDb.alertCount(db) };
       if (o.dataMode) me.dataMode = o.dataMode; // 'live' when the Marketing Report reads Vantagepoint (server/live.js)
       return sendJson(res, 200, me);
@@ -144,6 +148,7 @@ function createServer(db, opts) {
         if (!settingsRules.isKnown(k)) throw new HttpError(400, `Unknown setting: ${k}`);
         if (!settingsRules.isValid(k, v)) throw new HttpError(400, `That value is not allowed for ${k}.`);
       }
+      pip.checkSettingPeople(db, changes); // the PiP admins, viewers, primary admin and CFO must be real people
       if (changes.release) { // preview testers must be real people
         const known = new Set(db.all('SELECT id FROM users').map(u => u.id));
         if (Object.values(changes.release).some(r => r.testers.some(id => !known.has(id)))) throw new HttpError(400, 'One of the preview testers is not in People.');
@@ -461,6 +466,17 @@ function createServer(db, opts) {
         if (br[2] === 'draft' && method === 'PUT') return sendJson(res, 200, billing.saveDraft(db, user, br[1], await readJson(req), bctx));
         if (br[2] && method === 'POST') return sendJson(res, 200, billing.act(db, user, br[1], br[2], await readJson(req), bctx));
       }
+    }
+
+    /* ---- Projects in Pursuit: PICs and PMs submit; the PiP admins review. Every rule is re-checked in server/pip.js. ---- */
+    if (p === '/api/pip' || p.startsWith('/api/pip/')) {
+      const pctx = { settings: currentSettings(), today, baseUrl };
+      if (p === '/api/pip' && method === 'GET') return sendJson(res, 200, pip.home(db, user, pctx));
+      if (p === '/api/pip' && method === 'POST') return sendJson(res, 201, pip.submit(db, user, await readJson(req), pctx));
+      if (p === '/api/pip/form' && method === 'GET') return sendJson(res, 200, pip.formData(db, user, pctx));
+      const pr = /^\/api\/pip\/([0-9a-f-]{36})(?:\/(review|return|resubmit|created|withdraw))?$/.exec(p);
+      if (pr && !pr[2] && method === 'GET') return sendJson(res, 200, pip.detail(db, user, pr[1], pctx));
+      if (pr && pr[2] && method === 'POST') return sendJson(res, 200, pip.act(db, user, pr[1], pr[2], await readJson(req), pctx));
     }
 
     throw new HttpError(404, 'Not found.');
