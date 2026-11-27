@@ -89,3 +89,8 @@ Roles: `pm` (a project manager, Billing only) and `processor` (an invoice proces
 - `acct_rows (run_id, key, ...)`: one per PIC (`key` '' = Unassigned): goal (NULL = none), billed, profit, negative profit, unevaluated and listed counts, response ('yes', 'no' or NULL), utilization (basis points), backlog, MWIP, AR over 90. Money in cents.
 
 Both run tables are keyed by the Marketing Report's run (`runs.kind = 'bd'`) and locked with it by the same triggers. No percentages, to-goal, shortfall or project counts are stored.
+
+## Staffing projections (docs/SPEC-staffing.md; `server/staffing.js`)
+
+- `staffing_custom_mix` (wbs1, effective_from YYYY-MM-DD, mix_json, note, set_by, set_at; key wbs1 + effective_from): a project's own staffing mix. **Append-only** (no UPDATE, no DELETE: triggers). The latest row on or before today counts; `mix_json` 'null' puts the project back on the standard mix.
+- Everything else lives in settings (`staffing.*`, effective-dated) or comes from the pull each time the page opens; nothing is stored per month.

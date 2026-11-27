@@ -72,6 +72,19 @@ function createLocalSource() {
       const firm = f ? { incomeProfit: toCents(f.IncomeStatementProfit), esopBonus: toCents(f.EsopBonus), actualOhBp: Math.round(parseFloat(f.ActualOverheadPct) * 100), assignedOhBp: Math.round(parseFloat(f.AssignedOverheadPct) * 100) } : {};
       return { utilization, arOver90, firm };
     },
+    /* Staffing projections (docs/SPEC-staffing.md): what the page needs from Vantagepoint. Money in cents, rates in cents per hour.
+         categories: [{ code, title, staff }]     billing labor categories (BTLaborCats) and active people in each (EM.BillingCategory, Status A)
+         rates:      [{ category, rate, effective }]   the firm's standard rate table (BTRCTCats, table "Current Standard Rates")
+         contracted: [{ id, name, month, amount }]     architectural forecast by project and month (YYYYMM): the BD forecast rule over a longer window
+         pipeline:   [{ id, name, month, amount }]     pursuits by month, weighted by win probability, architectural
+       A source without this method leaves the page empty with a note. */
+    loadStaffing() {
+      const categories = read('staffing_categories.csv').map(r => ({ code: r.Code, title: r.Title, staff: Number(r.Staff) }));
+      const rates = read('staffing_rates.csv').map(r => ({ category: r.Category, rate: toCents(r.Rate), effective: r.Effective }));
+      const demand = read('staffing_demand.csv').map(r => ({ kind: r.Kind, id: r.Id, name: r.Name, month: Number(r.Month), amount: toCents(r.Amount) }));
+      const pick = k => demand.filter(d => d.kind === k).map(({ id, name, month, amount }) => ({ id, name, month, amount }));
+      return { categories, rates, contracted: pick('contract'), pipeline: pick('pursuit'), rateTable: 'Current Standard Rates' };
+    },
     load() {
       const projects = read('projects.csv')
         .filter(p => p.Status === 'A' && !/^[ZJ]/.test(p.WBS1)) // the SQL: Status A, WBS1 not starting Z or J

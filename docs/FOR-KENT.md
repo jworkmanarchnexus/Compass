@@ -143,3 +143,9 @@ Every call is checked on the server (`server/billing.js`); a PM or PIC reaches o
 **The pull.** `source.loadBilling()` (locally `server/vp-local.js`, from made-up CSV) is the one method to implement: projects with their billing type, billed to date and projection, and their phases or hourly lines. The table and column names behind it are Kent's to map to a verified Vantagepoint report (K-B1). Amounts that are submitted but not yet in Vantagepoint count as billed (`pending`) until the next copy is loaded, so a second request cannot overbill.
 
 **Emails.** `billing_notifications` records what accounting should hear about, with the delivery each person's settings call for. Nothing is sent yet; sending is Kent's question (H9).
+
+## Staffing projections (mockup; see `docs/SPEC-staffing.md`)
+
+- API: `GET /api/staffing` (Admin, Principals, the neighborhood leaders in `staffing.leaders`), `GET /api/admin/staffing` (Admin tab, view or edit).
+- Seam: the source's `loadStaffing()`; the Vantagepoint tables are in the spec, section 5. Add them to the policy's approved list before the pull.
+- `staffing_custom_mix` is append-only and has no screen on purpose (spec, section 4).

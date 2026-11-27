@@ -61,6 +61,24 @@ const DEFAULTS = {
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
   /* Principal Accountability: the project sizes for 'projects to reach goal' (the firm's sheet). fee in whole dollars; label is the construction size it stands for. */
   'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
+  /* Staffing projections (docs/SPEC-staffing.md). Levels group Vantagepoint billing categories (Josh, 2026-11-27). mix = each level's
+     share of project HOURS in the standard staffing mix: MADE-UP starting values until Josh sets the real mix. target = utilization target
+     (Josh, 2026-11-27). untracked = categories that are neither demand nor capacity. */
+  'staffing.levels': [
+    { id: 'principal', label: 'Principal', categories: ['2', '5'], mix: 10, target: 60 },
+    { id: 'pm', label: 'Project Manager', categories: ['13', '32'], mix: 20, target: 85 },
+    { id: 'pa', label: 'Project Architect', categories: ['42', '8'], mix: 15, target: 85 },
+    { id: 'jc', label: 'Job Captain / Architect', categories: ['16', '46'], mix: 25, target: 85 },
+    { id: 'design', label: 'Design / Production', categories: ['34', '18', '40'], mix: 20, target: 85 },
+    { id: 'interiors', label: 'Interior Design', categories: ['15', '17'], mix: 7, target: 85 },
+    { id: 'graphics', label: 'Graphic Design', categories: ['14', '19'], mix: 3, target: 50 },
+  ],
+  'staffing.untracked': ['11', '37', '45', '47', '36'], // Info Tech, Administration, Building Performance Analyst, Sr Principal CFO, Principal Communications
+  'staffing.hoursPerMonth': 173,    // a full-time month
+  'staffing.monthsShown': 12,       // the months after this one that the page shows
+  'staffing.firmMonths': 6,         // after this many months the forecast is thin (PMs plan the near term); the page marks the rest as less certain
+  'staffing.rateOverrides': {},     // { billing category: cents per hour } replaces the rate from Vantagepoint's standard rate table
+  'staffing.leaders': [],           // neighborhood leaders: user ids who may open the page besides Principals and the Admin
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false, picAccountability: false },
   /* Preview (shared/rules/roles.js): each module is 'live' for everyone its role allows, or in 'preview' for the Admin and the testers picked here */
@@ -133,6 +151,33 @@ const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
   && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;
 
+/* Staffing projections */
+const catCode = c => typeof c === 'string' && /^\d{1,4}$/.test(c);
+VALIDATORS['staffing.levels'] = v => Array.isArray(v) && v.length >= 1 && v.length <= 12 && new Set(v.map(l => l && l.id)).size === v.length
+  && v.every(l => !!l && typeof l === 'object' && Object.keys(l).length === 5 && typeof l.id === 'string' && /^[a-z][a-z0-9-]{0,23}$/.test(l.id)
+    && typeof l.label === 'string' && l.label.trim().length >= 1 && l.label.length <= 40
+    && Array.isArray(l.categories) && l.categories.length <= 20 && l.categories.every(catCode) && new Set(l.categories).size === l.categories.length
+    && pct(l.mix) && pct(l.target));
+VALIDATORS['staffing.untracked'] = v => Array.isArray(v) && v.length <= 60 && v.every(catCode) && new Set(v).size === v.length;
+VALIDATORS['staffing.hoursPerMonth'] = intIn(80, 250);
+VALIDATORS['staffing.monthsShown'] = intIn(3, 24);
+VALIDATORS['staffing.firmMonths'] = intIn(0, 24);
+VALIDATORS['staffing.rateOverrides'] = v => !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length <= 100
+  && Object.entries(v).every(([k, x]) => catCode(k) && Number.isInteger(x) && x >= 1 && x <= 10000000);
+VALIDATORS['staffing.leaders'] = v => Array.isArray(v) && v.length <= 200 && v.every(id => typeof id === 'string' && id.length > 0 && id.length <= 64) && new Set(v).size === v.length;
+
+/* the staffing levels as a whole: the mix adds to 100, a category sits in one level only and is not also untracked, a level with a share has a target.
+   A plain message, or null when fine. */
+function staffingProblem(levels, untracked) {
+  const total = levels.reduce((a, l) => a + l.mix, 0);
+  if (total !== 100) return `The staffing mix must add up to 100%. It adds up to ${total}%.`;
+  const seen = new Set();
+  for (const l of levels) for (const c of l.categories) { if (seen.has(c)) return `Category ${c} is in two levels.`; seen.add(c); }
+  for (const c of untracked || []) if (seen.has(c)) return `Category ${c} is in a level and also marked not tracked.`;
+  for (const l of levels) if (l.mix > 0 && !(l.target > 0)) return `${l.label} has a share of the mix but no utilization target.`;
+  return null;
+}
+
 /* release: the same modules as the default, each { stage, testers } with testers a list of distinct user ids. Whether each id is a real person is checked by the server. */
 VALIDATORS['release'] = v => !!v && typeof v === 'object' && !Array.isArray(v)
   && Object.keys(v).length === Object.keys(DEFAULTS.release).length
@@ -164,9 +209,12 @@ function allAt(rows, at) {
 function crossCheck(values) {
   if (!(values['ladder.reminder1Days'] < values['ladder.reminder2Days'] && values['ladder.reminder2Days'] < values['ladder.escalateDays'])) return 'The reminder ladder must go in order: reminder 1, then reminder 2, then escalate, each a later day.';
   if (values['standing.escalatedOnTime'] > values['standing.goodOnTime'] || values['standing.escalatedKept'] > values['standing.goodKept']) return 'The Escalated cutoffs cannot be higher than the Good standing cutoffs.';
+  const staffing = staffingProblem(values['staffing.levels'], values['staffing.untracked']);
+  if (staffing) return staffing;
+  if (values['staffing.firmMonths'] > values['staffing.monthsShown']) return 'The less certain months cannot start after the last month shown.';
   return null;
 }
 
-const settingsApi = { DEFAULTS, isKnown, isValid, settingAt, allAt, crossCheck };
+const settingsApi = { DEFAULTS, isKnown, isValid, settingAt, allAt, crossCheck, staffingProblem };
 if (typeof module !== 'undefined' && module.exports) module.exports = settingsApi;
 else if (typeof window !== 'undefined') window.CompassRules = Object.assign(window.CompassRules || {}, settingsApi);

@@ -351,3 +351,15 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **48px wide instead of 96px** in the Compass sidebar, to leave room for more modules (the brand block is 74px shorter). Josh asked for half.
 - **Compass only** (`shell/shell.css`), not the shared stylesheet, so the Toolbox keeps its look until Josh says otherwise. The sign-in page keeps the full size.
 - **Below the brand's 1-inch (96px) minimum** noted in the shared stylesheet; at 48px the "ARCH | NEXUS" words under the X are too small to read. Worth checking with whoever owns the brand guide.
+
+## Staffing projections (2026-11-27; `docs/SPEC-staffing.md`)
+
+- 2026-11-27 (Josh): **firm-wide first**; neighborhoods maybe later. **Visible to Principals and neighborhood leaders**, role grid included. A neighborhood leader is a principal or associate who leads a neighborhood, so leaders are a list of people in Admin, not a role.
+- 2026-11-27 (Josh): **one standard mix** in settings; **a project's own mix is possible but has no screen** (huge projects only, not advertised). **Roles** group Vantagepoint billing categories as in the spec; Info Tech, Administration, Building Performance Analyst, CFO and Communications are not counted.
+- 2026-11-27 (Josh): **billing rates from Vantagepoint's "Current Standard Rates"** (Utah and California merged), kept as settings the Admin can override; the blended rate is the mix times each role's rate. **Utilization targets per role, set in Admin**: Principal 60%, Graphic Design 50%, everyone else 85% (not read from the employee records).
+- **The mix is a share of hours**, so blended rate = sum of mix x rate, and people = hours / (hours in a month x target). Hours are what rates and targets are measured in.
+- **A role's rate is the average of its categories, weighted by people on staff**, so a role with eleven PMs and five senior PMs is priced like that mix of people. Open to change (S2).
+- **The page is worked out when it is opened**, not built and published like the Marketing Report: there is nothing to lock and the forecast has no history. If Josh wants a monthly record, it can become a run later.
+- **A category with people and no place is flagged, not dropped**, and the rule never guesses a rate: work that needs an unpriced role is listed instead.
+- **A project that uses its own mix is named on the page** ("How this is worked out"), so no number quietly departs from the standard rule.
+- **Contracted work and pursuits are never added into one figure without being shown separately** (chart stacks them; the grid has a switch), following "MWIP and forecast always separate".

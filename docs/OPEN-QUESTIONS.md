@@ -92,3 +92,14 @@ Decided 2026-10-30 (Josh): processors are Karen, Camille and Josh; PMs and PICs 
 | K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |
 | K-B4 | Where does accounting enter amounts in VP; are draft or posted invoices readable? | manual handoff; no reconciliation | Kent |
 | K-B5 | A read-only database account for the pull | n/a locally | Kent |
+
+## Staffing projections (mockup; see `docs/SPEC-staffing.md`)
+
+| # | Question | Default today | Where |
+|---|---|---|---|
+| S1 | The standard staffing mix: each role's share of the hours on a typical project | made up: Principal 10, PM 20, PA 15, Job Captain / Architect 25, Design / Production 20, Interiors 7, Graphics 3 | Admin > Staffing |
+| S2 | A role's billing rate when its categories differ (Sr PM and PM): weighted by people on staff, a plain average, or the senior rate? | weighted by people on staff | `logic/staffing.js` levelRates |
+| S3 | Pursuits: apply the MWIP factor (0.65) as the Marketing Report does, or use the weighted fee as is? | weighted fee as is | source |
+| S4 | Part-time people: count each as 1, or by their scheduled hours? | each counts 1 | source |
+| S5 | Months shown and when they become "less certain" | 12 and 6 | Admin > Staffing |
+| S6 | Should Finance see it? | no (Admin, Principals and neighborhood leaders only) | `shared/rules/roles.js` |
