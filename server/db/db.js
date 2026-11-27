@@ -18,6 +18,9 @@ function open(file) {
     const usersSql = raw.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").get();
     const rebuildUsers = !!usersSql && !usersSql.sql.includes("'processor'");
     if (rebuildUsers) raw.exec('ALTER TABLE users RENAME TO users_old');
+    // local files from the first dashboard build had one layout per person (no board); they are only preferences, so start over
+    const dash = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'dashboard_layouts'").get();
+    if (dash && !raw.prepare('PRAGMA table_info(dashboard_layouts)').all().some(c => c.name === 'board')) raw.exec('DROP TABLE dashboard_layouts');
     raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
     if (rebuildUsers) raw.exec('INSERT INTO users SELECT * FROM users_old; DROP TABLE users_old');
     // older local files: a published report's record of the contract amount rule (reports built before it used the default)

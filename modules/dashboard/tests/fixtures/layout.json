@@ -1,0 +1,420 @@
+{
+  "catalog": [
+    {
+      "id": "a",
+      "title": "A",
+      "minW": 1,
+      "maxW": 2,
+      "minH": 1,
+      "maxH": 2,
+      "w": 2,
+      "h": 1,
+      "on": true
+    },
+    {
+      "id": "b",
+      "title": "B",
+      "minW": 1,
+      "maxW": 4,
+      "minH": 1,
+      "maxH": 2,
+      "w": 1,
+      "h": 1,
+      "on": true
+    },
+    {
+      "id": "c",
+      "title": "C",
+      "minW": 2,
+      "maxW": 4,
+      "minH": 2,
+      "maxH": 3,
+      "w": 2,
+      "h": 2,
+      "on": true
+    },
+    {
+      "id": "d",
+      "title": "D",
+      "minW": 1,
+      "maxW": 2,
+      "minH": 1,
+      "maxH": 1,
+      "w": 1,
+      "h": 1,
+      "on": false
+    }
+  ],
+  "defaultLayout": {
+    "version": 1,
+    "items": [
+      {
+        "id": "a",
+        "w": 2,
+        "h": 1,
+        "on": true
+      },
+      {
+        "id": "b",
+        "w": 1,
+        "h": 1,
+        "on": true
+      },
+      {
+        "id": "c",
+        "w": 2,
+        "h": 2,
+        "on": true
+      },
+      {
+        "id": "d",
+        "w": 1,
+        "h": 1,
+        "on": false
+      }
+    ]
+  },
+  "normalize": [
+    {
+      "why": "nothing saved yet: the default",
+      "saved": null,
+      "expect": {
+        "version": 1,
+        "items": [
+          {
+            "id": "a",
+            "w": 2,
+            "h": 1,
+            "on": true
+          },
+          {
+            "id": "b",
+            "w": 1,
+            "h": 1,
+            "on": true
+          },
+          {
+            "id": "c",
+            "w": 2,
+            "h": 2,
+            "on": true
+          },
+          {
+            "id": "d",
+            "w": 1,
+            "h": 1,
+            "on": false
+          }
+        ]
+      }
+    },
+    {
+      "why": "unknown and repeated ids dropped, sizes forced inside the limits, a new dashpart added to the tray, off ones after on ones",
+      "saved": {
+        "version": 1,
+        "items": [
+          {
+            "id": "zz",
+            "w": 1,
+            "h": 1,
+            "on": true
+          },
+          {
+            "id": "c",
+            "w": 9,
+            "h": 1,
+            "on": true
+          },
+          {
+            "id": "a",
+            "w": 1,
+            "h": 2,
+            "on": false
+          },
+          {
+            "id": "c",
+            "w": 2,
+            "h": 2,
+            "on": true
+          },
+          {
+            "id": "b",
+            "w": "3",
+            "h": 2,
+            "on": true
+          }
+        ]
+      },
+      "expect": {
+        "version": 1,
+        "items": [
+          {
+            "id": "c",
+            "w": 4,
+            "h": 2,
+            "on": true
+          },
+          {
+            "id": "b",
+            "w": 3,
+            "h": 2,
+            "on": true
+          },
+          {
+            "id": "a",
+            "w": 1,
+            "h": 2,
+            "on": false
+          },
+          {
+            "id": "d",
+            "w": 1,
+            "h": 1,
+            "on": false
+          }
+        ]
+      }
+    },
+    {
+      "why": "anything not literally true for on is off",
+      "saved": {
+        "items": [
+          {
+            "id": "a",
+            "w": 2,
+            "h": 1,
+            "on": "yes"
+          }
+        ]
+      },
+      "expect": {
+        "version": 1,
+        "items": [
+          {
+            "id": "a",
+            "w": 2,
+            "h": 1,
+            "on": false
+          },
+          {
+            "id": "b",
+            "w": 1,
+            "h": 1,
+            "on": false
+          },
+          {
+            "id": "c",
+            "w": 2,
+            "h": 2,
+            "on": false
+          },
+          {
+            "id": "d",
+            "w": 1,
+            "h": 1,
+            "on": false
+          }
+        ]
+      }
+    }
+  ],
+  "pack": {
+    "layout": {
+      "version": 1,
+      "items": [
+        {
+          "id": "a",
+          "w": 2,
+          "h": 1,
+          "on": true
+        },
+        {
+          "id": "b",
+          "w": 1,
+          "h": 1,
+          "on": true
+        },
+        {
+          "id": "c",
+          "w": 2,
+          "h": 2,
+          "on": true
+        },
+        {
+          "id": "d",
+          "w": 1,
+          "h": 1,
+          "on": true
+        }
+      ]
+    },
+    "cases": [
+      {
+        "cols": 4,
+        "rows": 3,
+        "cells": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "w": 2,
+            "h": 1
+          },
+          {
+            "id": "b",
+            "x": 2,
+            "y": 0,
+            "w": 1,
+            "h": 1
+          },
+          {
+            "id": "c",
+            "x": 0,
+            "y": 1,
+            "w": 2,
+            "h": 2
+          },
+          {
+            "id": "d",
+            "x": 2,
+            "y": 1,
+            "w": 1,
+            "h": 1
+          }
+        ]
+      },
+      {
+        "cols": 2,
+        "rows": 5,
+        "cells": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "w": 2,
+            "h": 1
+          },
+          {
+            "id": "b",
+            "x": 0,
+            "y": 1,
+            "w": 1,
+            "h": 1
+          },
+          {
+            "id": "c",
+            "x": 0,
+            "y": 2,
+            "w": 2,
+            "h": 2
+          },
+          {
+            "id": "d",
+            "x": 0,
+            "y": 4,
+            "w": 1,
+            "h": 1
+          }
+        ]
+      },
+      {
+        "cols": 1,
+        "rows": 5,
+        "cells": [
+          {
+            "id": "a",
+            "x": 0,
+            "y": 0,
+            "w": 1,
+            "h": 1
+          },
+          {
+            "id": "b",
+            "x": 0,
+            "y": 1,
+            "w": 1,
+            "h": 1
+          },
+          {
+            "id": "c",
+            "x": 0,
+            "y": 2,
+            "w": 1,
+            "h": 2
+          },
+          {
+            "id": "d",
+            "x": 0,
+            "y": 4,
+            "w": 1,
+            "h": 1
+          }
+        ]
+      }
+    ],
+    "indexAt": [
+      {
+        "why": "over a dashpart",
+        "cols": 4,
+        "cx": 2,
+        "cy": 1,
+        "expect": 3
+      },
+      {
+        "why": "over the lower half of a tall one",
+        "cols": 4,
+        "cx": 1,
+        "cy": 2,
+        "expect": 2
+      },
+      {
+        "why": "the right half of a wide one on a two-column grid",
+        "cols": 2,
+        "cx": 1,
+        "cy": 0,
+        "expect": 0
+      },
+      {
+        "why": "the gap at the top right asks for the spot before the next dashpart, so it moves into the gap",
+        "cols": 4,
+        "cx": 3,
+        "cy": 0,
+        "expect": 2
+      },
+      {
+        "why": "an empty cell past the end",
+        "cols": 4,
+        "cx": 3,
+        "cy": 2,
+        "expect": 3
+      }
+    ],
+    "why": "Order is kept: d stays after c even though the gap at the top right would fit it; a person drags it there if they want."
+  },
+  "columnsFor": [
+    [
+      1400,
+      4
+    ],
+    [
+      900,
+      4
+    ],
+    [
+      899,
+      2
+    ],
+    [
+      560,
+      2
+    ],
+    [
+      559,
+      1
+    ],
+    [
+      320,
+      1
+    ]
+  ]
+}

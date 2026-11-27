@@ -17,7 +17,7 @@ Each month, list the active projects that are below break-even for the year, gro
 | Build, rebuild, publish, archive a run | yes | no | no | no | no (can see the run list) |
 | Read any project's plan | yes | yes, all of them | yes | with page access | no |
 | Write plan entries | no (labeled admin notes only) | only on projects they lead | no | no | no |
-| See a commitment's action (including Other words) and whether it improved the project | yes | **yes, on every project** | yes | yes (with page access) | no |
+| See a goal's approach and words, and whether it helped | yes | **yes, on every project** | yes | yes (with page access) | no |
 | See each PIC's on-time, kept and standing | yes | own always; others per setting | per setting | per setting | no |
 | Check-in drafts and queue | yes | **never** | no | no | no |
 | Commitment patterns, Reminders and standing settings | edit | no | no | no | patterns no; settings view |
@@ -50,44 +50,46 @@ Per project (one row per project number, WBS1), for three windows (current month
 
 A project is **listed** when it can be evaluated, its YTD profit is below `include.ytdProfitBelow` (default $0), and its YTD billed is at least `include.ignoreBilledUnder` (default $0). A project with **no PIC** is always reported as a warning, and is left out of the run unless `include.noPic` is `unassigned` (then it appears under "Unassigned"). A project that is both unevaluable and without a PIC gets two warnings. Listed projects are ordered by PIC, then worst YTD profit first.
 
-## 5. The plan log
+## 5. The plan log: goals, check-ins, comments
 
-Entries belong to the **project**, not to a run. The log is **append-only**: no edit, no delete, enforced by rules and by the database. A mistake is fixed with a **Correction** entry pointing at the original (which shows "Corrected on …"). The plan cycle is the calendar year: each January starts clean; earlier years stay readable.
+Entries belong to the **project**, not to a run. The log is **append-only**: no edit, no delete, enforced by rules and by the database. A mistake is set right with a later comment. The plan cycle is the calendar year: each January starts clean; earlier years stay readable.
 
-**The order of a plan.** When a project first makes the list, the PIC's only option is an **explanation** (what is driving the loss). It is written **once per plan cycle** and stays the only option until it exists, however late; an admin note does not satisfy or hide it. After it, the PIC adds **updates** and **commitments**, nothing else. The server enforces this (409 with a plain message).
+**Two rounds a month, tied to the run (Josh, 2026-11-26).** A round starts the day a month is first published (a rerun of the same month does not start a new round).
 
-Entry kinds: `explanation`, `commitment`, `update`, `done`, `date_revised` (all written by the PIC; `correction` exists only in older entries: a PIC who got something wrong adds an update that says so); `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system).
+- **Goal check-in**, due `round.dueBusinessDays` (5) weekdays after publishing. In one step the PIC:
+  1. (a project new to the list this year) says **what is driving the loss**: the explanation, once a year;
+  2. (with a goal open) says **Did it help?** Yes, No, or Too early to tell, with a **required comment**. This closes the goal;
+  3. sets the **next goal**: **Keep the same goal** (its approach and words are carried forward), or a new one: **one approach**, *Lower costs* or *Bring in additional revenue* (never both), and **a few words on how**, required. Picking an approach shows its ideas under **Potential Approaches** as guidance only; the idea is not picked or recorded. No numbers, no dates.
+- **Mid-month update**, opens `round.midOpensDays` (14) days after publishing and is due `round.dueBusinessDays` weekdays after that: where the goal stands, **In progress, Done or Stuck**, with a **required comment**. No new goal; it does not close the goal. It is owed only when this round's goal was set before it opened (a goal set late is not asked about two days later).
+- **A comment** can be added any time after the first goal check-in of the year.
+- A goal's **due date** is the next month's goal check-in due date (unknown until that month is published). Reporting on it by then counts as **kept**; after it, **done late**. A goal nobody reports on is recorded **Missed** by the daily job `due.missedAfterDays` (14) days after that check-in was due; the PIC then sets a new goal without reporting on it. Done and missed are final.
+- January waits for the grace period (`due.graceUntil`): no goal check-in is due before it.
 
-- **Commitment**: text and **one** action (lever) from ten. The PIC does **not** pick a date or give a number. The system sets the due date: the **next check-in**, which falls every 14 days (a setting, `due.cadenceDays`) from the day the project first showed on a published report, and is always after today (a commitment made on a check-in day is due at the following one). The form shows it ("Next due date: Oct 14. On that date you will give an update on this commitment and make a new one."). The kind of action is chosen first, above the text box. The levers, each with a short explanation shown when the PIC points at it: *Bring in money*: recover additional services; negotiate a fee adjustment; capture unbilled earned revenue; secure additional project scope; **Other**. *Spend less*: reduce remaining labor hours; optimize staffing mix; eliminate scope creep; reduce consultant and external costs; **Other**. (The earlier list of eight actions is kept only so old log entries keep their names.) **Other** gives the PIC a fill-in line (a few words, up to 120 characters, required); the words are kept with the commitment and shown with it. The action and whether it improved the project are visible to everyone who can read the plan (Josh's decision, 2026-10-11, reversing the handoff's rule). Only the analysis in section 9a is the Admin's alone. The PIC can still use Change date (with a reason; earlier dates stay on record).
-- **Check-in** is how a PIC moves a plan forward once a commitment is open, in one step: *report back* on each open commitment (what happened, and the required yes or no: "Did this action improve the financial state of the project during this period?"), then make the **next commitment** (kind of action and words), due at the following check-in. Reporting on or before the commitment's date counts as **kept**; after it, **done late** (not kept). With nothing open, the PIC just makes a commitment. An **Update** can be added any time between due dates. The yes or no is how the Admin tracks which kinds of action work (section 9a). The API keeps a plain Mark done as a building block; the page does not offer it.
-- **There is no Change date.** The due date is the system's check-in schedule, not the PIC's to move. Older plans keep their date revisions on the log.
-- **Missed** is recorded by the daily job when an open commitment's current date has passed by `due.missedAfterDays` (default 14) days. (**Chosen**: the mockup's own examples disagree.)
-- A done or missed commitment is final: later entries about it are ignored.
-- **No corrections.** The log is still append-only; a mistake is set right with a later update.
-- Text is required for every entry (4,000 characters at most).
+Entry kinds: `explanation`, `commitment` (a goal: `lever` is `cost` or `revenue`, `keptFrom` when carried forward), `done` (the report on a goal: `helped`, and `improved` true/false/null), `update` (with `midStatus`, the mid-month update; without, a comment), all written by the PIC; `admin_note` (written by the Admin, labeled, public, never counts toward a PIC's record); `missed` (written only by the system). Older entries (`correction`, `date_revised`, goals naming one of the earlier ten actions with their own due date) stay readable. The server checks every step with the pure rules (`plan.goalCheckinProblem`, `plan.midProblem`) and answers in plain words; a refused step writes nothing.
 
 ## 6. Plan status (per project, as of today)
 
-The first plan is due `due.newProjectDays` (14) days after the project first appeared on a **published** run, and never before the end of the January grace period (`due.graceUntil`, default Feb 1). After any PIC entry, the next update is due `due.afterEntryDays` (30) days later. Only PIC-written entries reset that clock (not admin notes or missed).
+| Status | Words on the page | Meaning |
+|---|---|---|
+| `no_plan` | First goal due *date* / No goal yet, *N* days late | No goal yet this year. The first goal is due `round.dueBusinessDays` weekdays after the project first appeared on a published run (never before the grace period ends). |
+| `update_due` | Goal check-in due *date* / Mid-month update due *date* | Something is owed this round and is not yet due. |
+| `overdue` | Goal check-in *N* days late / Mid-month update *N* days late | Something owed this round is past its due date. |
+| `current` | Done for this round | The goal check-in is done, and the mid-month update too once it has opened. |
 
-| Status | Meaning |
-|---|---|
-| **No plan** | No commitment yet this year. An explanation alone does not count. Shows days overdue once past its first-plan date. |
-| **Overdue** | The due date has passed. The due date is the **earlier** of (last PIC entry + 30 days) and the next open commitment's date. (**Chosen**.) |
-| **Update due** | The due date is within `due.soonDays` (14) days; also shown when nothing is open (the PIC owes a next commitment). |
-| **Current** | An open commitment exists, the due date is further off than the soon window, nothing is past due. |
+`owes` says which round is owed (`goal` or `mid`). A round missed last month does not carry into this month's status; it shows in the record (section 7).
 
 ## 7. On time, kept, standing
 
-- An entry is **on time** if made by its due date: the first by the first-plan date, each later one within 30 days of the one before. Done and date-revised entries count as entries.
-- **Kept** = commitments done on or before their date; counted over commitments that are finished (done or missed). Open ones are not counted yet.
-- **Standing** for a PIC: *Good standing* needs on time ≥ `standing.goodOnTime` (85) **and** kept ≥ `standing.goodKept` (80). *Escalated* is below `standing.escalatedOnTime` (60) **or** below `standing.escalatedKept` (50). Anything between is *Needs attention*. A measure with fewer than `standing.minSample` (3) items behind it is left out (**chosen**: otherwise one missed commitment makes someone Escalated); with neither measure there is no standing. Cutoffs must be consistent (escalated not above good), checked on save.
+- **On time**: for each round the project was on the list this year, the goal check-in counts once it is made or its due date has passed, and is on time when made by its due date; the same for the mid-month update when it was owed.
+- **Kept** = goals reported on by their due date, counted over goals that are finished (done or missed). Open ones are not counted yet.
+- **Standing** for a PIC: *Good standing* needs on time ≥ `standing.goodOnTime` (85) **and** kept ≥ `standing.goodKept` (80). *Escalated* is below `standing.escalatedOnTime` (60) **or** below `standing.escalatedKept` (50). Anything between is *Needs attention*. A measure with fewer than `standing.minSample` (3) items behind it is left out; with neither measure there is no standing. Cutoffs must be consistent (escalated not above good), checked on save.
+
 
 ## 8. Check-in drafts
 
 The system **never emails a PIC.** It prepares drafts in an Admin-only queue. The Admin edits one if they like, opens it in their own mailbox (a `mailto:` link), sends it there, and presses Mark as sent. The only automatic email goes to the Admin: a count and a link, weekdays, only if something is waiting, once a day, with no PIC or project names.
 
-Situations: **overdue** (has a plan, something is past due) and **no plan** (no commitment and past the first-plan date). Days are counted from the project's due date:
+Situations: **overdue** (a goal check-in or mid-month update is past due) and **no plan** (no goal yet and past its first-goal date). Days are counted from the project's due date:
 
 | Step | Day | What happens |
 |---|---|---|
@@ -100,37 +102,39 @@ Situations: **overdue** (has a plan, something is past due) and **no plan** (no 
 - A PIC who wrote an entry in the last `drafts.skipIfEntryDays` (2) days, or was sent a reminder in the last `drafts.skipIfSentDays` (5), is skipped that day (0 turns a rule off).
 - A **dismissed** draft never returns for that project in that situation with that due date; a new due date is a new situation. A **waiting** draft whose projects the PIC has dealt with is **withdrawn** automatically. Sent and dismissed drafts can be undone.
 - "Create check-in drafts" (`run.createCheckinDrafts`) off stops new drafts; stale ones are still withdrawn.
-- A project needs an update when a due date has passed: its first plan, or its check-in (the open commitment's due date, set by the schedule above). The Admin adds nothing to the system for that; the daily job reads the dates.
+- A project needs a reminder when something owed this round is past due: its first goal, the goal check-in, or the mid-month update (section 5). The Admin adds nothing to the system for that; the daily job reads the dates. A new round is a new due date, so a new situation.
 - **Not built:** "Repeat next monthly run" (needs the monthly summary email).
 
 ## 9. The page
 
 One page for everyone (the server removes what a viewer may not see). The Admin can open any run, draft included, on the same page before publishing.
 
-- **KPI strip:** total negative YTD profit and % of billed (with project count); plans current X of N; waiting on an update (past due + no plan, with the count of check-in drafts ready for the Admin); and since last month (projects off, new, improved, worse against the previous published run).
-- **Charts:** total negative YTD profit at each month end for 12 months (last year's months in grey) and the count of projects below break-even. Under "Just mine" both charts show that PIC's own projects (stored per run), not the firm's.
-- **A card per PIC**, ordered by the PIC's total YTD profit, biggest loss first: projects, total YTD profit and %, plans current (bar), on time %, kept x of y, standing (per visibility); a table of projects with profit YTD, plan chip, latest narrative update, next commitment (open / past due N days / date moved) and "N earlier commitments missed".
-- **PIC viewers** get a Just mine / Everyone toggle (default Just mine); "Just mine" shows their own four numbers and their own two charts.
+- **Top row:** the four numbers as a 2x2 block beside the chart (stacked under 1100px wide).
+- **The four numbers:** total negative YTD profit and % of billed (with project count); done for this round X of N; waiting on a check-in (late, due soon and no goal yet, with the count of check-in drafts ready for the Admin); and since last month (projects off, new, improved, worse against the previous published run).
+- **Chart:** total negative YTD profit at each month end for 12 months (last year's months in grey). Under "Just mine" it shows that PIC's own projects (stored per run), not the firm's. The chart of the count of projects below break-even was removed (Josh, 2026-11-25); each bar's tooltip still gives that month's count, and the run history still stores it.
+- **A card per PIC**, ordered by the PIC's total YTD profit, biggest loss first. The header starts with a show/hide button (the whole header row also toggles), then the PIC's name, total YTD profit and % of billed (the billed amount is in the tooltip), done for this round (bar), on time %, kept x of y, standing (per visibility). No initials circle, no project count. The table of projects: project (name, number and PM, and the status chip under them), profit YTD, latest comment, current goal (approach, the latest mid-month word, the words) and "N earlier goals not reported on". (Header and plan column changed by Josh, 2026-11-25.)
+- **PIC viewers** get a Just mine / Everyone toggle (default Just mine); "Just mine" shows their own four numbers and their own chart.
 - **The Admin** gets Everyone, or a drop-down of the PICs; picking one shows that PIC's numbers and charts the way "Just mine" shows a PIC's own.
 - **Every active PIC is on the page.** A PIC with no project below break-even has a card that says they have none and are doing a great job; on "Just mine" they see a congratulation instead of numbers. Cards are ordered by total loss, so these come last.
-- **Plan page** (one project): add to the log (PIC: the explanation first, then updates and commitments) or an admin note (Admin); the log newest first; commitments with Mark done and Change date; the year-to-date profit by month; project facts; a legend. Past cycles are read-only.
+- **Start my check-in** (PICs with projects on the list): a button in the header tile that opens the first of their projects still owed this round.
+- **Project page** (one project at a time; the check-in and the plan merged, Josh 2026-11-26): the header tile has the project's name, number, PIC, PM and first appearance, its status chip, and for its PIC their projects on the list to step through (1 of 4 ..., Done / To do / Late). Left: the goal check-in or the mid-month update when one is owed ("Save and next" goes to the next project still owed; "Previous" goes back), otherwise "Done for this round"; the Admin's note form; the **History**: every goal check-in (shown as one item: the explanation, Did it help and the comment, the next or kept goal), mid-month update, comment, admin note and Missed, newest first, with "Add a comment" for the PIC. Right: the project's numbers (profit YTD, since last month, billed YTD, profit %), **Goals so far** (each goal once, kept rounds folded in, with every Did it help), the YTD profit chart, and a legend. Past cycles are read-only.
 - **Check-in drafts** page (Admin) and a sidebar count badge.
 
 ## 9a. Commitment patterns (Admin only)
 
-A background analysis of what PICs commit to and what comes of it, in Admin > Commitment patterns, with a year picker. **Nothing extra is recorded**: it is worked out from the append-only plan log and the runs, so it cannot drift and old years stay available (pure rule, `modules/turnaround/logic/patterns.js`, pinned by `fixtures/patterns.json`). It shows:
+A background analysis of the goals PICs set and what comes of them, in Admin > Commitment patterns, with a year picker. **Nothing extra is recorded**: it is worked out from the append-only plan log and the runs, so it cannot drift and old years stay available (pure rule, `modules/turnaround/logic/patterns.js`, pinned by `fixtures/patterns.json`). It shows:
 
-- **Cutting cost or adding revenue?** Bring in money against Spend less: made, open, kept, done late, missed, kept rate (kept / finished), delivered against promised (dollars only, since hours and weeks cannot be added to dollars), typical days promised ahead, and how often the date moved. A plain sentence says which is kept more often, and warns when fewer than 10 finished commitments stand behind either side.
-- **By action** (all ten), **by PIC** (how often they commit, follow through, move dates, and their mix of money and spend-less), and **over the year** by month.
-- **How quickly projects are answered:** projects with an explanation and with a commitment, days from first appearing to the explanation, days from the explanation to the first commitment, and updates per project.
-- **Projects that came off the list:** what share of projects that left the list (against those still on it) had a kept commitment, by kind. It shows what went with a project leaving, not what caused it.
-- **What PICs typed under Other:** the words, so a recurring one can be given its own place on the list.
+- **Lowering costs or adding revenue?** Bring in additional revenue against Lower costs: set, open, on time, late, missed, on-time rate (on time / finished), and Helped (the PIC's Yes against No; Too early to tell is not counted). A plain sentence compares the two and warns when fewer than 10 finished goals stand behind either side.
+- **Older goals, by action** (only when a goal from before November 2026 named one of the earlier actions), **by PIC** (how many goals, how often reported on time, the share that bring in revenue), and **over the year** by month.
+- **How quickly projects are answered:** projects with an explanation and with a goal, days from first appearing to the explanation, days from the explanation to the first goal, and comments and mid-month updates per project.
+- **Projects that came off the list:** what share of projects that left the list (against those still on it) had a goal reported on time, by approach. It shows what went with a project leaving, not what caused it.
+- **What PICs typed under Other** (older goals only).
 
-Definitions: a commitment is *finished* when it is done or missed; *kept* is done on or before its (current) date. A rate is blank until something has finished.
+Definitions: a goal is *finished* when it is reported on or missed; *on time* (kept) is reported on by its due date. A rate is blank until something has finished.
 
 ## 10. Daily job
 
-Once a day (`npm run daily`): record Missed commitments; prepare and withdraw check-in drafts; email the Admin the count (weekdays, if any are waiting, once). Safe to run twice in a day. The monthly job (`npm run run-month`) builds the draft and emails the count.
+Once a day (`npm run daily`): record goals not reported on as Missed; prepare and withdraw check-in drafts; email the Admin the count (weekdays, if any are waiting, once). Safe to run twice in a day. The monthly job (`npm run run-month`) builds the draft and emails the count.
 
 ## 11. Settings (all effective-dated; saving adds a row, never overwrites)
 
@@ -145,11 +149,10 @@ Once a day (`npm run daily`): record Missed commitments; prepare and withdraw ch
 | `include.ytdProfitBelow` | 0 (dollars) |
 | `include.ignoreBilledUnder` | 0 (dollars, YTD billed) |
 | `include.noPic` | "leave-out-warn" (or "unassigned") |
-| `due.newProjectDays` | 14 |
-| `due.afterEntryDays` | 30 |
+| `round.dueBusinessDays` | 5 (weekdays each round has, from the day it opens) |
+| `round.midOpensDays` | 14 (days after publishing that the mid-month update opens) |
 | `due.graceUntil` | "02-01" |
-| `due.soonDays` | 14 |
-| `due.missedAfterDays` | 14 |
+| `due.missedAfterDays` | 14 (after the goal check-in a goal was due at) |
 | `ladder.reminder1Days` / `ladder.reminder2Days` / `ladder.escalateDays` | 3 / 10 / 21 |
 | `drafts.emailAdmin` | true |
 | `drafts.skipIfEntryDays` / `drafts.skipIfSentDays` | 2 / 5 |
@@ -165,9 +168,15 @@ A change applies to the next run. A run records the settings it was built with, 
 
 See `docs/DATA-MODEL.md`. In short: `plan_entries` (append-only), `runs` with `run_projects`, `run_warnings`, `run_history`, `run_project_history` (all locked with the run), `checkin_drafts`, `settings`, `audit_log` (append-only). Commitments are not a table: their state is replayed from `plan_entries`.
 
+## 12a. Export (Josh, 2026-11-25 and 26)
+
+An **Export** button at the right of the title row, with two choices. Both export what is on screen: everyone, or the one PIC picked (a PIC on "Just mine" exports their own). Nothing is fetched that the person cannot already see.
+
+- **Excel:** one row per project (PIC, project number, project, PM, profit YTD, % of billed, plan, plan due, latest comment date and text, goal approach, goal, goal set, mid-month status, earlier goals not reported on). A real .xlsx: dollars and percentages are numbers.
+- **PDF:** an Export PDF window like the Marketing Report's: settings on the left (whose projects, include the four figures / the chart / the projects, paper Letter, Legal or Tabloid, landscape by default, logo first page / every page / none, print date, an optional description), the real pages on the right, Download PDF at the bottom. Settings are remembered per person. Page 1: the heading, the four figures beside the chart. Then each PIC: their header (loss, %, plans current, on time, kept, standing where visible) and their projects; updates and commitments print in full. Page breaks (logic/export-plan.js, tested): a project never splits across pages; a PIC's header never sits alone at the bottom of a page; a page that continues a PIC opens with "Name (continued)" and the column headings. Vector PDF with Lato and Roboto Condensed embedded.
+
 ## 13. Not built, and why
 
-- Export Excel (the mockup has the button).
 - Contract fee and "billed to date %" on the plan page: the validated SQL does not pull fees.
 - Market sector on the plan page: no source.
 - The ladder's "Repeat" step and the monthly summary.

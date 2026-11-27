@@ -25,8 +25,8 @@ function scale(values, ticks, includeZero) {
 
 /* Bars hanging down from a zero line. points: [{ label, yearLabel?, value, kind: 'prev'|'bar'|'now', tip }] (value <= 0)
    fmt(value) writes a tick label; unit is the divisor that makes values "nice" (100000 cents = $1K) */
-export function negativeBars(points, { fmt, aria }) {
-  const W = 520, H = 220, L = 52, R = 8, T = 8, B = 40;
+export function negativeBars(points, { fmt, aria, width, height }) {
+  const W = width || 520, H = height || 220, L = 52, R = 8, T = 8, B = 40;
   const pw = W - L - R, ph = H - T - B;
   const sc = scale(points.map(p => p.value), 4, true);
   const y = v => T + (sc.hi - v) / (sc.hi - sc.lo) * ph;

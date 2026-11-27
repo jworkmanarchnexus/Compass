@@ -12,6 +12,15 @@ test('roles: who can view which area', () => {
     assert.deepStrictEqual(seen, roles.AREAS.filter(a => c.see.includes(a)), `${c.role} ${JSON.stringify(c.access)}`);
   }
 });
+test('roles: preview, a module released to the Admin and picked testers only', () => {
+  for (const c of roleFx.canUse) {
+    const seen = roles.AREAS.filter(a => roles.canUse(c.user, a, c.settings));
+    assert.deepStrictEqual(seen, roles.AREAS.filter(a => c.see.includes(a)), c.name);
+    const d = roles.describeUser(c.user, c.settings);
+    assert.deepStrictEqual(roles.AREAS.filter(a => d.areas[a]), seen, c.name + ' (describeUser)');
+    assert.deepStrictEqual(roles.PREVIEWABLE.filter(a => d.preview[a]), c.preview, c.name + ' (preview tag)');
+  }
+});
 test('roles: admin tabs', () => {
   for (const c of roleFx.adminTab) assert.strictEqual(roles.adminTab(c.role, c.tab), c.expect, `${c.role}/${c.tab}`);
 });

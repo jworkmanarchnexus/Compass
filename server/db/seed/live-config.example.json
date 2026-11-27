@@ -1,0 +1,23 @@
+{
+  "_note": "Made-up example. Copy to server/db/live/config.json (git-ignored) and put the real goals in. PIC goals are keyed by Vantagepoint employee code (EMMain.Employee); sector names are Vantagepoint project type descriptions. Amounts in dollars; the factor as a decimal.",
+  "goals": {
+    "2026": {
+      "pic": [
+        { "code": "000101", "name": "Example, Pat", "amount": 1500000 },
+        { "code": "000102", "name": "Example, Sam", "amount": 1500000 }
+      ],
+      "sector": [
+        { "name": "Civic", "amount": 1000000 },
+        { "name": "Healthcare", "amount": 2000000 }
+      ]
+    }
+  },
+  "sectors": [
+    { "name": "Civic" },
+    { "name": "Healthcare" },
+    { "name": "Laboratory", "rollsInto": "Healthcare", "rollsUntil": "2026-12-31" }
+  ],
+  "mwipFactor": [
+    { "effectiveFrom": "2026-01-01", "factor": 0.65 }
+  ]
+}

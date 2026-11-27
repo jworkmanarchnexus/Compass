@@ -22,6 +22,11 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 
 | # | Question | Default today | Where it lives |
 |---|---|---|---|
+| D1 | Who has a dashboard? | **Resolved by Josh, 2026-11-26: a PIC dashboard and a PM dashboard; each shows only for people who are PIC (or PM) on at least one active project** | `modules/dashboard/logic/boards.js` |
+| D4 | Should the Admin always have both dashboards, even when not PIC or PM on anything? | yes, to see what people see | `boards.js` |
+| D5 | Which dashparts belong on the PM dashboard? | **Resolved by Josh, 2026-11-26: Fee by phase, Unbilled work, Where the fee goes, Staff mix by role, all on to start** | `catalog.js` (`PM`) |
+| D2 | Exactly which Vantagepoint tables and fields each dashpart needs. **Source decided by Josh, 2026-11-26: Vantagepoint.** Several (phase overrun, staff mix by role, client scorecard, write-offs, days to pay) need data the scheduled copy does not pull yet | made-up data | `docs/SPEC-dashboard.md`; Kent for the pull |
+| D3 | Which dashparts a new person sees first, and at what size | **Resolved by Josh, 2026-11-26: the six as built** (below break-even, revenue, pipeline, portfolio bubble chart, fee by phase, unbilled work); staff mix, client scorecard and where the fee goes start in Available | `modules/dashboard/logic/catalog.js` |
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |
 | H4 | Is the MWIP backlog column stored raw and weighted at calculation time, or already weighted? | **Resolved by Josh, 2026-10-16: the source supplies Vantagepoint's probability-weighted fee, spread by days (`docs/MWIP-METHOD.md`), and Compass applies ONE factor (the architectural share, consultants removed) from the existing Admin setting, to both the PIC and sector views. The value is 0.65 (Josh, 2026-11-25).** The calculation is unchanged (amount x factor); only the meaning of the source amount changes from face value to probability-weighted | `docs/SPEC-bd.md` section 4 |
@@ -33,11 +38,13 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | H8 | Fallback for projects with several overhead rates? | reported as a warning, no profit invented | `profit.js` |
 | H10 | Final product name and a vector logo | "Compass"; small raster logo | |
 | H12 | Anything from the earlier ChatGPT engine? | nothing adopted | `reference/handoff/reference/chatgpt-engine-v0.1/` |
-| T6 | Recorded as Missed after how many days past a commitment's date? | 14 | Admin > Project Turnaround > Plan due dates. The mockup's examples disagree (2 days, and 11 days still "past due") |
-| T7 | What makes a plan's next update due? | the earlier of last entry + 30 days and the next commitment date | `plan.js`; the mockup's rows disagree |
-| T8 | A PIC with one missed commitment: Escalated? | no: a measure needs 3 items first | Admin > Reminders and standing |
+| T6 | A goal not reported on is recorded as Missed how many days after the goal check-in it was due at? | 14 | Admin > Project Turnaround > Check-in rounds |
+| T7 | ~~What makes a plan's next update due?~~ | **Decided (Josh, 2026-11-26): two rounds a month tied to the run.** Still open: how many weekdays each round has (default 5) and when the mid-month update opens (default 14 days after publishing) | Admin > Project Turnaround > Check-in rounds |
+| T22 | Keep "Add a comment" between rounds? | yes | `plan.js` (History card) |
+| T23 | Should the cause (what is driving the loss) be a pick-list? | no: one or two sentences | goal check-in |
+| T8 | A PIC with one late check-in: Escalated? | no: a measure needs 3 items first | Admin > Reminders and standing |
 | T9 | Drafts: one per PIC per situation (listing their projects), or one per project? | **one per PIC, full stop** (Josh, 2026-10-12): subject "Project Turnaround Updates", text = project names | `drafts.js` |
-| T10 | No-plan reminders: the mockup shows them 6 days after a project is listed; the ladder (counted from the 14-day due date) gives about 17 | the ladder | Admin: "days to a first plan", ladder days |
+| T10 | No-goal reminders: the ladder counts from the first goal's due date (5 weekdays after the project is listed), so about 3 days after that | the ladder | Admin: Check-in rounds, ladder days |
 | T11 | May the Admin rebuild a draft run without typing RERUN? | yes (nobody else has seen a draft) | `runs.js` |
 | T12 | "Ignore projects billed under $X": YTD billed? | yes | `selection.js` |
 | T13 | A PIC's Home shows their own projects needing action (not in the spec) | yes | `home.js` |
@@ -46,7 +53,7 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | T16 | Should the Admin be able to see plan content for a project that is not on any run? | yes (any project by link) | |
 | T18 | A project that was explained last year and lands on the list again: a new explanation each calendar year? | yes (the plan cycle is the year) | `plan.js` / `server/plan.js` |
 | T19 | (closed 2026-10-12: commitments no longer carry an amount, so there is no unit to convert.) | n/a | |
-| T20 | Which measures matter most in Commitment patterns? Today: kept rate, delivered against promised, lead time, dates moved, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
+| T20 | Which measures matter most in Commitment patterns? Today: goals reported on time, Did it help, cost against revenue, responsiveness, projects that left the list | see SPEC section 9a | `patterns.js` |
 | T21 | BD report: should "Other" be the home for revenue with no market sector, or should the Admin always be asked? | ask (publishing is refused until each project has a sector) | Admin > BD reports > rules |
 | T22 | BD report: do PICs see it? Do Finance and Marketing see the MWIP factor? | PICs no (setting); Finance and Marketing yes, PICs never see the factor | `access.picBd`; `server/bd.js` |
 | T23 | BD report: status thresholds 100% (On Track) and 99% of pace (On Pace) are the spec's; confirm | as spec | Admin > BD reports > rules |
@@ -54,10 +61,10 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | P2 | Normal billing lowers the contracted forecast, so "Forecast drops fast" will fire on a busy week. Alert on the whole drop, or only on the part moved into next year? | the whole drop, threshold $150,000 in 7 days | Admin > Pipeline alerts |
 | P3 | "MWIP slides week after week": the mockup's own table slides every week for every PIC, so a short run would alert on everyone. How many in a row? | 8 | Admin > Pipeline alerts |
 | P4 | The spec offers a PIC copy of the Monday alert email. The handoff rule is that the system never emails a PIC. | no PIC email, no switch | |
-| P5 | Export Excel on Pipeline watch: CSV (opens in Excel) or a real .xlsx? | CSV | |
+| P5 | ~~Export Excel on Pipeline watch: CSV or a real .xlsx?~~ **Answered (Josh, 2026-11-25): Excel.** Export > Excel gives a real .xlsx; the CSV route stays in the API. | .xlsx | |
 | P6 | Should the Admin be able to re-run the rules on an old snapshot after changing a threshold? | no; past alerts stay as they were | |
-| T24 | Export PDF is a generated vector PDF (Scheduler-style export window). Anything else wanted: Excel, emailing it, a fixed monthly PDF saved on the server? | PDF download only | Export PDF window |
-| T17 | Export Excel on the Turnaround page; contract fee and billed-to-date on the plan page | not built (no fee data in the validated SQL) | |
+| T24 | Export PDF: anything else wanted? **Partly answered (Josh, 2026-11-25): Excel too.** Export > Excel gives both tabs as two sheets. Still open: emailing it, a fixed monthly PDF saved on the server. | PDF window and Excel | Export menu |
+| T17 | ~~Export Excel on the Turnaround page~~ **Answered (Josh, 2026-11-25): built** (Export > Excel, one row per project; Export > PDF prints the page). Still open: contract fee and billed-to-date on the plan page. | not built (no fee data in the validated SQL) | |
 
 ## Billing (not built; see `docs/SPEC-billing.md`)
 

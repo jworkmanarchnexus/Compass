@@ -11,6 +11,13 @@ CREATE TABLE IF NOT EXISTS employees (
   last_name   TEXT NOT NULL,
   email       TEXT NOT NULL DEFAULT ''
 );
+-- Compass's own: the name to show for a Vantagepoint person instead of the Vantagepoint name (Admin > People). Never written back.
+CREATE TABLE IF NOT EXISTS employee_names (
+  code         TEXT PRIMARY KEY,          -- VP employee code
+  display_name TEXT NOT NULL,
+  set_by       TEXT,                      -- users.id
+  set_at       INTEGER
+);
 CREATE TABLE IF NOT EXISTS projects (
   wbs1        TEXT PRIMARY KEY,           -- VP project number (PR.WBS1)
   name        TEXT NOT NULL,
@@ -528,6 +535,15 @@ CREATE TABLE IF NOT EXISTS billing_notifications (   -- what the email rules say
   request_id    TEXT,
   involved_json TEXT NOT NULL DEFAULT '[]',          -- the processors it concerns
   delivery_json TEXT NOT NULL DEFAULT '[]'           -- for each: how their email settings say to deliver it [{ userId, mode, sendAt }]
+);
+
+-- My dashboards: each person's own arrangement of the curated dashparts, per dashboard (modules/dashboard/logic). Saving replaces the row.
+CREATE TABLE IF NOT EXISTS dashboard_layouts (
+  user_id     TEXT NOT NULL REFERENCES users(id),
+  board       TEXT NOT NULL CHECK (board IN ('pic','pm')),
+  layout_json TEXT NOT NULL,     -- { version, items: [{ id, w, h, on }] }, always normalized against that dashboard's catalog before it is stored
+  updated_at  INTEGER NOT NULL,
+  PRIMARY KEY (user_id, board)
 );
 
 CREATE TRIGGER IF NOT EXISTS billing_revisions_no_update BEFORE UPDATE ON billing_revisions BEGIN SELECT RAISE(ABORT, 'billing revisions are never changed'); END;

@@ -3,6 +3,7 @@
    The rules live in modules/turnaround/logic (pure, tested); this file applies them to the database.
    The database itself also enforces the lock with triggers (schema.sql), so a bug here still cannot change a published run. */
 const crypto = require('node:crypto');
+const { employeeNames } = require('./names');
 const { HttpError } = require('./errors');
 const profit = require('../modules/turnaround/logic/profit');
 const selection = require('../modules/turnaround/logic/selection');
@@ -133,7 +134,7 @@ function listRuns(db) {
 /* a run with its projects (names resolved from the Vantagepoint copy) and, for the admin, its warnings */
 function runDetail(db, id, { withWarnings }) {
   const r = getRun(db, id);
-  const emp = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
+  const emp = employeeNames(db);
   const who = code => ({ code, name: code ? (emp[code] || code) : 'Unassigned' });
   const projects = db.all('SELECT * FROM run_projects WHERE run_id = ? ORDER BY pic_code, profit_ytd, wbs1', r.id).map(p => ({
     wbs1: p.wbs1, name: p.name, pic: who(p.pic_code), pm: who(p.pm_code),

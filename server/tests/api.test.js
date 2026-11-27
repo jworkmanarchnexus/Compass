@@ -56,18 +56,18 @@ test('system admin can read Admin but never change it', () => withApp(async ({ a
 test('settings: saving adds a dated row, is audited, and an unchanged value does nothing', () => withApp(async ({ api, db }) => {
   const josh = api('j.workman');
   const before = (await josh.get('/api/admin/settings')).body;
-  assert.strictEqual(before['due.newProjectDays'].value, 14);
-  assert.strictEqual(before['due.newProjectDays'].effectiveFrom, null, 'still the default');
+  assert.strictEqual(before['round.midOpensDays'].value, 14);
+  assert.strictEqual(before['round.midOpensDays'].effectiveFrom, null, 'still the default');
 
-  assert.deepStrictEqual((await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 10, 'due.afterEntryDays': 30 } })).body, { saved: 1 });
+  assert.deepStrictEqual((await josh.put('/api/admin/settings', { changes: { 'round.midOpensDays': 10, 'due.missedAfterDays': 14 } })).body, { saved: 1 });
   const after = (await josh.get('/api/admin/settings')).body;
-  assert.strictEqual(after['due.newProjectDays'].value, 10);
-  assert.ok(after['due.newProjectDays'].effectiveFrom > 0);
-  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'due.newProjectDays'").n, 1);
+  assert.strictEqual(after['round.midOpensDays'].value, 10);
+  assert.ok(after['round.midOpensDays'].effectiveFrom > 0);
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'round.midOpensDays'").n, 1);
 
   // changing it again keeps the old row, so a run built earlier can still be reproduced
-  await josh.put('/api/admin/settings', { changes: { 'due.newProjectDays': 21 } });
-  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'due.newProjectDays'").n, 2);
+  await josh.put('/api/admin/settings', { changes: { 'round.midOpensDays': 21 } });
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM settings WHERE key = 'round.midOpensDays'").n, 2);
 
   const log = (await josh.get('/api/admin/audit')).body;
   assert.strictEqual(log.filter(e => e.action === 'setting.change').length, 2);
@@ -130,9 +130,57 @@ test('people: a deactivated person can no longer use the app but keeps their his
 }));
 
 test('the audit log is append-only: the database itself refuses changes and deletes', () => withApp(async ({ api, db }) => {
-  await api('j.workman').put('/api/admin/settings', { changes: { 'due.newProjectDays': 9 } });
+  await api('j.workman').put('/api/admin/settings', { changes: { 'round.midOpensDays': 9 } });
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM audit_log').n, 1);
   assert.throws(() => db.run("UPDATE audit_log SET action = 'x'"), /append-only/);
   assert.throws(() => db.run('DELETE FROM audit_log'), /append-only/);
   assert.strictEqual(db.get('SELECT COUNT(*) n FROM audit_log').n, 1);
+}));
+
+test('preview: a module in preview opens only for the Admin and the picked testers, and the server enforces it', () => withApp(async ({ api, db }) => {
+  const id = u => db.get('SELECT id FROM users WHERE username = ?', u).id;
+  const josh = api('j.workman');
+  const live = { stage: 'live', testers: [] };
+  const release = { turnaround: live, bd: live, pipeline: live, billing: { stage: 'preview', testers: [id('d.whitfield'), id('karen.acct')] } };
+
+  assert.strictEqual((await api('m.oyelaran').get('/api/billing/portfolio')).status, 200, 'live: every PIC opens Billing');
+  assert.strictEqual((await josh.put('/api/admin/settings', { changes: { release } })).status, 200);
+  assert.strictEqual(db.get("SELECT COUNT(*) n FROM audit_log WHERE action = 'setting.change' AND object = 'release'").n, 1, 'the change is in the audit log');
+
+  // picked PIC and processor: open, tagged Preview
+  for (const who of ['d.whitfield', 'karen.acct']) {
+    const me = (await api(who).get('/api/me')).body;
+    assert.strictEqual(me.areas.billing, true, who);
+    assert.strictEqual(me.preview.billing, true, who);
+    assert.strictEqual((await api(who).get('/api/billing/portfolio')).status, 200, who);
+  }
+  // not picked: hidden and refused
+  for (const who of ['m.oyelaran', 'camille.acct', 'a.ruiz']) {
+    const me = (await api(who).get('/api/me')).body;
+    assert.strictEqual(me.areas.billing, false, who);
+    assert.strictEqual((await api(who).get('/api/billing/portfolio')).status, 403, who);
+  }
+  // the Admin always sees it
+  const jm = (await josh.get('/api/me')).body;
+  assert.strictEqual(jm.areas.billing, true);
+  assert.strictEqual(jm.preview.billing, true);
+  assert.strictEqual(jm.preview.bd, false, 'live modules are not tagged');
+
+  // testers must be real people; nothing is saved otherwise
+  const bad = { ...release, bd: { stage: 'preview', testers: ['nobody-here'] } };
+  assert.strictEqual((await josh.put('/api/admin/settings', { changes: { release: bad } })).status, 400);
+  assert.strictEqual((await api('m.hale').get('/api/me')).body.areas.bd, true, 'the bad save changed nothing');
+
+  // back to live for everyone
+  assert.strictEqual((await josh.put('/api/admin/settings', { changes: { release: { ...release, billing: live } } })).status, 200);
+  assert.strictEqual((await api('m.oyelaran').get('/api/billing/portfolio')).status, 200);
+}));
+
+test('preview: Marketing Report in preview hides it from Finance and Marketing who were not picked', () => withApp(async ({ api, db }) => {
+  const live = { stage: 'live', testers: [] };
+  const hale = db.get("SELECT id FROM users WHERE username = 'm.hale'").id;
+  await api('j.workman').put('/api/admin/settings', { changes: { release: { turnaround: live, bd: { stage: 'preview', testers: [hale] }, pipeline: live, billing: live } } });
+  assert.strictEqual((await api('m.hale').get('/api/me')).body.areas.bd, true);
+  assert.strictEqual((await api('c.brandt').get('/api/me')).body.areas.bd, false);
+  assert.strictEqual((await api('c.brandt').get('/api/home')).body.areas.bd, false, 'Home agrees with the side bar');
 }));

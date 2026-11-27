@@ -1,9 +1,6 @@
 {
- "_note": "Dates are YYYY-MM-DD. Settings are the Admin defaults. Hand-worked; see the names for the reasoning.",
+ "_note": "Rounds: Sep 2 2026 (August numbers) and Oct 2 2026 (September numbers). Worked by hand: the Sep 2 round has its goal check-in due Sep 9, the mid-month update opening Sep 16 and due Sep 23; the Oct 2 round: Oct 9, Oct 16, Oct 23. Weekdays only; holidays are not modelled.",
  "settings": {
-  "due.newProjectDays": 14,
-  "due.afterEntryDays": 30,
-  "due.soonDays": 14,
   "due.graceUntil": "02-01",
   "ladder.reminder1Days": 3,
   "ladder.reminder2Days": 10,
@@ -13,300 +10,509 @@
   "standing.goodOnTime": 85,
   "standing.goodKept": 80,
   "standing.escalatedOnTime": 60,
-  "standing.escalatedKept": 50
+  "standing.escalatedKept": 50,
+  "round.dueBusinessDays": 5,
+  "round.midOpensDays": 14,
+  "due.missedAfterDays": 14
  },
+ "roundDates": [
+  {
+   "start": "2026-09-02",
+   "expect": {
+    "goalDue": "2026-09-09",
+    "midOpens": "2026-09-16",
+    "midDue": "2026-09-23"
+   }
+  },
+  {
+   "start": "2026-10-02",
+   "expect": {
+    "goalDue": "2026-10-09",
+    "midOpens": "2026-10-16",
+    "midDue": "2026-10-23"
+   }
+  },
+  {
+   "start": "2026-01-05",
+   "expect": {
+    "goalDue": "2026-02-01",
+    "midOpens": "2026-01-19",
+    "midDue": "2026-01-26"
+   }
+  }
+ ],
  "planStatus": [
   {
-   "name": "new project, inside its 14 days",
+   "name": "new on the list, no goal yet, inside its first week",
    "today": "2026-10-07",
    "firstAppeared": "2026-10-02",
    "entries": [],
    "expect": {
     "status": "no_plan",
-    "dueDate": "2026-10-16",
+    "dueDate": "2026-10-09",
     "daysOverdue": 0,
-    "hasPlan": false
-   }
+    "owes": "goal"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "new project, 4 days past its first-plan date",
-   "today": "2026-10-20",
-   "firstAppeared": "2026-10-02",
+   "name": "no goal, a month after first appearing",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-09-02",
    "entries": [],
    "expect": {
     "status": "no_plan",
-    "dueDate": "2026-10-16",
-    "daysOverdue": 4
-   }
+    "dueDate": "2026-09-09",
+    "daysOverdue": 28,
+    "owes": "goal"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "an explanation alone is not a plan",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-08-01",
+   "name": "an explanation alone is not a goal",
+   "today": "2026-09-08",
+   "firstAppeared": "2026-09-02",
    "entries": [
     {
-     "id": "e1",
+     "id": "x1",
      "kind": "explanation",
-     "date": "2026-09-20"
+     "date": "2026-09-05",
+     "data": {}
     }
    ],
    "expect": {
     "status": "no_plan",
-    "dueDate": "2026-08-15",
-    "daysOverdue": 53,
-    "hasPlan": false,
-    "lastEntryDate": "2026-09-20"
-   }
-  },
-  {
-   "name": "January grace: nothing is due before Feb 1 even for an old project",
-   "today": "2026-01-20",
-   "firstAppeared": "2025-06-01",
-   "entries": [],
-   "expect": {
-    "status": "no_plan",
-    "dueDate": "2026-02-01",
+    "dueDate": "2026-09-09",
     "daysOverdue": 0
-   }
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "after the grace period it is overdue (9 days)",
-   "today": "2026-02-10",
-   "firstAppeared": "2025-06-01",
-   "entries": [],
-   "expect": {
-    "status": "no_plan",
-    "dueDate": "2026-02-01",
-    "daysOverdue": 9
-   }
-  },
-  {
-   "name": "current: open commitment far off, entry 7 days ago",
+   "name": "goal set last month; this month's goal check-in not done, not yet due",
    "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
+   "firstAppeared": "2026-09-02",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-15",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
      "data": {
-      "promisedBy": "2026-11-14"
+      "lever": "cost"
+     }
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-09",
+    "daysOverdue": 0,
+    "owes": "goal"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "this month's goal check-in past due",
+   "today": "2026-10-12",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    }
+   ],
+   "expect": {
+    "status": "overdue",
+    "dueDate": "2026-10-09",
+    "daysOverdue": 3,
+    "owes": "goal"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "goal check-in done, the mid-month update not open yet",
+   "today": "2026-10-12",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
      }
     },
     {
-     "id": "u1",
-     "kind": "update",
-     "date": "2026-09-30"
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
     }
    ],
    "expect": {
     "status": "current",
-    "dueDate": "2026-10-30",
+    "dueDate": null,
     "daysOverdue": 0,
-    "hasOpenCommitment": true
-   }
+    "owes": ""
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "update due: the commitment date is 10 days away",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
+   "name": "the mid-month update opens two weeks after publishing",
+   "today": "2026-10-16",
+   "firstAppeared": "2026-09-02",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-15",
-     "data": {
-      "promisedBy": "2026-10-17"
-     }
-    },
-    {
-     "id": "u1",
-     "kind": "update",
-     "date": "2026-09-29"
-    }
-   ],
-   "expect": {
-    "status": "update_due",
-    "dueDate": "2026-10-17",
-    "daysOverdue": 0
-   }
-  },
-  {
-   "name": "overdue: the commitment date passed 11 days ago",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-09-15",
-     "data": {
-      "promisedBy": "2026-09-26"
-     }
-    }
-   ],
-   "expect": {
-    "status": "overdue",
-    "dueDate": "2026-09-26",
-    "daysOverdue": 11
-   }
-  },
-  {
-   "name": "a revised date moves the due date",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-09-15",
-     "data": {
-      "promisedBy": "2026-10-03"
-     }
-    },
-    {
-     "id": "r1",
-     "kind": "date_revised",
-     "date": "2026-09-29",
+     "date": "2026-09-04",
      "commitmentId": "c1",
      "data": {
-      "from": "2026-10-03",
-      "to": "2026-10-17"
-     }
-    }
-   ],
-   "expect": {
-    "status": "update_due",
-    "dueDate": "2026-10-17",
-    "daysOverdue": 0
-   }
-  },
-  {
-   "name": "all commitments done and nothing new for 41 days: overdue",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-08-18",
-     "data": {
-      "promisedBy": "2026-08-29"
+      "lever": "cost"
      }
     },
     {
      "id": "d1",
      "kind": "done",
-     "date": "2026-08-27",
-     "commitmentId": "c1"
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
+    }
+   ],
+   "expect": {
+    "status": "update_due",
+    "dueDate": "2026-10-23",
+    "daysOverdue": 0,
+    "owes": "mid"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "the mid-month update past due",
+   "today": "2026-10-26",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
     }
    ],
    "expect": {
     "status": "overdue",
-    "dueDate": "2026-09-26",
-    "daysOverdue": 11,
-    "hasOpenCommitment": false
-   }
+    "dueDate": "2026-10-23",
+    "daysOverdue": 3,
+    "owes": "mid"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "nothing open but a recent entry: never current, the PIC owes a next commitment",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
+   "name": "the mid-month update done",
+   "today": "2026-10-26",
+   "firstAppeared": "2026-09-02",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-08-18",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
      "data": {
-      "promisedBy": "2026-08-29"
+      "lever": "cost"
      }
     },
     {
      "id": "d1",
      "kind": "done",
-     "date": "2026-08-27",
-     "commitmentId": "c1"
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "m1",
+     "kind": "update",
+     "date": "2026-10-19",
+     "commitmentId": "c2",
+     "data": {
+      "midStatus": "progress"
+     }
+    }
+   ],
+   "expect": {
+    "status": "current",
+    "dueDate": null,
+    "owes": ""
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "a plain comment is not the mid-month update",
+   "today": "2026-10-26",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
     },
     {
      "id": "u1",
      "kind": "update",
-     "date": "2026-09-30"
+     "date": "2026-10-19",
+     "data": {}
     }
    ],
    "expect": {
-    "status": "update_due",
-    "dueDate": "2026-10-30",
+    "status": "overdue",
+    "daysOverdue": 3,
+    "owes": "mid"
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "a goal set after the mid-month update opened: no mid-month update this round",
+   "today": "2026-10-26",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-20",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
+    }
+   ],
+   "expect": {
+    "status": "current",
+    "owes": ""
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "a missed mid-month update last month does not carry into this month",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-09-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-05",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
+    }
+   ],
+   "expect": {
+    "status": "current",
+    "owes": ""
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "January: the first goal waits for the grace period",
+   "today": "2026-01-20",
+   "firstAppeared": "2026-01-05",
+   "rounds": [
+    "2026-01-05"
+   ],
+   "entries": [],
+   "expect": {
+    "status": "no_plan",
+    "dueDate": "2026-02-01",
     "daysOverdue": 0
    }
   },
   {
-   "name": "last year does not carry over: fresh start in January",
-   "today": "2026-03-01",
-   "firstAppeared": "2025-11-01",
+   "name": "last year's goal does not count this year",
+   "today": "2026-01-20",
+   "firstAppeared": "2025-12-02",
+   "rounds": [
+    "2025-12-02",
+    "2026-01-05"
+   ],
    "entries": [
     {
-     "id": "c0",
+     "id": "c1",
      "kind": "commitment",
-     "date": "2025-12-01",
+     "date": "2025-12-04",
+     "commitmentId": "c1",
      "data": {
-      "promisedBy": "2026-01-15"
+      "lever": "cost"
      }
     }
    ],
    "expect": {
     "status": "no_plan",
     "dueDate": "2026-02-01",
-    "daysOverdue": 28,
-    "hasPlan": false
-   }
-  },
-  {
-   "name": "an admin note does not reset the PIC clock",
-   "today": "2026-10-07",
-   "firstAppeared": "2026-07-01",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-09-15",
-     "data": {
-      "promisedBy": "2026-11-01"
-     }
-    },
-    {
-     "id": "n1",
-     "kind": "admin_note",
-     "date": "2026-10-05"
-    }
-   ],
-   "expect": {
-    "status": "update_due",
-    "dueDate": "2026-10-15",
-    "daysOverdue": 0,
-    "lastEntryDate": "2026-09-15"
+    "daysOverdue": 0
    }
   }
  ],
  "commitmentStates": [
   {
-   "name": "open, date revised once",
+   "name": "a goal is due at the next month's goal check-in",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-15",
-     "data": {
-      "promisedBy": "2026-10-03"
-     }
-    },
-    {
-     "id": "r1",
-     "kind": "date_revised",
-     "date": "2026-09-29",
+     "date": "2026-09-04",
      "commitmentId": "c1",
      "data": {
-      "from": "2026-10-03",
-      "to": "2026-10-17"
+      "lever": "cost"
      }
     }
    ],
@@ -314,111 +520,125 @@
     {
      "id": "c1",
      "status": "open",
-     "dueDate": "2026-10-17",
-     "promisedBy": "2026-10-03",
-     "revisions": 1,
-     "kept": null
+     "dueDate": "2026-10-09",
+     "kept": null,
+     "helped": null,
+     "mid": null
     }
    ]
   },
   {
-   "name": "done before its date is kept",
+   "name": "a goal set this month has no due date until next month is published",
    "entries": [
     {
-     "id": "c1",
+     "id": "c2",
      "kind": "commitment",
-     "date": "2026-08-18",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
      "data": {
-      "promisedBy": "2026-08-29"
+      "lever": "cost"
      }
-    },
-    {
-     "id": "d1",
-     "kind": "done",
-     "date": "2026-08-27",
-     "commitmentId": "c1"
     }
    ],
    "expect": [
     {
-     "id": "c1",
-     "status": "done",
-     "dueDate": "2026-08-29",
-     "revisions": 0,
-     "kept": true
+     "id": "c2",
+     "status": "open",
+     "dueDate": null
     }
    ]
   },
   {
-   "name": "done on its date is kept",
+   "name": "reported on by its due date: kept",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-08-18",
-     "data": {
-      "promisedBy": "2026-08-29"
-     }
-    },
-    {
-     "id": "d1",
-     "kind": "done",
-     "date": "2026-08-29",
-     "commitmentId": "c1"
-    }
-   ],
-   "expect": [
-    {
-     "id": "c1",
-     "status": "done",
-     "kept": true
-    }
-   ]
-  },
-  {
-   "name": "done after its date is not kept",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-08-18",
-     "data": {
-      "promisedBy": "2026-08-29"
-     }
-    },
-    {
-     "id": "d1",
-     "kind": "done",
-     "date": "2026-09-02",
-     "commitmentId": "c1"
-    }
-   ],
-   "expect": [
-    {
-     "id": "c1",
-     "status": "done",
-     "kept": false
-    }
-   ]
-  },
-  {
-   "name": "missed by the system",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-08-31",
-     "data": {
-      "promisedBy": "2026-09-12"
-     }
-    },
-    {
-     "id": "m1",
-     "kind": "missed",
-     "date": "2026-09-14",
+     "date": "2026-09-04",
      "commitmentId": "c1",
      "data": {
-      "dueDate": "2026-09-12"
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-08",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "early",
+      "improved": null
+     }
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "kept": true,
+     "helped": "early"
+    }
+   ]
+  },
+  {
+   "name": "reported on after its due date: done late",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-12",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "no",
+      "improved": false
+     }
+    }
+   ],
+   "expect": [
+    {
+     "id": "c1",
+     "status": "done",
+     "kept": false,
+     "helped": "no"
+    }
+   ]
+  },
+  {
+   "name": "missed is final: a later report is ignored",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
+    },
+    {
+     "id": "x",
+     "kind": "missed",
+     "date": "2026-10-23",
+     "commitmentId": "c1",
+     "data": {}
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-24",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
      }
     }
    ],
@@ -431,99 +651,81 @@
    ]
   },
   {
-   "name": "a closed commitment is final",
+   "name": "an older goal keeps its own date",
    "entries": [
     {
-     "id": "c1",
+     "id": "c0",
      "kind": "commitment",
      "date": "2026-08-18",
+     "commitmentId": "c0",
      "data": {
+      "lever": "labor",
       "promisedBy": "2026-08-29"
      }
     },
     {
-     "id": "d1",
+     "id": "d0",
      "kind": "done",
      "date": "2026-08-27",
-     "commitmentId": "c1"
-    },
-    {
-     "id": "r1",
-     "kind": "date_revised",
-     "date": "2026-09-01",
-     "commitmentId": "c1",
+     "commitmentId": "c0",
      "data": {
-      "from": "2026-08-29",
-      "to": "2026-10-01"
+      "helped": "yes",
+      "improved": true
      }
-    },
-    {
-     "id": "m1",
-     "kind": "missed",
-     "date": "2026-09-20",
-     "commitmentId": "c1"
     }
    ],
    "expect": [
     {
-     "id": "c1",
+     "id": "c0",
      "status": "done",
      "dueDate": "2026-08-29",
-     "revisions": 0,
      "kept": true
     }
    ]
   },
   {
-   "name": "revised, then done by the new date is kept",
+   "name": "a mid-month update is noted on the goal and does not close it",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-01",
-     "data": {
-      "promisedBy": "2026-09-12"
-     }
-    },
-    {
-     "id": "r1",
-     "kind": "date_revised",
-     "date": "2026-09-14",
+     "date": "2026-09-04",
      "commitmentId": "c1",
      "data": {
-      "from": "2026-09-12",
-      "to": "2026-10-03"
+      "lever": "cost"
      }
     },
     {
-     "id": "d1",
-     "kind": "done",
-     "date": "2026-10-01",
-     "commitmentId": "c1"
+     "id": "m1",
+     "kind": "update",
+     "date": "2026-09-17",
+     "commitmentId": "c1",
+     "data": {
+      "midStatus": "stuck"
+     }
     }
    ],
    "expect": [
     {
      "id": "c1",
-     "status": "done",
-     "dueDate": "2026-10-03",
-     "revisions": 1,
-     "kept": true
+     "status": "open",
+     "mid": "stuck"
     }
    ]
   }
  ],
  "commitmentsToMiss": [
   {
-   "name": "18 days past its date",
-   "today": "2026-09-30",
+   "name": "14 days after the goal check-in was due",
+   "today": "2026-10-23",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-01",
+     "date": "2026-09-04",
+     "commitmentId": "c1",
      "data": {
-      "promisedBy": "2026-09-12"
+      "lever": "cost"
      }
     }
    ],
@@ -532,62 +734,33 @@
    ]
   },
   {
-   "name": "13 days past: not yet",
-   "today": "2026-09-25",
+   "name": "13 days after: not yet",
+   "today": "2026-10-22",
    "entries": [
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-01",
-     "data": {
-      "promisedBy": "2026-09-12"
-     }
-    }
-   ],
-   "expect": []
-  },
-  {
-   "name": "the date was moved, so it is not past",
-   "today": "2026-09-30",
-   "entries": [
-    {
-     "id": "c1",
-     "kind": "commitment",
-     "date": "2026-09-01",
-     "data": {
-      "promisedBy": "2026-09-12"
-     }
-    },
-    {
-     "id": "r1",
-     "kind": "date_revised",
-     "date": "2026-09-14",
+     "date": "2026-09-04",
      "commitmentId": "c1",
      "data": {
-      "from": "2026-09-12",
-      "to": "2026-10-03"
+      "lever": "cost"
      }
     }
    ],
    "expect": []
   },
   {
-   "name": "already done",
-   "today": "2026-09-30",
+   "name": "a goal with no due date yet is never missed",
+   "today": "2026-12-31",
    "entries": [
     {
-     "id": "c1",
+     "id": "c2",
      "kind": "commitment",
-     "date": "2026-09-01",
+     "date": "2026-10-05",
+     "commitmentId": "c2",
      "data": {
-      "promisedBy": "2026-09-12"
+      "lever": "cost"
      }
-    },
-    {
-     "id": "d1",
-     "kind": "done",
-     "date": "2026-09-10",
-     "commitmentId": "c1"
     }
    ],
    "expect": []
@@ -595,123 +768,141 @@
  ],
  "onTimeStats": [
   {
-   "name": "two on time, one late",
-   "today": "2026-10-20",
-   "firstAppeared": "2026-08-01",
+   "name": "nothing due yet",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-10-02",
+   "entries": [],
+   "expect": {
+    "onTime": 0,
+    "total": 0
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "first goal late, mid-month on time, next goal on time",
+   "today": "2026-10-12",
+   "firstAppeared": "2026-09-02",
    "entries": [
-    {
-     "id": "e1",
-     "kind": "explanation",
-     "date": "2026-08-10"
-    },
     {
      "id": "c1",
      "kind": "commitment",
-     "date": "2026-09-09",
+     "date": "2026-09-12",
+     "commitmentId": "c1",
      "data": {
-      "promisedBy": "2026-10-30"
+      "lever": "cost"
      }
     },
     {
-     "id": "u1",
+     "id": "m1",
      "kind": "update",
-     "date": "2026-10-12"
+     "date": "2026-09-22",
+     "commitmentId": "c1",
+     "data": {
+      "midStatus": "progress"
+     }
+    },
+    {
+     "id": "d1",
+     "kind": "done",
+     "date": "2026-10-08",
+     "commitmentId": "c1",
+     "data": {
+      "helped": "yes",
+      "improved": true
+     }
+    },
+    {
+     "id": "c2",
+     "kind": "commitment",
+     "date": "2026-10-08",
+     "commitmentId": "c2",
+     "data": {
+      "lever": "cost"
+     }
     }
    ],
    "expect": {
     "onTime": 2,
     "total": 3
-   }
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "no entries yet",
-   "today": "2026-10-20",
-   "firstAppeared": "2026-08-01",
+   "name": "nothing done counts once each goal check-in is past due",
+   "today": "2026-10-12",
+   "firstAppeared": "2026-09-02",
    "entries": [],
    "expect": {
     "onTime": 0,
-    "total": 0
-   }
+    "total": 2
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   },
   {
-   "name": "inside the January grace period counts as on time",
-   "today": "2026-03-01",
-   "firstAppeared": "2026-01-05",
+   "name": "a round still open is not counted yet",
+   "today": "2026-10-07",
+   "firstAppeared": "2026-09-02",
    "entries": [
     {
-     "id": "e1",
-     "kind": "explanation",
-     "date": "2026-01-25"
-    }
-   ],
-   "expect": {
-    "onTime": 1,
-    "total": 1
-   }
-  },
-  {
-   "name": "the first entry made after Feb 1 is late",
-   "today": "2026-03-01",
-   "firstAppeared": "2026-01-05",
-   "entries": [
-    {
-     "id": "e1",
-     "kind": "explanation",
-     "date": "2026-02-02"
-    }
-   ],
-   "expect": {
-    "onTime": 0,
-    "total": 1
-   }
-  },
-  {
-   "name": "admin notes and the system are not the PIC entries",
-   "today": "2026-10-20",
-   "firstAppeared": "2026-08-01",
-   "entries": [
-    {
-     "id": "n1",
-     "kind": "admin_note",
-     "date": "2026-08-05"
-    },
-    {
-     "id": "e1",
-     "kind": "explanation",
-     "date": "2026-08-10"
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-09-05",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
     },
     {
      "id": "m1",
-     "kind": "missed",
+     "kind": "update",
      "date": "2026-09-20",
-     "commitmentId": "x"
+     "commitmentId": "c1",
+     "data": {
+      "midStatus": "progress"
+     }
+    }
+   ],
+   "expect": {
+    "onTime": 2,
+    "total": 2
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
+  },
+  {
+   "name": "a project new on the October run is measured from there",
+   "today": "2026-10-30",
+   "firstAppeared": "2026-10-02",
+   "entries": [
+    {
+     "id": "c1",
+     "kind": "commitment",
+     "date": "2026-10-06",
+     "commitmentId": "c1",
+     "data": {
+      "lever": "cost"
+     }
     }
    ],
    "expect": {
     "onTime": 1,
-    "total": 1
-   }
-  },
-  {
-   "name": "last year entries are not counted",
-   "today": "2026-10-20",
-   "firstAppeared": "2025-01-05",
-   "entries": [
-    {
-     "id": "e1",
-     "kind": "explanation",
-     "date": "2025-12-10"
-    },
-    {
-     "id": "e2",
-     "kind": "update",
-     "date": "2026-03-01"
-    }
-   ],
-   "expect": {
-    "onTime": 0,
-    "total": 1
-   }
+    "total": 2
+   },
+   "rounds": [
+    "2026-09-02",
+    "2026-10-02"
+   ]
   }
  ],
  "keptStats": [
@@ -989,62 +1180,215 @@
    "expect": true
   }
  ],
- "nextDue": [
+ "goalCheckinProblem": [
   {
-   "name": "before the first check-in",
-   "appeared": "2026-10-02",
-   "today": "2026-10-07",
-   "cadence": 14,
-   "expect": "2026-10-16"
+   "name": "already done this round",
+   "input": {
+    "approach": "cost",
+    "how": "x"
+   },
+   "state": {
+    "explained": true,
+    "openGoal": null,
+    "lastGoal": null,
+    "doneThisRound": true
+   },
+   "expect": "already done"
   },
   {
-   "name": "the day before a check-in",
-   "appeared": "2026-10-02",
-   "today": "2026-10-15",
-   "cadence": 14,
-   "expect": "2026-10-16"
+   "name": "new to the list: say what is driving the loss",
+   "input": {
+    "approach": "cost",
+    "how": "x"
+   },
+   "state": {
+    "explained": false,
+    "openGoal": null,
+    "lastGoal": null,
+    "doneThisRound": false
+   },
+   "expect": "Say what is driving the loss."
   },
   {
-   "name": "on a check-in day, a new commitment is due at the next one",
-   "appeared": "2026-10-02",
-   "today": "2026-10-16",
-   "cadence": 14,
-   "expect": "2026-10-30"
+   "name": "an open goal needs Did it help",
+   "input": {
+    "comment": "x",
+    "keep": true
+   },
+   "state": {
+    "explained": true,
+    "openGoal": "c1",
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": "Say whether your last goal helped"
   },
   {
-   "name": "the day the report went live",
-   "appeared": "2026-10-02",
-   "today": "2026-10-02",
-   "cadence": 14,
-   "expect": "2026-10-16"
+   "name": "an open goal needs a comment",
+   "input": {
+    "helped": "yes",
+    "comment": "  ",
+    "keep": true
+   },
+   "state": {
+    "explained": true,
+    "openGoal": "c1",
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": "Add a comment on how your last goal went."
   },
   {
-   "name": "a weekly cadence",
-   "appeared": "2026-10-02",
-   "today": "2026-10-20",
-   "cadence": 7,
-   "expect": "2026-10-23"
+   "name": "keep the same goal",
+   "input": {
+    "helped": "early",
+    "comment": "Started last week.",
+    "keep": true
+   },
+   "state": {
+    "explained": true,
+    "openGoal": "c1",
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": null
   },
   {
-   "name": "no report date yet counts from today",
-   "appeared": null,
-   "today": "2026-10-07",
-   "cadence": 14,
-   "expect": "2026-10-21"
+   "name": "nothing to keep",
+   "input": {
+    "keep": true
+   },
+   "state": {
+    "explained": true,
+    "openGoal": null,
+    "lastGoal": null,
+    "doneThisRound": false
+   },
+   "expect": "There is no goal to keep yet."
   },
   {
-   "name": "a report date in the future still waits one cadence",
-   "appeared": "2026-10-10",
-   "today": "2026-10-07",
-   "cadence": 14,
-   "expect": "2026-10-24"
+   "name": "with a goal to keep, the PIC chooses: keep it or set a new one",
+   "input": {
+    "helped": "no",
+    "comment": "x"
+   },
+   "state": {
+    "explained": true,
+    "openGoal": "c1",
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": "Keep the same goal, or set a new one."
   },
   {
-   "name": "across a year end",
-   "appeared": "2026-12-20",
-   "today": "2027-01-02",
-   "cadence": 14,
-   "expect": "2027-01-03"
+   "name": "a new goal needs an approach",
+   "input": {
+    "helped": "no",
+    "comment": "x",
+    "keep": false,
+    "how": "x"
+   },
+   "state": {
+    "explained": true,
+    "openGoal": "c1",
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": "Pick an approach"
+  },
+  {
+   "name": "an older action is not an approach",
+   "input": {
+    "keep": false,
+    "approach": "labor",
+    "how": "x"
+   },
+   "state": {
+    "explained": true,
+    "openGoal": null,
+    "lastGoal": "c1",
+    "doneThisRound": false
+   },
+   "expect": "Pick an approach"
+  },
+  {
+   "name": "a new goal needs the how",
+   "input": {
+    "keep": false,
+    "approach": "cost",
+    "how": ""
+   },
+   "state": {
+    "explained": true,
+    "openGoal": null,
+    "lastGoal": null,
+    "doneThisRound": false
+   },
+   "expect": "Say how, specifically"
+  },
+  {
+   "name": "a first goal, complete",
+   "input": {
+    "cause": "Fee too low for the site work.",
+    "approach": "revenue",
+    "how": "Ask for an additional services fee."
+   },
+   "state": {
+    "explained": false,
+    "openGoal": null,
+    "lastGoal": null,
+    "doneThisRound": false
+   },
+   "expect": null
   }
+ ],
+ "midProblem": [
+  {
+   "name": "nothing owed",
+   "input": {
+    "status": "progress",
+    "comment": "x"
+   },
+   "state": {
+    "owesMid": false
+   },
+   "expect": "no mid-month update due"
+  },
+  {
+   "name": "needs where it stands",
+   "input": {
+    "comment": "x"
+   },
+   "state": {
+    "owesMid": true
+   },
+   "expect": "Pick where it stands"
+  },
+  {
+   "name": "needs a comment",
+   "input": {
+    "status": "stuck",
+    "comment": ""
+   },
+   "state": {
+    "owesMid": true
+   },
+   "expect": "Add a comment on where it stands."
+  },
+  {
+   "name": "complete",
+   "input": {
+    "status": "done",
+    "comment": "Sent the request."
+   },
+   "state": {
+    "owesMid": true
+   },
+   "expect": null
+  }
+ ],
+ "rounds": [
+  "2026-09-02",
+  "2026-10-02"
  ]
 }
