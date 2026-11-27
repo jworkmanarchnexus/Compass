@@ -1,6 +1,6 @@
 # Archnexus Compass
 
-Business intelligence and management accountability for Archnexus (~80-person architecture firm). Sister tool to the **Toolbox** (`../ToolBox`, tools that help architects work faster). Compass guides leadership: **Project Turnaround** first, then **BD report** and **Pipeline watch**, plus Home and Admin. Owner: Josh (architect becoming CFO, not a developer). Kent (IT) will host it and may rebuild the front end.
+Business intelligence and management accountability for Archnexus (~80-person architecture firm). Sister tool to the **Toolbox** (`../ToolBox`, tools that help architects work faster). Compass guides leadership: **Project Turnaround** first, then **BD report** and **Pipeline watch**, **Projects in Pursuit** (the PiP intake), plus Home and Admin. Owner: Josh (architect becoming CFO, not a developer). Kent (IT) will host it and may rebuild the front end.
 
 This repo is a working prototype on Josh's computer only (localhost) until Kent's server exists. Its lasting value is the behavior, data model, business rules with tests, and the look.
 
@@ -15,7 +15,7 @@ This repo is a working prototype on Josh's computer only (localhost) until Kent'
 | `reference/handoff/sql/compass_negative_projects.sql` | Validated Vantagepoint query. Source of truth for profit math. |
 | `reference/handoff/design/` | Clickable mockup (`portal-mockup.html`), 1440px screens, page source. A design reference, not code to ship. |
 | `docs/PLAN.md` | Phases, in order. One at a time. |
-| `docs/SPEC-turnaround.md`, `docs/SPEC-bd.md`, `docs/SPEC-pipeline.md`, `docs/SPEC-shell-and-admin.md`, `docs/SPEC-dashboard.md` | What is built: behavior, rules, permissions. Written from the tested code. |
+| `docs/SPEC-turnaround.md`, `docs/SPEC-bd.md`, `docs/SPEC-pipeline.md`, `docs/SPEC-shell-and-admin.md`, `docs/SPEC-dashboard.md`, `docs/SPEC-pip.md` | What is built: behavior, rules, permissions. Written from the tested code. |
 | `docs/DATA-MODEL.md` | The tables as built and the invariants the database enforces. |
 | `docs/FOR-KENT.md` | How to run it, what to keep, the five seams to replace, the API. |
 | `docs/OPEN-QUESTIONS.md` | Everything still undecided, with the default today. |
@@ -29,7 +29,7 @@ This repo is a working prototype on Josh's computer only (localhost) until Kent'
 - A published run is locked. Rerun = archive (reason + typing `RERUN`) and a new draft.
 - Plan logs are append-only: no edit, no delete; fixes are Correction entries. Entries belong to the project (WBS1), not the run.
 - Only the PIC writes plan content. Admin notes are labeled and public. Never post in a PIC's voice.
-- The system never emails a PIC as Josh. Reminders are admin-only check-in drafts he sends himself. The only automatic email goes to Josh and has no PIC data. This is about Project Turnaround. Billing has its own emails to invoice processors, set by each processor (Josh, 2026-10-30; `docs/SPEC-billing.md`); the Turnaround and Marketing report emails are separate.
+- The system never emails a PIC as Josh. Reminders are admin-only check-in drafts he sends himself. The only automatic email goes to Josh and has no PIC data. This is about Project Turnaround. Billing has its own emails to invoice processors, set by each processor (Josh, 2026-10-30; `docs/SPEC-billing.md`); the Turnaround and Marketing report emails are separate. Projects in Pursuit queues its own emails to the PIC, PM, primary PiP admin and CFO, and to whoever submitted a returned PiP (Josh, 2026-11-26; `docs/SPEC-pip.md`).
 - A commitment's action (including "Other" words), amount and actual result are visible to everyone who can read the plan (Josh reversed the handoff rule on 2026-10-11); the per-action analysis stays Admin-only. MWIP factor never on PIC pages. YTD only. MWIP and forecast always separate.
 - Every threshold is an effective-dated Admin setting, not a constant.
 - Copy stays plain and non-punitive.

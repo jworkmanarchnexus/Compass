@@ -81,3 +81,16 @@ Money is whole cents. Nothing here is ever deleted.
 | `billing_notifications` | what accounting should hear about, with how each person's own settings say to deliver it (now, held for business hours, digest, off) | nothing is sent yet |
 
 Roles: `pm` (a project manager, Billing only) and `processor` (an invoice processor) join `admin`, `pic`, `finance`, `marketing`, `sysadmin`. A PM or PIC is the author of a project when their VP employee code is its project-manager or principal code.
+
+## Projects in Pursuit tables (`docs/SPEC-pip.md`; `server/pip.js`)
+
+**Vantagepoint copy for PiP** (loaded by the pull, locally from `clients.csv` and `contacts.csv`): `vp_clients` (id, name, address) and `vp_contacts` (id, client, name, email, phone). `employees.licensed` (1, 0 or empty) narrows the project architect list once it is known (open PIP3).
+
+| Table | What | Rule |
+|---|---|---|
+| `pip_requests` | one per PiP: its number (`seq`), who submitted it and when, status, current revision, when it was decided, the Vantagepoint number | never deleted; a trigger refuses any change once created or withdrawn |
+| `pip_revisions` | every version of the form as submitted (cleaned fields, plus urgency as worked out that day) | append-only (triggers) |
+| `pip_events` | submit, review, return (with the note), resubmit, created (with the number), withdraw (with the reason) | append-only |
+| `pip_notifications` | the emails the rules say to send: who, why, subject, body | append-only; nothing is sent yet |
+
+The PiP settings (`pip.*`) live in `settings` like every other.

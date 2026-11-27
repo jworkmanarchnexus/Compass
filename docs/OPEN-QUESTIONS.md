@@ -86,3 +86,16 @@ Decided 2026-10-30 (Josh): processors are Karen, Camille and Josh; PMs and PICs 
 | K-B3 | How do amendments and multi-level WBS appear? | one line per billing phase | Kent |
 | K-B4 | Where does accounting enter amounts in VP; are draft or posted invoices readable? | manual handoff; no reconciliation | Kent |
 | K-B5 | A read-only database account for the pull | n/a locally | Kent |
+
+## Projects in Pursuit (`docs/SPEC-pip.md`)
+
+Decided 2026-11-26 (Josh): see `docs/DECISIONS.md`.
+
+| # | Question | Default today | Who |
+|---|---|---|---|
+| PIP1 | The worksheet labels 80-90% "Contracting", which is not a Vantagepoint stage. Which stage do PiPs at 80-90% use? | Awarded and Awarded with Interview allow 80% or 90%; Negotiation 50-70%. An Admin setting, so a change needs no rebuild | Josh / the PiP admin |
+| PIP2 | Should a PiP's submitter (and PIC and PM) get an email when it is created in Vantagepoint? | no: only submit and return send email | Josh |
+| PIP3 | Does Vantagepoint record who is a licensed architect, and where? | not known: anyone can be project architect | Kent |
+| PIP4 | Where do clients and contacts come from in the pull (Firms and Contacts tables), and which id is kept? | made-up `clients.csv` and `contacts.csv` | Kent |
+| PIP5 | How should the queued PiP emails be sent (the firm's mail automation)? | queued in `pip_notifications`, not sent | Kent |
+| PIP6 | Who are the real PiP admins, the primary admin and the CFO? Who on the sustainability team should be a viewer? | seed: Karen, Camille and Casey; Karen; Josh; no viewers | Josh |

@@ -139,3 +139,15 @@ Every call is checked on the server (`server/billing.js`); a PM or PIC reaches o
 **The pull.** `source.loadBilling()` (locally `server/vp-local.js`, from made-up CSV) is the one method to implement: projects with their billing type, billed to date and projection, and their phases or hourly lines. The table and column names behind it are Kent's to map to a verified Vantagepoint report (K-B1). Amounts that are submitted but not yet in Vantagepoint count as billed (`pending`) until the next copy is loaded, so a second request cannot overbill.
 
 **Emails.** `billing_notifications` records what accounting should hear about, with the delivery each person's settings call for. Nothing is sent yet; sending is Kent's question (H9).
+
+## Projects in Pursuit API (`docs/SPEC-pip.md`)
+
+| Call | Who | What |
+|---|---|---|
+| `GET /api/pip` | principals, PMs, PiP admins, viewers, Admin | the home list: waiting PiPs and the recent ones, and what this person may do |
+| `GET /api/pip/form` | as above | the lists, the Vantagepoint pickers (employees, principals, architects, clients with contacts) and the settings that shape the form |
+| `POST /api/pip` `{ fields }` | principals, PMs, Admin | submit; 400 with `problems: [{ field, message }]` when a rule fails |
+| `GET /api/pip/:id` | as for the list | one PiP: fields, resolved names, AIA 2030 status, the actions this person may take, history and queued emails |
+| `POST /api/pip/:id/<action>` (review, return, resubmit, created, withdraw) `{ status, note, number, fields }` | see the spec, section 4 | `status` is what the person saw (409 if it moved) |
+
+**For the pull:** clients and contacts (open PIP4), and whether employees carry a licensed-architect flag (PIP3). **For mail:** `pip_notifications` holds each email to send (PIP5).

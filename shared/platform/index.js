@@ -8,3 +8,4 @@ export { Bd } from './bd.js';
 export { Pipeline } from './pipeline.js';
 export { Billing } from './billing.js';
 export { Dashboard } from './dashboard.js';
+export { Pip } from './pip.js';

@@ -16,6 +16,10 @@ import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 import { renderDashboard } from '/modules/dashboard/ui/page.js';
+import { renderPipHome } from '/modules/pip/ui/home.js';
+import { renderPipForm } from '/modules/pip/ui/form.js';
+import { renderPipDetail } from '/modules/pip/ui/detail.js';
+import { pipAdminCards } from '/modules/pip/ui/admin.js';
 import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
 import { renderBoardTab, isTab } from '/modules/dashboard/ui/tabs.js';
 const lastDashTab = {}; // the dashboard tab a project was opened from, so Back returns there
@@ -42,6 +46,7 @@ const NAV = [
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
+  { id: 'pip', area: 'pip', href: '#/pip', icon: 'file-plus-2', label: 'Projects in Pursuit', blurb: 'Start tracking a pursuit: the PiP form, and where each one stands.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
 const flatNav = NAV.flatMap(n => [n].concat(n.sub || []));
@@ -194,6 +199,22 @@ async function pageBillingProject(wbs1, requestId) {
   }
 }
 
+async function pagePip() {
+  const body = frame('pip', [crumb('Compass', '#/'), sep(), crumb('Projects in Pursuit')], 'Projects in Pursuit', 'Start tracking a pursuit. The PiP admins review it and create it in Vantagepoint.');
+  await renderPipHome(ctx, body);
+}
+async function pagePipForm(id) {
+  const body = frame('pip', [crumb('Compass', '#/'), sep(), crumb('Projects in Pursuit', '#/pip'), sep(), crumb(id ? 'Change and resubmit' : 'New PiP')], id ? 'Change and resubmit' : 'New PiP',
+    'Fill in the four sections, then Review. Required answers have a red star.');
+  await renderPipForm(ctx, body, id);
+}
+async function pagePipDetail(id) {
+  const body = frame('pip', [crumb('Compass', '#/'), sep(), crumb('Projects in Pursuit', '#/pip'), sep(), crumb('PiP')], null);
+  try { await renderPipDetail(ctx, body, id); } catch (e) {
+    body.append(e.status === 404 ? h('div', { class: 'empty-note', text: 'That PiP does not exist.' }) : banner('circle-alert', e.message, 'err'));
+  }
+}
+
 async function pageCheckins() {
   const body = frame('checkins', [crumb('Compass', '#/'), sep(), crumb('Project Turnaround', '#/turnaround'), sep(), crumb('Check-in drafts')], 'Check-in drafts', 'Short drafts for PICs who are overdue or have no plan. Nothing sends itself. You read each one, change it if you like, and send it from your own mailbox.');
   await renderCheckins(ctx, body);
@@ -212,8 +233,10 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', pip: 'Projects in Pursuit', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
+  'pip.stageProbabilities': 'Probability by stage', 'pip.cfoThreshold': 'Coordinate with the CFO at', 'pip.recentDays': 'Recent list covers',
+  'pip.admins': 'PiP admins', 'pip.viewers': 'Can also see PiPs', 'pip.primaryAdmin': 'Primary PiP admin', 'pip.cfo': 'CFO',
   'dashboard.projectedSpendPct': 'Fee burn: projected spend', 'dashboard.watchProfitPct': 'Project status: Watch below', 'dashboard.endingSoonDays': 'Ending soon within',
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
@@ -293,6 +316,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const [s, portfolio, calendar] = await Promise.all([Admin.settings(), isBillingUser ? Billing.portfolio({ scope: 'all' }) : null, isBillingUser ? Billing.calendar() : null]);
       slot.textContent = '';
       slot.append(...billingAdminCards(ctx, s, portfolio && calendar ? { calendar, rows: portfolio.rows, today: portfolio.today } : null, canEdit, rerender));
+    } else if (tab === 'pip') {
+      const [s, people] = await Promise.all([Admin.settings(), Admin.people()]);
+      slot.textContent = '';
+      slot.append(...pipAdminCards(ctx, s, people, canEdit, rerender));
     } else if (tab === 'dashboards') {
       const s = await Admin.settings();
       slot.textContent = '';
@@ -696,6 +723,9 @@ function route() {
   }
   if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
   if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();
+  if (hash === '#/pip') return me.areas.pip ? pagePip() : pageNoAccess();
+  if (hash === '#/pip/new') return me.pip && me.pip.submit ? pagePipForm(null) : pageNoAccess();
+  if ((m = /^#\/pip\/([0-9a-f-]{36})(\/edit)?$/.exec(hash))) return me.areas.pip ? (m[2] ? pagePipForm(m[1]) : pagePipDetail(m[1])) : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();

@@ -334,3 +334,21 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Chips are kept in the page, not saved**, and only on the fixed tabs (open D12).
 - **`portfolio.js` wraps itself in a function** because the browser loads the logic files as plain scripts that share one global scope, and it uses names `burn.js` also declares.
 - **Sample data** for the tabs extends `ui/burn-sample.js` (PM names, hours, receivables), so every tab and the fee burn agree with each other.
+
+## Projects in Pursuit (2026-11-26; `docs/SPEC-pip.md`)
+
+- 2026-11-26 (Josh): **the PiP becomes a Compass module.** Fields and lists follow the admin's draft worksheet (PIP Worksheet_V2); everything the employee's HTML concept added for AIA 2030 is kept, with his reportability rule unchanged.
+- 2026-11-26 (Josh): **probability is a small range per stage, strictly enforced** from the worksheet's Data Points labels. Vantagepoint's stages are fixed; a pursuit can be further along in real life than its stage says. 100% is a project, not a pursuit.
+- 2026-11-26 (Josh): **intake only**: no closed stages on the form. **No phase split** (one PiP per pursuit; very large projects case by case). **Gross fee.** **$1M+ warns and tells the CFO; it never blocks.** **Urgency is worked out from the start date.** Specialty consultants are not asked.
+- 2026-11-26 (Josh): **who:** principals and PMs submit; a handful of PiP admins (picked in Admin) review; the module is visible only to them, the PIC/PM group, and people the Admin adds. Everyone who sees it sees every PiP in full.
+- 2026-11-26 (Josh): **statuses from the concept**, a return always carries a note, withdraw instead of delete, the Vantagepoint number is typed when it is created. **Emails:** PIC, PM and the primary admin on submit; the submitter on return. These are their own set, like Billing's.
+- 2026-11-26 (Josh): **layout:** the PiP home lists waiting PiPs first, then the last 30 days, with a New PiP button; the form is four cards on one page and a compact review, not five pages; no tabs.
+- **Who is a "principal or PM" follows the projects as well as the role** (like the dashboards), so a principal who has no Compass PIC role yet, or a PM who is only on Vantagepoint, still gets the form.
+- **The stage table and the people are Admin settings**, so the admin can follow the worksheet without a code change. The settings file keeps its own copy of the default table (it also runs in the browser before the PiP rules load); a test keeps the two equal.
+- **People are picked by typing against the Vantagepoint list** (a datalist), and only an exact pick counts, so each one maps to one employee code. Repeated names show their code.
+- **Clients and contacts come from a Vantagepoint copy** (`vp_clients`, `vp_contacts`, made-up CSV locally), never live from the browser, like everything else from Vantagepoint.
+- **Licensed architects:** `employees.licensed` (1, 0 or empty). The project architect list is narrowed only once the copy says something about anyone, so nothing breaks before Kent knows where Vantagepoint keeps it.
+- **The site address and gross area are hidden once a project is not reportable**, because they were added for AIA 2030 (Josh). They stay optional otherwise, as in the concept.
+- **Emails are queued, not sent** (`pip_notifications`), like Billing's, and listed in each PiP's history so people can see who was told.
+- **Every revision, event and queued email is append-only**, and a created or withdrawn PiP is locked, by database triggers.
+- **An unsent PiP is kept in the browser** (per person) so a reload does not lose a half-filled form; nothing unsent is stored on the server.
