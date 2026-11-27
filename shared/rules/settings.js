@@ -45,6 +45,9 @@ const DEFAULTS = {
   /* Dashboards: the fee burn's projected spend = planned hours x billing rate x this percent (modules/dashboard/logic/burn.js).
      Never actual pay or cost rates (Josh, 2026-11-26). 85 is a made-up starting value; Josh sets the real one. */
   'dashboard.projectedSpendPct': 85,
+  /* Dashboards: a project's status on the tabs (modules/dashboard/logic/portfolio.js). Below zero is always Needs a look. */
+  'dashboard.watchProfitPct': 10,  // year-to-date profit under this % of billed (and not below zero) is Watch
+  'dashboard.endingSoonDays': 90,  // the Ending soon chip: projects whose end date is within this many days
   /* Pipeline watch alert rules. sev: 'alert' (counts toward the menu badge), 'watch' (shown only) or 'off'. Amounts are dollars. */
   'pipeline.rules': {
     mwipDrop: { sev: 'alert', amount: 75000, days: 7 },          // a PIC's MWIP falls by this much within this many days
@@ -120,6 +123,8 @@ VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
 VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);
 VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
 VALIDATORS['dashboard.projectedSpendPct'] = intIn(1, 200);
+VALIDATORS['dashboard.watchProfitPct'] = intIn(0, 100);
+VALIDATORS['dashboard.endingSoonDays'] = intIn(30, 365);
 const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 VALIDATORS['billing.businessHours'] = v => !!v && typeof v === 'object' && Object.keys(v).length === 3 && hhmm(v.start) && hhmm(v.end) && v.start < v.end
   && Array.isArray(v.days) && v.days.length >= 1 && v.days.every(d => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v.days).size === v.days.length;
