@@ -59,8 +59,10 @@ const DEFAULTS = {
     noNew: { sev: 'watch', days: 30 },                           // a PIC has added no pursuit in this many days
   },
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
+  /* Principal Accountability: the project sizes for 'projects to reach goal' (the firm's sheet). fee in whole dollars; label is the construction size it stands for. */
+  'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
-  'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
+  'access': { marketingTurnaround: false, picBd: false, picPipeline: false, picAccountability: false },
   /* Preview (shared/rules/roles.js): each module is 'live' for everyone its role allows, or in 'preview' for the Admin and the testers picked here */
   'release': {
     turnaround: { stage: 'live', testers: [] },
@@ -120,6 +122,8 @@ VALIDATORS['pipeline.rules'] = v => !!v && typeof v === 'object' && Object.keys(
   return !!x && typeof x === 'object' && SEVS.includes(x.sev) && Object.keys(shape).every(k => shape[k](x[k])) && Object.keys(x).length === Object.keys(shape).length + 1;
 }) && Object.keys(v).length === Object.keys(RULE_SHAPE).length;
 VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
+VALIDATORS['acct.projectSizes'] = v => Array.isArray(v) && v.length >= 1 && v.length <= 6 && v.every(x => !!x && typeof x === 'object' && Object.keys(x).length === 2
+  && typeof x.label === 'string' && x.label.trim().length >= 1 && x.label.length <= 40 && Number.isInteger(x.fee) && x.fee >= 1000 && x.fee <= 1e8);
 VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);
 VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
 VALIDATORS['dashboard.projectedSpendPct'] = intIn(1, 200);
@@ -148,6 +152,8 @@ function settingAt(rows, key, at) {
   for (const r of rows) {
     if (r.key === key && r.effectiveFrom <= at && (!best || r.effectiveFrom >= best.effectiveFrom)) best = r;
   }
+  // a switch added to 'access' later is off in a value saved before it existed
+  if (best && key === 'access') return Object.assign({}, DEFAULTS.access, best.value);
   return best ? best.value : DEFAULTS[key];
 }
 function allAt(rows, at) {

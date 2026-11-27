@@ -1,0 +1,16 @@
+/* Principal Accountability. Tokens only: no hex colors. It borrows the Marketing Report's table and export styles (bd.css). */
+.acct-table thead tr.acct-groups th { background: var(--surface-2); color: var(--text-strong); font: 700 12px/1.2 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; padding: 6px; border-bottom: 1px solid var(--line); }
+.acct-table thead tr.acct-groups th.acct-g { border-left: 2px solid var(--surface); }
+.acct-table thead th { white-space: normal; min-width: 76px; }
+.acct-table thead th:first-child { min-width: 150px; }
+.acct-table td.acct-c { text-align: center; }
+.acct-table td.acct-proj { text-align: center; background: var(--surface-2); }
+.acct-table tr.acct-total td { border-top: 1.5px solid var(--line-strong); border-bottom: 0; }
+.acct-neg { color: var(--crit); }
+.acct-notes { text-align: left; }
+.acct-notes p { margin: 0 0 4px; }
+.acct-notes p:last-child { margin-bottom: 0; }
+.acct-dl { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content); gap: 6px 32px; margin: 0; padding: var(--s4) var(--s5); font-size: 14px; }
+.acct-dl dt { color: var(--text-2); }
+.acct-dl dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.xw-prev .sheet.acct-sheet { max-width: 980px; }

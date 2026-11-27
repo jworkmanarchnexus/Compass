@@ -1,0 +1,87 @@
+{
+  "_about": "Principal Accountability rules (modules/accountability/logic/accountability.js). Money in cents, rates in basis points. The derive and firm cases use rows of the firm's October 2026 sheet, so the arithmetic is checked against the real workbook.",
+  "sizes": [
+    { "label": "Projects $2-3M", "fee": 150000 },
+    { "label": "Projects $4-5M", "fee": 250000 },
+    { "label": "Projects $10M", "fee": 500000 },
+    { "label": "Projects $35M", "fee": 1500000 }
+  ],
+  "derive": [
+    { "name": "past the goal, backlog on top (Dave Abraham on the sheet)", "row": { "goal": 230769200, "billedYtd": 266927200, "profitYtd": -4659000, "backlog": 19230500 },
+      "expect": { "toGoal": -36158000, "shortfall": -55388500, "projects": [0, 0, 0, 0], "profitPctRounded": -2 } },
+    { "name": "short of the goal (Brad Busath on the sheet): projects of each size to close it", "row": { "goal": 230769200, "billedYtd": 55253900, "profitYtd": -9726300, "backlog": 2603800 },
+      "expect": { "toGoal": 175515300, "shortfall": 172911500, "projects": [12, 7, 4, 2], "profitPctRounded": -18 } },
+    { "name": "nothing billed yet (Jeff Tuft on the sheet): no percent, the whole goal to go", "row": { "goal": 230769200, "billedYtd": 0, "profitYtd": 0, "backlog": 0 },
+      "expect": { "toGoal": 230769200, "shortfall": 230769200, "projects": [16, 10, 5, 2], "profitPctRounded": null } },
+    { "name": "exactly at the goal: no projects needed", "row": { "goal": 100000000, "billedYtd": 60000000, "profitYtd": 0, "backlog": 40000000 },
+      "expect": { "toGoal": 40000000, "shortfall": 0, "projects": [0, 0, 0, 0], "profitPctRounded": 0 } },
+    { "name": "one cent short still needs one project of each size", "row": { "goal": 100000000, "billedYtd": 60000000, "profitYtd": 0, "backlog": 39999999 },
+      "expect": { "toGoal": 40000000, "shortfall": 1, "projects": [1, 1, 1, 1], "profitPctRounded": 0 } },
+    { "name": "no goal: nothing worked out against it", "row": { "goal": null, "billedYtd": 5000000, "profitYtd": 500000, "backlog": 100 },
+      "expect": { "toGoal": null, "shortfall": null, "projects": [null, null, null, null], "profitPctRounded": 10 } }
+  ],
+  "firm": {
+    "name": "the firm block of the October 2026 sheet",
+    "meta": { "incomeProfit": 154169900, "esopBonus": 186999800, "archRevenue": 1707097300, "actualOhBp": 25500, "assignedOhBp": 20000 },
+    "totalProfitYtd": 428295900,
+    "expect": { "difference": -274126000, "profitOnArchText": "20%", "actualOh": "255%", "assignedOh": "200%" }
+  },
+  "rows": {
+    "input": {
+      "goals": { "E1": 100000000, "E2": 100000000, "E9": 50000000 },
+      "goalOrder": ["E2", "E1", "E9"],
+      "names": { "E1": "Ana One", "E2": "Ben Two", "E3": "Cal Three", "E9": "Zed Nine" },
+      "projects": [
+        { "wbs1": "P1", "principal": "E1", "billedYtd": 4000000, "profitYtd": 1000000 },
+        { "wbs1": "P2", "principal": "E1", "billedYtd": 2000000, "profitYtd": -300000 },
+        { "wbs1": "P3", "principal": "E1", "billedYtd": 1000000, "profitYtd": -200000 },
+        { "wbs1": "P4", "principal": "E2", "billedYtd": 3000000, "profitYtd": null },
+        { "wbs1": "P5", "principal": "E2", "billedYtd": 500000, "profitYtd": 100000 },
+        { "wbs1": "P6", "principal": "E3", "billedYtd": 700000, "profitYtd": -50000 },
+        { "wbs1": "P7", "principal": "", "billedYtd": 90000, "profitYtd": 10000 }
+      ],
+      "backlog": { "E1": 1500000, "E2": 0, "E3": 250000 },
+      "mwip": { "E1": 800000, "E9": 0 },
+      "arOver90": [{ "wbs1": "P2", "amount": 120000 }, { "wbs1": "X9", "amount": 5000 }, { "wbs1": "X8", "amount": 7000 }],
+      "picOf": { "X8": "E3" },
+      "utilization": { "E1": 4400, "E3": 6000 },
+      "planStatus": { "E1": ["current", "current"], "E2": ["current", "overdue"], "E3": ["update_due"] }
+    },
+    "expect": {
+      "order": ["E2", "E1", "E9", "E3", ""],
+      "E1": { "label": "Ana One", "goal": 100000000, "billedYtd": 7000000, "profitYtd": 500000, "negativeYtd": -500000, "unevaluated": 0, "response": "yes", "listed": 2, "utilizationBp": 4400, "backlog": 1500000, "mwip": 800000, "arOver90": 120000 },
+      "E2": { "goal": 100000000, "billedYtd": 3500000, "profitYtd": 100000, "negativeYtd": 0, "unevaluated": 1, "response": "no", "utilizationBp": null, "arOver90": 0 },
+      "E9": { "label": "Zed Nine", "goal": 50000000, "billedYtd": 0, "response": null, "listed": 0 },
+      "E3": { "goal": null, "billedYtd": 700000, "negativeYtd": -50000, "response": "no", "arOver90": 7000 },
+      "": { "label": "Unassigned", "goal": null, "billedYtd": 90000, "arOver90": 5000, "response": null },
+      "total": { "goal": 250000000, "billedYtd": 11290000, "profitYtd": 560000, "negativeYtd": -550000, "backlog": 1750000, "mwip": 800000, "arOver90": 132000, "unevaluated": 1 }
+    }
+  },
+  "csv": {
+    "report": {
+      "meta": { "year": 2026, "months": 10, "cutoff": "2026-10-31", "goalTotal": 300000000, "sizes": [{ "label": "Projects $2-3M", "fee": 150000 }],
+        "incomeProfit": 154169900, "esopBonus": 186999800, "archRevenue": 1707097300, "actualOhBp": 25500, "assignedOhBp": 20000 },
+      "rows": [
+        { "key": "E8", "label": "Brad Busath", "goal": 230769200, "billedYtd": 55253900, "profitYtd": -9726300, "negativeYtd": -10343600, "unevaluated": 0, "listed": 2, "response": "no", "utilizationBp": 4900, "backlog": 2603800, "mwip": 0, "arOver90": 0 }
+      ]
+    },
+    "expectLines": [
+      "Principal Accountability",
+      "As of 10/31/2026",
+      "",
+      ",2026 YTD 10/31/2026,,,,,,2026 goals,,,,,,Projects to reach goal",
+      "PIC,YTD billed,YTD profit,YTD profit %,YTD negative profit (all jobs this year),Negative profit response,Utilization,2026 goal,$ amount to goal,2026 backlog,2026 shortfall / (excess),ETC MWIP,AR > 90,\"Projects $2-3M, $150,000 fee\"",
+      "Brad Busath,\"$552,539\",\"($97,263)\",-18%,\"($103,436)\",No,49%,\"$2,307,692\",\"$1,755,153\",\"$26,038\",\"$1,729,115\",$-,$-,12",
+      "Totals,\"$552,539\",\"($97,263)\",-18%,\"($103,436)\",,,\"$2,307,692\",\"$1,755,153\",\"$26,038\",\"$1,729,115\",$-,$-,",
+      "Goal 10/31/2026,\"$2,500,000\"",
+      "",
+      "Income statement profit (loss),\"$1,541,699\"",
+      "Difference from project profit,\"$1,638,962\"",
+      "YTD actual overhead rate,255%",
+      "Assigned overhead rate,200%",
+      "Architectural revenue,\"$17,070,973\"",
+      "ESOP / bonus contribution,\"$1,869,998\"",
+      "Profit on architectural revenue,20%"
+    ]
+  }
+}

@@ -54,6 +54,9 @@ table.dt select.txt { width: 210px; }
 .seg.wrap { flex-wrap: wrap; height: auto; }
 .seg.wrap > button { height: 28px; }
 .side-brand .side-tag { margin: 0; align-self: flex-start; }
+/* Josh 2026-11-26: the sidebar logo at half size (48px) to leave room for more modules. Compass only; below the brand's
+   1-inch (96px) minimum noted in the shared stylesheet. The sign-in page keeps the full size. */
+.side .side-logo { width: 48px; margin-top: 4px; }
 table.dt td.strong, table.dt td.nowrap { white-space: nowrap; }
 table.dt select.txt { width: 250px; }
 /* the shared stylesheet shows the menu overlay whenever the window is narrow; it should only show while the menu is open */

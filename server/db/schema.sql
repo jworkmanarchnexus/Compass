@@ -558,3 +558,65 @@ CREATE TRIGGER IF NOT EXISTS billing_assignments_no_update BEFORE UPDATE ON bill
 CREATE TRIGGER IF NOT EXISTS billing_assignments_no_delete BEFORE DELETE ON billing_assignments BEGIN SELECT RAISE(ABORT, 'assignments are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_requests_no_delete BEFORE DELETE ON billing_requests BEGIN SELECT RAISE(ABORT, 'billing requests are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_requests_processed BEFORE UPDATE ON billing_requests WHEN OLD.status = 'processed' BEGIN SELECT RAISE(ABORT, 'a processed request takes no more changes'); END;
+
+-- ---- Principal Accountability (modules/accountability): built with the Marketing Report (kind 'bd'), from the same pull, and locked with it ----
+-- each PIC's billed goal for a year (gross billings, the firm's accountability sheet; not the Marketing Report's net goals). Admin > Accountability.
+CREATE TABLE IF NOT EXISTS acct_goals (
+  year   INTEGER NOT NULL,
+  pic    TEXT NOT NULL,                    -- VP employee code
+  amount INTEGER NOT NULL,                 -- cents
+  sort   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (year, pic)
+);
+-- what the report was built with: the firm figures from the source (NULL = the source had none) and the project sizes in force
+CREATE TABLE IF NOT EXISTS acct_meta (
+  run_id            TEXT PRIMARY KEY REFERENCES runs(id),
+  year              INTEGER NOT NULL,
+  months            INTEGER NOT NULL,
+  cutoff            TEXT NOT NULL,
+  status_day        TEXT NOT NULL,         -- plan statuses (the response column) are as of this day
+  turnaround_run_id TEXT,                  -- the published Project Turnaround run they were read from; NULL = none yet
+  income_profit     INTEGER,               -- cents, income statement profit (loss) YTD
+  esop_bonus        INTEGER,               -- cents, ESOP / bonus contribution YTD
+  actual_oh_bp      INTEGER,               -- basis points, YTD actual overhead rate (25500 = 255%)
+  assigned_oh_bp    INTEGER,
+  arch_revenue      INTEGER NOT NULL,      -- cents, the Marketing Report's firm YTD revenue (net of consultants)
+  sizes_json        TEXT NOT NULL          -- [{ label, fee }] the project sizes for "projects to reach goal", fee in dollars
+);
+-- one row per PIC. To goal, shortfall, percentages and project counts are worked out when shown, never stored.
+CREATE TABLE IF NOT EXISTS acct_rows (
+  run_id         TEXT NOT NULL REFERENCES runs(id),
+  key            TEXT NOT NULL,            -- PIC employee code; '' = Unassigned
+  label          TEXT NOT NULL,
+  sort           INTEGER NOT NULL DEFAULT 0,
+  goal           INTEGER,                  -- cents; NULL = no goal
+  billed_ytd     INTEGER NOT NULL,
+  profit_ytd     INTEGER NOT NULL,
+  negative_ytd   INTEGER NOT NULL,
+  unevaluated    INTEGER NOT NULL DEFAULT 0, -- projects with billings whose profit could not be worked out (no overhead rate)
+  listed         INTEGER NOT NULL DEFAULT 0, -- the PIC's projects on the Project Turnaround run
+  response       TEXT CHECK (response IN ('yes','no')),
+  utilization_bp INTEGER,
+  backlog        INTEGER NOT NULL,
+  mwip           INTEGER NOT NULL,
+  ar_over90      INTEGER NOT NULL,
+  PRIMARY KEY (run_id, key)
+);
+CREATE TRIGGER IF NOT EXISTS acct_rows_locked_insert BEFORE INSERT ON acct_rows
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS acct_rows_locked_update BEFORE UPDATE ON acct_rows
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS acct_rows_locked_delete BEFORE DELETE ON acct_rows
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS acct_meta_locked_insert BEFORE INSERT ON acct_meta
+WHEN (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS acct_meta_locked_update BEFORE UPDATE ON acct_meta
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft' OR (SELECT status FROM runs WHERE id = NEW.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;
+CREATE TRIGGER IF NOT EXISTS acct_meta_locked_delete BEFORE DELETE ON acct_meta
+WHEN (SELECT status FROM runs WHERE id = OLD.run_id) <> 'draft'
+BEGIN SELECT RAISE(ABORT, 'run is locked'); END;

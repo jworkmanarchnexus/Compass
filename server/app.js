@@ -11,6 +11,7 @@ const { createLocalSource } = require('./vp-local');
 const { createFileMailer } = require('./mail');
 const planDb = require('./plan');
 const bdDb = require('./bd');
+const acctDb = require('./accountability');
 const pipeDb = require('./pipeline');
 const { buildHome } = require('./home');
 const tdb = require('./turnaround');
@@ -346,6 +347,20 @@ function createServer(db, opts) {
       const out = pipeDb.runWeekly(db, { source, settings: currentSettings(), date, mailer, baseUrl, adminEmails: [] });
       audit(user, 'pipeline.snapshot', `Snapshot ${date}`, { created: out.created });
       return sendJson(res, out.created ? 201 : 200, { created: out.created, date, alerts: pipeDb.alertCount(db) });
+    }
+
+    /* ---- Principal Accountability: read (Admin and Finance). Built, published and archived with the Marketing Report. ---- */
+    const canAcct = () => { if (!roles.canView(user.role, 'accountability', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.'); };
+    if (p === '/api/accountability/reports' && method === 'GET') { canAcct(); return sendJson(res, 200, bdDb.listReports(db, { role: user.role })); }
+    const am = /^\/api\/accountability\/reports\/([^/]+)$/.exec(p);
+    if (am && method === 'GET') { canAcct(); return sendJson(res, 200, acctDb.report(db, am[1], { role: user.role }, bdDb.label)); }
+    if (p === '/api/admin/accountability/goals' && method === 'GET') { requireTab(user, 'accountability', 'view'); return sendJson(res, 200, acctDb.goals(db)); }
+    if (p === '/api/admin/accountability/goals' && method === 'PUT') {
+      requireTab(user, 'accountability', 'edit');
+      const b = await readJson(req);
+      const r = acctDb.setGoal(db, b);
+      audit(user, 'acct.goal', `${b.year} accountability goal: ${b.pic}`, r);
+      return sendJson(res, 200, acctDb.goals(db));
     }
 
     /* ---- BD report: read (BD viewers), and the Admin's own data and runs ---- */

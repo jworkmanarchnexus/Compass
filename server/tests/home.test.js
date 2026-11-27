@@ -98,7 +98,7 @@ test('Finance, Marketing and the system admin each get only their part', () => w
   const mkt = (await home(t, 'c.brandt')).body;
   assert.deepStrictEqual(mkt.published.map(p => p.label), ['Marketing Report, September 2026', 'Marketing Report, August 2026'], 'Marketing sees the BD reports, not Turnaround, by default');
   assert.ok(!mkt.attention && !mkt.checks);
-  await t.api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: false, picPipeline: false } } });
+  await t.api('j.workman').put('/api/admin/settings', { changes: { access: { marketingTurnaround: true, picBd: false, picPipeline: false, picAccountability: false } } });
   assert.strictEqual((await home(t, 'c.brandt')).body.published.length, 4, 'and Turnaround too once allowed');
   const kent = (await home(t, 'kent')).body;
   assert.ok(kent.checks && kent.next && kent.pull && !kent.attention && !kent.published && !kent.yours, 'the system admin sees checks, never run contents');
