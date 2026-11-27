@@ -12,6 +12,7 @@ const { isValid } = require('../modules/turnaround/logic/dates');
 const drill = require('../modules/bd/logic/drill');
 const mwipRule = require('../modules/bd/logic/mwip');
 const forecastRule = require('../modules/bd/logic/forecast');
+const acct = require('./accountability');
 
 // the day a report is built, local time (COMPASS_TODAY pins it for a demo, as the app does)
 const buildDay = () => { if (process.env.COMPASS_TODAY) return process.env.COMPASS_TODAY; const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
@@ -42,7 +43,7 @@ function ownInputs(db, period) {
   return { year, goals, sectors, cutoff, factorBp: f.factor_bp, overrides };
 }
 
-function compute(db, source, period, settings) {
+function compute(db, source, period, settings, today) {
   const own = ownInputs(db, period);
   const data = source.loadBd(period);
   /* a source that supplies the pursuits themselves (fee, probability-weighted fee, stage, estimated dates) gets the MWIP worked out here,
@@ -69,11 +70,14 @@ function compute(db, source, period, settings) {
   const out = report.computeBd({ period, goals: own.goals, projects, revenue: data.revenue, forecast: data.forecast, mwip: data.mwip, factorBp: own.factorBp, thresholds: th, sectors: own.sectors, overrides: own.overrides, unknownTo: settings['bd.noSector'] === 'other' ? 'Other' : undefined, contractAmount: settings['bd.contractAmount'] });
   const names = Object.fromEntries(data.projects.map(p => [p.wbs1, p.name]).concat(data.mwip.map(m => [m.id, m.name || m.id])));
   const detail = drill.buildDetail({ period, lines: out.lines, forecastMonths: data.forecastMonths || [], mwipMonths: data.mwipMonths || [], names });
-  return { out, own, projects, th, detail, mwipLeftOut, forecastSkipped };
+  // Principal Accountability is built from the same pull, with this report, and locked with it (server/accountability.js)
+  const accountability = acct.compute(db, source, period, settings, { out, data }, today || buildDay());
+  return { out, own, projects, th, detail, mwipLeftOut, forecastSkipped, accountability };
 }
 
 function fill(db, runId, period, settings, c) {
   const { out, own, projects, th, detail, mwipLeftOut, forecastSkipped } = c;
+  acct.fill(db, runId, c.accountability);
   for (const d of detail) db.run('INSERT INTO bd_detail (run_id, kind, item_id, name, pic, sector, month, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', runId, d.kind, d.id, d.name, d.pic, d.sector, d.month, d.amount);
   db.run('INSERT INTO bd_run_meta (run_id, year, months, cutoff, factor_bp, on_pace_pct, on_track_pct, no_sector_rule, contract_amount_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, own.year, out.months, own.cutoff, own.factorBp, th.onPace, th.onTrack, settings['bd.noSector'], settings['bd.contractAmount']);
   const put = (scope, r, sort) => db.run('INSERT INTO bd_rows (run_id, scope, key, label, sort, goal, ytd_goal, ytd, forecast, mwip_raw, mwip, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', runId, scope, r.key, r.label, sort, r.goal, r.ytdGoal, r.ytd, r.forecast, r.mwipRaw, r.mwip, r.total, r.status);
@@ -93,10 +97,10 @@ function fill(db, runId, period, settings, c) {
   for (const d of out.defaulted) warn('note', d.wbs1, `${name(d.wbs1)}: revenue with no market sector went to Other`, d.amount);
 }
 
-function buildDraft(db, { source, period, settings }) {
+function buildDraft(db, { source, period, settings, today }) {
   const verdict = lifecycle.canBuild(allBd(db).map(life), KIND, period);
   if (!verdict.ok) throw new HttpError(409, verdict.error);
-  const c = compute(db, source, period, settings);
+  const c = compute(db, source, period, settings, today);
   return db.tx(() => {
     const id = crypto.randomUUID();
     const version = lifecycle.nextVersion(allBd(db).map(life), KIND, period);
@@ -113,6 +117,7 @@ function rebuildDraft(db, runId, { source, settings }) {
   const c = compute(db, source, run.period, settings);
   db.tx(() => {
     for (const t of ['bd_detail', 'bd_rows', 'bd_run_meta', 'run_warnings']) db.run(`DELETE FROM ${t} WHERE run_id = ?`, runId);
+    acct.clear(db, runId);
     db.run('UPDATE runs SET settings_json = ? WHERE id = ?', JSON.stringify(settings), runId);
     fill(db, runId, run.period, settings, c);
   });

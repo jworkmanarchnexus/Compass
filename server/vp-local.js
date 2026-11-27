@@ -58,6 +58,20 @@ function createLocalSource() {
       const lines = read('billing_lines.csv').map(r => ({ wbs1: r.WBS1, lineId: r.LineId, name: r.Name, kind: r.Kind, sort: Number(r.Sort), feeCents: cents(r.Fee), billedCents: cents(r.Billed), availableCents: cents(r.Available), projectionCents: cents(r.Projection) }));
       return { projects, lines };
     },
+    /* Principal Accountability: what the firm's accountability sheet needs beyond the profit pull and the Marketing Report.
+       Where each lives (Vantagepoint utilization, AR aging, the income statement) is Kent's to confirm (docs/OPEN-QUESTIONS.md A1).
+         utilization:  [{ pic, bp }]          each PIC's utilization year to date, basis points (4400 = 44%)
+         arOver90:     [{ wbs1, amount }]     receivables more than 90 days old at the cutoff, per project, cents
+         firm:         { incomeProfit, esopBonus, actualOhBp, assignedOhBp }   year to date; any may be null
+       A source without this method still builds the report; those columns stay blank. */
+    loadAccountability(period) {
+      const pick = f => read(f).filter(r => Number(r.Period) === period);
+      const utilization = pick('acct_utilization.csv').map(r => ({ pic: r.Principal, bp: Math.round(parseFloat(r.UtilizationPct) * 100) }));
+      const arOver90 = pick('acct_ar.csv').map(r => ({ wbs1: r.WBS1, amount: toCents(r.Over90) }));
+      const f = pick('acct_firm.csv')[0];
+      const firm = f ? { incomeProfit: toCents(f.IncomeStatementProfit), esopBonus: toCents(f.EsopBonus), actualOhBp: Math.round(parseFloat(f.ActualOverheadPct) * 100), assignedOhBp: Math.round(parseFloat(f.AssignedOverheadPct) * 100) } : {};
+      return { utilization, arOver90, firm };
+    },
     load() {
       const projects = read('projects.csv')
         .filter(p => p.Status === 'A' && !/^[ZJ]/.test(p.WBS1)) // the SQL: Status A, WBS1 not starting Z or J

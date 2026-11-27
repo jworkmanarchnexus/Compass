@@ -29,9 +29,9 @@ test('sign-in: the picker lists active people only; every other call needs a sig
 test('me: carries the role and what that role may see', () => withApp(async ({ api }) => {
   const josh = (await api('j.workman').get('/api/me')).body;
   assert.strictEqual(josh.role, 'admin');
-  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, pipeline: true, billing: true, admin: true });
+  assert.deepStrictEqual(josh.areas, { turnaround: true, checkins: true, bd: true, accountability: true, pipeline: true, billing: true, admin: true });
   const casey = (await api('c.brandt').get('/api/me')).body;
-  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, pipeline: true, billing: false, admin: false }, 'marketing sees BD and Pipeline only by default');
+  assert.deepStrictEqual(casey.areas, { turnaround: false, checkins: false, bd: true, accountability: false, pipeline: true, billing: false, admin: false }, 'marketing sees BD and Pipeline only by default');
   const dana = (await api('d.whitfield').get('/api/me')).body;
   assert.strictEqual(dana.areas.checkins, false);
   assert.strictEqual(dana.adminTabs.people, null);

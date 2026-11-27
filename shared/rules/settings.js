@@ -55,6 +55,8 @@ const DEFAULTS = {
     noNew: { sev: 'watch', days: 30 },                           // a PIC has added no pursuit in this many days
   },
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
+  /* Principal Accountability: the project sizes for 'projects to reach goal' (the firm's sheet). fee in whole dollars; label is the construction size it stands for. */
+  'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
   /* what the narrower roles may see. The spec leaves these open, so the safe answer is the default and Josh can widen it. */
   'access': { marketingTurnaround: false, picBd: false, picPipeline: false },
 };
@@ -111,6 +113,8 @@ VALIDATORS['pipeline.rules'] = v => !!v && typeof v === 'object' && Object.keys(
   return !!x && typeof x === 'object' && SEVS.includes(x.sev) && Object.keys(shape).every(k => shape[k](x[k])) && Object.keys(x).length === Object.keys(shape).length + 1;
 }) && Object.keys(v).length === Object.keys(RULE_SHAPE).length;
 VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
+VALIDATORS['acct.projectSizes'] = v => Array.isArray(v) && v.length >= 1 && v.length <= 6 && v.every(x => !!x && typeof x === 'object' && Object.keys(x).length === 2
+  && typeof x.label === 'string' && x.label.trim().length >= 1 && x.label.length <= 40 && Number.isInteger(x.fee) && x.fee >= 1000 && x.fee <= 1e8);
 VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);
 VALIDATORS['billing.rolloverDay'] = intIn(1, 28);
 const hhmm = v => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);

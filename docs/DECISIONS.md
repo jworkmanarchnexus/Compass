@@ -243,3 +243,13 @@
 - **Submit is disabled while anything blocks it, and the screen lists why.** Save Draft is always on. The Vantagepoint numbers changing under a request show a banner that must be acknowledged before submitting.
 - **Notes are a small rich-text box (bold, italic, list).** The server cleans them again; the browser only shows text the server has cleaned.
 - **Processors and the Admin can open every project but the screen is read-only for them until step 5** (queue, return, process).
+
+## Principal Accountability (2026-11-26)
+
+- **Built with the Marketing Report, not as its own run.** Same pull, same month, same Admin, so it is filled in the same transaction as the Marketing Report draft and locked by the same triggers (`acct_rows`, `acct_meta` keyed by that run). One Publish for the month instead of two, and no change to the `runs.kind` CHECK (SQLite cannot alter a CHECK, and rebuilding `runs` would disturb every table and trigger that refers to it). If Josh later wants it published on its own, the tables move to their own run kind without changing their shape.
+- **Billed and profit cover every project in the pull, not only those below break-even.** The Turnaround run stores only the listed projects, so Accountability works profit out again from the pull with the same tested rule (`turnaround/logic/profit.js`).
+- **The response column is read on the build day** from the latest published Turnaround run for the month or before, and frozen. In production the Turnaround draft for the same month is usually not published yet on the first business day, so it reads the previous month's run; rebuilding the Marketing Report draft after publishing the Turnaround run refreshes it. The demo builds its reports after the plan logs and pins the build day, so the figures match a real first-of-month build.
+- **One `sheet()` makes the page, the PDF and the CSV**, so all three always say the same thing; the CSV is tested line by line against a row of the October 2026 workbook.
+- **Money is shown the workbook's way** (whole dollars, brackets, "$-" for zero), unlike the Marketing Report's thousands, because the workbook is what people compare it with.
+- **The PDF reuses the Marketing Report's fonts, logo, paper sizes and jsPDF**, with its own one-page layout that shrinks to fit.
+- **A source with no profit pull or no `loadAccountability` still builds the Marketing Report**; those columns are blank. Accountability never blocks the Marketing Report.

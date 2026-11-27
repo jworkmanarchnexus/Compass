@@ -8,7 +8,7 @@ const ROLES = ['admin', 'pic', 'pm', 'processor', 'finance', 'marketing', 'sysad
 const ROLE_LABEL = { admin: 'Admin', pic: 'PIC', pm: 'Project manager (Billing only)', processor: 'Invoice processor (Billing)', finance: 'Finance, view only', marketing: 'Marketing director, view only', sysadmin: 'System admin' };
 
 /* areas of the app that have a page of their own */
-const AREAS = ['turnaround', 'checkins', 'bd', 'pipeline', 'billing', 'admin'];
+const AREAS = ['turnaround', 'checkins', 'bd', 'accountability', 'pipeline', 'billing', 'admin'];
 
 function canView(role, area, access) {
   const a = access || {};
@@ -16,6 +16,8 @@ function canView(role, area, access) {
     case 'turnaround': return role === 'admin' || role === 'pic' || role === 'finance' || (role === 'marketing' && !!a.marketingTurnaround);
     case 'checkins': return role === 'admin'; // the reminder queue is Josh's alone
     case 'bd': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picBd);
+    // every PIC's profit, side by side: the Admin and Finance until Josh says otherwise (docs/OPEN-QUESTIONS.md A3)
+    case 'accountability': return role === 'admin' || role === 'finance';
     case 'pipeline': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picPipeline);
     case 'billing': return role === 'admin' || role === 'processor' || role === 'pic' || role === 'pm'; // a PIC or PM sees only their own projects (modules/billing/logic/access.js)
     case 'admin': return role === 'admin' || role === 'sysadmin';
@@ -24,7 +26,7 @@ function canView(role, area, access) {
 }
 
 /* Admin tabs, in display order. 'edit' = may change it, 'view' = may read it, null = hidden. */
-const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'pipeline', 'billing', 'people', 'runs', 'patterns', 'audit'];
+const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'accountability', 'pipeline', 'billing', 'people', 'runs', 'patterns', 'audit'];
 function adminTab(role, tab) {
   if (role === 'admin') return 'edit';
   if (role === 'sysadmin') {

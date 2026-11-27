@@ -40,7 +40,7 @@ Conventions: ids are text UUIDs (Kent may change this); **money is whole cents (
 ## Invariants the database enforces (so a bug in the code cannot break them)
 
 1. `audit_log`, `plan_entries`, `bd_mwip_factor`, `pursuit_notes` and the three snapshot tables: no update, no delete.
-2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`, `bd_detail`) can be added, changed or removed only while the run is a **draft**.
+2. A run's rows (`run_projects`, `run_warnings`, `run_history`, `run_pic_history`, `run_project_history`, `bd_rows`, `bd_run_meta`, `bd_detail`, `acct_rows`, `acct_meta`) can be added, changed or removed only while the run is a **draft**.
 3. A run itself moves only draft → published, or published → archived with a non-empty reason and nothing else changed; an archived run never changes; only a draft may be deleted.
 
 A reset of the local database (`npm run seed`) is a developer action: it drops these guards, empties the tables and recreates the guards. The app has no such path.
@@ -79,3 +79,11 @@ Money is whole cents. Nothing here is ever deleted.
 | `billing_notifications` | what accounting should hear about, with how each person's own settings say to deliver it (now, held for business hours, digest, off) | nothing is sent yet |
 
 Roles: `pm` (a project manager, Billing only) and `processor` (an invoice processor) join `admin`, `pic`, `finance`, `marketing`, `sysadmin`. A PM or PIC is the author of a project when their VP employee code is its project-manager or principal code.
+
+## Principal Accountability tables (docs/SPEC-accountability.md; `server/accountability.js`)
+
+- `acct_goals (year, pic, amount, sort)`: each PIC's billed goal for a year, cents. Compass's own data, edited in Admin > Accountability.
+- `acct_meta (run_id, ...)`: one per Marketing Report run: year, months, cutoff, the day plan statuses were read and the Project Turnaround run they came from, the firm figures from the source (NULL when the source has none), the architectural revenue, and the project sizes in force (`sizes_json`).
+- `acct_rows (run_id, key, ...)`: one per PIC (`key` '' = Unassigned): goal (NULL = none), billed, profit, negative profit, unevaluated and listed counts, response ('yes', 'no' or NULL), utilization (basis points), backlog, MWIP, AR over 90. Money in cents.
+
+Both run tables are keyed by the Marketing Report's run (`runs.kind = 'bd'`) and locked with it by the same triggers. No percentages, to-goal, shortfall or project counts are stored.
