@@ -49,6 +49,7 @@ One list per dashboard. Each dashpart has an id, title, one-sentence blurb, min 
 | Staff mix by role (PIC, PM, PA, Production, Visualization) | 2-4 x 1-3 | 2 x 1 | no |
 | Client scorecard | 2-4 x 2-3 | 2 x 2 | no |
 | Where the fee goes (contract fee to collected) | 2-4 x 1-2 | 2 x 1 | no |
+| Fee burn (billed and spent against the fee) | 2-4 x 1-3 | 4 x 2 | no |
 
 **PM dashboard** (confirmed by Josh, 2026-11-26)
 
@@ -57,6 +58,7 @@ One list per dashboard. Each dashpart has an id, title, one-sentence blurb, min 
 | Fee by phase, planned against actual | 2-4 x 1-2 | 2 x 2 | yes |
 | Unbilled work | 1-2 x 1-2 | 2 x 1 | yes |
 | Where the fee goes | 2-4 x 1-2 | 2 x 1 | yes |
+| Fee burn | 2-4 x 1-3 | 4 x 2 | no |
 | Staff mix by role | 2-4 x 1-3 | 4 x 1 | yes |
 
 The same dashpart draws the same way on either dashboard; only the projects behind it will differ once it has real data.
@@ -65,12 +67,30 @@ The same dashpart draws the same way on either dashboard; only the projects behi
 
 `render({ w, h, px, py })` draws for its size in cells and its exact pixel size, and draws **more** as it grows (more rows, axis labels, names on bubbles, more table columns, a second chart), never a stretched copy. `says(w, h)` is the plain sentence for edit mode. In edit mode the drawing is faded so the controls lead. Colors are classes in `ui/dashboard.css` built on brand tokens; nothing over or under is red.
 
+## Fee burn (Josh, 2026-11-26; rules `modules/dashboard/logic/burn.js`, tested from `tests/fixtures/burn.json`)
+
+Billed and spent as running totals by month, against the fee. Month across, dollars up.
+- **Billed:** actual through the last closed month (solid blue), then the project's revenue forecast (dashed, lighter blue).
+- **Spent:** actual cost with overhead, labor x (1 + overhead %) + expenses, the same as Project Turnaround's profit (solid dark gray); then projected spend (dashed gray).
+- **Projected spend = planned hours x billing rate x the Admin setting "Projected spend" (`dashboard.projectedSpendPct`, % of billing value, default 85, made up).** It never uses anyone's pay or cost rate: with one hour in a plan, a PM could otherwise work out a person's salary (Josh). Admin > Dashboards.
+- A dotted line marks the current month; the months from it on are shaded.
+- **This year / Full project** switch. This year: January to December, totals from zero on Jan 1, fee line = fee less what was billed before Jan 1 ("Fee left at Jan 1"). Full project: the first month to the last month of the project (of all the projects, on a dashboard), fee line = the fee.
+- A plain sentence under the chart: billed and spent through the last closed month, and the month spent went (or is projected to go) past the fee line, if it does.
+- On a dashboard it adds up every project the person leads (PIC) or manages (PM). At 3 or 4 wide a picker shows one project, with **Open project** to its page. One row tall: billed against the fee line and spent, with a small chart, no axes.
+- A project with no overhead plan is still drawn with labor alone, and the rules return a warning (not shown on screen yet).
+- Off for a new person (the starting set Josh chose, D3 and D5, is unchanged); people add it with Customize.
+
+## One project (`#/dashboard/pic/project/<WBS1>`, `#/dashboard/pm/project/<WBS1>`; `ui/project.js`)
+
+Opened from the Fee burn's project picker. Back returns to the dashboard. Four figures (fee with start and end, billed to date, spent to date, projected spent at the end against the fee) and the fee burn full width, Full project first. Only for people who have that dashboard. Sample data (`ui/burn-sample.js`).
+
 ## API
 
-`GET /api/me` carries `dashboards`: `["pic"]`, `["pm"]`, both or none. `GET /api/dashboards/:board` (`pic` or `pm`) → `{ board, label, catalog, layout, saved, updatedAt }` (the default layout when nothing is saved). `PUT /api/dashboards/:board` with `{ layout }` saves (normalized against that dashboard's catalog first) or `{ reset: true }` removes the saved row. 403 for a dashboard the person does not have, 404 for one that does not exist. Table `dashboard_layouts` (one row per person per dashboard).
+`GET /api/me` carries `dashboards`: `["pic"]`, `["pm"]`, both or none. `GET /api/dashboards/:board` (`pic` or `pm`) → `{ board, label, catalog, layout, saved, updatedAt, burn: { projectedSpendPct } }` (the default layout when nothing is saved). `PUT /api/dashboards/:board` with `{ layout }` saves (normalized against that dashboard's catalog first) or `{ reset: true }` removes the saved row. 403 for a dashboard the person does not have, 404 for one that does not exist. Table `dashboard_layouts` (one row per person per dashboard).
 
 ## Not built
 
+- Fee burn on real data: monthly billed, labor and expenses per project; the overhead plan; the revenue forecast by month; planned hours and billing rate by month (D2). On real data the one-project page must also check the person is PIC or PM on that project (D8).
 - Real data. Every dashpart will read Vantagepoint (through the scheduled copy, never from the browser); exactly which tables and fields each needs is open question D2.
 - Per-dashpart settings (for example which projects the bubble chart includes).
 - The Admin curating the catalog on a screen (today it is a code file).

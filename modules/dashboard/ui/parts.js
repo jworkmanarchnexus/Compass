@@ -6,6 +6,9 @@
      too ("Wider: adds the weekly trend") so a person can see what a change will do before making it.
    Everything here is static text we wrote, so building it as HTML strings is safe. Colors are classes in dashboard.css. */
 
+import * as BC from './burn-chart.js';
+import { sampleProjects, SAMPLE_MONTHS } from './burn-sample.js';
+
 const usd = k => { const d = Math.abs(k) * 1000, s = k < 0 ? '-$' : '$'; return d >= 1e6 ? s + (d / 1e6).toFixed(2) + 'M' : s + Math.round(d / 1000) + 'K'; };
 const pct = (n, signed) => (signed && n > 0 ? '+' : '') + Math.round(n) + '%';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -258,7 +261,55 @@ const leakage = {
   },
 };
 
-export const PARTS = { turnaround, revenue, pipeline, unbilled, bubble, phase, staffmix, clients, leakage };
+/* ---------- Fee burn (billed and spent against the fee; rules in ../logic/burn.js, drawing in burn-chart.js) ----------
+   The dashboard sets which board it is on and the Admin's projected-spend percent (setBurnContext). The period switch and
+   the project picker live in the dashpart; changing either redraws every fee burn on the page. */
+const BURN = { board: 'pic', pct: 85, window: 'year', project: '' };
+export function setBurnContext({ board, projectedSpendPct }) { BURN.board = board; if (projectedSpendPct) BURN.pct = projectedSpendPct; BURN.project = ''; }
+function burnResult() {
+  const all = sampleProjects(BURN.board), list = BURN.project ? all.filter(p => p.wbs1 === BURN.project) : all;
+  return { all, r: window.CompassDashboard.burn.burn(list, Object.assign({ window: BURN.window, projectedSpendPct: BURN.pct }, SAMPLE_MONTHS)) };
+}
+const burnPart = {
+  says(w, h) {
+    if (h === 1) return w >= 3 ? 'Billed and spent so far against the fee, with a small chart of the year.' : 'Billed and spent so far against the fee, with a small chart.';
+    if (w >= 3) return 'The chart of billed and spent against the fee, by month, with a This year / Full project switch and a project picker that opens one project on its own page.';
+    return 'The chart of billed and spent against the fee, by month, with a This year / Full project switch.';
+  },
+  render(box) {
+    const { w, h, px, py } = box;
+    const { all, r } = burnResult();
+    const root = c => `<div class="burn-part" data-box='${JSON.stringify(box)}'>${c}</div>`;
+    if (h === 1) {
+      const head = kpi(r.feeLineKind === 'total' ? 'Billed of the fee' : 'Billed this year', `${BC.money(r.toDate.billed)}`, `of ${BC.money(r.feeLine)} · spent ${BC.money(r.toDate.spent)}`);
+      return root(`<div class="burn-mini">${head}${BC.chart(r, { px: Math.max(60, px - (w >= 3 ? 230 : 150)), py: Math.max(40, py - 8), compact: true })}</div>`);
+    }
+    const pick = w >= 3 ? `<select class="txt burn-pick" data-burn-project aria-label="Which projects">
+        <option value="">All ${all.length} projects</option>${all.map(p => `<option value="${p.wbs1}"${p.wbs1 === BURN.project ? ' selected' : ''}>${BC.esc(p.wbs1 + ' ' + p.name)}</option>`).join('')}</select>
+        ${BURN.project ? `<a class="burn-open" href="#/dashboard/${BURN.board}/project/${encodeURIComponent(BURN.project)}">Open project</a>` : ''}` : '';
+    const controls = `<div class="burn-controls">${BC.windowSwitch(BURN.window)}${pick}</div>`;
+    const showLegend = py > 230, showSentence = py > 200;
+    const chartH = py - 40 - (showLegend ? 26 : 0) - (showSentence ? 22 : 0);
+    return root(controls + BC.chart(r, { px, py: Math.max(60, chartH) }) + (showLegend ? BC.legend(r) : '') + (showSentence ? `<p class="burn-says">${BC.sentence(r)}</p>` : ''));
+  },
+};
+function redrawBurns() {
+  for (const el of document.querySelectorAll('.burn-part')) {
+    const box = JSON.parse(el.dataset.box);
+    el.outerHTML = burnPart.render(box);
+  }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.burn-part [data-burn-window]');
+  if (!b) return;
+  BURN.window = b.dataset.burnWindow; redrawBurns();
+});
+document.addEventListener('change', e => {
+  if (!e.target.matches('.burn-part [data-burn-project]')) return;
+  BURN.project = e.target.value; redrawBurns();
+});
+
+export const PARTS = { turnaround, revenue, pipeline, unbilled, bubble, phase, staffmix, clients, leakage, burn: burnPart };
 
 /* draws one dashpart into `el` at its current size. A dashpart with no drawing yet gets a plain placeholder. */
 export function drawPart(el, id, box) {

@@ -53,3 +53,12 @@ test('a dashboard you do not have is refused; bad requests are refused', () => w
   assert.strictEqual((await api('d.whitfield').put('/api/dashboards/pic', {})).status, 400);
   assert.strictEqual((await api('d.whitfield').put('/api/dashboards/pic', { layout: { items: 'x' } })).status, 400);
 }));
+
+test("the fee burn's projected-spend percent comes from the Admin setting, and only the Admin can change it", () => withApp(async ({ api }) => {
+  assert.strictEqual((await api('d.whitfield').get('/api/dashboards/pic')).body.burn.projectedSpendPct, 85, 'the default');
+  assert.strictEqual((await api('d.whitfield').put('/api/admin/settings', { changes: { 'dashboard.projectedSpendPct': 70 } })).status, 403, 'a PIC cannot change it');
+  assert.strictEqual((await api('j.workman').put('/api/admin/settings', { changes: { 'dashboard.projectedSpendPct': 0 } })).status, 400, 'out of range');
+  assert.strictEqual((await api('j.workman').put('/api/admin/settings', { changes: { 'dashboard.projectedSpendPct': 70 } })).status, 200);
+  assert.strictEqual((await api('d.whitfield').get('/api/dashboards/pic')).body.burn.projectedSpendPct, 70);
+  assert.ok((await api('d.whitfield').get('/api/dashboards/pic')).body.catalog.some(c => c.id === 'burn' && c.on === false), 'Fee burn is offered, off for a new person');
+}));

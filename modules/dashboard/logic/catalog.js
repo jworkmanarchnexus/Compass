@@ -16,6 +16,7 @@ const PIC = [
   { id: 'staffmix', title: 'Staff mix by role', blurb: 'Share of hours by role on your projects, against the firm.', minW: 2, maxW: 4, minH: 1, maxH: 3, w: 2, h: 1, on: false },
   { id: 'clients', title: 'Client scorecard', blurb: 'Revenue, margin, days to pay and repeat work for your clients.', minW: 2, maxW: 4, minH: 2, maxH: 3, w: 2, h: 2, on: false },
   { id: 'leakage', title: 'Where the fee goes', blurb: 'Contract fee to hours charged, billed, written off and collected.', minW: 2, maxW: 4, minH: 1, maxH: 2, w: 2, h: 1, on: false },
+  { id: 'burn', title: 'Fee burn', blurb: 'Billed and spent by month against the fee, this year or the whole job, with forecast and projected spend.', minW: 2, maxW: 4, minH: 1, maxH: 3, w: 4, h: 2, on: false },
 ];
 
 /* the PM dashboard: running the work on the projects they manage. The same dashpart (id) draws the same way on either. */
@@ -24,6 +25,7 @@ const PM = [
   { id: 'unbilled', title: 'Unbilled work', blurb: 'Work done on your projects but not yet invoiced, by how long it has waited.', minW: 1, maxW: 2, minH: 1, maxH: 2, w: 2, h: 1, on: true },
   { id: 'leakage', title: 'Where the fee goes', blurb: 'Contract fee to hours charged, billed, written off and collected, on the projects you manage.', minW: 2, maxW: 4, minH: 1, maxH: 2, w: 2, h: 1, on: true },
   { id: 'staffmix', title: 'Staff mix by role', blurb: 'Share of hours by role on the projects you manage, against the firm.', minW: 2, maxW: 4, minH: 1, maxH: 3, w: 4, h: 1, on: true },
+  { id: 'burn', title: 'Fee burn', blurb: 'Billed and spent by month against the fee on the projects you manage, this year or the whole job.', minW: 2, maxW: 4, minH: 1, maxH: 3, w: 4, h: 2, on: false },
 ];
 
 const CATALOGS = { pic: PIC, pm: PM };

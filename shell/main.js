@@ -8,6 +8,7 @@ import { bdAdminCards } from '/modules/bd/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
 import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
 import { billingAdminCards } from '/modules/billing/ui/admin.js';
+import { dashboardAdminCards } from '/modules/dashboard/ui/admin.js';
 import { renderBillingList } from '/modules/billing/ui/list.js';
 import { renderBillingProject } from '/modules/billing/ui/project.js';
 import { renderOverview } from '/modules/turnaround/ui/overview.js';
@@ -15,6 +16,7 @@ import { renderPlan } from '/modules/turnaround/ui/plan.js';
 import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 import { renderDashboard } from '/modules/dashboard/ui/page.js';
+import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
 
 const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Billing, ApiError } = platform;
 const T = window.Toolbox;
@@ -160,6 +162,12 @@ async function pageDashboard(board) {
   await renderDashboard(ctx, body, board);
 }
 
+async function pageDashboardProject(board, wbs1) {
+  const label = board === 'pm' ? 'PM dashboard' : 'PIC dashboard';
+  const body = frame('dash-' + board, [crumb('Compass', '#/'), sep(), crumb(label, '#/dashboard/' + board), sep(), crumb(wbs1)], 'Project ' + wbs1, 'One project from your dashboard: billed and spent against the fee.');
+  await renderDashboardProject(ctx, body, board, wbs1);
+}
+
 async function pagePipeline() {
   const body = frame('pipeline', [crumb('Compass', '#/'), sep(), crumb('Pipeline watch')], 'Pipeline watch', 'Weekly snapshots of pursuits (MWIP) and contracted forecast, by PIC, with what changed and what needs a look.');
   await renderPipeline(ctx, body);
@@ -201,8 +209,9 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
+  'dashboard.projectedSpendPct': 'Fee burn: projected spend',
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
@@ -281,6 +290,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const [s, portfolio, calendar] = await Promise.all([Admin.settings(), isBillingUser ? Billing.portfolio({ scope: 'all' }) : null, isBillingUser ? Billing.calendar() : null]);
       slot.textContent = '';
       slot.append(...billingAdminCards(ctx, s, portfolio && calendar ? { calendar, rows: portfolio.rows, today: portfolio.today } : null, canEdit, rerender));
+    } else if (tab === 'dashboards') {
+      const s = await Admin.settings();
+      slot.textContent = '';
+      slot.append(...dashboardAdminCards(ctx, s, canEdit, rerender));
     } else if (tab === 'runs') {
       const runs = await Admin.runs();
       slot.textContent = '';
@@ -669,6 +682,9 @@ function route() {
   if ((m = /^#\/dashboard(?:\/(pic|pm))?$/.exec(hash))) {
     const mine = me.dashboards || [], board = m[1] || mine[0];
     return board && mine.includes(board) ? pageDashboard(board) : pageNoAccess();
+  }
+  if ((m = /^#\/dashboard\/(pic|pm)\/project\/([^/?]+)$/.exec(hash))) {
+    return (me.dashboards || []).includes(m[1]) ? pageDashboardProject(m[1], decodeURIComponent(m[2])) : pageNoAccess();
   }
   if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
   if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();
