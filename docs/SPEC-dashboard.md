@@ -67,6 +67,22 @@ The same dashpart draws the same way on either dashboard; only the projects behi
 
 `render({ w, h, px, py })` draws for its size in cells and its exact pixel size, and draws **more** as it grows (more rows, axis labels, names on bubbles, more table columns, a second chart), never a stretched copy. `says(w, h)` is the plain sentence for edit mode. In edit mode the drawing is faded so the controls lead. Colors are classes in `ui/dashboard.css` built on brand tokens; nothing over or under is red.
 
+## Tabs (Josh, 2026-11-26: fixed tabs, keep the customizable grid; `ui/tabs.js`, rules `logic/portfolio.js`)
+
+A row of tabs in the header tile of each dashboard: **Overview, Profit, Revenue forecast, Hours**, and on the PIC dashboard only **Billing & AR** (marked PIC). Routes `#/dashboard/<board>/<tab>`; Overview is `#/dashboard/<board>`. A tab the dashboard does not have goes back to Overview.
+- **Overview** is the person's own grid of dashparts, exactly as before (Customize shows only here).
+- **The other tabs are fixed:** the same for everyone with that dashboard. Each has a row of figures, then charts and tables. Every project name is a link to that project on the same tab.
+  - Profit: fee, billed this year, profit this year, how many need a look; profit % by project (lowest first); a table with PM (PIC dashboard), fee, billed, spent, profit, profit %, billed and spent as % of fee, status.
+  - Revenue forecast: next 3 and 6 months, billed this year, fee left to bill; the fee burn for the projects shown; forecast by month (next six); a table by project and month.
+  - Hours: hours this year against plan, the difference, how many are over plan; actual as % of plan by project; a table.
+  - Billing & AR: owed to us, over 60 days; aging by project (current, 31-60, 61-90, 90+).
+- **Status** (plain labels, never red): **Needs a look** = year-to-date profit below zero; **Watch** = $0 or more but under the Admin's "Watch" percent of billed (`dashboard.watchProfitPct`, default 10); **On track** = the rest.
+- **Group chips** on the fixed tabs: All, Needs a look (Watch too), Below zero, Ending in N days (`dashboard.endingSoonDays`, default 90; end month within N/30 months of the current one, or already past). Each shows its count. The chip is kept while moving between tabs of the same dashboard (not saved). Not on Overview.
+- **Open a project** (a picker at the right of the tab row, on every tab) opens a project on the tab you are on.
+- **Dashpart arrows open the matching tab:** Fee burn to Revenue forecast, Fee by phase to Profit, Staff mix to Hours, Unbilled work to Billing & AR (PIC dashboard only).
+- **One project** has the same tabs. Its Overview is the fee burn page; Profit shows this year's closed months (billed, spent, profit, profit so far); Revenue forecast the next six months and every month to the end; Hours by person; Billing & AR its open invoices. Back returns to the dashboard tab the project was opened from.
+- Year to date = January through the last closed month. Spent = cost with overhead, as Project Turnaround.
+
 ## Fee burn (Josh, 2026-11-26; rules `modules/dashboard/logic/burn.js`, tested from `tests/fixtures/burn.json`)
 
 Billed and spent as running totals by month, against the fee. Month across, dollars up.
@@ -86,7 +102,7 @@ Opened from the Fee burn's project picker. Back returns to the dashboard. Four f
 
 ## API
 
-`GET /api/me` carries `dashboards`: `["pic"]`, `["pm"]`, both or none. `GET /api/dashboards/:board` (`pic` or `pm`) → `{ board, label, catalog, layout, saved, updatedAt, burn: { projectedSpendPct } }` (the default layout when nothing is saved). `PUT /api/dashboards/:board` with `{ layout }` saves (normalized against that dashboard's catalog first) or `{ reset: true }` removes the saved row. 403 for a dashboard the person does not have, 404 for one that does not exist. Table `dashboard_layouts` (one row per person per dashboard).
+`GET /api/me` carries `dashboards`: `["pic"]`, `["pm"]`, both or none. `GET /api/dashboards/:board` (`pic` or `pm`) → `{ board, label, catalog, layout, saved, updatedAt, burn: { projectedSpendPct }, rules: { watchProfitPct, endingSoonDays } }` (the default layout when nothing is saved). `PUT /api/dashboards/:board` with `{ layout }` saves (normalized against that dashboard's catalog first) or `{ reset: true }` removes the saved row. 403 for a dashboard the person does not have, 404 for one that does not exist. Table `dashboard_layouts` (one row per person per dashboard).
 
 ## Not built
 

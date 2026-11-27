@@ -317,4 +317,12 @@ export function drawPart(el, id, box) {
   el.innerHTML = p ? p.render(box) : `<div class="dp-empty">Not drawn yet</div>`;
 }
 export function partSays(id, w, h) { const p = PARTS[id]; return p ? p.says(w, h) : ''; }
-export function partLink(id) { const p = PARTS[id]; return p && p.href ? { href: p.href, area: p.area } : null; }
+/* where a dashpart's arrow goes: a page elsewhere (href, for people who may open it), or a tab of this dashboard */
+const TAB_OF = { burn: 'forecast', phase: 'profit', unbilled: 'billing', staffmix: 'hours' };
+export function partLink(id, board) {
+  const p = PARTS[id];
+  if (p && p.href) return { href: p.href, area: p.area };
+  const tab = TAB_OF[id];
+  if (!tab || (tab === 'billing' && board !== 'pic')) return null; // Billing & AR is a PIC tab
+  return { href: `#/dashboard/${board}/${tab}`, area: null };
+}

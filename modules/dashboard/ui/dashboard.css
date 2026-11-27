@@ -207,3 +207,38 @@ body.dash-dragging, body.dash-dragging * { cursor: grabbing !important; user-sel
 .dproj-card { height: auto; }
 .dproj-card .dp-head { justify-content: space-between; }
 .dproj-chart { margin-top: 10px; min-width: 0; }
+
+/* ---------- the tab row in the header tile (tabs.js) ---------- */
+.dtabs { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin-top: 12px; margin-bottom: -6px; }
+.dtabs-list { display: flex; gap: 2px; overflow-x: auto; min-width: 0; }
+.dtabs-list a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px 10px; color: var(--text-2); text-decoration: none; font-size: 14px; border-bottom: 3px solid transparent; white-space: nowrap; }
+.dtabs-list a:hover { color: var(--text-strong); }
+.dtabs-list a.on { color: var(--accent-text); border-bottom-color: var(--accent); font-weight: 700; }
+.dtabs-tag { font: 700 10px/1 var(--f-cond); letter-spacing: .06em; padding: 2px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--accent-text); }
+.dtabs-right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-bottom: 8px; }
+.dtabs-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dchip { height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text-2); font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.dchip .n { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.dchip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+.dtabs-open { height: 30px; max-width: 220px; font-size: 13px; }
+
+/* ---------- the fixed tabs ---------- */
+.dtab-card { height: auto; gap: 10px; }
+.dtab-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.dtab-head h2 { margin: 0; font: 700 15.5px/1.2 var(--f-cond); color: var(--text-strong); }
+.dtab-head .dtab-tools { margin-left: auto; }
+.dtab-scroll { overflow-x: auto; }
+.dtab-table td.nm { width: auto; max-width: 340px; }
+.dtab-table td.nm a { color: var(--text-strong); text-decoration: none; }
+.dtab-table td.nm a:hover { color: var(--accent-text); text-decoration: underline; }
+.dbars { display: grid; gap: 7px; }
+.dbar { display: grid; grid-template-columns: minmax(110px, 220px) minmax(0, 1fr) 64px; gap: 12px; align-items: center; font-size: 13px; }
+.dbar-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); text-decoration: none; }
+a.dbar-nm:hover { color: var(--accent-text); text-decoration: underline; }
+.dbar-track { position: relative; height: 12px; background: var(--line-2); border-radius: 3px; }
+.dbar-track i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--dp-c2); }
+.dbar-track i.neg { background: var(--warn-fill); }
+.dbar-track b { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text-3); }
+.dbar-v { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-strong); }
+.dcols { min-width: 0; }
+@media (max-width: 640px) { .dbar { grid-template-columns: minmax(80px, 120px) minmax(0, 1fr) 54px; } .dtabs-open { max-width: 100%; } }

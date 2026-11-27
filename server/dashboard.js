@@ -20,9 +20,11 @@ function requireBoard(db, user, board) {
 /* settings = the Admin settings in force; the page needs the fee burn's projected-spend percent */
 function get(db, user, board, settings) {
   requireBoard(db, user, board);
-  const burn = { projectedSpendPct: (settings || {})['dashboard.projectedSpendPct'] };
+  const s = settings || {};
+  const burn = { projectedSpendPct: s['dashboard.projectedSpendPct'] };
+  const rules = { watchProfitPct: s['dashboard.watchProfitPct'], endingSoonDays: s['dashboard.endingSoonDays'] }; // status and chips on the tabs
   const row = db.get('SELECT layout_json, updated_at FROM dashboard_layouts WHERE user_id = ? AND board = ?', user.id, board);
-  return { board, label: B.BOARD_LABEL[board], catalog: CATALOGS[board], layout: L.normalize(row ? JSON.parse(row.layout_json) : null, CATALOGS[board]), saved: !!row, updatedAt: row ? row.updated_at : null, burn };
+  return { board, label: B.BOARD_LABEL[board], catalog: CATALOGS[board], layout: L.normalize(row ? JSON.parse(row.layout_json) : null, CATALOGS[board]), saved: !!row, updatedAt: row ? row.updated_at : null, burn, rules };
 }
 
 /* body: { layout } saves it (normalized first, so a bad id or size can never be stored); { reset: true } goes back to the default */

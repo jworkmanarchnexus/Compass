@@ -47,14 +47,16 @@ function check(projects, opts) {
   }
 }
 
+/* actual spent in one month: labor x (1 + overhead %) + expenses (overheadPct null = no overhead plan: labor alone) */
+const spentOf = (a, overheadPct) => Math.round(a.labor * (100 + (overheadPct === null ? 0 : overheadPct)) / 100) + a.expenses;
+
 /* one project's own amounts by month index: { billed, spent } (not running totals) */
 function monthly(p, last, pct) {
   const out = new Map();
   const add = (i, billed, spent) => { const x = out.get(i) || { billed: 0, spent: 0 }; x.billed += billed; x.spent += spent; out.set(i, x); };
-  const oh = p.overheadPct === null ? 0 : p.overheadPct;
   for (const a of p.actuals || []) {
     const i = toIndex(a.month);
-    if (i <= last) add(i, a.billed, Math.round(a.labor * (100 + oh) / 100) + a.expenses);
+    if (i <= last) add(i, a.billed, spentOf(a, p.overheadPct));
   }
   for (const f of p.forecast || []) { const i = toIndex(f.month); if (i > last) add(i, f.billed, 0); }
   for (const h of p.plannedHours || []) { const i = toIndex(h.month); if (i > last) add(i, 0, Math.round(h.hours * h.billRate * pct / 100)); }
@@ -101,6 +103,6 @@ function burn(projects, opts) {
   };
 }
 
-const burnApi = { burn, toIndex, toMonth };
+const burnApi = { burn, spentOf, toIndex, toMonth };
 if (typeof module !== 'undefined' && module.exports) module.exports = burnApi;
 else if (typeof window !== 'undefined') window.CompassDashboard = Object.assign(window.CompassDashboard || {}, { burn: burnApi });

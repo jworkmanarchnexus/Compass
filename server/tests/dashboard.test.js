@@ -62,3 +62,10 @@ test("the fee burn's projected-spend percent comes from the Admin setting, and o
   assert.strictEqual((await api('d.whitfield').get('/api/dashboards/pic')).body.burn.projectedSpendPct, 70);
   assert.ok((await api('d.whitfield').get('/api/dashboards/pic')).body.catalog.some(c => c.id === 'burn' && c.on === false), 'Fee burn is offered, off for a new person');
 }));
+
+test('the status cutoffs on the tabs come from the Admin settings', () => withApp(async ({ api }) => {
+  assert.deepStrictEqual((await api('d.whitfield').get('/api/dashboards/pic')).body.rules, { watchProfitPct: 10, endingSoonDays: 90 });
+  assert.strictEqual((await api('j.workman').put('/api/admin/settings', { changes: { 'dashboard.endingSoonDays': 10 } })).status, 400, 'at least 30 days');
+  await api('j.workman').put('/api/admin/settings', { changes: { 'dashboard.watchProfitPct': 15, 'dashboard.endingSoonDays': 120 } });
+  assert.deepStrictEqual((await api('d.whitfield').get('/api/dashboards/pic')).body.rules, { watchProfitPct: 15, endingSoonDays: 120 });
+}));

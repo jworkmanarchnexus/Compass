@@ -8,6 +8,8 @@
    The layout rules (packing, limits, order) are in ../logic/layout.js and tested there; this file only draws and listens. */
 import { Dashboard } from '/shared/platform/index.js';
 import { drawPart, partSays, partLink, setBurnContext } from './parts.js';
+import { mountTabRow } from './tabs.js';
+import { sampleProjects } from './burn-sample.js';
 
 const D = window.CompassDashboard;
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -19,6 +21,7 @@ export async function renderDashboard(ctx, body, board) {
   const me = Session.me();
   const data = await Dashboard.get(board);
   setBurnContext({ board, projectedSpendPct: data.burn && data.burn.projectedSpendPct });
+  mountTabRow(ctx, body, { board, active: 'overview', projects: sampleProjects(board) });
   const catalog = data.catalog;
   const info = new Map(catalog.map(c => [c.id, c]));
 
@@ -48,7 +51,7 @@ export async function renderDashboard(ctx, body, board) {
   /* ---------- one tile per dashpart that is on ---------- */
   function makeTile(id) {
     const c = info.get(id);
-    const link = partLink(id);
+    const link = partLink(id, board);
     const resizeBtn = (dir, ico, label) => h('button', { class: 'dp-arrow ' + dir, type: 'button', 'aria-label': `${label}: ${c.title}`,
       onclick: () => { layout = D.resize(layout, id, dir, catalog); apply(); },
       onmouseenter: e => previewSays(id, dir, e.currentTarget), onmouseleave: () => previewSays(id, null), onfocus: e => previewSays(id, dir, e.currentTarget), onblur: () => previewSays(id, null) }, icon(ico, 14));
@@ -61,7 +64,7 @@ export async function renderDashboard(ctx, body, board) {
       h('section', { class: 'dp-in', 'aria-label': c.title },
         h('header', { class: 'dp-head' },
           h('h2', { text: c.title }),
-          link && me.areas[link.area] ? h('a', { class: 'dp-open', href: link.href, title: 'Open the full page', 'aria-label': `Open ${c.title}` }, icon('arrow-right', 15)) : null),
+          link && (!link.area || me.areas[link.area]) ? h('a', { class: 'dp-open', href: link.href, title: link && !link.area ? 'Open the tab with the detail' : 'Open the full page', 'aria-label': `Open ${c.title}` }, icon('arrow-right', 15)) : null),
         bodyEl,
         h('button', { class: 'dp-x', type: 'button', title: 'Put away', 'aria-label': `Put away: ${c.title}`, onclick: () => { layout = D.hide(layout, id); apply(); } }, icon('x', 13)),
         h('div', { class: 'dp-foot' }, size, says),

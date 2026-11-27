@@ -325,3 +325,12 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Built as a dashpart plus a one-project page**, on the same made-up data approach as the other dashparts, but with the math in tested pure rules (`logic/burn.js`) so real data only has to fill the same input shape.
 - **Admin > Dashboards** is a new Admin tab, for the one setting.
 - **Off for a new person**, so Josh's starting set (D3, D5) is unchanged (open D9).
+
+## Dashboard tabs (2026-11-26; `docs/SPEC-dashboard.md`)
+
+- 2026-11-26 (Josh): **fixed tabs, and keep the customizable dashboards.** Overview is the existing grid; Profit, Revenue forecast, Hours and (PIC only) Billing & AR are the same for everyone. Dashparts are the summary and their arrows open the matching tab, the way some already open Turnaround or the Marketing Report.
+- **Tabs are links with their own address** (`#/dashboard/pic/profit`), so Back, bookmarks and a link in an email all work, and the one-project page uses the same pattern (`.../project/<WBS1>/profit`).
+- **The status and chip rules are pure and tested** (`logic/portfolio.js`), with the two cutoffs as Admin settings, because every threshold is a setting.
+- **Chips are kept in the page, not saved**, and only on the fixed tabs (open D12).
+- **`portfolio.js` wraps itself in a function** because the browser loads the logic files as plain scripts that share one global scope, and it uses names `burn.js` also declares.
+- **Sample data** for the tabs extends `ui/burn-sample.js` (PM names, hours, receivables), so every tab and the fee burn agree with each other.
