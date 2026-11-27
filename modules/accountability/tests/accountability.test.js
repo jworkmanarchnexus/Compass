@@ -56,3 +56,18 @@ test('money shows as the sheet shows it: whole dollars, losses in brackets, zero
   assert.strictEqual(A.dollars(0), '$-');
   assert.strictEqual(A.dollars(null), '');
 });
+
+test('Export > Excel: the same table and firm block as the page, with numbers as numbers (whole dollars, ratios for %)', () => {
+  const [table, firm] = A.toSheets(fx.csv.report);
+  const s = A.sheet(fx.csv.report);
+  assert.strictEqual(table.columns.length, s.columns.length, 'one Excel column per page column');
+  assert.strictEqual(table.rows.length, s.body.length + 1, 'every PIC, then Totals');
+  const brad = table.rows[0];
+  assert.deepStrictEqual(brad.slice(0, 3), ['Brad Busath', 552539, -97263], 'dollars as whole numbers, losses negative');
+  assert.strictEqual(Math.round(100 * brad[3]), -18, 'profit % as a ratio, the page says -18%');
+  assert.deepStrictEqual([brad[5], brad[6], brad[13]], ['No', 0.49, 12], 'response as words, utilization as a ratio, projects as a count');
+  assert.strictEqual(brad[11], 0, 'a zero stays a zero ($- on the page)');
+  const totalRow = table.rows[table.rows.length - 1];
+  assert.deepStrictEqual([totalRow[0], totalRow[5], totalRow[13]], ['Totals', null, null], 'Totals has no response or project count');
+  assert.deepStrictEqual(firm.rows.map(r => r[0]), s.firm.map(r => r[0]), 'the firm block has the page\'s figures, in order');
+});

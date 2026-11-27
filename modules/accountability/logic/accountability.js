@@ -149,6 +149,8 @@ const dollars = c => {
 const percent = (x, digits = 0) => (x === null || x === undefined ? '' : `${(100 * x).toFixed(digits)}%`);
 const bp = v => (v === null || v === undefined ? '' : `${Math.round(v / 100)}%`);
 const RESPONSE = { yes: 'Yes', no: 'No' };
+const whole = c => (c === null || c === undefined ? null : Math.round(c / 100)); // cents to whole dollars, for Excel
+const ratioBp = v => (v === null || v === undefined ? null : v / 10000);
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const shortDay = ymd => { const [y, m, d] = String(ymd).split('-').map(Number); return `${m}/${d}/${y}`; };
 
@@ -156,21 +158,21 @@ const shortDay = ymd => { const [y, m, d] = String(ymd).split('-').map(Number); 
 function columns(meta) {
   const y = meta.year;
   const cols = [
-    { id: 'label', group: '', head: 'PIC', text: r => r.label },
-    { id: 'billedYtd', group: 'ytd', head: 'YTD billed', money: true, text: r => dollars(r.billedYtd) },
-    { id: 'profitYtd', group: 'ytd', head: 'YTD profit', money: true, text: r => dollars(r.profitYtd) },
-    { id: 'profitPct', group: 'ytd', head: 'YTD profit %', text: (r, d) => (r.billedYtd ? percent(d.profitPct) : 'NA') },
-    { id: 'negativeYtd', group: 'ytd', head: 'YTD negative profit (all jobs this year)', money: true, text: r => dollars(r.negativeYtd) },
-    { id: 'response', group: 'ytd', head: 'Negative profit response', text: r => (r.key === '_total' ? '' : RESPONSE[r.response] || '-') },
-    { id: 'utilization', group: 'ytd', head: 'Utilization', text: r => bp(r.utilizationBp) },
-    { id: 'goal', group: 'goals', head: `${y} goal`, money: true, text: r => dollars(r.goal) },
-    { id: 'toGoal', group: 'goals', head: '$ amount to goal', money: true, text: (r, d) => dollars(d.toGoal) },
-    { id: 'backlog', group: 'goals', head: `${y} backlog`, money: true, text: r => dollars(r.backlog) },
-    { id: 'shortfall', group: 'goals', head: `${y} shortfall / (excess)`, money: true, text: (r, d) => dollars(d.shortfall) },
-    { id: 'mwip', group: 'goals', head: 'ETC MWIP', money: true, text: r => dollars(r.mwip) },
-    { id: 'arOver90', group: 'goals', head: 'AR > 90', money: true, text: r => dollars(r.arOver90) },
+    { id: 'label', group: '', head: 'PIC', text: r => r.label, xl: 'text', value: r => r.label },
+    { id: 'billedYtd', xl: 'money', value: r => whole(r.billedYtd), group: 'ytd', head: 'YTD billed', money: true, text: r => dollars(r.billedYtd) },
+    { id: 'profitYtd', xl: 'money', value: r => whole(r.profitYtd), group: 'ytd', head: 'YTD profit', money: true, text: r => dollars(r.profitYtd) },
+    { id: 'profitPct', xl: 'pct', value: (r, d) => d.profitPct, group: 'ytd', head: 'YTD profit %', text: (r, d) => (r.billedYtd ? percent(d.profitPct) : 'NA') },
+    { id: 'negativeYtd', xl: 'money', value: r => whole(r.negativeYtd), group: 'ytd', head: 'YTD negative profit (all jobs this year)', money: true, text: r => dollars(r.negativeYtd) },
+    { id: 'response', xl: 'text', value: r => (r.key === '_total' ? null : RESPONSE[r.response] || null), group: 'ytd', head: 'Negative profit response', text: r => (r.key === '_total' ? '' : RESPONSE[r.response] || '-') },
+    { id: 'utilization', xl: 'pct', value: r => ratioBp(r.utilizationBp), group: 'ytd', head: 'Utilization', text: r => bp(r.utilizationBp) },
+    { id: 'goal', xl: 'money', value: r => whole(r.goal), group: 'goals', head: `${y} goal`, money: true, text: r => dollars(r.goal) },
+    { id: 'toGoal', xl: 'money', value: (r, d) => whole(d.toGoal), group: 'goals', head: '$ amount to goal', money: true, text: (r, d) => dollars(d.toGoal) },
+    { id: 'backlog', xl: 'money', value: r => whole(r.backlog), group: 'goals', head: `${y} backlog`, money: true, text: r => dollars(r.backlog) },
+    { id: 'shortfall', xl: 'money', value: (r, d) => whole(d.shortfall), group: 'goals', head: `${y} shortfall / (excess)`, money: true, text: (r, d) => dollars(d.shortfall) },
+    { id: 'mwip', xl: 'money', value: r => whole(r.mwip), group: 'goals', head: 'ETC MWIP', money: true, text: r => dollars(r.mwip) },
+    { id: 'arOver90', xl: 'money', value: r => whole(r.arOver90), group: 'goals', head: 'AR > 90', money: true, text: r => dollars(r.arOver90) },
   ];
-  (meta.sizes || []).forEach((s, i) => cols.push({ id: 'p' + i, group: 'projects', head: `${s.label}, ${dollars(s.fee * 100)} fee`, text: (r, d) => (r.key === '_total' || d.projects[i] === null ? '' : String(d.projects[i])) }));
+  (meta.sizes || []).forEach((s, i) => cols.push({ id: 'p' + i, xl: 'int', value: (r, d) => (r.key === '_total' ? null : d.projects[i]), group: 'projects', head: `${s.label}, ${dollars(s.fee * 100)} fee`, text: (r, d) => (r.key === '_total' || d.projects[i] === null ? '' : String(d.projects[i])) }));
   return cols;
 }
 function groups(meta) {
@@ -223,7 +225,26 @@ function toCsv(report) {
   return lines.map(l => l.map(q).join(',')).join('\r\n') + '\r\n';
 }
 
-const api = { computeRows, totals, derive, projectsNeeded, pace, firmFigures, dollars, percent, columns, groups, sheet, toCsv, MONTHS };
+/* Export > Excel: the same report as shared/export/xlsx.js sheets, with numbers as numbers (whole dollars, ratios for %).
+   Sheet 1 is the table (the PICs, then Totals); sheet 2 is the firm block. */
+function toSheets(report) {
+  const { meta, rows } = report;
+  const cols = columns(meta), g = groups(meta);
+  const total = totals(rows);
+  const line = r => { const d = derive(r, meta.sizes); return cols.map(c => c.value(r, d)); };
+  const f = firmFigures(meta, total);
+  return [
+    { name: 'By PIC', columns: cols.map((c, i) => ({ title: c.group && (i === 0 || cols[i - 1].group !== c.group) ? `${g[c.group]}: ${c.head}` : c.head, type: c.xl, width: i === 0 ? 24 : 16 })),
+      rows: [...rows.map(line), line(total)] },
+    { name: 'The firm', columns: [{ title: 'Figure', width: 34 }, { title: 'Amount', type: 'money', width: 16 }, { title: 'Rate', type: 'pct', width: 12 }],
+      rows: [['Income statement profit (loss)', whole(f.incomeProfit), null], ['Difference from project profit', whole(f.difference), null],
+        ['YTD actual overhead rate', null, ratioBp(f.actualOhBp)], ['Assigned overhead rate', null, ratioBp(f.assignedOhBp)],
+        ['Architectural revenue', whole(f.archRevenue), null], ['ESOP / bonus contribution', whole(f.esopBonus), null],
+        ['Profit on architectural revenue', null, f.profitOnArch]] },
+  ];
+}
+
+const api = { toSheets, computeRows, totals, derive, projectsNeeded, pace, firmFigures, dollars, percent, columns, groups, sheet, toCsv, MONTHS };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else if (typeof window !== 'undefined') window.AcctRules = api;
 })();

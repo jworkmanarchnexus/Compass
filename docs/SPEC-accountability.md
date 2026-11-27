@@ -1,6 +1,6 @@
 # Spec: Principal Accountability
 
-The first tab of the firm's "2026 Project Improvement (Accountability)" workbook, as a page: one row per PIC, year to date, against each PIC's billed goal, with the firm's figures under it. It only shows the figures and exports them (PDF, and a CSV for Excel), as the Marketing Report does. Rules are in `modules/accountability/logic/accountability.js` (pure) and pinned by `modules/accountability/tests/fixtures/accountability.json`, whose cases use rows of the October 2026 workbook. The database, lifecycle and roles are tested in `server/tests/accountability.test.js`.
+The first tab of the firm's "2026 Project Improvement (Accountability)" workbook, as a page: one row per PIC, year to date, against each PIC's billed goal, with the firm's figures under it. It only shows the figures and exports them (PDF and Excel, from the Export menu in the header), as the Marketing Report does. Rules are in `modules/accountability/logic/accountability.js` (pure) and pinned by `modules/accountability/tests/fixtures/accountability.json`, whose cases use rows of the October 2026 workbook. The database, lifecycle and roles are tested in `server/tests/accountability.test.js`.
 
 ## 1. Who sees what
 
@@ -53,10 +53,14 @@ A figure the source does not have is shown as "Not in the source yet", and what 
 
 ## 5. Export
 
-- **Export PDF:** a window like the Marketing Report's, with the real page on the right. One page: the table, totals, the goal line and the firm figures, shrunk to fit. Choices: paper (Letter, Tabloid, A4, A3), orientation (default landscape), logo, print date; remembered on the device. Draft is marked in the footer.
-- **Download for Excel (CSV):** the same grid: title, as-of date, the two heading rows, the PICs, Totals, the goal line and the firm block (`toCsv`, tested line by line).
+The **Export** button at the right of the page header (as on every page) has two choices.
 
-Both come from the same `sheet()` the page uses, so they say exactly what the page says. Not tested: the PDF on paper, and the CSV in Excel versions other than current Microsoft 365.
+- **PDF:** a window like the Marketing Report's, with the real page on the right. One page: the table, totals, the goal line and the firm figures, shrunk to fit. Choices: paper (Letter, Tabloid, A4, A3), orientation (default landscape), logo, print date; remembered on the device. Draft is marked in the footer.
+- **Excel:** a real .xlsx (`toSheets`, tested): sheet "By PIC" with the PICs and Totals, each column as on the page with dollars as whole numbers and percentages as ratios (the group heading is put in front of the first column of each group); sheet "The firm" with the firm figures, amounts and rates in their own columns. `toCsv` is still in the rules (tested), but the page no longer offers a CSV.
+
+The line beside the report picker shows only the billing cutoff; the picker names the month and version, and the banner says when it was published.
+
+The PDF comes from the same `sheet()` the page uses, and the Excel from the same columns, so they say what the page says. Not tested: the PDF on paper, and the .xlsx opened in Excel itself (checked with openpyxl).
 
 ## 6. What the source must provide
 
@@ -66,4 +70,3 @@ Nothing new for billed, profit, backlog and MWIP (the Project Turnaround `load` 
 
 - The workbook's "*Part of larger Projects+" footnote on some PICs.
 - A history across months, charts, drill-downs.
-- An .xlsx file (CSV opens in Excel).

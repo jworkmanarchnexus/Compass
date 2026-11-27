@@ -3,7 +3,8 @@
    Every figure on the page comes from AcctRules.sheet (logic/accountability.js), the same words the PDF and the CSV use. */
 import { fmtDay, fmtDayYear, fmtWhen } from '/shared/ui/format.js';
 import { Accountability } from '/shared/platform/index.js';
-import { openExport, downloadCsv } from './export.js';
+import { openExport } from './export.js';
+import { exportMenu, fileSafe } from '/shared/ui/export-menu.js';
 
 const A = window.AcctRules;
 const isNeg = t => /^\(|^-\d/.test(t);
@@ -28,13 +29,15 @@ export async function renderAccountability(ctx, body, wantedId) {
     const r = d.run;
     const pick = h('select', { class: 'txt', style: 'max-width:340px', 'aria-label': 'Report', onchange: e => go(e.target.value) },
       ...list.map(x => h('option', { value: x.id, text: x.label + (x.status === 'draft' ? ' (draft)' : x.status === 'archived' ? ' (archived)' : ''), selected: x.id === id })));
-    const status = { draft: 'Draft', published: 'Published, locked', archived: 'Archived' }[r.status];
-    if (d.available) holder.append(h('p', { class: 'muted', style: 'margin:0', text: `Period ${String(r.period).replace(/(\d{4})(\d{2})/, '$1-$2')} · Billing cutoff ${fmtDayYear(d.meta.cutoff)} · Version ${r.version} · ${status}` }));
+    // the picker names the month and version and the banner says when it was published, so beside the picker only the billing cutoff
     holder.append(
       h('div', { class: 'bd-tools' }, h('div', {}, h('label', { class: 'fl', text: 'Report' }), pick),
-        d.available ? h('button', { class: 'btn', type: 'button', text: 'Export PDF', onclick: () => openExport(ctx, d) }) : null,
-        d.available ? h('button', { class: 'btn', type: 'button', text: 'Download for Excel (CSV)', onclick: () => downloadCsv(ctx, d) }) : null),
+        d.available ? h('span', { class: 'muted', text: 'Billing cutoff ' + fmtDayYear(d.meta.cutoff) }) : null),
       banner(ctx, d, isAdmin));
+    if (ctx.actions) ctx.actions(body, d.available ? exportMenu(ctx, {
+      excel: () => ({ file: `Principal-Accountability-${fileSafe(r.label)}.xlsx`, sheets: A.toSheets(d) }),
+      pdf: () => openExport(ctx, d),
+    }) : null);
     if (!d.available) {
       holder.append(h('div', { class: 'empty-note', text: 'This version was built before Principal Accountability existed, so it has no figures. Archive and rerun the Marketing Report for this month to add them.' }));
       return;
@@ -48,7 +51,7 @@ export async function renderAccountability(ctx, body, wantedId) {
 function banner(ctx, d, isAdmin) {
   const { h, icon } = ctx;
   const r = d.run;
-  const text = r.status === 'published' ? `Published ${fmtWhen(r.publishedAt)} with the ${r.label} Marketing Report. Locked: it never changes.`
+  const text = r.status === 'published' ? `Published ${fmtWhen(r.publishedAt)} with its Marketing Report. Locked: it never changes.`
     : r.status === 'draft' ? 'Draft. Only you can see it. It is published with the Marketing Report for the same month; rebuilding that draft rebuilds this one.'
       : `Archived ${fmtWhen(r.archivedAt)} with its Marketing Report. Reason: ${r.archiveReason}`;
   return h('div', { class: 'stack' },
