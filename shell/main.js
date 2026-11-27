@@ -5,6 +5,8 @@ import * as platform from '/shared/platform/index.js';
 import { renderHome, homeHeader } from '/shell/home.js';
 import { renderBd } from '/modules/bd/ui/report.js';
 import { bdAdminCards } from '/modules/bd/ui/admin.js';
+import { renderAccountability } from '/modules/accountability/ui/page.js';
+import { accountabilityAdminCards } from '/modules/accountability/ui/admin.js';
 import { renderPipeline } from '/modules/pipeline/ui/page.js';
 import { pipelineAdminCards } from '/modules/pipeline/ui/admin.js';
 import { billingAdminCards } from '/modules/billing/ui/admin.js';
@@ -24,7 +26,7 @@ import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
 import { renderBoardTab, isTab } from '/modules/dashboard/ui/tabs.js';
 const lastDashTab = {}; // the dashboard tab a project was opened from, so Back returns there
 
-const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Billing, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Accountability, Billing, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -44,6 +46,7 @@ const NAV = [
   { id: 'turnaround', area: 'turnaround', href: '#/turnaround', icon: 'target', label: 'Project Turnaround', blurb: 'Projects below break-even this year, and what is being done about each one.',
     sub: [{ id: 'checkins', area: 'checkins', href: '#/turnaround/checkins', icon: 'list', label: 'Check-in drafts', blurb: 'Reminder drafts for you to send from your own mailbox.' }] },
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
+  { id: 'accountability', area: 'accountability', href: '#/accountability', icon: 'users', label: 'Accountability', blurb: 'Each PIC against their billed goal, with profit, backlog and MWIP.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
   { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
   { id: 'pip', area: 'pip', href: '#/pip', icon: 'file-plus-2', label: 'Projects in Pursuit', blurb: 'Start tracking a pursuit: the PiP form, and where each one stands.' },
@@ -186,6 +189,11 @@ async function pageBd(id) {
   await renderBd(ctx, body, id);
 }
 
+async function pageAccountability(id) {
+  const body = frame('accountability', [crumb('Compass', '#/'), sep(), crumb('Accountability')], 'Principal Accountability', 'Each PIC year to date: billed, profit and the response to negative profit, against their billed goal with backlog and MWIP. Built and published with the Marketing Report for the same month.');
+  await renderAccountability(ctx, body, id);
+}
+
 async function pageBilling() {
   const me = Session.me();
   const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing')], 'Billing', me.role === 'pm' || me.role === 'pic' ? 'Your projects this billing month. Tell accounting what to bill.' : 'Every project this billing month, and where each one stands.');
@@ -233,13 +241,14 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', pipeline: 'Pipeline alerts', billing: 'Billing', pip: 'Projects in Pursuit', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', accountability: 'Accountability', pipeline: 'Pipeline alerts', billing: 'Billing', pip: 'Projects in Pursuit', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
   'pip.stageProbabilities': 'Probability by stage', 'pip.cfoThreshold': 'Coordinate with the CFO at', 'pip.recentDays': 'Recent list covers',
   'pip.admins': 'PiP admins', 'pip.viewers': 'Can also see PiPs', 'pip.primaryAdmin': 'Primary PiP admin', 'pip.cfo': 'CFO',
   'dashboard.projectedSpendPct': 'Fee burn: projected spend', 'dashboard.watchProfitPct': 'Project status: Watch below', 'dashboard.endingSoonDays': 'Ending soon within',
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
+  'acct.projectSizes': 'Project sizes for projects to reach goal',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
@@ -306,6 +315,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const [s, inputs] = await Promise.all([Admin.settings(), Bd.inputs()]);
       slot.textContent = '';
       slot.append(...bdAdminCards(ctx, s, inputs, canEdit, rerender));
+    } else if (tab === 'accountability') {
+      const [s, inputs] = await Promise.all([Admin.settings(), Accountability.goals()]);
+      slot.textContent = '';
+      slot.append(...accountabilityAdminCards(ctx, s, inputs, canEdit, rerender));
     } else if (tab === 'pipeline') {
       const s = await Admin.settings();
       slot.textContent = '';
@@ -451,7 +464,7 @@ function turnaroundCards(s, canEdit, rerender) {
 function accessCard(s, canEdit, rerender) {
   return settingsCard('What narrower roles can see', 'Not everything in the spec is settled. These start at the safest answer; turn one on to widen it.', s, ['access'], canEdit, rerender, ed => [
     row('Marketing director', 'The decided rule is Marketing Report and Pipeline watch. The mockup also mentions Project Turnaround.', ed.check('access', 'Can also see Project Turnaround', 'marketingTurnaround')),
-    row('PICs', 'PICs always see Project Turnaround. Marketing Report and Pipeline watch are off until you decide.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
+    row('PICs', 'PICs always see Project Turnaround. The others are off until you turn them on. PICs never see the MWIP factor.', ed.check('access', 'Can see the Marketing Report', 'picBd'), ed.check('access', 'Can see Accountability', 'picAccountability'), ed.check('access', 'Can see Pipeline watch', 'picPipeline')),
   ], 'Takes effect the next time the person opens a page.');
 }
 
@@ -673,6 +686,7 @@ function auditText(e) {
   if (e.action === 'checkin.undo') return ['Put a check-in draft back in the queue', ''];
   if (e.action === 'daily.run') return ['Ran the daily checks', `${e.detail.created} new drafts, ${e.detail.withdrawn} withdrawn, ${e.detail.missed} goals recorded as missed`];
   if (e.action === 'bd.goal') return [`Changed a Marketing Report goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to $${Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
+  if (e.action === 'acct.goal') return [`Changed an accountability goal: ${e.object}`, `${e.detail.from === null ? 'none' : '$' + Math.round(e.detail.from / 100).toLocaleString('en-US')} to ${e.detail.to === null ? 'none' : '$' + Math.round(e.detail.to / 100).toLocaleString('en-US')}`];
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
   if (e.action === 'name.set') return [`Changed the name shown for ${e.object}`, `${e.detail.from} to ${e.detail.to}`];
@@ -709,6 +723,7 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
+  if ((m = /^#\/accountability(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.accountability ? pageAccountability(m[1]) : pageNoAccess();
   if ((m = /^#\/dashboard(?:\/(pic|pm))?(?:\/([a-z]+))?$/.exec(hash)) && (!m[2] || m[1])) {
     const mine = me.dashboards || [], board = m[1] || mine[0], tab = m[2] || 'overview';
     if (!board || !mine.includes(board)) return pageNoAccess();

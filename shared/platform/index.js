@@ -5,6 +5,7 @@ export { Admin } from './admin.js';
 export { Turnaround, Plan, Checkins } from './turnaround.js';
 export { Home } from './home.js';
 export { Bd } from './bd.js';
+export { Accountability } from './accountability.js';
 export { Pipeline } from './pipeline.js';
 export { Billing } from './billing.js';
 export { Dashboard } from './dashboard.js';
