@@ -12,6 +12,8 @@
    - 'watch' Watch: profit is at or above zero but its percent of billed is under watchProfitPct
    - 'ok'    On track: everything else, including a project with nothing billed or spent yet this year */
 'use strict';
+(function () { // its own scope: in the browser this file shares the page's global scope with burn.js
+
 
 const B = (typeof module !== 'undefined' && module.exports) ? require('./burn') : window.CompassDashboard.burn;
 const { toIndex, toMonth, spentOf } = B;
@@ -79,3 +81,4 @@ function totals(list, rules) {
 const portfolioApi = { summarize, status, inChip, totals, STATUS_LABEL, CHIPS, CHIP_LABEL };
 if (typeof module !== 'undefined' && module.exports) module.exports = portfolioApi;
 else if (typeof window !== 'undefined') window.CompassDashboard = Object.assign(window.CompassDashboard || {}, { portfolio: portfolioApi });
+})();

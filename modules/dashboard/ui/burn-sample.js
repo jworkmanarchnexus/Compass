@@ -14,6 +14,8 @@ const DEFS = [
   ['2026-0102', 'Lakeview Rec Center', 930000, '2026-08', '2028-01', 0.82],
 ];
 const PM_ONES = ['2024-0207', '2024-0231', '2025-0133', '2026-0102'];
+const PMS = ['Ana Ruiz', 'Alex Moreno', 'Jo Nakamura', 'Ravi Shah', 'Ana Ruiz', 'Jo Nakamura']; // made-up names, one per project
+export const SAMPLE_PEOPLE = ['Lee Park', 'Jordan Cruz', 'Avery Kim', 'Sam Ortiz']; // who charged hours, for one project's Hours tab
 
 const idx = m => { const [y, mm] = m.split('-').map(Number); return y * 12 + mm - 1; };
 const mon = i => `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
@@ -40,7 +42,12 @@ function build([wbs1, name, feeDollars, start, end, k], n) {
     plannedHours.push({ month: mon(a + i), hours: Math.round(value * 0.4 / RATES[0] * 2) / 2, billRate: RATES[0] });
     plannedHours.push({ month: mon(a + i), hours: Math.round(value * 0.6 / RATES[1] * 2) / 2, billRate: RATES[1] });
   }
-  return { wbs1, name, fee, start, end, overheadPct: OVERHEAD, actuals, forecast, plannedHours };
+  // hours and receivables, also made up: hours from this year's labor at a flat made-up rate; AR from the last months billed
+  const y0 = idx('2026-01'), yearLabor = actuals.filter(x => idx(x.month) >= y0).reduce((s, x) => s + x.labor, 0);
+  const actualYtd = Math.round(yearLabor / 5200), planYtd = Math.round(actualYtd * (0.88 + 0.07 * ((n * 3) % 5)));
+  const billedIn = m => (actuals.find(x => x.month === m) || { billed: 0 }).billed;
+  const ar = { current: Math.round(billedIn('2026-10') * 0.85), d31: Math.round(billedIn('2026-09') * 0.3), d61: n % 2 ? Math.round(billedIn('2026-08') * 0.12) : 0, d91: n === 1 || n === 4 ? Math.round(billedIn('2026-07') * 0.08) : 0 };
+  return { wbs1, name, pic: 'Dana Whitfield', pm: PMS[n], fee, start, end, overheadPct: OVERHEAD, actuals, forecast, plannedHours, hours: { planYtd, actualYtd }, ar };
 }
 
 const ALL = DEFS.map(build);

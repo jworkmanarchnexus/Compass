@@ -30,6 +30,9 @@ Who decides: **Josh** (how it should behave), **Kent** (hosting and the firm's s
 | D7 | Does the fee burn's **actual** spent line reveal pay on a small job (one person charging in a month)? Should it use billing value x the same percent instead? | actual cost with overhead, as Project Turnaround | `modules/dashboard/logic/burn.js` |
 | D8 | On real data, who may open one project's page: only its PIC and PM (and the Admin)? | anyone with that dashboard (sample data) | `ui/project.js`, `server/dashboard.js` |
 | D9 | Should Fee burn be on for a new person? | off (the starting set in D3 and D5 is unchanged) | `catalog.js` |
+| D10 | What each fixed tab shows (Profit, Revenue forecast, Hours, Billing & AR), and whether the PM dashboard should have Billing & AR | the mockup's contents; Billing & AR on the PIC dashboard only | `modules/dashboard/ui/tabs.js` |
+| D11 | The status cutoffs: Watch below what profit %, and how many days is "ending soon"? | Watch below 10%; 90 days | Admin > Dashboards |
+| D12 | Should the group chips also filter the dashparts on Overview? | no (several are firm or pipeline summaries) | `ui/tabs.js` |
 | D3 | Which dashparts a new person sees first, and at what size | **Resolved by Josh, 2026-11-26: the six as built** (below break-even, revenue, pipeline, portfolio bubble chart, fee by phase, unbilled work); staff mix, client scorecard and where the fee goes start in Available | `modules/dashboard/logic/catalog.js` |
 | H2 | Does the Marketing director see Project Turnaround? | no (BD and Pipeline only) | Admin > People > "What narrower roles can see" |
 | T5 | May PICs see the BD report and Pipeline watch? Does Finance see Turnaround? | PICs: no. Finance: yes | same card (`access`) |

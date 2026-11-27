@@ -17,6 +17,8 @@ import { renderCheckins } from '/modules/turnaround/ui/checkins.js';
 import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 import { renderDashboard } from '/modules/dashboard/ui/page.js';
 import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
+import { renderBoardTab, isTab } from '/modules/dashboard/ui/tabs.js';
+const lastDashTab = {}; // the dashboard tab a project was opened from, so Back returns there
 
 const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Billing, ApiError } = platform;
 const T = window.Toolbox;
@@ -156,16 +158,17 @@ async function pageTurnaround() {
   renderOverview(ctx, body, data);
 }
 
-async function pageDashboard(board) {
+async function pageDashboard(board, tab) {
   const label = board === 'pm' ? 'PM dashboard' : 'PIC dashboard';
   const body = frame('dash-' + board, [crumb('Compass', '#/'), sep(), crumb(label)], label, `Sample data: every dashpart shows made-up numbers for now. Later they come from Vantagepoint, for the projects you ${board === 'pm' ? 'manage' : 'lead'}.`);
-  await renderDashboard(ctx, body, board);
+  if (tab && tab !== 'overview') await renderBoardTab(ctx, body, board, tab);
+  else await renderDashboard(ctx, body, board);
 }
 
-async function pageDashboardProject(board, wbs1) {
+async function pageDashboardProject(board, wbs1, tab) {
   const label = board === 'pm' ? 'PM dashboard' : 'PIC dashboard';
-  const body = frame('dash-' + board, [crumb('Compass', '#/'), sep(), crumb(label, '#/dashboard/' + board), sep(), crumb(wbs1)], 'Project ' + wbs1, 'One project from your dashboard: billed and spent against the fee.');
-  await renderDashboardProject(ctx, body, board, wbs1);
+  const body = frame('dash-' + board, [crumb('Compass', '#/'), sep(), crumb(label, '#/dashboard/' + board), sep(), crumb(wbs1)], 'Project ' + wbs1, 'One project from your dashboard. Sample data for now.');
+  await renderDashboardProject(ctx, body, board, wbs1, tab, lastDashTab[board]);
 }
 
 async function pagePipeline() {
@@ -679,12 +682,17 @@ function route() {
   if ((m = /^#\/admin(?:\/([a-z]+))?$/.exec(hash))) return me.areas.admin ? pageAdmin(m[1]) : pageNoAccess();
   if ((m = /^#\/turnaround\/p\/([^/?]+)(?:\?cycle=(\d{4}))?$/.exec(hash))) return me.areas.turnaround ? pagePlan(decodeURIComponent(m[1]), m[2] ? Number(m[2]) : undefined) : pageNoAccess();
   if ((m = /^#\/bd(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.bd ? pageBd(m[1]) : pageNoAccess();
-  if ((m = /^#\/dashboard(?:\/(pic|pm))?$/.exec(hash))) {
-    const mine = me.dashboards || [], board = m[1] || mine[0];
-    return board && mine.includes(board) ? pageDashboard(board) : pageNoAccess();
+  if ((m = /^#\/dashboard(?:\/(pic|pm))?(?:\/([a-z]+))?$/.exec(hash)) && (!m[2] || m[1])) {
+    const mine = me.dashboards || [], board = m[1] || mine[0], tab = m[2] || 'overview';
+    if (!board || !mine.includes(board)) return pageNoAccess();
+    if (!isTab(board, tab)) { location.hash = '#/dashboard/' + board; return; }
+    lastDashTab[board] = tab;
+    return pageDashboard(board, tab);
   }
-  if ((m = /^#\/dashboard\/(pic|pm)\/project\/([^/?]+)$/.exec(hash))) {
-    return (me.dashboards || []).includes(m[1]) ? pageDashboardProject(m[1], decodeURIComponent(m[2])) : pageNoAccess();
+  if ((m = /^#\/dashboard\/(pic|pm)\/project\/([^/?]+)(?:\/([a-z]+))?$/.exec(hash))) {
+    if (!(me.dashboards || []).includes(m[1])) return pageNoAccess();
+    if (m[3] && !isTab(m[1], m[3])) { location.hash = `#/dashboard/${m[1]}/project/${m[2]}`; return; }
+    return pageDashboardProject(m[1], decodeURIComponent(m[2]), m[3] || 'overview');
   }
   if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
   if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();

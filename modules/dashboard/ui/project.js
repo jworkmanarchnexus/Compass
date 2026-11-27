@@ -2,14 +2,17 @@
    few figures above it. MADE-UP SAMPLE DATA (burn-sample.js) until the Vantagepoint copy carries the real numbers; then the
    server must also check that the person is PIC or PM on this project (it already checks they have this dashboard). */
 import { Dashboard } from '/shared/platform/index.js';
-import { sampleProject, SAMPLE_MONTHS } from './burn-sample.js';
+import { sampleProject, sampleProjects, SAMPLE_MONTHS } from './burn-sample.js';
 import * as BC from './burn-chart.js';
+import { mountTabRow, renderProjectTab, isTab } from './tabs.js';
 
-export async function renderDashboardProject(ctx, body, board, wbs1) {
+export async function renderDashboardProject(ctx, body, board, wbs1, tab, backTab) {
   const { h, T, icon, actions, banner } = ctx;
   const data = await Dashboard.get(board); // refuses a dashboard the person does not have
-  const back = h('a', { class: 'btn', href: '#/dashboard/' + board }, icon('arrow-left'), h('span', { text: data.label }));
+  const back = h('a', { class: 'btn', href: '#/dashboard/' + board + (backTab && backTab !== 'overview' ? '/' + backTab : '') }, icon('arrow-left'), h('span', { text: data.label }));
   actions(body, back);
+  if (tab && tab !== 'overview' && isTab(board, tab)) { await renderProjectTab(ctx, body, board, wbs1, tab); T.hydrateIcons(body); return; }
+  mountTabRow(ctx, body, { board, active: 'overview', project: wbs1, projects: sampleProjects(board) });
   const p = sampleProject(board, wbs1);
   if (!p) { body.append(banner('info', `${wbs1} is not one of the projects on your ${data.label}.`)); return; }
 
