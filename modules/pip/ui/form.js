@@ -68,7 +68,25 @@ export async function renderPipForm(ctx, body, pipId) {
     el.addEventListener('input', () => { f[key] = el.value; changed(); });
     return el;
   };
-  const dollars = key => { const el = text(key, { num: true, cls: 'money-in' }); return h('span', { class: 'pip-money' }, h('span', { class: 'muted', text: '$' }), el); };
+  /* whole dollars, shown with commas as you type (1,250,000); the form keeps the plain digits */
+  const withCommas = digits => digits ? Number(digits).toLocaleString('en-US') : '';
+  const dollars = key => {
+    const el = h('input', { class: 'txt money-in', id: 'f-' + key, type: 'text', inputmode: 'numeric', autocomplete: 'off', 'aria-describedby': 'err-' + key });
+    f[key] = String(f[key]).replace(/\D/g, '');
+    el.value = withCommas(f[key]);
+    el.addEventListener('input', () => {
+      // keep the cursor after the same digit it was after, once the commas move
+      const before = el.value.slice(0, el.selectionStart).replace(/\D/g, '').length;
+      const digits = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 11);
+      el.value = withCommas(digits);
+      let pos = 0, seen = 0;
+      while (pos < el.value.length && seen < before) { if (/\d/.test(el.value[pos])) seen++; pos++; }
+      el.setSelectionRange(pos, pos);
+      f[key] = digits;
+      changed();
+    });
+    return h('span', { class: 'pip-money' }, h('span', { class: 'muted', text: '$' }), el);
+  };
   const select = (key, options, prompt) => {
     const el = h('select', { class: 'txt', id: 'f-' + key, 'aria-describedby': 'err-' + key });
     const fill = opts => { el.textContent = ''; el.append(h('option', { value: '', text: prompt || 'Choose one' }), ...opts.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return h('option', { value: String(v), text: l }); })); el.value = String(f[key]); };
