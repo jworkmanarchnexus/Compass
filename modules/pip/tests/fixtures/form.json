@@ -1,0 +1,114 @@
+{
+  "allowedProbs": [
+    { "stage": "Research", "expect": [10] },
+    { "stage": "Go NoGo Process", "expect": [20] },
+    { "stage": "Fee Proposal Only (No Marketing)", "expect": [20] },
+    { "stage": "Marketing Proposal", "expect": [20] },
+    { "stage": "Shortlisted", "expect": [30, 40] },
+    { "stage": "Negotiation", "expect": [50, 60, 70] },
+    { "stage": "Awarded", "expect": [80, 90] },
+    { "stage": "Awarded with Interview", "expect": [80, 90] },
+    { "stage": "Lost - Shortlisted", "expect": [] },
+    { "stage": "", "expect": [] }
+  ],
+  "validStageProbs": [
+    { "name": "the default", "value": "DEFAULT", "expect": true },
+    { "name": "a stage missing", "value": { "Research": [10] }, "expect": false },
+    { "name": "100% is not a pursuit", "value": { "Research": [10], "Go NoGo Process": [20], "Fee Proposal Only (No Marketing)": [20], "Marketing Proposal": [20], "Shortlisted": [30, 40], "Negotiation": [50, 60, 70], "Awarded": [90, 100], "Awarded with Interview": [80, 90] }, "expect": false },
+    { "name": "out of order", "value": { "Research": [10], "Go NoGo Process": [20], "Fee Proposal Only (No Marketing)": [20], "Marketing Proposal": [20], "Shortlisted": [40, 30], "Negotiation": [50, 60, 70], "Awarded": [80, 90], "Awarded with Interview": [80, 90] }, "expect": false },
+    { "name": "an empty stage", "value": { "Research": [], "Go NoGo Process": [20], "Fee Proposal Only (No Marketing)": [20], "Marketing Proposal": [20], "Shortlisted": [30, 40], "Negotiation": [50, 60, 70], "Awarded": [80, 90], "Awarded with Interview": [80, 90] }, "expect": false }
+  ],
+  "urgency": [
+    { "start": "", "today": "2026-11-26", "expect": { "value": null, "note": "Needs a start date" } },
+    { "start": "2026-13-40", "today": "2026-11-26", "expect": { "value": null, "note": "Needs a start date" } },
+    { "start": "2026-11-01", "today": "2026-11-26", "expect": { "value": "0-6 Months", "note": "The start date has passed" } },
+    { "start": "2026-11-26", "today": "2026-11-26", "expect": { "value": "0-6 Months", "note": "" } },
+    { "start": "2027-05-26", "today": "2026-11-26", "expect": { "value": "0-6 Months", "note": "" } },
+    { "start": "2027-05-27", "today": "2026-11-26", "expect": { "value": "6-12 Months", "note": "" } },
+    { "start": "2027-11-26", "today": "2026-11-26", "expect": { "value": "6-12 Months", "note": "" } },
+    { "start": "2027-11-27", "today": "2026-11-26", "expect": { "value": "12+ Months", "note": "" } },
+    { "start": "2027-02-28", "today": "2026-08-31", "expect": { "value": "0-6 Months", "note": "" } },
+    { "start": "2027-03-01", "today": "2026-08-31", "expect": { "value": "6-12 Months", "note": "" } }
+  ],
+  "aia2030": [
+    { "f": {}, "expect": "pending" },
+    { "f": { "deliv": "New Construction" }, "expect": "rep" },
+    { "f": { "deliv": "Expansion/Infill" }, "expect": "rep" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel" }, "expect": "pending" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "No" }, "expect": "pending" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "Yes" }, "expect": "rep" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "env": "A quarter or more" }, "expect": "rep" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "Yes", "env": "Not sure" }, "expect": "rep" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "Not sure", "env": "Minor" }, "expect": "review" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "No", "env": "Not sure" }, "expect": "review" },
+    { "f": { "deliv": "Modernization/Renovation/Remodel", "hvac": "No", "env": "Minor" }, "expect": "not" },
+    { "f": { "deliv": "Tenant Improvement" }, "expect": "pending" },
+    { "f": { "deliv": "Tenant Improvement", "light": "Yes" }, "expect": "rep" },
+    { "f": { "deliv": "Tenant Improvement", "light": "Not sure" }, "expect": "review" },
+    { "f": { "deliv": "Tenant Improvement", "light": "No" }, "expect": "not" },
+    { "f": { "deliv": "Sustainability" }, "expect": "review" },
+    { "f": { "deliv": "Bridging/Criteria Documents" }, "expect": "review" },
+    { "f": { "deliv": "Feasibility Study" }, "expect": "not" },
+    { "f": { "deliv": "Master Plan" }, "expect": "not" },
+    { "f": { "deliv": "Programming" }, "expect": "not" },
+    { "f": { "deliv": "New Construction", "resp": "Consultant" }, "expect": "rep" }
+  ],
+  "complete": {
+    "name": "Granite Ridge Library", "stage": "Shortlisted", "prob": 40, "source": "Referral", "resp": "Prime", "direct": "No",
+    "client": "C100", "contact": "K100",
+    "ptype": "K-12 Education", "deliv": "New Construction", "desc": "A new library wing.",
+    "office": "Salt Lake", "principal": "E101", "pm": "E201", "pa": "", "delivery": "CM at Risk", "comp": "Fixed Fee",
+    "fee": 450000, "start": "2027-03-01", "end": "2028-06-30"
+  },
+  "lists": {
+    "clients": [{ "id": "C100", "contacts": ["K100", "K101"] }, { "id": "C200", "contacts": [] }],
+    "employees": ["E101", "E102", "E201", "E202", "E205"],
+    "principals": ["E101", "E102"],
+    "architects": null
+  },
+  "problems": [
+    { "name": "complete form has no problems", "change": {}, "expect": [] },
+    { "name": "empty form lists every required field", "replace": {}, "expectFields": ["name", "stage", "prob", "source", "resp", "direct", "client", "ptype", "deliv", "desc", "office", "principal", "pm", "delivery", "comp", "fee", "start", "end"] },
+    { "name": "probability outside the stage", "change": { "prob": 50 }, "expectFields": ["prob"] },
+    { "name": "a closed stage is not offered", "change": { "stage": "Lost - Shortlisted" }, "expectFields": ["stage"] },
+    { "name": "a new client needs its legal name", "change": { "client": "new", "contact": "" }, "expectFields": ["newClientName"] },
+    { "name": "a new contact needs a name", "change": { "contact": "new" }, "expectFields": ["ncName"] },
+    { "name": "contact of another client", "change": { "client": "C200" }, "expectFields": ["contact"] },
+    { "name": "unknown client", "change": { "client": "C999" }, "expectFields": ["client", "contact"] },
+    { "name": "renovation asks two questions", "change": { "deliv": "Modernization/Renovation/Remodel" }, "expectFields": ["hvac", "env"] },
+    { "name": "interiors asks about lighting", "change": { "deliv": "Tenant Improvement" }, "expectFields": ["light"] },
+    { "name": "a principal must be a principal", "change": { "principal": "E205" }, "expectFields": ["principal"] },
+    { "name": "people must be from the list", "change": { "pm": "Somebody", "pa": "E999" }, "expectFields": ["pm", "pa"] },
+    { "name": "end before start", "change": { "end": "2027-01-01" }, "expectFields": ["end"] },
+    { "name": "bad optional date", "change": { "proposalDate": "next week" }, "expectFields": ["proposalDate"] },
+    { "name": "fee must be whole dollars and more than zero", "change": { "fee": 0 }, "expectFields": ["fee"] },
+    { "name": "fee with cents", "change": { "fee": 1000.5 }, "expectFields": ["fee"] },
+    { "name": "gross area must be a number", "change": { "gsf": "big" }, "expectFields": ["gsf"] },
+    { "name": "contact email", "change": { "contact": "new", "ncName": "Pat", "ncEmail": "pat at example" }, "expectFields": ["ncEmail"] }
+  ],
+  "architects": [
+    { "name": "known architects: a non-architect is refused", "architects": ["E202"], "pa": "E205", "expectFields": ["pa"] },
+    { "name": "known architects: an architect is fine", "architects": ["E202"], "pa": "E202", "expectFields": [] },
+    { "name": "not tracked: anyone from the list", "architects": null, "pa": "E205", "expectFields": [] }
+  ],
+  "warnings": [
+    { "name": "under the CFO threshold", "f": { "fee": 999999 }, "expect": [] },
+    { "name": "at the CFO threshold", "f": { "fee": 1000000 }, "expect": ["cfo"] },
+    { "name": "a lower threshold set by the Admin", "f": { "fee": 600000 }, "cfoThreshold": 500000, "expect": ["cfo"] },
+    { "name": "start date passed", "f": { "fee": 10, "start": "2026-01-01" }, "today": "2026-11-26", "expect": ["past"] }
+  ],
+  "clean": [
+    { "name": "trims, keeps numbers, drops unknown fields",
+      "in": { "name": "  Library  ", "fee": "$1,250,000", "prob": "40", "hack": "x", "deliv": "New Construction", "gsf": "12000" },
+      "pick": { "name": "Library", "fee": 1250000, "prob": 40, "gsf": 12000 }, "absent": ["hack"] },
+    { "name": "scope answers not asked are dropped",
+      "in": { "deliv": "New Construction", "hvac": "Yes", "light": "No" },
+      "pick": { "hvac": "", "light": "" } },
+    { "name": "site fields are dropped when not reportable",
+      "in": { "deliv": "Master Plan", "street": "1 Main", "city": "Provo", "gsf": 5000 },
+      "pick": { "street": "", "city": "", "gsf": null } },
+    { "name": "new client fields kept only for a new client",
+      "in": { "client": "C100", "newClientName": "Acme" },
+      "pick": { "newClientName": "" } }
+  ]
+}

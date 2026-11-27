@@ -1,0 +1,78 @@
+{
+  "cfg": { "admins": ["u-wendy"], "viewers": ["u-sustain"], "primaryAdmin": "u-wendy", "cfo": "u-josh", "cfoThreshold": 1000000, "recentDays": 30 },
+  "people": {
+    "josh": { "id": "u-josh", "role": "admin", "employeeCode": "", "picProjects": 0, "pmProjects": 0 },
+    "pic": { "id": "u-dana", "role": "pic", "employeeCode": "E101", "picProjects": 3, "pmProjects": 0 },
+    "picNoProjects": { "id": "u-riley", "role": "pic", "employeeCode": "E108", "picProjects": 0, "pmProjects": 0 },
+    "pm": { "id": "u-ana", "role": "pm", "employeeCode": "E201", "picProjects": 0, "pmProjects": 2 },
+    "financeWhoManages": { "id": "u-fin", "role": "finance", "employeeCode": "E209", "picProjects": 0, "pmProjects": 1 },
+    "wendy": { "id": "u-wendy", "role": "processor", "employeeCode": "", "picProjects": 0, "pmProjects": 0 },
+    "sustain": { "id": "u-sustain", "role": "marketing", "employeeCode": "", "picProjects": 0, "pmProjects": 0 },
+    "marketing": { "id": "u-casey", "role": "marketing", "employeeCode": "", "picProjects": 0, "pmProjects": 0 },
+    "sysadmin": { "id": "u-kent", "role": "sysadmin", "employeeCode": "", "picProjects": 0, "pmProjects": 0 }
+  },
+  "perms": {
+    "josh": { "see": true, "submit": true, "review": true },
+    "pic": { "see": true, "submit": true, "review": false },
+    "picNoProjects": { "see": true, "submit": true, "review": false },
+    "pm": { "see": true, "submit": true, "review": false },
+    "financeWhoManages": { "see": true, "submit": true, "review": false },
+    "wendy": { "see": true, "submit": false, "review": true },
+    "sustain": { "see": true, "submit": false, "review": false },
+    "marketing": { "see": false, "submit": false, "review": false },
+    "sysadmin": { "see": false, "submit": false, "review": false }
+  },
+  "check": [
+    { "who": "wendy", "status": "new", "action": "review", "expect": { "ok": true, "to": "review" } },
+    { "who": "pic", "status": "new", "action": "review", "submittedBy": "u-dana", "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "wendy", "status": "review", "action": "review", "expect": { "ok": false, "reason": "wrong-status" } },
+    { "who": "wendy", "status": "review", "action": "return", "input": {}, "expect": { "ok": false, "reason": "needs-note" } },
+    { "who": "wendy", "status": "review", "action": "return", "input": { "note": "  " }, "expect": { "ok": false, "reason": "needs-note" } },
+    { "who": "wendy", "status": "new", "action": "return", "input": { "note": "Fee looks low" }, "expect": { "ok": true, "to": "returned" } },
+    { "who": "wendy", "status": "review", "action": "created", "input": {}, "expect": { "ok": false, "reason": "needs-number" } },
+    { "who": "wendy", "status": "review", "action": "created", "input": { "number": "P26-0412" }, "expect": { "ok": true, "to": "created" } },
+    { "who": "wendy", "status": "returned", "action": "created", "input": { "number": "P26-0412" }, "expect": { "ok": false, "reason": "wrong-status" } },
+    { "who": "wendy", "status": "created", "action": "withdraw", "input": { "note": "dup" }, "expect": { "ok": false, "reason": "wrong-status" } },
+    { "who": "pic", "status": "returned", "action": "resubmit", "submittedBy": "u-dana", "expect": { "ok": true, "to": "new" } },
+    { "who": "pm", "status": "returned", "action": "resubmit", "submittedBy": "u-dana", "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "wendy", "status": "returned", "action": "resubmit", "submittedBy": "u-dana", "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "pic", "status": "new", "action": "withdraw", "submittedBy": "u-dana", "input": { "note": "Client went another way" }, "expect": { "ok": true, "to": "withdrawn" } },
+    { "who": "pic", "status": "new", "action": "withdraw", "submittedBy": "u-dana", "input": {}, "expect": { "ok": false, "reason": "needs-note" } },
+    { "who": "pm", "status": "new", "action": "withdraw", "submittedBy": "u-dana", "input": { "note": "x" }, "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "wendy", "status": "returned", "action": "withdraw", "submittedBy": "u-dana", "input": { "note": "Duplicate" }, "expect": { "ok": true, "to": "withdrawn" } },
+    { "who": "sustain", "status": "new", "action": "withdraw", "submittedBy": "u-dana", "input": { "note": "x" }, "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "marketing", "status": "new", "action": "review", "expect": { "ok": false, "reason": "not-allowed" } },
+    { "who": "wendy", "status": "new", "action": "delete", "expect": { "ok": false, "reason": "not-allowed" } }
+  ],
+  "actionsFor": [
+    { "who": "wendy", "status": "new", "submittedBy": "u-dana", "expect": ["review", "return", "created", "withdraw"] },
+    { "who": "wendy", "status": "review", "submittedBy": "u-dana", "expect": ["return", "created", "withdraw"] },
+    { "who": "pic", "status": "returned", "submittedBy": "u-dana", "expect": ["resubmit", "withdraw"] },
+    { "who": "pic", "status": "new", "submittedBy": "u-dana", "expect": ["withdraw"] },
+    { "who": "pm", "status": "new", "submittedBy": "u-dana", "expect": [] },
+    { "who": "josh", "status": "created", "submittedBy": "u-dana", "expect": [] }
+  ],
+  "recipients": [
+    { "name": "submitted: PIC, PM and the primary admin", "event": "submit", "fields": { "principal": "E101", "pm": "E201", "fee": 450000 }, "submittedBy": "u-dana", "expect": { "employees": ["E101", "E201"], "users": ["u-wendy"] } },
+    { "name": "$1M or more: the CFO too", "event": "submit", "fields": { "principal": "E101", "pm": "E201", "fee": 1000000 }, "submittedBy": "u-dana", "expect": { "employees": ["E101", "E201"], "users": ["u-wendy", "u-josh"] } },
+    { "name": "the same person as PIC and PM is told once", "event": "resubmit", "fields": { "principal": "E101", "pm": "E101", "fee": 10 }, "submittedBy": "u-dana", "expect": { "employees": ["E101"], "users": ["u-wendy"] } },
+    { "name": "returned: whoever submitted it", "event": "return", "fields": { "principal": "E101", "pm": "E201", "fee": 2000000 }, "submittedBy": "u-ana", "expect": { "employees": [], "users": ["u-ana"] } },
+    { "name": "created: no email", "event": "created", "fields": { "principal": "E101", "pm": "E201", "fee": 10 }, "submittedBy": "u-ana", "expect": { "employees": [], "users": [] } },
+    { "name": "withdrawn: no email", "event": "withdraw", "fields": { "principal": "E101", "pm": "E201", "fee": 10 }, "submittedBy": "u-ana", "expect": { "employees": [], "users": [] } }
+  ],
+  "homeList": {
+    "now": 1764201600000,
+    "requests": [
+      { "id": "a", "status": "new", "submittedBy": "u-dana", "submittedAt": 1764000000000, "decidedAt": null },
+      { "id": "b", "status": "review", "submittedBy": "u-ana", "submittedAt": 1763000000000, "decidedAt": null },
+      { "id": "c", "status": "returned", "submittedBy": "u-dana", "submittedAt": 1700000000000, "decidedAt": null },
+      { "id": "d", "status": "created", "submittedBy": "u-dana", "submittedAt": 1762000000000, "decidedAt": 1764100000000 },
+      { "id": "e", "status": "withdrawn", "submittedBy": "u-ana", "submittedAt": 1762000000000, "decidedAt": 1763900000000 },
+      { "id": "f", "status": "created", "submittedBy": "u-ana", "submittedAt": 1758000000000, "decidedAt": 1760000000000 }
+    ],
+    "cases": [
+      { "who": "wendy", "expect": { "waiting": [{ "id": "c", "review": false, "mineToFix": false }, { "id": "b", "review": true, "mineToFix": false }, { "id": "a", "review": true, "mineToFix": false }], "recent": [{ "id": "d", "review": false, "mineToFix": false }, { "id": "e", "review": false, "mineToFix": false }] } },
+      { "who": "pic", "expect": { "waiting": [{ "id": "c", "review": false, "mineToFix": true }, { "id": "b", "review": false, "mineToFix": false }, { "id": "a", "review": false, "mineToFix": false }], "recent": [{ "id": "d", "review": false, "mineToFix": false }, { "id": "e", "review": false, "mineToFix": false }] } }
+    ]
+  }
+}
