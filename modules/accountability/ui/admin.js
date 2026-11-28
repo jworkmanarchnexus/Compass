@@ -69,7 +69,7 @@ export function accountabilityAdminCards(ctx, settings, inputs, canEdit, rerende
       } }))) : null));
   // ---- overhead in YTD profit ----
   cards.push(ctx.settingsCard('Overhead in YTD profit', 'Profit is billed less labor times (1 + overhead) less expenses. A project with no overhead plan in Vantagepoint is not counted. A report records the rule it was built with.', settings, ['acct.overheadRule', 'acct.assignedOverheadPct'], canEdit, rerender, ed => [
-    ctx.row('Overhead rate used', 'The assigned rate matches the October 2026 sheet best. Each project\'s own plan rate is what Project Turnaround uses.', ed.select('acct.overheadRule', [['assigned', 'The assigned rate, on every project with a plan'], ['project', 'Each project\'s own plan rate']])),
+    ctx.row('Overhead rate used', 'Decided: 200% for all (the assigned rate on every project with a plan). Each project\'s own plan rate is what Project Turnaround uses.', ed.select('acct.overheadRule', [['assigned', 'The assigned rate, on every project with a plan'], ['project', 'Each project\'s own plan rate']])),
     ctx.row('Assigned overhead rate', 'Also shown in the firm figures under the table.', ed.num('acct.assignedOverheadPct', { narrow: true }), h('span', { class: 'muted', text: '%' })),
   ]));
   return cards;

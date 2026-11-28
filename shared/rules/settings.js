@@ -61,8 +61,8 @@ const DEFAULTS = {
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
   /* Principal Accountability: the project sizes for 'projects to reach goal' (the firm's sheet). fee in whole dollars; label is the construction size it stands for. */
   /* Principal Accountability: the overhead in YTD profit. 'assigned' = the assigned rate below on every project that has a plan
-     (matches the firm's October 2026 sheet best); 'project' = each project's own plan rate, as Project Turnaround does. A project
-     with no plan rate is not counted either way. Open question A7. */
+     (Josh, 2026-11-28: "200% for all"); 'project' = each project's own plan rate, as Project Turnaround does. A project
+     with no plan rate is not counted either way. */
   'acct.overheadRule': 'assigned',
   'acct.assignedOverheadPct': 200,
   'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
