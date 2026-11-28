@@ -35,8 +35,8 @@ function statusOf({ goal, ytdGoal, ytd, total }, th) {
      goals        { pic: { code: cents }, sector: { name: cents }, picOrder: [codes], sectorOrder: [names] }
      projects     { wbs1: { pic, sector } }   sector as the source gives it (may be blank or unknown)
      revenue      [{ wbs1, period, amount }]  net of consultants; only periods up to `period` of the same year count
-     forecast     [{ wbs1, amount }]  or, when the source supplies the entered gross, [{ wbs1, gross, fee, consultFee, reimbAllow }]: the architectural share is then worked out here (logic/architectural.js)
-     contractAmount  'feeConsult' (default) or 'feeConsultReimb': what "full contract amount" means for that share
+     forecast     [{ wbs1, amount }]  or, when the source supplies the entered gross, [{ wbs1, gross, fee, consultFee, reimbAllow, directCostToDate, earnedToDate }]: the architectural share is then worked out here (logic/architectural.js)
+     contractAmount  the consultant-share rule: 'vpActual' (default, Vantagepoint's Consultants %), 'feeConsult' or 'feeConsultReimb'
      mwip         [{ id, pic, sector, amount }]   at face value
    output also has `lines`: [{ kind: 'ytd'|'forecast'|'mwip', id, pic, sector, amount }], every amount counted and where (for the drill-downs, logic/drill.js)
      factorBp     the MWIP factor in basis points (6700 = 0.67)
@@ -51,7 +51,7 @@ function computeBd(input) {
   const forecastNotes = [];
   const forecast = input.forecast.map(f => {
     if (f.gross === undefined) return f;
-    const r = architecturalAmount(f, input.contractAmount || 'feeConsult');
+    const r = architecturalAmount(f, input.contractAmount || 'vpActual');
     if (r.issue) forecastNotes.push({ wbs1: f.wbs1, issue: r.issue, amount: f.gross });
     return { wbs1: f.wbs1, amount: r.amount };
   });

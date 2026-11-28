@@ -25,12 +25,17 @@ function toSnapshot(rows, { period, pulledAt }) {
     if (amount) revenue.push({ wbs1, period, amount });
   }
   const forecastEntries = rows.forecast.map(r => ({ wbs1: project(r, true), start: date(r.start_date), end: date(r.end_date), amount: cents(r.amount) }));
+  // Vantagepoint's Consultants % inputs, on the projects that have a forecast (the only ones the share is used for)
+  for (const r of rows.toDate || []) {
+    const p = projects.get(text(r.project));
+    if (p && 'fee' in p) Object.assign(p, { directCostToDate: cents(r.direct_cost), earnedToDate: cents(r.earned) });
+  }
   const pursuits = rows.pursuits.map(r => ({ id: text(r.project), name: text(r.name), pic: text(r.pic_code), sector: text(r.sector),
     stage: text(r.stage), estFee: cents(r.revenue), weightedFee: cents(r.weighted), estStart: date(r.est_start), estCompletion: date(r.est_completion) }));
   const holidays = [...new Set(rows.holidays.map(h => date(h.d)).filter(Boolean))].sort();
   const employees = rows.principals.map(e => ({ code: text(e.code), firstName: text(e.first_name), lastName: text(e.last_name) })).filter(e => e.code);
   return {
-    source: 'Vantagepoint', statements: 'bd-2026-11-26', period, pulledAt,
+    source: 'Vantagepoint', statements: 'bd-2026-11-28', period, pulledAt,
     projects: [...projects.values()].sort((a, b) => (a.wbs1 < b.wbs1 ? -1 : 1)),
     revenue, forecastEntries, holidays, pursuits, employees,
   };

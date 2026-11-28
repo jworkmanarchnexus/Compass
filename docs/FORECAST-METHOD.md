@@ -1,6 +1,6 @@
 # Contracted revenue forecast method, reproduced against a same-day export (2026-10-17)
 
-Status: **monthly amounts reproduced to the dollar against a same-day export (2026-11-25: 144 of 144 projects, 12 months); not approved.** The export's Consultants % column is not reproduced yet. No firm amounts or names are in this file.
+Status: **monthly amounts reproduced to the dollar against a same-day export (2026-11-25: 144 of 144 projects, 12 months); the Consultants % column reproduced from the report's own definition (2026-11-28: 143 of 144 exact, 144 within half a point); not approved.** No firm amounts or names are in this file.
 
 ## Why this is live data
 
@@ -10,8 +10,15 @@ Like MWIP, the forecast has no history and is not tied to a reporting period: PM
 
 1. **Population:** active (`Status = 'A'`) parent projects (`WBS2` and `WBS3` empty) whose number does not start with a letter (those are pursuits, see `docs/MWIP-METHOD.md`).
 2. **Gross monthly forecast** = the sum of the plan's period revenue entries: `PNPlannedRevenueLabor.PeriodCost`, joined to `PNTask` on `PlanID` and `TaskID` to find the project, **each entry spread across its own dates (`StartDate` to `EndDate`) by working days**: Monday to Friday, less the firm holiday calendar (`CFGHoliday`), then added up by month (2026-11-25). Bucketing by the month of `StartDate` is right only for entries inside one month; the 9 projects that missed on 2026-10-17 had entries spanning months. Vantagepoint shows whole dollars. The amounts are **gross, exactly as the PM entered them**. (The `PeriodBill` column in that table is zero on every row; the revenue lives in `PeriodCost`.) The window is the months from the report month through December of the same year (Compass: through Dec 31).
-3. **No current-month reduction** (unlike MWIP), and **no Consultants % applied**: the Vantagepoint export's Consultants % column is not used for the forecast and does not need to be reproduced (owner, 2026-10-17).
-4. **Architectural forecast, for the BD report only (owner rule):** each month's gross x (1 - consultant fees / full contract amount) for that project. A $100k contract with $30k of consultants shows 0.7 x the month. The consultant fees and full contract amount come from the project record (`PR.ConsultFee`, and `PR.Fee` + `PR.ConsultFee`, with or without `PR.ReimbAllow`). **Decision: default is fee + consultant fees, without the reimbursable allowance, and it will be a setting you can change** (Josh was unsure; the choice moves only 12 of 145 projects, by at most 2.4 points of the ratio).
+3. **No current-month reduction** (unlike MWIP).
+4. **Architectural forecast, for the BD report only:** each month's gross x (1 - the consultant share). Which share is the Admin setting `bd.contractAmount`:
+   - **`vpActual`, the default (owner, 2026-11-28): Vantagepoint's "Consultants %"**, exactly as the "CFO-Nexus Revenue Forecast Detail for Architectural Revenue" report defines it (its query, downloaded by Josh): `[dirjtd] / [JTDEarnedRevenue]`.
+     - `dirjtd` = job-to-date amount of every line on a `CA.Type` 7 or 8 account (61xx consultants-direct, 62xx direct expenses: travel, meals, reproductions...) **flagged `ProjectCost = 'Y'`**, across `LedgerAP`, `LedgerAR`, `LedgerEX` and `LedgerMisc`.
+     - `JTDEarnedRevenue` = job-to-date revenue (`CA.Type` 4, sign reversed) over the same ledgers. (The report uses the plan's JTD revenue for projects whose `AllocMethod` is `r`; the ledger gave the same result on every project tested.)
+     - Through the report month. The statement is `toDate` in `server/vp/bd-statements.js`.
+     - It is an **actual-to-date** ratio, not a contract ratio: it moves every month as costs and revenue post; moving dollars between our fee and the consultant fee changes it only when costs post; consultants booked to the reimbursable accounts (51xx, `CA.Type` 6) are not in it. A project with no revenue yet is 0% (the full forecast counts), as Vantagepoint shows it.
+     - Note: YTD revenue (the Office Earnings method) takes out only consultants (`CA.Type` 8); this share also takes out direct expenses (type 7).
+   - `feeConsult`: consultant fee / (fee + consultant fee) from the project record (the contract split; the rule from 2026-10-17 to 2026-11-28). `feeConsultReimb`: the same with the reimbursable allowance in the denominator.
 
 ## Evidence (live, 2026-10-17)
 
@@ -28,7 +35,12 @@ The rule is `modules/bd/logic/forecast.js` (fixtures `modules/bd/tests/fixtures/
 - **Population:** 144 projects in the export; no active project with plan entries in the window is missing from it.
 - **Monthly amounts:** 144 of 144 projects within $1 in every month (1,725 of 1,728 cells exact to the dollar; the other 3 differ by $1, rounding) with the working-day spread and the full holiday calendar. Bucketing by start month: 130 of 144. Calendar days, or weekdays without holidays: 130 to 131.
 - **Backlog column** = Fee + Consultant fee + Reimbursable allowance from the project record, less billed to date (`LedgerAR` invoices, retainage excluded): 118 of 144. Not used by the BD report.
-- **Consultants % column:** not reproduced. It is not consultant fee / (fee + consultant fee) from the project record or the plan (39 of 144 at best), and it changes from month to month on projects whose contract did not change. Closest: consultant cost to date (`CA.Type` 5 to 8) / billed to date, 74 of 144 exact and 112 within half a point; some projects are far off (one shows 0.09% against 31% from the ledger). It is probably a calculated column defined in the report itself: read its definition in Vantagepoint (Columns & Groups) or ask its owner.
+- **Consultants % column** (Nov 25 work, superseded on Nov 28): not consultant fee / (fee + consultant fee) from the project record or the plan (39 of 144 at best).
+
+## Evidence (live, 2026-11-28): the Consultants % and the architectural forecast, by PIC
+
+- Against Josh's same-day export (forecast by PIC, October): `[dirjtd] / [JTDEarnedRevenue]` through 202610 with `ProjectCost = 'Y'`: **143 of 144 projects exact**, 144 within half a point (the one left is a tiny project, off by 0.007 points). Without the `ProjectCost` filter: 140. Through 202611: 113. Contract split: 38. Remaining consultant fee / backlog: 35.
+- The Compass draft rebuilt with `vpActual` matches the export's architectural forecast for every PIC to within a few cents ($2.74 on the firm total), the export rounding each month to whole dollars.
 
 ## Unresolved
 

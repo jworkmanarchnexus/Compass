@@ -257,7 +257,7 @@ const CHOICE_LABEL = {
   'bd.mwipPeriod': { daily: 'Daily', semimonthly: 'Semi-monthly', monthly: 'Monthly' },
   'bd.mwipStart': { afterReportMonth: 'the first day after the report month', buildDay: 'the day the report is built' },
   'bd.mwipThrough': { yearEnd: 'December 31', 3: '3 months', 6: '6 months', 12: '12 months' },
-  'bd.contractAmount': { feeConsult: 'fee + consultant fees', feeConsultReimb: 'fee + consultant fees + reimbursable allowance' },
+  'bd.contractAmount': { vpActual: "Vantagepoint's Consultants % (direct costs / earned revenue to date)", feeConsult: 'consultant fee / (fee + consultant fee)', feeConsultReimb: 'consultant fee / (fee + consultant fee + reimbursable allowance)' },
   'bd.noSector': { keep: 'keep in Unassigned', ask: 'ask before publishing', other: 'put in Other' },
   'include.noPic': { 'leave-out-warn': 'leave out and warn', unassigned: 'show as Unassigned' },
 };

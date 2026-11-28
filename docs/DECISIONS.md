@@ -363,3 +363,10 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **A category with people and no place is flagged, not dropped**, and the rule never guesses a rate: work that needs an unpriced role is listed instead.
 - **A project that uses its own mix is named on the page** ("How this is worked out"), so no number quietly departs from the standard rule.
 - **Contracted work and pursuits are never added into one figure without being shown separately** (chart stacks them; the grid has a switch), following "MWIP and forecast always separate".
+
+## The forecast's consultant share is Vantagepoint's Consultants % (2026-11-28, Josh)
+
+- **Default `bd.contractAmount` = `vpActual`:** direct costs to date ÷ earned revenue to date, through the report month, exactly as the firm's Vantagepoint forecast report defines its "Consultants %" (`[dirjtd] / [JTDEarnedRevenue]`, read from the report definition Josh downloaded). It reproduces 143 of 144 projects, and the October forecast by PIC to within cents. The contract split (`feeConsult`, `feeConsultReimb`) stays available as a choice.
+- **Why it differs from consultant fee ÷ our fee:** it is actual-to-date, not the contract; it also takes out direct expenses (62xx); it leaves out consultants booked to reimbursable accounts (51xx); and timing of costs and revenue moves it. Moving dollars between our fee and the consultant fee shows up only as costs post.
+- **Known inconsistency, kept on purpose to match the firm's reports:** YTD revenue takes out only consultants (type 8), while this share also takes out direct expenses (type 7).
+- **The pull now carries each project's direct costs and earned revenue to date** (statement `toDate`); a draft built before this has no such figures, so rebuild it after a new pull.
