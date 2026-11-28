@@ -30,7 +30,7 @@ const DEFAULTS = {
   'visibility.picRecords': 'everyone',
   'bd.onPacePct': 99,            // BD report: On Pace needs YTD revenue at least this % of pace
   'bd.onTrackPct': 100,          // BD report: On Track needs (YTD + forecast + MWIP) at least this % of the goal
-  'bd.contractAmount': 'feeConsult', // BD forecast: the full contract amount behind the architectural share: 'feeConsult' (fee + consultant fees) or 'feeConsultReimb' (also the reimbursable allowance)
+  'bd.contractAmount': 'vpActual',   // BD forecast: the consultant share taken out: 'vpActual' (Vantagepoint's Consultants %: direct costs / earned revenue to date), 'feeConsult' (consultant fee / (fee + consultant fee)) or 'feeConsultReimb' (also the reimbursable allowance)
   /* BD MWIP backlog, the options of Vantagepoint's MWIP report (modules/bd/logic/mwip.js, docs/MWIP-METHOD.md) */
   'bd.mwipBasis': 'weighted',          // 'weighted' (Weighted Fee = fee x probability) or 'estimated' (Est. Fee)
   'bd.mwipAllocation': 'spread',       // 'spread' (by days, estimated start to completion), 'start' or 'completion' (all in that month)
@@ -121,7 +121,7 @@ const VALIDATORS = {
   'standing.minSample': v => Number.isInteger(v) && v >= 1 && v <= 20,
   'bd.onPacePct': pct,
   'bd.onTrackPct': v => Number.isInteger(v) && v >= 50 && v <= 200,
-  'bd.contractAmount': oneOf(['feeConsult', 'feeConsultReimb']),
+  'bd.contractAmount': oneOf(['vpActual', 'feeConsult', 'feeConsultReimb']),
   'bd.noSector': oneOf(['keep', 'ask', 'other']),
   'bd.mwipBasis': oneOf(['weighted', 'estimated']),
   'bd.mwipAllocation': oneOf(['spread', 'start', 'completion']),

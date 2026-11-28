@@ -27,7 +27,7 @@ async function pullBd(period, { log = console.log } = {}) {
   const vp = await open(cfg);
   const rows = {};
   try {
-    for (const name of ['revenue', 'forecast', 'holidays', 'pursuits', 'principals']) {
+    for (const name of ['revenue', 'forecast', 'toDate', 'holidays', 'pursuits', 'principals']) {
       const r = await vp.query(sql[name]);
       if (r.truncated) throw new Error(`${name}: more rows than the limit; nothing was saved`);
       rows[name] = r.rows;

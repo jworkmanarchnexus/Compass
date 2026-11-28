@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { DEFINITIONS, contractAmount, architecturalAmount } = require('../logic/architectural');
+const { DEFINITIONS, contractAmount, architecturalAmount, consultantShare } = require('../logic/architectural');
 const fx = require('./fixtures/architectural.json');
 
 test('every fixture case: the architectural share of a forecast month, and what is reported', () => {
@@ -11,9 +11,13 @@ test('every fixture case: the architectural share of a forecast month, and what 
   }
 });
 
-test('the two definitions of the full contract amount', () => {
+test('the three consultant-share rules; the contract amount exists only for the two contract rules', () => {
   const row = { fee: 70, consultFee: 30, reimbAllow: 10 };
-  assert.deepStrictEqual(DEFINITIONS, ['feeConsult', 'feeConsultReimb']);
+  assert.deepStrictEqual(DEFINITIONS, ['vpActual', 'feeConsult', 'feeConsultReimb']);
+  assert.throws(() => contractAmount(row, 'vpActual'), /unknown/);
+  assert.strictEqual(consultantShare({ directCostToDate: 25, earnedToDate: 100 }), 0.25, 'Vantagepoint: direct costs / earned revenue to date');
+  assert.strictEqual(consultantShare({}, 'vpActual'), 0, 'no revenue yet: 0%');
+  assert.strictEqual(consultantShare(row, 'feeConsult'), 0.3);
   assert.strictEqual(contractAmount(row, 'feeConsult'), 100);
   assert.strictEqual(contractAmount(row, 'feeConsultReimb'), 110);
   assert.strictEqual(contractAmount({}, 'feeConsult'), 0);
