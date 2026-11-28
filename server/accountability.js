@@ -35,12 +35,15 @@ function getRun(db, id) {
 /* everything the rows need, as of the report month. `today` is the day plan statuses are read on. */
 function compute(db, source, period, settings, today) {
   const year = Math.floor(period / 100);
-  // billed and profit: the Project Turnaround math over every project the pull returns, not only the ones below break-even
-  const pull = typeof source.load === 'function' ? source.load(period) : { projects: [], ledger: [], overhead: [] };
-  const evaluated = profitRule.computeProjects({ projects: pull.projects, ledger: pull.ledger, overhead: pull.overhead, runPeriod: period });
-  const projects = evaluated.map(p => ({ wbs1: p.wbs1, principal: p.principal, billedYtd: p.billed.ytd, profitYtd: p.evaluable ? p.profit.ytd : null }));
-
   const x = typeof source.loadAccountability === 'function' ? source.loadAccountability(period) || {} : {};
+  // billed and profit: the Project Turnaround math over every project the pull returns, not only the ones below break-even.
+  // A source whose Accountability pull carries its own profit rows (the Vantagepoint snapshot) uses those; otherwise the profit pull.
+  const pull = x.profit || (typeof source.load === 'function' ? source.load(period) : { projects: [], ledger: [], overhead: [] });
+  // overhead: the assigned rate on every project that has a plan rate, or each project's own (Admin > Accountability, open question A7)
+  const assignedPct = settings['acct.assignedOverheadPct'];
+  const overhead = settings['acct.overheadRule'] === 'assigned' ? pull.overhead.map(o => ({ wbs1: o.wbs1, min: assignedPct, max: assignedPct })) : pull.overhead;
+  const evaluated = profitRule.computeProjects({ projects: pull.projects, ledger: pull.ledger, overhead, runPeriod: period });
+  const projects = evaluated.map(p => ({ wbs1: p.wbs1, principal: p.principal, billedYtd: p.billed.ytd, profitYtd: p.evaluable ? p.profit.ytd : null }));
   const picOfX = Object.fromEntries((x.projects || []).map(p => [p.wbs1, p.principal || '']));
   const picOf = Object.assign({}, Object.fromEntries(db.all('SELECT wbs1, principal FROM projects').map(p => [p.wbs1, p.principal])), picOfX);
   const add = (map, k, v) => { map[k || ''] = (map[k || ''] || 0) + v; };
@@ -84,7 +87,7 @@ function compute(db, source, period, settings, today) {
   const meta = {
     year, months: period % 100, cutoff: schedule.lastDayOfPeriod(period),
     statusDay: today, turnaroundRunId: tr ? tr.id : null, archRevenue,
-    incomeProfit: firm.incomeProfit ?? null, esopBonus: firm.esopBonus ?? null, actualOhBp: firm.actualOhBp ?? null, assignedOhBp: firm.assignedOhBp ?? null,
+    incomeProfit: firm.incomeProfit ?? null, esopBonus: firm.esopBonus ?? null, actualOhBp: firm.actualOhBp ?? null, assignedOhBp: Math.round(assignedPct * 100), // the firm block's assigned rate is the setting itself
     sizes: settings['acct.projectSizes'],
   };
   return { rows, meta };

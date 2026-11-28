@@ -60,6 +60,11 @@ const DEFAULTS = {
   },
   'pipeline.emailAdmin': true,                                   // the Monday email to the Admin when alerts need a look (never to PICs)
   /* Principal Accountability: the project sizes for 'projects to reach goal' (the firm's sheet). fee in whole dollars; label is the construction size it stands for. */
+  /* Principal Accountability: the overhead in YTD profit. 'assigned' = the assigned rate below on every project that has a plan
+     (matches the firm's October 2026 sheet best); 'project' = each project's own plan rate, as Project Turnaround does. A project
+     with no plan rate is not counted either way. Open question A7. */
+  'acct.overheadRule': 'assigned',
+  'acct.assignedOverheadPct': 200,
   'acct.projectSizes': [{ label: 'Projects $2-3M', fee: 150000 }, { label: 'Projects $4-5M', fee: 250000 }, { label: 'Projects $10M', fee: 500000 }, { label: 'Projects $35M', fee: 1500000 }],
   /* Projects in Pursuit (docs/SPEC-pip.md). The probabilities each intake stage allows, from the PiP worksheet's Data Points tab
      (the same default as modules/pip/logic/form.js DEFAULT_STAGE_PROBS; a test keeps them equal). */
@@ -134,6 +139,8 @@ VALIDATORS['pipeline.rules'] = v => !!v && typeof v === 'object' && Object.keys(
   return !!x && typeof x === 'object' && SEVS.includes(x.sev) && Object.keys(shape).every(k => shape[k](x[k])) && Object.keys(x).length === Object.keys(shape).length + 1;
 }) && Object.keys(v).length === Object.keys(RULE_SHAPE).length;
 VALIDATORS['pipeline.emailAdmin'] = v => typeof v === 'boolean';
+VALIDATORS['acct.overheadRule'] = v => v === 'assigned' || v === 'project';
+VALIDATORS['acct.assignedOverheadPct'] = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1000;
 VALIDATORS['acct.projectSizes'] = v => Array.isArray(v) && v.length >= 1 && v.length <= 6 && v.every(x => !!x && typeof x === 'object' && Object.keys(x).length === 2
   && typeof x.label === 'string' && x.label.trim().length >= 1 && x.label.length <= 40 && Number.isInteger(x.fee) && x.fee >= 1000 && x.fee <= 1e8);
 VALIDATORS['billing.varianceThreshold'] = intIn(0, 1e11);

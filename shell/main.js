@@ -248,7 +248,7 @@ const SETTING_LABEL = {
   'dashboard.projectedSpendPct': 'Fee burn: projected spend', 'dashboard.watchProfitPct': 'Project status: Watch below', 'dashboard.endingSoonDays': 'Ending soon within',
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
-  'acct.projectSizes': 'Project sizes for projects to reach goal',
+  'acct.projectSizes': 'Project sizes for projects to reach goal', 'acct.overheadRule': 'Overhead in YTD profit', 'acct.assignedOverheadPct': 'Assigned overhead rate',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',

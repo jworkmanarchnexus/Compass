@@ -369,3 +369,12 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Emails are queued, not sent** (`pip_notifications`), like Billing's, and listed in each PiP's history so people can see who was told.
 - **Every revision, event and queued email is append-only**, and a created or withdrawn PiP is locked, by database triggers.
 - **An unsent PiP is kept in the browser** (per person) so a reload does not lose a half-filled form; nothing unsent is stored on the server.
+
+## Principal Accountability on Vantagepoint data (2026-11-28)
+
+- **The validated Turnaround query is rewritten, not run.** It ends in `SELECT ... INTO #Profit`, which the connection's policy refuses (one plain SELECT only). `server/vp/acct-statements.js` asks for the same sums by project and month, and `turnaround/logic/profit.js` adds them up, so the arithmetic stays in one tested place.
+- **The snapshot keeps the query's filters and what they leave out, apart.** Accountability counts all jobs this year (active and inactive), which the October sheet confirms; the left-out rows stay in the snapshot so the rule can be checked and changed without a new pull. Overhead and non-regular projects are never counted.
+- **Overhead is a setting, defaulting to the assigned 200%.** It matches the October sheet for 9 PICs against 6 for each project's own rate; the remaining differences look like plan rates edited after the sheet. Josh decides (A7). The firm block's "Assigned overhead rate" is that same setting.
+- **Backlog stays gross although the sheet looks net** (A8): Josh said gross; the evidence is written up for him rather than acted on.
+- **Reconciling never discloses amounts.** The checks ran on Josh's computer and printed only exact / within 1% / 5% / 20% / off per PIC.
+- **`VP_ENV_FILE`** points a worktree at the `.env.vp` in the main folder, so the login is never copied.

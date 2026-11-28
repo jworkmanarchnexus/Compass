@@ -20,8 +20,8 @@ Its own run (`runs.kind = 'acct'`), with the same lifecycle as Project Turnaroun
 
 | Column | Meaning |
 |---|---|
-| YTD billed | everything billed on the PIC's projects, January through the report month, **gross** (as the workbook: the firm total there is $26.8M against $17.1M architectural revenue). From the Project Turnaround pull. |
-| YTD profit | Billed − Labor × (1 + overhead%) − Expenses, the Project Turnaround math, added over the PIC's projects. A project with billings but no overhead rate cannot be evaluated: its billings count, its profit does not, and the page says how many. |
+| YTD billed | everything billed on the PIC's projects, January through the report month, **gross**, on **all jobs this year**: active and inactive projects (the sheet's words), but not overhead or other non-regular projects, nor numbers starting Z or J. The validated Turnaround query counts active projects only; that misses jobs closed during the year (72 had activity in 2026 by October), and against the October 2026 sheet only "all jobs" matches (billed exact for 12 of 13 PICs). |
+| YTD profit | Billed − Labor × (1 + overhead%) − Expenses, the Project Turnaround math, added over the PIC's projects. **Overhead is an Admin setting** (`acct.overheadRule`): by default the assigned rate (`acct.assignedOverheadPct`, 200%) on every project that has an overhead plan, which matches the October 2026 sheet best; or each project's own plan rate. A project with billings but no overhead plan cannot be evaluated: its billings count, its profit does not, and the page says how many (open question A7). |
 | YTD profit % | profit ÷ billed; "NA" when nothing was billed. |
 | YTD negative profit (all jobs this year) | the YTD profit of the PIC's projects below zero, added up. |
 | Negative profit response | **Yes** when every one of the PIC's projects on the latest published Project Turnaround run (for the report month or before) has a **Current** plan; **No** otherwise; a dash when none of their projects is on it (Josh, 2026-11-26). Read on the day the report is built; the day is shown. "Update due" counts as No (open question A4). |
@@ -65,6 +65,12 @@ The PDF comes from the same `sheet()` the page uses, and the Excel from the same
 ## 6. What the source must provide
 
 Billed and profit come from the profit pull (`load`, the Project Turnaround query). Everything else comes from `loadAccountability(period)`: `{ projects: [{ wbs1, principal }], forecastEntries + holidays (or forecast: [{ wbs1, amount }]), pursuits (or mwip: [{ id, pic, amount }]), revenue: [{ wbs1, period, amount }], utilization: [{ pic, bp }], arOver90: [{ wbs1, amount }], firm: { incomeProfit, esopBonus, actualOhBp, assignedOhBp } }` (cents; basis points, 4400 = 44%). Any part may be missing; those columns are then blank. Where utilization, AR and the firm figures live is open question A1. Locally the gross inputs are read from the same made-up project files the Marketing Report's source reads (they stand for the raw Vantagepoint rows), plus `server/db/seed/acct_*.csv`.
+
+## 6b. Live: the Vantagepoint pull (`npm run vp:pull-acct -- 202610`)
+
+The job (`server/jobs/vp-pull-acct.js`) runs fixed, read-only statements and saves a snapshot in the git-ignored live folder; live mode builds the report from it (`server/vp-snapshot.js`), never from the made-up files. The statements: the validated Turnaround query rewritten as one plain SELECT that returns months (`server/vp/acct-statements.js`: LedgerAR, LD, LedgerAP, LedgerMisc, LedgerEX, RPPlan, PR), plus the same plan-entry, holiday, pursuit, revenue and name reads the Marketing Report's pull uses, kept raw. Utilization, AR over 90 and the firm figures are not pulled yet (open question A1), so those columns say "Not in the source yet".
+
+Checked 2026-11-28 by building October 2026 through the app from a pull and comparing to the firm's October sheet, on Josh's computer (categories only; no amounts left it): YTD billed exact for 12 of 13 PICs (Burbank within 1%; firm total within 1%); negative profit exact for 11; YTD profit exact for 9 (A7); ETC MWIP exact for 7 (the others' pursuits were edited after the sheet); architectural revenue exact; backlog exact for 1 (A8). Lisa Whoolery on the sheet is "Lisa Ramidan" in Vantagepoint (her row matches exactly); rename her in Admin > People > names shown for Vantagepoint people.
 
 ## 7. Not built
 

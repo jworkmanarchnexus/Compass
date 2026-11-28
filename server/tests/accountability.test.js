@@ -28,14 +28,14 @@ test('the September demo report: each PIC\'s columns, the order, the response to
   assert.strictEqual(d.available, true);
   assert.deepStrictEqual(d.rows.map(r => r.label), ['Jordan Ames', 'Elena Castellanos', 'Riley Chen', 'Tom Lindqvist', 'Ben Okafor', 'Marcus Oyelaran', 'Priya Raman', 'Dana Whitfield', 'Unassigned'], 'the Admin\'s goal order, then Unassigned');
   const elena = d.rows.find(r => r.key === 'E105');
-  assert.deepStrictEqual({ ...elena }, { key: 'E105', label: 'Elena Castellanos', goal: 100000000, billedYtd: 33853900, profitYtd: -4352000, negativeYtd: -4352000, unevaluated: 0, listed: 2,
+  assert.deepStrictEqual({ ...elena }, { key: 'E105', label: 'Elena Castellanos', goal: 100000000, billedYtd: 33853900, profitYtd: -11019890, negativeYtd: -11019890, unevaluated: 0, listed: 2,
     response: 'yes', utilizationBp: 6900, backlog: 16000000, mwip: 14179105, arOver90: 2695000 });
   // both of Elena's listed projects have a Current plan under the two-rounds rules; Dana's do not all
   assert.strictEqual(d.rows.find(r => r.label === 'Dana Whitfield').response, 'no', 'any project without a Current plan is No');
   const jordan = d.rows.find(r => r.key === 'E107');
   assert.deepStrictEqual([jordan.goal, jordan.billedYtd, jordan.response, jordan.utilizationBp], [100000000, 0, null, 3400], 'a goal and nothing billed still gets a row; nothing on the Turnaround run is a dash, not No');
   const riley = d.rows.find(r => r.key === 'E108');
-  assert.deepStrictEqual([riley.negativeYtd, riley.listed, riley.response], [0, 0, null], 'a profitable PIC has no negative profit and nothing listed');
+  assert.deepStrictEqual([riley.listed, riley.response], [0, null], 'a PIC with nothing on the Turnaround run gets a dash (the run used each project\'s own rate; Accountability uses the assigned 200%, so the two can differ)');
   assert.deepStrictEqual({ year: d.meta.year, months: d.meta.months, cutoff: d.meta.cutoff, statusDay: d.meta.statusDay, goalTotal: d.meta.goalTotal, incomeProfit: d.meta.incomeProfit, actualOhBp: d.meta.actualOhBp },
     { year: 2026, months: 9, cutoff: '2026-09-30', statusDay: '2026-10-01', goalTotal: 800000000, incomeProfit: 23678000, actualOhBp: 25500 });
 }, demo));
@@ -73,7 +73,8 @@ test('building the Marketing Report no longer builds Accountability, and the oth
 test('billed and profit add up to the profit pull: every project counted once, under its PIC', () => withApp(async ({ api }) => {
   const d = (await api('j.workman').get(`/api/accountability/reports/${await septId(api)}`)).body;
   const pull = createLocalSource().load();
-  const all = profitRule.computeProjects({ ...pull, runPeriod: 202609 });
+  // the default overhead rule: the assigned 200% on every project that has a plan rate
+  const all = profitRule.computeProjects({ ...pull, overhead: pull.overhead.map(o => ({ wbs1: o.wbs1, min: 200, max: 200 })), runPeriod: 202609 });
   const t = A.totals(d.rows);
   assert.strictEqual(t.billedYtd, all.reduce((a, p) => a + p.billed.ytd, 0));
   assert.strictEqual(t.profitYtd, all.filter(p => p.evaluable).reduce((a, p) => a + p.profit.ytd, 0));
@@ -179,3 +180,19 @@ test('live mode refuses to build Accountability until its source reads Vantagepo
   assert.strictEqual(r.status, 409);
   assert.match(r.body.error, /not on Vantagepoint data yet/);
 }, { dataMode: 'live', source: Object.assign({}, createLocalSource(), { loadAccountability: undefined }) }));
+
+test('the overhead rule is an Admin setting: the assigned rate on every project with a plan (default 200%), or each project\'s own', () => withApp(async ({ api }) => {
+  const josh = api('j.workman');
+  const build = async () => { const r = (await josh.post('/api/admin/runs', { kind: 'acct', period: 202609 })).body; return r; };
+  const pull = createLocalSource().load();
+  const total = oh => profitRule.computeProjects({ ...pull, overhead: oh, runPeriod: 202609 }).filter(p => p.evaluable).reduce((a, p) => a + p.profit.ytd, 0);
+  const d1 = await build();
+  assert.strictEqual(A.totals(d1.rows).profitYtd, total(pull.overhead.map(o => ({ wbs1: o.wbs1, min: 200, max: 200 }))), 'assigned 200%');
+  assert.strictEqual(d1.meta.assignedOhBp, 20000, 'the firm block shows the setting');
+  for (const bad of ['flat', 'own']) assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'acct.overheadRule': bad } })).status, 400);
+  await josh.put('/api/admin/settings', { changes: { 'acct.overheadRule': 'project', 'acct.assignedOverheadPct': 175 } });
+  assert.strictEqual((await josh.post(`/api/admin/accountability/runs/${d1.run.id}/rebuild`)).status, 200);
+  const d2 = (await josh.get(`/api/accountability/reports/${d1.run.id}`)).body;
+  assert.strictEqual(A.totals(d2.rows).profitYtd, total(pull.overhead), 'each project\'s own plan rate, as Project Turnaround');
+  assert.strictEqual(d2.meta.assignedOhBp, 17500);
+}));

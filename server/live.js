@@ -32,6 +32,12 @@ const source = Object.assign({}, base, {
     loadEmployees(db, snap.employees || []);
     return data;
   },
+  // Principal Accountability on its own pull (npm run vp:pull-acct); the PIC names come with it too
+  loadAccountability(period) {
+    const data = base.loadAccountability(period);
+    loadEmployees(db, data.employees || []);
+    return data;
+  },
 });
 
 createServer(db, { source, dataMode: 'live', baseUrl: `http://localhost:${PORT}` }).listen(PORT, HOST, () => {

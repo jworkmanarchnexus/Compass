@@ -19,7 +19,8 @@ function parseEnvFile(text) {
   return out;
 }
 
-function loadConfig(env = process.env, file = path.join(ROOT, '.env.vp')) {
+// VP_ENV_FILE points a worktree (or Kent's job) at a .env.vp kept elsewhere, so the login is never copied around
+function loadConfig(env = process.env, file = env.VP_ENV_FILE || path.join(ROOT, '.env.vp')) {
   let fromFile = {};
   try { fromFile = parseEnvFile(fs.readFileSync(file, 'utf8')); } catch { /* no file: environment only */ }
   const get = k => env[k] ?? fromFile[k];

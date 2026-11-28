@@ -16,6 +16,10 @@ The Marketing Report can be built from real Vantagepoint data. Everything else i
 
 The demo (`npm start`, port 5281) is untouched: its own database and the made-up files.
 
+## Principal Accountability on live data
+
+`npm.cmd run vp:pull-acct -- 202610` pulls its inputs (billed, labor, expenses and overhead by project and month; plan entries; pursuits; revenue; names) into `server/db/live/snapshots/acct-<month>-<time>.json`. Then build it in Admin > Report runs (Accountability). Give the PICs their billed goals in Admin > Accountability first. Utilization, AR over 90 and the firm figures are not pulled yet. Without a pull for the month, live mode says how to make one; it never falls back to the made-up billings. Checks against the October 2026 sheet: `docs/SPEC-accountability.md` section 6b.
+
 ## Where things are (all git-ignored: real firm data)
 
 | | |
