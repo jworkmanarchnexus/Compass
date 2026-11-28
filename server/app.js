@@ -246,6 +246,15 @@ function createServer(db, opts) {
       const period = body.period === undefined ? latest : body.period;
       if (!Number.isInteger(period) || period < 200001 || period % 100 < 1 || period % 100 > 12) throw new HttpError(400, 'That is not a valid month.');
       if (period > latest) throw new HttpError(400, 'That month has not closed yet.');
+      if (body.kind === 'acct') {
+        // live mode: only the Marketing Report reads Vantagepoint so far; Accountability would mix real and made-up figures
+        if (o.dataMode === 'live' && typeof source.loadAccountability !== 'function') throw new HttpError(409, 'Accountability is not on Vantagepoint data yet, so it cannot be built in live mode.');
+        const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
+        const made = acctDb.runMonthly(db, { source, settings: currentSettings(), period, mailer, baseUrl, adminEmails, today: today() });
+        if (!made.created) throw new HttpError(409, 'There is already a draft or published Accountability report for that month.', { id: made.id });
+        audit(user, 'acct.build', `Accountability ${acctDb.label(acctDb.getRun(db, made.id))}`, { runId: made.id });
+        return sendJson(res, 201, acctDb.report(db, made.id, { role: user.role }));
+      }
       if (body.kind === 'bd') {
         const adminEmails = db.all("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND email <> ''").map(u => u.email);
         const made = bdDb.runMonthly(db, { source, settings: currentSettings(), period, mailer, baseUrl, adminEmails });
@@ -354,11 +363,26 @@ function createServer(db, opts) {
       return sendJson(res, out.created ? 201 : 200, { created: out.created, date, alerts: pipeDb.alertCount(db) });
     }
 
-    /* ---- Principal Accountability: read (Admin and Finance). Built, published and archived with the Marketing Report. ---- */
-    const canAcct = () => { if (!roles.canView(user.role, 'accountability', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.'); };
-    if (p === '/api/accountability/reports' && method === 'GET') { canAcct(); return sendJson(res, 200, bdDb.listReports(db, { role: user.role })); }
+    /* ---- Principal Accountability: its own monthly run. Read: the Admin, Finance, and PICs when allowed. Build, publish, archive: the Admin. ---- */
+    const canAcct = () => { if (!roles.canUse(user, 'accountability', currentSettings())) throw new HttpError(403, 'You do not have access to this.'); };
+    if (p === '/api/accountability/reports' && method === 'GET') { canAcct(); return sendJson(res, 200, acctDb.listReports(db, { role: user.role })); }
     const am = /^\/api\/accountability\/reports\/([^/]+)$/.exec(p);
-    if (am && method === 'GET') { canAcct(); return sendJson(res, 200, acctDb.report(db, am[1], { role: user.role }, bdDb.label)); }
+    if (am && method === 'GET') { canAcct(); return sendJson(res, 200, acctDb.report(db, am[1], { role: user.role })); }
+    const ax = /^\/api\/admin\/accountability\/runs\/([^/]+)\/(rebuild|publish|archive)$/.exec(p);
+    if (ax && method === 'POST') {
+      requireTab(user, 'accountability', 'edit');
+      const id = ax[1]; const b = await readJson(req);
+      const lbl = () => `Accountability ${acctDb.label(acctDb.getRun(db, id))}`;
+      if (ax[2] === 'rebuild') { acctDb.rebuildDraft(db, id, { source, settings: currentSettings(), today: today() }); audit(user, 'acct.rebuild', lbl(), { runId: id }); }
+      else if (ax[2] === 'publish') { acctDb.publish(db, id, user); audit(user, 'acct.publish', lbl(), { runId: id }); }
+      else {
+        const was = lbl();
+        const newId = acctDb.archiveAndRerun(db, id, { reason: b.reason, confirm: b.confirm }, { source, settings: currentSettings(), today: today() });
+        audit(user, 'acct.archive', was, { runId: id, reason: b.reason.trim(), newRunId: newId });
+        return sendJson(res, 200, acctDb.report(db, newId, { role: user.role }));
+      }
+      return sendJson(res, 200, acctDb.report(db, id, { role: user.role }));
+    }
     if (p === '/api/admin/accountability/goals' && method === 'GET') { requireTab(user, 'accountability', 'view'); return sendJson(res, 200, acctDb.goals(db)); }
     if (p === '/api/admin/accountability/goals' && method === 'PUT') {
       requireTab(user, 'accountability', 'edit');

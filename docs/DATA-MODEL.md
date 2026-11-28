@@ -85,10 +85,10 @@ Roles: `pm` (a project manager, Billing only) and `processor` (an invoice proces
 ## Principal Accountability tables (docs/SPEC-accountability.md; `server/accountability.js`)
 
 - `acct_goals (year, pic, amount, sort)`: each PIC's billed goal for a year, cents. Compass's own data, edited in Admin > Accountability.
-- `acct_meta (run_id, ...)`: one per Marketing Report run: year, months, cutoff, the day plan statuses were read and the Project Turnaround run they came from, the firm figures from the source (NULL when the source has none), the architectural revenue, and the project sizes in force (`sizes_json`).
+- `acct_meta (run_id, ...)`: one per Accountability run (`runs.kind = 'acct'`): year, months, cutoff, the day plan statuses were read and the Project Turnaround run they came from, the firm figures from the source (NULL when the source has none), the architectural revenue, and the project sizes in force (`sizes_json`).
 - `acct_rows (run_id, key, ...)`: one per PIC (`key` '' = Unassigned): goal (NULL = none), billed, profit, negative profit, unevaluated and listed counts, response ('yes', 'no' or NULL), utilization (basis points), backlog, MWIP, AR over 90. Money in cents.
 
-Both run tables are keyed by the Marketing Report's run (`runs.kind = 'bd'`) and locked with it by the same triggers. No percentages, to-goal, shortfall or project counts are stored.
+Both run tables are keyed by an Accountability run (`runs.kind = 'acct'`) and locked by the same triggers as every run's rows. No percentages, to-goal, shortfall or project counts are stored.
 
 ## Projects in Pursuit tables (`docs/SPEC-pip.md`; `server/pip.js`)
 

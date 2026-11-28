@@ -20,11 +20,13 @@ test('admin Home on the demo day: what needs attention, what was published, what
   assert.strictEqual(h.attention[1].badge, '1 conversation');
   assert.strictEqual(h.attention[1].href, '#/turnaround/checkins');
 
-  assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'Marketing Report, September 2026', 'Marketing Report, August 2026', 'Project Turnaround, August 2026'], 'newest first, both kinds');
+  assert.deepStrictEqual(h.published.map(p => p.label), ['Project Turnaround, September 2026', 'Accountability, September 2026', 'Marketing Report, September 2026', 'Accountability, August 2026', 'Marketing Report, August 2026'], 'newest first, every kind, five at most');
   assert.strictEqual(h.published[0].by, 'Josh');
   assert.match(h.published[0].text, /^16 turnaround projects\. Visible to PICs and Finance\.$/);
-  assert.match(h.published[1].text, /^Billing cutoff 2026-09-30\. Visible to Finance and Marketing\.$/);
-  assert.strictEqual(h.published[1].href, `#/bd/${h.published[1].id}`);
+  assert.match(h.published[2].text, /^Billing cutoff 2026-09-30\. Visible to Finance and Marketing\.$/);
+  assert.strictEqual(h.published[2].href, `#/bd/${h.published[2].id}`);
+  assert.match(h.published[1].text, /^Each PIC against their billed goal\. Visible to Finance\.$/);
+  assert.strictEqual(h.published[1].href, `#/accountability/${h.published[1].id}`);
 
   const by = title => h.checks.find(c => c.title.includes(title));
   assert.strictEqual(by('Monthly Vantagepoint pull').status, 'ok');

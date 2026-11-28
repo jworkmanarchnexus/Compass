@@ -11,6 +11,7 @@
 const dbmod = require('../db/db');
 const runsDb = require('../runs');
 const bdDb = require('../bd');
+const acctDb = require('../accountability');
 const schedule = require('../../modules/turnaround/logic/schedule');
 const settingsRules = require('../../shared/rules/settings');
 const { createLocalSource } = require('../vp-local');
@@ -46,6 +47,12 @@ function main(argv) {
       if (bd.created) { db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'bd.build', `Marketing Report ${schedule.periodLabel(period)}, version 1`, JSON.stringify({ runId: bd.id, by: 'scheduled job' })); console.log(`Built the ${schedule.periodLabel(period)} Marketing Report draft.`); }
       else console.log(`There is already a Marketing Report draft or published report for ${schedule.periodLabel(period)}; nothing changed there.`);
     } catch (e) { console.log(`The Marketing Report was not built: ${e.message}`); }
+    // Principal Accountability: its own draft, the same day
+    try {
+      const a = acctDb.runMonthly(db, { source: createLocalSource(), settings, period, mailer: createFileMailer(), baseUrl: process.env.COMPASS_URL || 'http://localhost:5281', adminEmails, today });
+      if (a.created) { db.run('INSERT INTO audit_log (at, user_id, action, object, detail_json) VALUES (?, ?, ?, ?, ?)', db.now(), 'system', 'acct.build', `Accountability ${schedule.periodLabel(period)}, version 1`, JSON.stringify({ runId: a.id, by: 'scheduled job' })); console.log(`Built the ${schedule.periodLabel(period)} Accountability draft.`); }
+      else console.log(`There is already an Accountability draft or published report for ${schedule.periodLabel(period)}; nothing changed there.`);
+    } catch (e) { console.log(`Accountability was not built: ${e.message}`); }
     if (out.created) console.log(`Built the ${schedule.periodLabel(period)} Project Turnaround draft. Review it in Admin > Report runs.`);
   } finally { db.close(); }
 }

@@ -12,9 +12,9 @@ The first tab of the firm's "2026 Project Improvement (Accountability)" workbook
 
 Every PIC's profit sits side by side, so it starts with the Admin and Finance; Admin > People > "What narrower roles can see" opens it to every PIC (Josh, 2026-11-26: all Principals see it). A PIC sees every PIC's row, published reports only.
 
-## 2. Built with the Marketing Report
+## 2. Its own monthly report
 
-It is built from the same monthly pull, **at the same moment as the Marketing Report draft, and frozen with it** (`acct_rows`, `acct_meta`, keyed by the Marketing Report's run). So there is one lifecycle and one Publish for the month: rebuilding the Marketing Report draft rebuilds it, publishing publishes it, archive and rerun archives it. The report picker lists the Marketing Report's versions. A version built before this existed shows a note to archive and rerun it.
+Its own run (`runs.kind = 'acct'`), with the same lifecycle as Project Turnaround and the Marketing Report: the monthly job builds a **draft** (and emails the Admin a count and link), the Admin reviews it on the page (Rebuild draft, Publish for viewing), a published report is **locked** by the database, and changing one means **archive and rerun** (a reason and the word `RERUN`). Admin > Report runs can build one for any closed month. Its figures are its own and **gross**; nothing is read from a Marketing Report, which is net of consultants (Josh, 2026-11-27). Rows are frozen in `acct_rows` and `acct_meta`.
 
 ## 3. The columns (per PIC)
 
@@ -28,9 +28,9 @@ It is built from the same monthly pull, **at the same moment as the Marketing Re
 | Utilization | from the source, year to date. |
 | Goal | the PIC's billed goal for the year (Admin > Accountability), per PIC (Josh, 2026-11-26). |
 | $ amount to goal | goal − YTD billed. In brackets: past the goal. |
-| Backlog | contracted forecast still to bill through December 31, **gross as entered** (so it reads against gross billings), from the Marketing Report's pull. |
+| Backlog | the PMs' plan revenue still to bill through December 31, **gross as entered** (spread by working days less firm holidays, as Vantagepoint's forecast report does, when the source gives the plan entries themselves), read by Accountability's own pull. No architectural share. |
 | Shortfall / (excess) | goal − billed − backlog. In brackets: the backlog more than covers the goal. (The workbook labels this "Excess/(Shortfall)" but its numbers have this sign; open question A5.) |
-| ETC MWIP | the Marketing Report's MWIP for the PIC, weighted (the same figure as on that report). |
+| ETC MWIP | pursuits not yet contracted: each one's **probability-weighted fee**, spread by days from the month after the report month through December 31, **with no 0.65 architectural factor** (Josh, 2026-11-27). The options are fixed for this report (Weighted Fee, spread evenly, daily) so a change to the Marketing Report's MWIP settings never moves it. |
 | AR > 90 | receivables over 90 days on the PIC's projects, from the source. |
 | Projects to reach goal | one column per project size (Admin setting `acct.projectSizes`, default $150K, $250K, $500K and $1.5M fees, named for the construction size): **how many projects of that fee would close the shortfall, rounded up; 0 when there is none** (Josh, 2026-11-26). |
 
@@ -45,7 +45,7 @@ Percentages, to-goal, shortfall and project counts are worked out when shown, ne
 | Income statement profit (loss) | source, YTD |
 | Difference from project profit | income statement profit − the PICs' YTD profit added up |
 | YTD actual overhead rate, Assigned overhead rate | source |
-| Architectural revenue | the Marketing Report's firm YTD revenue (net of consultants) |
+| Architectural revenue | revenue net of consultants, January through the report month, read by Accountability's own pull (the sheet's "Arch Revenue" line, the one net figure on it; Josh kept it, 2026-11-27) |
 | ESOP / bonus contribution | source, YTD |
 | Profit on architectural revenue | (income statement profit + ESOP / bonus) ÷ architectural revenue (the workbook's 20% reproduces) |
 
@@ -64,7 +64,7 @@ The PDF comes from the same `sheet()` the page uses, and the Excel from the same
 
 ## 6. What the source must provide
 
-Nothing new for billed, profit, backlog and MWIP (the Project Turnaround `load` and the Marketing Report `loadBd`). One more method, `loadAccountability(period)`: `{ utilization: [{ pic, bp }], arOver90: [{ wbs1, amount }], firm: { incomeProfit, esopBonus, actualOhBp, assignedOhBp } }` (cents; basis points, 4400 = 44%). A source without it still builds; those columns are blank. Where these live is open question A1. Locally: `server/db/seed/acct_*.csv` (made up).
+Billed and profit come from the profit pull (`load`, the Project Turnaround query). Everything else comes from `loadAccountability(period)`: `{ projects: [{ wbs1, principal }], forecastEntries + holidays (or forecast: [{ wbs1, amount }]), pursuits (or mwip: [{ id, pic, amount }]), revenue: [{ wbs1, period, amount }], utilization: [{ pic, bp }], arOver90: [{ wbs1, amount }], firm: { incomeProfit, esopBonus, actualOhBp, assignedOhBp } }` (cents; basis points, 4400 = 44%). Any part may be missing; those columns are then blank. Where utilization, AR and the firm figures live is open question A1. Locally the gross inputs are read from the same made-up project files the Marketing Report's source reads (they stand for the raw Vantagepoint rows), plus `server/db/seed/acct_*.csv`.
 
 ## 7. Not built
 

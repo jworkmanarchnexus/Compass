@@ -205,7 +205,7 @@ test('Turnaround and BD runs stay out of each other\'s way', () => withApp(async
   const turn = (await josh.get('/api/turnaround/current')).body;
   assert.strictEqual(turn.run.period, 202609, 'the Turnaround page is unaffected by BD reports');
   const runs = (await josh.get('/api/admin/runs')).body;
-  assert.deepStrictEqual(runs.filter(r => r.period === 202609).map(r => r.kind).sort(), ['bd', 'turnaround']);
+  assert.deepStrictEqual(runs.filter(r => r.period === 202609).map(r => r.kind).sort(), ['acct', 'bd', 'turnaround']);
   assert.strictEqual(runs.find(r => r.kind === 'bd' && r.period === 202609).projectCount, 6, 'six PICs');
   assert.strictEqual((await josh.post('/api/admin/runs', { period: 202607 })).status, 201);
   assert.strictEqual((await josh.post('/api/admin/runs', { kind: 'bd', period: 202607 })).status, 201);

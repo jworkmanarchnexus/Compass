@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 -- Report runs (built in phase 2; created now so the schema is in one place)
 CREATE TABLE IF NOT EXISTS runs (
   id             TEXT PRIMARY KEY,
-  kind           TEXT NOT NULL CHECK (kind IN ('turnaround','bd')),
+  kind           TEXT NOT NULL CHECK (kind IN ('turnaround','bd','acct')),
   period         INTEGER NOT NULL,        -- YYYYMM
   version        INTEGER NOT NULL,
   status         TEXT NOT NULL CHECK (status IN ('draft','published','archived')),
@@ -560,7 +560,7 @@ CREATE TRIGGER IF NOT EXISTS billing_assignments_no_delete BEFORE DELETE ON bill
 CREATE TRIGGER IF NOT EXISTS billing_requests_no_delete BEFORE DELETE ON billing_requests BEGIN SELECT RAISE(ABORT, 'billing requests are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS billing_requests_processed BEFORE UPDATE ON billing_requests WHEN OLD.status = 'processed' BEGIN SELECT RAISE(ABORT, 'a processed request takes no more changes'); END;
 
--- ---- Principal Accountability (modules/accountability): built with the Marketing Report (kind 'bd'), from the same pull, and locked with it ----
+-- ---- Principal Accountability (modules/accountability): its own monthly run (kind 'acct'), locked like the others. Gross figures; never the Marketing Report's ----
 -- each PIC's billed goal for a year (gross billings, the firm's accountability sheet; not the Marketing Report's net goals). Admin > Accountability.
 CREATE TABLE IF NOT EXISTS acct_goals (
   year   INTEGER NOT NULL,

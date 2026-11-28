@@ -58,19 +58,29 @@ function createLocalSource() {
       const lines = read('billing_lines.csv').map(r => ({ wbs1: r.WBS1, lineId: r.LineId, name: r.Name, kind: r.Kind, sort: Number(r.Sort), feeCents: cents(r.Fee), billedCents: cents(r.Billed), availableCents: cents(r.Available), projectionCents: cents(r.Projection) }));
       return { projects, lines };
     },
-    /* Principal Accountability: what the firm's accountability sheet needs beyond the profit pull and the Marketing Report.
-       Where each lives (Vantagepoint utilization, AR aging, the income statement) is Kent's to confirm (docs/OPEN-QUESTIONS.md A1).
-         utilization:  [{ pic, bp }]          each PIC's utilization year to date, basis points (4400 = 44%)
-         arOver90:     [{ wbs1, amount }]     receivables more than 90 days old at the cutoff, per project, cents
+    /* Principal Accountability: what the firm's accountability sheet needs beyond the profit pull (load). Its own inputs, GROSS,
+       never a Marketing Report figure (Josh, 2026-11-27). Money in cents.
+         projects:     [{ wbs1, principal }]             project to PIC, for the backlog, MWIP and AR
+         forecastEntries + holidays, or forecast: [{ wbs1, amount }]   the PMs' plan revenue still to bill through Dec 31, gross as entered
+         pursuits, or mwip: [{ id, pic, amount }]         pursuits not yet contracted, probability-weighted, with no architectural factor
+         revenue:      [{ wbs1, period, amount }]        revenue net of consultants by month, for the firm block's architectural revenue only
+         utilization:  [{ pic, bp }]                     each PIC's utilization year to date, basis points (4400 = 44%)
+         arOver90:     [{ wbs1, amount }]                receivables more than 90 days old at the cutoff, per project
          firm:         { incomeProfit, esopBonus, actualOhBp, assignedOhBp }   year to date; any may be null
-       A source without this method still builds the report; those columns stay blank. */
+       Where utilization, AR and the firm figures live is still open (docs/OPEN-QUESTIONS.md A1). A source without this method still
+       builds the report; those columns stay blank. Locally the gross inputs come from the same made-up project files as the
+       Marketing Report's (they are the raw Vantagepoint rows); nothing is read from a built report. */
     loadAccountability(period) {
       const pick = f => read(f).filter(r => Number(r.Period) === period);
       const utilization = pick('acct_utilization.csv').map(r => ({ pic: r.Principal, bp: Math.round(parseFloat(r.UtilizationPct) * 100) }));
       const arOver90 = pick('acct_ar.csv').map(r => ({ wbs1: r.WBS1, amount: toCents(r.Over90) }));
       const f = pick('acct_firm.csv')[0];
       const firm = f ? { incomeProfit: toCents(f.IncomeStatementProfit), esopBonus: toCents(f.EsopBonus), actualOhBp: Math.round(parseFloat(f.ActualOverheadPct) * 100), assignedOhBp: Math.round(parseFloat(f.AssignedOverheadPct) * 100) } : {};
-      return { utilization, arOver90, firm };
+      const projects = read('bd_projects.csv').map(p => ({ wbs1: p.WBS1, principal: p.Principal }));
+      const forecast = read('bd_forecast.csv').filter(r => Number(r.Period) === period).map(r => ({ wbs1: r.WBS1, amount: toCents(r.Amount) }));
+      const mwip = read('bd_mwip.csv').filter(r => Number(r.Period) === period).map(r => ({ id: r.Pursuit, pic: r.Principal, amount: toCents(r.Amount) }));
+      const revenue = read('bd_revenue.csv').filter(r => Number(r.Period) <= period).map(r => ({ wbs1: r.WBS1, period: Number(r.Period), amount: toCents(r.Amount) }));
+      return { projects, forecast, mwip, revenue, utilization, arOver90, firm };
     },
     load() {
       const projects = read('projects.csv')

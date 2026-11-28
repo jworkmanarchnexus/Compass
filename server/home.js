@@ -42,6 +42,11 @@ function buildHome(db, user, { today, settings }) {
       items.push({ kind: 'bd_draft', badge: 'Draft', tone: 'warn', title: `Marketing Report: ${schedule.periodLabel(bdDraft.period)} is ready to review`,
         text: u.n ? `${plural(u.n, 'project')} ${u.n === 1 ? 'needs' : 'need'} a market sector before it can be published.` : 'Nothing is holding it back. Check the numbers and publish when you are ready.', href: `#/bd/${bdDraft.id}`, action: 'Review draft', primary: !u.n });
     }
+    const acctDraft = runs.find(r => r.kind === 'acct' && r.status === 'draft');
+    if (acctDraft && settings['run.showOnHome']) {
+      items.push({ kind: 'acct_draft', badge: 'Draft', tone: 'warn', title: `Accountability: ${schedule.periodLabel(acctDraft.period)} is ready to review`,
+        text: 'Check the numbers and publish when you are ready.', href: `#/accountability/${acctDraft.id}`, action: 'Review draft', primary: false });
+    }
     const waiting = db.all("SELECT items_json, situation FROM checkin_drafts WHERE status = 'waiting'");
     if (waiting.length) {
       const count = s => waiting.filter(d => d.situation === s).reduce((n, d) => n + JSON.parse(d.items_json).length, 0);
@@ -73,19 +78,24 @@ function buildHome(db, user, { today, settings }) {
 
   // ---- recently published ----
   const canBd = roles.canUse(user, 'bd', settings);
-  if (canTurnaround || canBd) {
+  const canAcct = roles.canUse(user, 'accountability', settings);
+  if (canTurnaround || canBd || canAcct) {
     const names = Object.fromEntries(db.all('SELECT id, display_name FROM users').map(u => [u.id, u.display_name]));
     const list = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
     // in preview, only the picked testers see it (roles.canUse), so say that instead of the roles
     const testers = area => { const n = settings.release[area].testers.length; return n ? [`your ${plural(n, 'preview tester')} (in preview)`] : ['nobody else yet (in preview)']; };
     const whoTurn = roles.inPreview('turnaround', settings.release) ? testers('turnaround') : ['PICs', 'Finance'].concat(settings.access.marketingTurnaround ? ['Marketing'] : []);
     const whoBd = roles.inPreview('bd', settings.release) ? testers('bd') : ['Finance', 'Marketing'].concat(settings.access.picBd ? ['PICs'] : []);
-    out.published = runs.filter(r => r.status === 'published' && (r.kind === bdDb.KIND ? canBd : canTurnaround))
+    out.published = runs.filter(r => r.status === 'published' && (r.kind === bdDb.KIND ? canBd : r.kind === 'acct' ? canAcct : canTurnaround))
       .sort((a, b) => b.published_at - a.published_at).slice(0, 5).map(r => {
         const by = names[r.published_by] ? names[r.published_by].split(' ')[0] : null;
         if (r.kind === bdDb.KIND) {
           const m = db.get('SELECT cutoff FROM bd_run_meta WHERE run_id = ?', r.id);
           return { id: r.id, label: `Marketing Report, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `Billing cutoff ${m ? m.cutoff : ''}.${isAdmin ? ` Visible to ${list(whoBd)}.` : ''}`, href: `#/bd/${r.id}` };
+        }
+        if (r.kind === 'acct') {
+          const whoAcct = roles.inPreview('accountability', settings.release) ? testers('accountability') : ['Finance'].concat(settings.access.picAccountability ? ['PICs'] : []);
+          return { id: r.id, label: `Accountability, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `Each PIC against their billed goal.${isAdmin ? ` Visible to ${list(whoAcct)}.` : ''}`, href: `#/accountability/${r.id}` };
         }
         const n = db.get('SELECT COUNT(*) AS n FROM run_projects WHERE run_id = ?', r.id).n;
         return { id: r.id, label: `Project Turnaround, ${schedule.periodLabel(r.period)}`, version: r.version, publishedAt: r.published_at, by, text: `${plural(n, 'turnaround project')}.${isAdmin ? ` Visible to ${list(whoTurn)}.` : ''}`, href: '#/turnaround' };

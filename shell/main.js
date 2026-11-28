@@ -190,7 +190,7 @@ async function pageBd(id) {
 }
 
 async function pageAccountability(id) {
-  const body = frame('accountability', [crumb('Compass', '#/'), sep(), crumb('Accountability')], 'Principal Accountability', 'Each PIC year to date: billed, profit and the response to negative profit, against their billed goal with backlog and MWIP. Built and published with the Marketing Report for the same month.');
+  const body = frame('accountability', [crumb('Compass', '#/'), sep(), crumb('Accountability')], 'Principal Accountability', 'Each PIC year to date: billed, profit and the response to negative profit, against their billed goal with backlog and MWIP. Gross figures; its own monthly report.');
   await renderAccountability(ctx, body, id);
 }
 
@@ -562,7 +562,8 @@ function rolesCard() {
 /* ---- report runs ---- */
 const STATUS_CHIP = { draft: ['warn', 'Draft'], published: ['ok', 'Published, locked'], archived: ['out', 'Archived'] };
 const statusChip = s => h('span', { class: 'chip ' + STATUS_CHIP[s][0], text: STATUS_CHIP[s][1] });
-const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'Marketing Report' };
+const KIND_LABEL = { turnaround: 'Project Turnaround', bd: 'Marketing Report', acct: 'Accountability' };
+const KIND_HREF = { bd: '#/bd/', acct: '#/accountability/', turnaround: '#/admin/runs/' };
 const fmtCents = c => (c < 0 ? '-$' : '$') + Math.abs(Math.round(c / 100)).toLocaleString('en-US'); // whole dollars; the minus sign carries the meaning, not only the colour
 const fmtPct = (profit, billed) => billed ? (profit < 0 ? '-' : '') + Math.abs(100 * profit / billed).toFixed(1) + '%' : '-';
 
@@ -578,10 +579,10 @@ function closedPeriods() {
 
 function runsCard(runs, canEdit, onBuilt, onError) {
   const periods = closedPeriods();
-  const kindSel = h('select', { class: 'txt', style: 'width:180px', 'aria-label': 'Which report' }, h('option', { value: 'turnaround', text: 'Project Turnaround' }), h('option', { value: 'bd', text: 'Marketing Report' }));
+  const kindSel = h('select', { class: 'txt', style: 'width:180px', 'aria-label': 'Which report' }, h('option', { value: 'turnaround', text: 'Project Turnaround' }), h('option', { value: 'bd', text: 'Marketing Report' }), h('option', { value: 'acct', text: 'Accountability' }));
   const sel = h('select', { class: 'txt', style: 'width:200px', 'aria-label': 'Month to build' });
   const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', onclick: async () => {
-    try { const r = await Admin.buildRun(Number(sel.value), kindSel.value); location.hash = (kindSel.value === 'bd' ? '#/bd/' : '#/admin/runs/') + r.run.id; } catch (e) { onError(e); }
+    try { const r = await Admin.buildRun(Number(sel.value), kindSel.value); location.hash = KIND_HREF[kindSel.value] + r.run.id; } catch (e) { onError(e); }
   } });
   const fillMonths = () => { // a month already built for the chosen report is greyed out
     const live = new Set(runs.filter(r => r.kind === kindSel.value && r.status !== 'archived').map(r => r.period));
@@ -604,7 +605,7 @@ function runsCard(runs, canEdit, onBuilt, onError) {
         h('td', { class: 'strong', text: KIND_LABEL[r.kind] || r.kind }), h('td', { text: r.label }), h('td', { text: 'v' + r.version }), h('td', {}, statusChip(r.status)),
         h('td', { class: 'r', text: String(r.projectCount) }), h('td', { class: 'muted', text: fmtTime(r.createdAt) }),
         h('td', { class: 'muted', text: r.publishedAt ? `${fmtTime(r.publishedAt)}${r.publishedByName ? ' by ' + r.publishedByName.split(' ')[0] : ''}` : '-' }),
-        h('td', {}, r.status === 'archived' ? h('span', { class: 'muted', text: 'Reason: ' + r.archiveReason }) : canEdit ? h('a', { href: (r.kind === 'bd' ? '#/bd/' : '#/admin/runs/') + r.id, text: r.status === 'draft' ? 'Review' : 'View' }) : null))))))
+        h('td', {}, r.status === 'archived' ? h('span', { class: 'muted', text: 'Reason: ' + r.archiveReason }) : canEdit ? h('a', { href: (KIND_HREF[r.kind] || '#/admin/runs/') + r.id, text: r.status === 'draft' ? 'Review' : 'View' }) : null))))))
       : h('div', { class: 'empty-row', text: 'No runs yet.' }));
 }
 
@@ -693,8 +694,8 @@ function auditText(e) {
   if (e.action === 'pipeline.snapshot') return ['Saved a pipeline snapshot', e.object];
   if (e.action === 'pipeline.clear') return ['Cleared a pipeline alert', e.object];
   if (e.action === 'pipeline.note') return ['Added a note on a pursuit', e.object];
-  const bdVerb = { 'bd.build': 'Built', 'bd.rebuild': 'Rebuilt the draft of', 'bd.publish': 'Published', 'bd.archive': 'Archived' }[e.action];
-  if (bdVerb) return [`${bdVerb}: ${e.object}`, e.action === 'bd.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
+  const bdVerb = { 'bd.build': 'Built', 'bd.rebuild': 'Rebuilt the draft of', 'bd.publish': 'Published', 'bd.archive': 'Archived', 'acct.build': 'Built', 'acct.rebuild': 'Rebuilt the draft of', 'acct.publish': 'Published', 'acct.archive': 'Archived' }[e.action];
+  if (bdVerb) return [`${bdVerb}: ${e.object}`, e.action.endsWith('.archive') ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   const runVerb = { 'run.build': 'Built', 'run.rebuild': 'Rebuilt the draft of', 'run.publish': 'Published', 'run.archive': 'Archived' }[e.action];
   if (runVerb) return [`${runVerb}: ${e.object}`, e.action === 'run.archive' ? `Reason: ${e.detail.reason}` : e.detail.by ? `by the ${e.detail.by}` : ''];
   return [e.action, e.object];

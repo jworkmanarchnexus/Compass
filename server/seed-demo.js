@@ -53,7 +53,7 @@ function seedDemo(db) {
       if (e.l) ids[e.l] = id;
     });
   }
-  // BD reports for August and September, built after the plan logs so Principal Accountability (built with them) reads each plan as it stood on the build day. The one project with no market sector was assigned to Civic by the Admin (as in the mockup).
+  // BD reports for August and September. The one project with no market sector was assigned to Civic by the Admin (as in the mockup).
   const bd = require('./bd');
   const { parseCsv } = require('./csv');
   const noSector = parseCsv(fs.readFileSync(path.join(__dirname, 'db', 'seed', 'bd_projects.csv'), 'utf8')).find(p => !p.Sector);
@@ -65,6 +65,14 @@ function seedDemo(db) {
   }
 
   // the daily job's first look, on the demo day, so the check-in queue starts with what it would hold
+  // Principal Accountability for August and September, its own runs, built after the plan logs so the response column reads each plan as it stood on the build day
+  const acct = require('./accountability');
+  for (const [period, builtAt, publishedAt] of [[202608, '2026-09-01T06:10', '2026-09-03T10:10'], [202609, '2026-10-01T06:10', '2026-10-02T11:35']]) {
+    const id = acct.buildDraft(db, { source, period, settings, today: builtAt.slice(0, 10) });
+    db.run('UPDATE runs SET created_at = ? WHERE id = ?', at(builtAt), id);
+    db.run("UPDATE runs SET status = 'published', published_at = ?, published_by = ? WHERE id = ?", at(publishedAt), admin.id, id);
+  }
+
   require('./turnaround').dailyChecks(db, { today: '2026-10-07', settings, mailer: null, baseUrl: '', adminEmails: [] });
 }
 

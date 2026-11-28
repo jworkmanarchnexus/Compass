@@ -1,35 +1,65 @@
 'use strict';
-/* Principal Accountability on the database. It is built with the Marketing Report (server/bd.js calls compute and fill), from
-   the same monthly pull, so it is drafted, published, locked, archived and rerun with that report: there is one lifecycle and one
-   Publish button for the month. The arithmetic is modules/accountability/logic/accountability.js (pure, tested). */
+/* Principal Accountability on the database: its own monthly run (runs.kind = 'acct'), with the same lifecycle as Project Turnaround
+   and the Marketing Report (modules/turnaround/logic/lifecycle.js): a draft, published and locked, archived with a reason and the
+   word RERUN. It reads its own inputs from the source and never a Marketing Report figure: the accountability sheet is GROSS
+   (Josh, 2026-11-27), the Marketing Report is net of consultants.
+   The arithmetic is modules/accountability/logic/accountability.js (pure, tested). */
+const crypto = require('node:crypto');
 const { HttpError } = require('./errors');
 const A = require('../modules/accountability/logic/accountability');
 const profitRule = require('../modules/turnaround/logic/profit');
 const plan = require('../modules/turnaround/logic/plan');
-const planDb = require('./plan');
+const lifecycle = require('../modules/turnaround/logic/lifecycle');
 const schedule = require('../modules/turnaround/logic/schedule');
+const forecastRule = require('../modules/bd/logic/forecast');
+const mwipRule = require('../modules/bd/logic/mwip');
+const planDb = require('./plan');
 
-/* everything the rows need, as of the report month. `bd` is what the Marketing Report just worked out from the same pull:
-   { out (report.computeBd), data (the source's loadBd result) }. `today` is the day plan statuses are read on. */
-function compute(db, source, period, settings, bd, today) {
+const KIND = 'acct';
+const label = r => `${schedule.periodLabel(r.period)}, version ${r.version}`;
+const allAcct = db => db.all("SELECT * FROM runs WHERE kind = 'acct' ORDER BY period DESC, version DESC");
+const life = r => ({ id: r.id, kind: r.kind, period: r.period, version: r.version, status: r.status });
+const buildDay = () => { if (process.env.COMPASS_TODAY) return process.env.COMPASS_TODAY; const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+
+/* MWIP for Accountability: each pursuit's probability-weighted fee, spread by days as Vantagepoint's MWIP report does by default,
+   from the month after the report month through December 31, with NO architectural factor (Josh, 2026-11-27). Fixed here on
+   purpose, not the Marketing Report's settings, so changing that report never moves this one. */
+const MWIP_OPTIONS = Object.assign({}, mwipRule.DEFAULT_OPTIONS, { basis: 'weighted', start: 'afterReportMonth', through: 'yearEnd' });
+
+function getRun(db, id) {
+  const r = db.get("SELECT * FROM runs WHERE id = ? AND kind = 'acct'", String(id));
+  if (!r) throw new HttpError(404, 'Report not found.');
+  return r;
+}
+
+/* everything the rows need, as of the report month. `today` is the day plan statuses are read on. */
+function compute(db, source, period, settings, today) {
   const year = Math.floor(period / 100);
   // billed and profit: the Project Turnaround math over every project the pull returns, not only the ones below break-even
-  // (a source with no profit pull still builds the Marketing Report; billed and profit are then empty)
   const pull = typeof source.load === 'function' ? source.load(period) : { projects: [], ledger: [], overhead: [] };
   const evaluated = profitRule.computeProjects({ projects: pull.projects, ledger: pull.ledger, overhead: pull.overhead, runPeriod: period });
   const projects = evaluated.map(p => ({ wbs1: p.wbs1, principal: p.principal, billedYtd: p.billed.ytd, profitYtd: p.evaluable ? p.profit.ytd : null }));
 
-  // backlog: the contracted forecast through December 31, gross (as entered) when the source gives it, so it reads against gross billings
-  const picOfBd = Object.fromEntries(bd.data.projects.map(p => [p.wbs1, p.principal || '']));
-  const backlog = {};
-  for (const f of bd.data.forecast || []) { const k = picOfBd[f.wbs1] || ''; backlog[k] = (backlog[k] || 0) + (f.gross !== undefined ? f.gross : f.amount); }
-  // MWIP: the Marketing Report's own weighted figure for each PIC
-  const mwip = {};
-  for (const r of bd.out.pic) mwip[r.key || ''] = r.mwip;
+  const x = typeof source.loadAccountability === 'function' ? source.loadAccountability(period) || {} : {};
+  const picOfX = Object.fromEntries((x.projects || []).map(p => [p.wbs1, p.principal || '']));
+  const picOf = Object.assign({}, Object.fromEntries(db.all('SELECT wbs1, principal FROM projects').map(p => [p.wbs1, p.principal])), picOfX);
+  const add = (map, k, v) => { map[k || ''] = (map[k || ''] || 0) + v; };
 
-  const extra = typeof source.loadAccountability === 'function' ? source.loadAccountability(period) || {} : {};
-  const utilization = Object.fromEntries((extra.utilization || []).map(u => [u.pic, u.bp]));
-  const picOf = Object.assign({}, picOfBd, Object.fromEntries(db.all('SELECT wbs1, principal FROM projects').map(p => [p.wbs1, p.principal])));
+  // backlog: the PMs' plan revenue still to bill through December 31, GROSS as entered (spread by working days when the source
+  // gives the entries themselves; otherwise the source's own gross amounts per project)
+  const backlog = {};
+  if (x.forecastEntries) {
+    const f = forecastRule.computeForecast({ entries: x.forecastEntries, holidays: x.holidays || [], period });
+    for (const [wbs1, gross] of Object.entries(f.gross)) add(backlog, picOf[wbs1], gross);
+  } else for (const f of x.forecast || []) add(backlog, picOf[f.wbs1], f.amount);
+
+  // ETC MWIP: probability-weighted fee, no factor
+  const mwip = {};
+  if (x.pursuits) for (const m of mwipRule.computeMwip({ pursuits: x.pursuits, period, buildDate: today, options: MWIP_OPTIONS }).mwip) add(mwip, m.pic, m.amount);
+  else for (const m of x.mwip || []) add(mwip, m.pic, m.amount);
+
+  // the firm block's architectural revenue: revenue net of consultants, January through the report month (the sheet's "Arch Revenue")
+  const archRevenue = (x.revenue || []).filter(r => r.period === undefined || (r.period <= period && r.period >= year * 100 + 1)).reduce((a, r) => a + r.amount, 0);
 
   // the response column: plan status, as of `today`, of each PIC's projects on the latest published Project Turnaround run for this month or before
   const tr = db.get("SELECT id, period FROM runs WHERE kind = 'turnaround' AND status = 'published' AND period <= ? ORDER BY period DESC, version DESC LIMIT 1", period);
@@ -48,11 +78,12 @@ function compute(db, source, period, settings, bd, today) {
   const goals = {}, goalOrder = [];
   for (const g of db.all('SELECT pic, amount FROM acct_goals WHERE year = ? ORDER BY sort, pic', year)) { goals[g.pic] = g.amount; goalOrder.push(g.pic); }
   const names = Object.fromEntries(db.all('SELECT code, first_name, last_name FROM employees').map(e => [e.code, `${e.first_name} ${e.last_name}`]));
-  const rows = A.computeRows({ goals, goalOrder, projects, backlog, mwip, arOver90: extra.arOver90 || [], picOf, utilization, planStatus, names });
-  const firm = extra.firm || {};
+  const utilization = Object.fromEntries((x.utilization || []).map(u => [u.pic, u.bp]));
+  const rows = A.computeRows({ goals, goalOrder, projects, backlog, mwip, arOver90: x.arOver90 || [], picOf, utilization, planStatus, names });
+  const firm = x.firm || {};
   const meta = {
-    year, months: bd.out.months, cutoff: schedule.lastDayOfPeriod(period),
-    statusDay: today, turnaroundRunId: tr ? tr.id : null, archRevenue: bd.out.firm.ytd,
+    year, months: period % 100, cutoff: schedule.lastDayOfPeriod(period),
+    statusDay: today, turnaroundRunId: tr ? tr.id : null, archRevenue,
     incomeProfit: firm.incomeProfit ?? null, esopBonus: firm.esopBonus ?? null, actualOhBp: firm.actualOhBp ?? null, assignedOhBp: firm.assignedOhBp ?? null,
     sizes: settings['acct.projectSizes'],
   };
@@ -66,15 +97,72 @@ function fill(db, runId, c) {
   c.rows.forEach((r, i) => db.run('INSERT INTO acct_rows (run_id, key, label, sort, goal, billed_ytd, profit_ytd, negative_ytd, unevaluated, listed, response, utilization_bp, backlog, mwip, ar_over90) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     runId, r.key, r.label, i + 1, r.goal, r.billedYtd, r.profitYtd, r.negativeYtd, r.unevaluated, r.listed, r.response, r.utilizationBp, r.backlog, r.mwip, r.arOver90));
 }
-
 const clear = (db, runId) => { for (const t of ['acct_rows', 'acct_meta']) db.run(`DELETE FROM ${t} WHERE run_id = ?`, runId); };
 
-/* one report, read back. Who may read it was checked by the caller (roles: Admin and Finance); a draft or archived version is the Admin's. */
-function report(db, runId, viewer, bdLabel) {
-  const run = db.get("SELECT * FROM runs WHERE id = ? AND kind = 'bd'", String(runId));
+/* ---- the lifecycle ---- */
+function newDraft(db, period, settings, c) {
+  const id = crypto.randomUUID();
+  const version = lifecycle.nextVersion(allAcct(db).map(life), KIND, period);
+  db.run("INSERT INTO runs (id, kind, period, version, status, created_at, settings_json) VALUES (?, 'acct', ?, ?, 'draft', ?, ?)", id, period, version, db.now(), JSON.stringify(settings));
+  fill(db, id, c);
+  return id;
+}
+
+function buildDraft(db, { source, period, settings, today }) {
+  const verdict = lifecycle.canBuild(allAcct(db).map(life), KIND, period);
+  if (!verdict.ok) throw new HttpError(409, verdict.error);
+  const c = compute(db, source, period, settings, today || buildDay());
+  return db.tx(() => newDraft(db, period, settings, c));
+}
+
+function rebuildDraft(db, runId, { source, settings, today }) {
+  const run = getRun(db, runId);
+  const verdict = lifecycle.canRebuild(run);
+  if (!verdict.ok) throw new HttpError(409, verdict.error);
+  const c = compute(db, source, run.period, settings, today || buildDay());
+  db.tx(() => { clear(db, runId); db.run('UPDATE runs SET settings_json = ? WHERE id = ?', JSON.stringify(settings), runId); fill(db, runId, c); });
+}
+
+function publish(db, runId, user) {
+  const run = getRun(db, runId);
+  const verdict = lifecycle.canPublish(run);
+  if (!verdict.ok) throw new HttpError(409, verdict.error);
+  db.run("UPDATE runs SET status = 'published', published_at = ?, published_by = ? WHERE id = ?", db.now(), user.id, runId);
+}
+
+function archiveAndRerun(db, runId, { reason, confirm }, { source, settings, today }) {
+  const run = getRun(db, runId);
+  const verdict = lifecycle.canArchive(run, { reason, confirm });
+  if (!verdict.ok) throw new HttpError(run.status === 'published' ? 400 : 409, verdict.error);
+  const c = compute(db, source, run.period, settings, today || buildDay());
+  return db.tx(() => {
+    db.run("UPDATE runs SET status = 'archived', archived_at = ?, archive_reason = ? WHERE id = ?", db.now(), reason.trim(), runId);
+    return newDraft(db, run.period, settings, c);
+  });
+}
+
+/* the scheduled job and the "Build" button both come here. Safe to repeat. */
+function runMonthly(db, { source, settings, period, mailer, baseUrl, adminEmails, today }) {
+  const live = allAcct(db).find(r => r.period === period && r.status !== 'archived');
+  if (live) return { created: false, id: live.id };
+  const id = buildDraft(db, { source, period, settings, today });
+  if (settings['run.emailAdmin'] && mailer && adminEmails && adminEmails.length) {
+    mailer.sendToAdmin({ to: adminEmails, subject: `Accountability draft ready: ${schedule.periodLabel(period)}`, body: `The ${schedule.periodLabel(period)} Principal Accountability draft is ready to review.\nOpen it: ${baseUrl}/#/accountability/${id}` });
+  }
+  return { created: true, id };
+}
+
+/* the versions a person may pick from: everyone who may read it sees published ones; the Admin also sees drafts and archived */
+function listReports(db, viewer) {
+  return allAcct(db).filter(r => viewer.role === 'admin' || r.status === 'published').map(r => ({ id: r.id, period: r.period, version: r.version, status: r.status, label: label(r), publishedAt: r.published_at, archiveReason: r.archive_reason }));
+}
+
+/* one report, read back. Who may read it was checked by the caller; a draft or archived version is the Admin's. */
+function report(db, runId, viewer) {
+  const run = db.get("SELECT * FROM runs WHERE id = ? AND kind = 'acct'", String(runId));
   if (!run || (viewer.role !== 'admin' && run.status !== 'published')) throw new HttpError(404, 'Report not found.');
   const m = db.get('SELECT * FROM acct_meta WHERE run_id = ?', run.id);
-  const runOut = { id: run.id, period: run.period, version: run.version, status: run.status, label: bdLabel(run), publishedAt: run.published_at, archivedAt: run.archived_at, archiveReason: run.archive_reason };
+  const runOut = { id: run.id, period: run.period, version: run.version, status: run.status, label: label(run), publishedAt: run.published_at, archivedAt: run.archived_at, archiveReason: run.archive_reason };
   if (!m) return { run: runOut, available: false };
   const rows = db.all('SELECT * FROM acct_rows WHERE run_id = ? ORDER BY sort', run.id).map(r => ({
     key: r.key, label: r.label, goal: r.goal, billedYtd: r.billed_ytd, profitYtd: r.profit_ytd, negativeYtd: r.negative_ytd, unevaluated: r.unevaluated, listed: r.listed,
@@ -111,4 +199,4 @@ function setGoal(db, { year, pic, amount }) {
   return { from: old ? old.amount : null, to: amount };
 }
 
-module.exports = { compute, fill, clear, report, goals, setGoal };
+module.exports = { KIND, label, getRun, compute, buildDraft, rebuildDraft, publish, archiveAndRerun, runMonthly, listReports, report, goals, setGoal, MWIP_OPTIONS };

@@ -21,8 +21,18 @@ function open(file) {
     // local files from the first dashboard build had one layout per person (no board); they are only preferences, so start over
     const dash = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'dashboard_layouts'").get();
     if (dash && !raw.prepare('PRAGMA table_info(dashboard_layouts)').all().some(c => c.name === 'board')) raw.exec('DROP TABLE dashboard_layouts');
+    // older local files: the runs table's kinds did not yet include 'acct' (Principal Accountability, its own run). Rebuild it and keep
+    // every row. Foreign keys are off meanwhile and legacy_alter_table is on, which keeps every other table's and trigger's reference to "runs" pointing at the new table; the runs
+    // triggers go with the old table, so the schema is applied again afterwards to put them back.
+    const runsSql = raw.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'runs'").get();
+    const rebuildRuns = !!runsSql && !runsSql.sql.includes("'acct'");
+    if (rebuildRuns) raw.exec('PRAGMA foreign_keys = OFF; PRAGMA legacy_alter_table = ON; ALTER TABLE runs RENAME TO runs_old;');
     raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
     if (rebuildUsers) raw.exec('INSERT INTO users SELECT * FROM users_old; DROP TABLE users_old');
+    if (rebuildRuns) {
+      raw.exec('INSERT INTO runs SELECT * FROM runs_old; DROP TABLE runs_old; PRAGMA legacy_alter_table = OFF; PRAGMA foreign_keys = ON;');
+      raw.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+    }
     // older local files: the employees copy had no licensed-architect column (Projects in Pursuit)
     if (!raw.prepare('PRAGMA table_info(employees)').all().some(c => c.name === 'licensed')) raw.exec('ALTER TABLE employees ADD COLUMN licensed INTEGER');
     // older local files: a published report's record of the contract amount rule (reports built before it used the default)
