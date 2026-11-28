@@ -4,15 +4,11 @@ The Marketing Report can be built from real Vantagepoint data. Everything else i
 
 ## How to use it (Josh)
 
-1. **Pull a month** from Vantagepoint (read only). Needs `.env.vp` (see `docs/VP-CONNECTION.md`).
+Everything is by hand; nothing runs on its own (Josh, 2026-11-28: accounting closes the month anywhere from the 3rd to the 7th).
 
-   ```
-   npm.cmd run vp:pull-bd -- 202610
-   ```
-
-   It saves a snapshot of that moment: YTD revenue per project, the PMs' plan entries, the holiday calendar, the pursuits, and the principals' names. Without a month it pulls the last closed month.
-2. **Start live mode**: `npm.cmd run live`, then open http://localhost:5290. The first start sets up its own database from `server/db/live/config.json` (the 2026 goals, the sectors, the 0.65 factor).
-3. **Build the report** in Admin > Report runs (Marketing Report, the month), review the draft, publish. **Rebuild draft** re-reads the latest pull for that month, so pull again first if the forecast or MWIP changed. The report notes when the pull was made.
+1. **Start live mode**: `npm.cmd run live`, then open http://localhost:5290. The first start sets up its own database from `server/db/live/config.json` (the 2026 goals, the sectors, the 0.65 factor). Needs `.env.vp` (see `docs/VP-CONNECTION.md`).
+2. **Pull** once the month has closed: Admin > Report runs, pick Marketing Report and the month, **Pull from Vantagepoint** (about a minute, read only). The page then shows when that month was last pulled and what it holds. It saves a snapshot of that moment: YTD revenue per project, the PMs' plan entries, the holiday calendar, the pursuits, the figures behind the Consultants %, and the principals' names. (The same pull from a terminal: `npm.cmd run vp:pull-bd -- 202611`.)
+3. **Build** (same page, **Build a run**), **review** the draft, **publish**, then **Export PDF** from the report. **Rebuild draft** re-reads the latest pull for that month, so pull again first if the forecast or MWIP changed. The report notes when the pull was made.
 
 The demo (`npm start`, port 5281) is untouched: its own database and the made-up files.
 

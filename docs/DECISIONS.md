@@ -370,3 +370,10 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Why it differs from consultant fee ÷ our fee:** it is actual-to-date, not the contract; it also takes out direct expenses (62xx); it leaves out consultants booked to reimbursable accounts (51xx); and timing of costs and revenue moves it. Moving dollars between our fee and the consultant fee shows up only as costs post.
 - **Known inconsistency, kept on purpose to match the firm's reports:** YTD revenue takes out only consultants (type 8), while this share also takes out direct expenses (type 7).
 - **The pull now carries each project's direct costs and earned revenue to date** (statement `toDate`); a draft built before this has no such figures, so rebuild it after a new pull.
+
+## The Marketing Report is run by hand, with a Pull button (2026-11-28, Josh)
+
+- **Nothing runs on its own.** Accounting closes a month anywhere from the 3rd to the 7th, so Josh pulls, builds, reviews, publishes and exports the PDF himself. Nothing is scheduled; the monthly job is not used for the Marketing Report.
+- **"Pull from Vantagepoint" button on Admin > Report runs, live mode only, Admin only** (Josh asked). This bends the handoff rule "only a scheduled job reads Vantagepoint": the pull is still run by the server with the same fixed, read-only statements and the same snapshot, the browser never reaches Vantagepoint, and the demo has no such button. One pull at a time; each pull is in the audit log; a failed pull says why and leaves nothing half-saved (the snapshot is written only after every statement has run).
+- **The page shows when the month was last pulled and what it holds**, since the forecast and MWIP are whatever Vantagepoint says at that moment.
+- **Josh is the only reader for now:** he exports the PDF. Hosting for others waits for Kent.

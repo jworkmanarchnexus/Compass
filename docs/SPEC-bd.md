@@ -85,7 +85,7 @@ Annual, per PIC (keyed by Vantagepoint employee code) and per sector, in whole d
 
 ## 6. Lifecycle
 
-Same as Project Turnaround: a scheduled job builds a **draft** on the first business day (with the Turnaround run, from the same pull) and emails the Admin a count and link; the Admin reviews it, resolves sectors, and **publishes** (locked, enforced by the database). To change a published report: **archive and rerun** (a reason **and** the word `RERUN`); the old version stays on file, marked archived; everyone else keeps seeing the last published report until the new version is published. A draft may be rebuilt freely. Versions are numbered per month ("September 2026, version 2").
+**All by hand (Josh, 2026-11-28): nothing runs on its own.** Accounting closes a month anywhere from the 3rd to the 7th, so the Admin decides when: **pull** the month from Vantagepoint (Admin > Report runs, live mode, read only, about a minute), **build** a **draft**, review it, resolve sectors, and **publish**, then export the PDF. (The monthly job, `npm run run-month`, still exists for the demo; it is not scheduled anywhere.) A build emails the Admin a count and link. A published report is locked (enforced by the database). To change a published report: **archive and rerun** (a reason **and** the word `RERUN`); the old version stays on file, marked archived; everyone else keeps seeing the last published report until the new version is published. A draft may be rebuilt freely. Versions are numbered per month ("September 2026, version 2").
 
 ## 7. What the source must provide (`loadBd(period)`)
 
