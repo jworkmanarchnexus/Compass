@@ -34,8 +34,8 @@ async function main() {
   cfg.rowLimit = 100000; cfg.queryTimeoutSeconds = 120;
   const vp = await open(cfg);
   const q = async (name, sql) => { const r = await vp.query(sql); if (r.truncated) throw new Error(name + ': row limit hit'); console.error(`${name}: ${r.rows.length} rows`); return r.rows; };
-  let rev, fc, mw, hol;
-  try { rev = await q('revenue', SQL.revenue); fc = await q('forecast', SQL.forecast); hol = await q('holidays', SQL.holidays); mw = await q('mwip', SQL.pursuits); } finally { await vp.close(); }
+  let rev, fc, mw, hol, td;
+  try { rev = await q('revenue', SQL.revenue); fc = await q('forecast', SQL.forecast); td = await q('toDate', SQL.toDate); hol = await q('holidays', SQL.holidays); mw = await q('mwip', SQL.pursuits); } finally { await vp.close(); }
   fs.mkdirSync(OUT, { recursive: true });
   const file = path.join(OUT, `bd-live-${period}-asof-${asOf}.json`);
   fs.writeFileSync(file, JSON.stringify({ period, asOf, pulledAt: new Date().toISOString(), revenue: rev, forecast: fc, holidays: hol, mwip: mw }, null, 1));
@@ -51,12 +51,13 @@ async function main() {
   for (const r of rev) { const g = cents(r.gross), k = cents(r.consultant); add(r.pic, r.sector, 'gross', g); add(r.pic, r.sector, 'consult', k); add(r.pic, r.sector, 'ytd', g - k); }
 
   // forecast: the report's own rules. Spread each entry by working days (logic/forecast.js), months after the report month through
-  // December, then the architectural share with fee + consultant fees as the full contract amount (logic/architectural.js, the default)
+  // December, then the architectural share with Vantagepoint's Consultants % (logic/architectural.js, the default rule)
   const f = computeForecast({ entries: fc.map(r => ({ wbs1: String(r.project).trim(), start: r.start_date, end: r.end_date, amount: cents(r.amount) })), holidays: hol.map(h => h.d), period });
   const proj = Object.fromEntries(fc.map(r => [String(r.project).trim(), r]));
+  const toDate = Object.fromEntries(td.map(r => [String(r.project).trim(), r]));
   for (const [wbs1, g] of Object.entries(f.gross)) {
-    const r = proj[wbs1];
-    const arch = architecturalAmount({ gross: g, fee: cents(r.fee), consultFee: cents(r.consult_fee), reimbAllow: cents(r.reimb_allow) }, 'feeConsult').amount;
+    const r = proj[wbs1], t = toDate[wbs1] || {};
+    const arch = architecturalAmount({ gross: g, directCostToDate: cents(t.direct_cost), earnedToDate: cents(t.earned) }, 'vpActual').amount;
     add(r.pic, r.sector, 'fcGross', g); add(r.pic, r.sector, 'fcArch', arch);
   }
   const fcFrom = f.months.length ? f.months[0] : '-';

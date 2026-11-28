@@ -106,7 +106,7 @@ function niceStep(range, ticks) {
 const KEYS = {
   firm: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']],
   rows: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining']],
-  single: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining'], ['markpace', 'Pace line'], ['markgoal', 'Goal line']],
+  single: [['ytd', 'YTD revenue'], ['forecast', 'Revenue forecast'], ['mwip', 'MWIP backlog'], ['pace', 'Goal pace'], ['rest', 'Goal remaining'], ['markpace', 'YTD goal line']],
 };
 
 function chartRows(sec, d) {
@@ -117,18 +117,18 @@ function chartRows(sec, d) {
     const market = sec.id === 'firmChartMarket'; // the market sector page opens with the same totals, labelled for markets
     return {
       title: `${market ? 'All markets' : 'Total firm'}: total projected ${K(f.total)}  |  Annual goal: ${K(f.goal)} (${X.pct(f.total, f.goal)} of goal)`, keys: KEYS.firm, tall: true,
-      rows: [{ label: market ? 'Total market' : 'Total firm', segs: [['ytd', f.ytd], ['forecast', f.forecast], ['mwip', f.mwip]], end: K(f.mwip) }, { label: 'Annual goal', segs: [['pace', f.ytdGoal], ['rest', rest]] }],
+      rows: [{ label: market ? 'Total market' : 'Total firm', segs: [['ytd', f.ytd], ['forecast', f.forecast], ['mwip', f.mwip]] }, { label: 'Annual goal', segs: [['pace', f.ytdGoal], ['rest', rest]] }],
     };
   }
   // the PIC and market sector charts show the goal the way Dave's reports do (logic/goal-chart.js)
   const scope = sec.id === 'picChart' ? 'pic' : 'sector';
   const lay = window.BdGoalChart.layout(scope === 'pic' ? d.pic : d.sector, scope);
   const goalSegs = r => [['pace', r.ytdGoal], ['rest', Math.max(0, r.goal - r.ytdGoal)]];
-  const actual = (r, gap) => ({ label: r.label, gap, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]], end: K(r.mwip) });
+  const actual = (r, gap) => ({ label: r.label, gap, segs: [['ytd', r.ytd], ['forecast', r.forecast], ['mwip', r.mwip]] });
   const single = lay.mode === 'single';
   return {
     title: scope === 'pic' ? 'By PIC' : 'By market sector', keys: single ? KEYS.single : KEYS.rows, tall: false, small: true, tight: !single,
-    guides: single ? [['pace', lay.goal.ytdGoal], ['goal', lay.goal.goal]] : [],
+    guides: single ? [['pace', lay.goal.ytdGoal]] : [], // one dashed line: the YTD goal (Josh, 2026-11-28)
     rows: single ? [{ label: 'Goal', segs: goalSegs(lay.goal), muted: true }, ...lay.rows.map((r, i) => actual(r, i === 0))]
       : lay.rows.flatMap(r => [actual(r, true), { label: 'Goal', segs: goalSegs(r), muted: true }]),
   };
@@ -140,7 +140,7 @@ function paintChart(c, F, pal, w, y0, sec, d) {
   const rh = ch.tall ? C.firmRow : ch.small ? C.goalRow : C.row, bh = ch.tight ? rh : rh * 0.64; // tight: a bar and its goal bar sit flush
   const ys = []; let yy = 0;
   ch.rows.forEach(r => { if (r.gap) yy += C.gap; ys.push(yy); yy += rh; });
-  const L = 130, R = 44, bodyTop = C.sum + C.top, bodyH = yy;
+  const L = 130, R = 100, bodyTop = C.sum + C.top, bodyH = yy; // R: room after the bars for the colour-keyed small amounts
   const total = bodyTop + bodyH + C.axis + C.key;
   const top = Math.max(...ch.rows.map(r => r.segs.reduce((a, s) => a + s[1], 0)), ...(ch.guides || []).map(g => g[1]), 1);
   const step = niceStep(top, 5), axisMax = Math.ceil(top / step) * step;
@@ -159,22 +159,30 @@ function paintChart(c, F, pal, w, y0, sec, d) {
     const y = bodyTop + ys[i] + (rh - bh) / 2; // (no offset when tight)
     c.fillStyle = r.muted ? pal.muted : pal.ink; c.font = fnt(F, 'ui', r.muted ? 8.5 : 9.5); c.textAlign = 'right';
     c.fillText(fitText(c, r.label, L - 10), L - 8, y + bh / 2 + 3.4);
-    let acc = 0;
+    // an amount inside its slice when it fits; otherwise after the bar as a colour key and the number (as on the page). Zero: nothing.
+    let acc = 0; const atEnd = [];
     for (const [kind, v] of r.segs) {
       if (v <= 0) continue;
       const x0 = px(acc), x1 = px(acc + v);
       c.fillStyle = pal[kind]; c.fillRect(x0, y, Math.max(1, x1 - x0), bh);
-      if (kind !== 'mwip') {
-        const t = X.fmtK(v);
-        c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center';
-        if (x1 - x0 >= c.measureText(t).width + 6) { c.fillStyle = inkOn(pal[kind]); c.fillText(t, (x0 + x1) / 2, y + bh / 2 + 3.2); }
-        else if (ch.tight && r.gap) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 8, true); c.fillText(t, (x0 + x1) / 2, y - 2); } // too narrow: just above the bar
-      }
+      const t = X.fmtK(v);
+      c.font = fnt(F, 'cond', 9, true); c.textAlign = 'center';
+      if (t === X.fmtK(0)) { /* rounds to nothing: no number */ }
+      else if (x1 - x0 >= c.measureText(t).width + 6) { c.fillStyle = inkOn(pal[kind]); c.fillText(t, (x0 + x1) / 2, y + bh / 2 + 3.2); }
+      else atEnd.push([kind, (acc > 0 ? '+' : '') + t]);
       acc += v;
     }
-    if (r.end) { c.fillStyle = pal.ink; c.font = fnt(F, 'cond', 9, true); c.textAlign = 'left'; c.fillText(r.end, px(acc) + 6, y + bh / 2 + 3.2); }
+    let ex = px(acc) + 5;
+    c.font = fnt(F, 'cond', 8.5, true); c.textAlign = 'left';
+    for (const [kind, t] of atEnd) {
+      const s = Math.min(7, bh - 2), sy = y + (bh - s) / 2;
+      c.fillStyle = pal[kind]; c.fillRect(ex, sy, s, s);
+      if (kind === 'forecast') { c.strokeStyle = pal.muted; c.lineWidth = 0.5; c.strokeRect(ex, sy, s, s); }
+      c.fillStyle = pal.ink; c.fillText(t, ex + s + 3, y + bh / 2 + 3);
+      ex += s + 3 + c.measureText(t).width + 7;
+    }
   });
-  // dashed lines down the whole chart: where each should be by now, and the full goal
+  // the dashed line down the whole chart: the YTD goal, where each should be by now
   for (const [kind, v] of ch.guides || []) {
     c.strokeStyle = kind === 'pace' ? pal.pace : pal.goalMark; c.lineWidth = 1.4;
     dashed(c, true);

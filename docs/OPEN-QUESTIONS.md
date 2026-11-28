@@ -107,3 +107,14 @@ Decided 2026-11-26 (Josh): see `docs/DECISIONS.md`.
 | PIP4 | Where do clients and contacts come from in the pull (Firms and Contacts tables), and which id is kept? | made-up `clients.csv` and `contacts.csv` | Kent |
 | PIP5 | How should the queued PiP emails be sent (the firm's mail automation)? | queued in `pip_notifications`, not sent | Kent |
 | PIP6 | Who are the real PiP admins, the primary admin and the CFO? Who on the sustainability team should be a viewer? | seed: Karen, Camille and Casey; Karen; Josh; no viewers | Josh |
+
+## Staffing projections (mockup; see `docs/SPEC-staffing.md`)
+
+| # | Question | Default today | Where |
+|---|---|---|---|
+| S1 | The standard staffing mix: each role's share of the hours on a typical project | made up: Principal 10, PM 20, PA 15, Job Captain / Architect 25, Design / Production 20, Interiors 7, Graphics 3 | Admin > Staffing |
+| S2 | A role's billing rate when its categories differ (Sr PM and PM): weighted by people on staff, a plain average, or the senior rate? | weighted by people on staff | `logic/staffing.js` levelRates |
+| S3 | Pursuits: apply the MWIP factor (0.65) as the Marketing Report does, or use the weighted fee as is? | weighted fee as is | source |
+| S4 | Part-time people: count each as 1, or by their scheduled hours? | each counts 1 | source |
+| S5 | Months shown and when they become "less certain" | 12 and 6 | Admin > Staffing |
+| S6 | Should Finance see it? | no (Admin, Principals and neighborhood leaders only) | `shared/rules/roles.js` |

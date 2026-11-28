@@ -49,6 +49,22 @@ WHERE p.WBS2 = '' AND p.WBS3 = '' AND p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-
 
     holidays: 'SELECT DISTINCT CONVERT(varchar(10), HolidayDate, 120) AS d FROM dbo.CFGHoliday',
 
+    // Vantagepoint's forecast "Consultants %", as its own report query defines it ([dirjtd] / [JTDEarnedRevenue], from the
+    // "CFO-Nexus Revenue Forecast Detail" report definition): direct costs = CA.Type 7 or 8 lines flagged ProjectCost = 'Y',
+    // earned revenue = -(CA.Type 4 lines), both across all four ledgers, job to date through the report month.
+    // 143 of 144 projects exact (2026-11-28). For active projects; the inputs, per project.
+    toDate: `SELECT x.WBS1 AS project,
+       SUM(CASE WHEN a.Type IN (7, 8) AND x.ProjectCost = 'Y' THEN x.Amount ELSE 0 END) AS direct_cost,
+       -SUM(CASE WHEN a.Type = 4 THEN x.Amount ELSE 0 END) AS earned
+FROM (SELECT WBS1, Account, Amount, ProjectCost FROM dbo.LedgerAP WHERE Period <= ${period}
+      UNION ALL SELECT WBS1, Account, Amount, ProjectCost FROM dbo.LedgerAR WHERE Period <= ${period}
+      UNION ALL SELECT WBS1, Account, Amount, ProjectCost FROM dbo.LedgerEX WHERE Period <= ${period}
+      UNION ALL SELECT WBS1, Account, Amount, ProjectCost FROM dbo.LedgerMisc WHERE Period <= ${period}) x
+JOIN (SELECT Account, MIN(Type) AS Type FROM dbo.CA GROUP BY Account) a ON a.Account = x.Account
+JOIN dbo.PR p ON p.WBS1 = x.WBS1 AND p.WBS2 = '' AND p.WBS3 = ''
+WHERE p.Status = 'A' AND p.WBS1 NOT LIKE '[A-Za-z]%' AND a.Type IN (4, 7, 8)
+GROUP BY x.WBS1`,
+
     pursuits: `SELECT p.WBS1 AS project, p.Name AS name, p.Principal AS pic_code, ${PIC} AS pic, ISNULL(t.Description, p.ProjectType) AS sector,
        ISNULL(p.Revenue, 0) AS revenue, ISNULL(p.WeightedRevenue, 0) AS weighted, p.Stage AS stage, p.Probability AS probability,
        CONVERT(varchar(10), p.EstStartDate, 120) AS est_start, CONVERT(varchar(10), p.EstCompletionDate, 120) AS est_completion

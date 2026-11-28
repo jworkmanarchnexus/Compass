@@ -1,0 +1,67 @@
+{
+  "_note": "Made-up numbers chosen so every result can be checked by hand. Money is cents; rates are cents per hour. See modules/staffing/logic/staffing.js.",
+  "base": {
+    "months": [202610, 202611],
+    "levels": [
+      { "id": "a", "label": "Level A", "categories": ["1", "2"], "mix": 50, "target": 50 },
+      { "id": "b", "label": "Level B", "categories": ["3"], "mix": 50, "target": 100 }
+    ],
+    "untracked": ["8"],
+    "rates": [
+      { "category": "1", "rate": 10000, "effective": "2026-01-01" },
+      { "category": "1", "rate": 12000, "effective": "2026-08-01" },
+      { "category": "2", "rate": 20000, "effective": "2026-01-01" },
+      { "category": "3", "rate": 10000, "effective": "2026-01-01" },
+      { "category": "3", "rate": 99999, "effective": "2027-01-01" }
+    ],
+    "staff": [
+      { "category": "1", "count": 1 },
+      { "category": "2", "count": 1 },
+      { "category": "3", "count": 2 },
+      { "category": "8", "count": 3 },
+      { "category": "9", "count": 1 }
+    ],
+    "hoursPerMonth": 100,
+    "at": "2026-09-01",
+    "contracted": [
+      { "id": "P1", "month": 202610, "amount": 1300000 },
+      { "id": "P2", "month": 202610, "amount": 1600000 },
+      { "id": "P1", "month": 202701, "amount": 999999 }
+    ],
+    "pipeline": [
+      { "id": "Q1", "month": 202611, "amount": 2600000 }
+    ],
+    "customMixes": { "P2": { "a": 100 } }
+  },
+  "expect": {
+    "levelRates": { "a": 16000, "b": 10000 },
+    "blended": 13000,
+    "rows": [
+      { "month": 202610, "contracted": { "a": 3, "b": 0.5 }, "pipeline": { "a": 0, "b": 0 }, "total": { "a": 3, "b": 0.5 }, "sum": { "contracted": 3.5, "pipeline": 0, "total": 3.5 } },
+      { "month": 202611, "contracted": { "a": 0, "b": 0 }, "pipeline": { "a": 2, "b": 1 }, "total": { "a": 2, "b": 1 }, "sum": { "contracted": 0, "pipeline": 3, "total": 3 } }
+    ],
+    "capacity": { "byLevel": { "a": 2, "b": 2 }, "total": 4, "untracked": 3, "unassigned": [{ "category": "9", "count": 1 }] },
+    "gaps": {
+      "a": { "contracted": [1, -2], "total": [1, 0] },
+      "b": { "contracted": [-1.5, -2], "total": [-1.5, -1] }
+    },
+    "customUsed": ["P2"],
+    "warnings": [{ "kind": "unassigned", "category": "9", "count": 1 }]
+  },
+  "rateCases": [
+    { "name": "an older day uses the rate in effect then", "at": "2026-07-01", "overrides": {}, "expect": { "a": 15000, "b": 10000 } },
+    { "name": "an Admin override replaces the Vantagepoint rate", "at": "2026-09-01", "overrides": { "3": 5000 }, "expect": { "a": 16000, "b": 5000 } },
+    { "name": "a rate dated in the future is not used yet", "at": "2026-12-31", "overrides": {}, "expect": { "a": 16000, "b": 10000 } }
+  ],
+  "monthsAfter": [
+    { "today": "2026-11-27", "count": 3, "expect": [202612, 202701, 202702] },
+    { "today": "2026-10-07", "count": 2, "expect": [202611, 202612] }
+  ],
+  "checkLevels": [
+    { "name": "fine", "levels": [{ "id": "a", "label": "A", "categories": ["1"], "mix": 60, "target": 85 }, { "id": "b", "label": "B", "categories": ["2"], "mix": 40, "target": 50 }], "untracked": ["3"], "expect": null },
+    { "name": "mix does not add to 100", "levels": [{ "id": "a", "label": "A", "categories": ["1"], "mix": 60, "target": 85 }, { "id": "b", "label": "B", "categories": ["2"], "mix": 30, "target": 50 }], "untracked": [], "expect": "The staffing mix must add up to 100%. It adds up to 90%." },
+    { "name": "a category in two levels", "levels": [{ "id": "a", "label": "A", "categories": ["1"], "mix": 60, "target": 85 }, { "id": "b", "label": "B", "categories": ["1"], "mix": 40, "target": 50 }], "untracked": [], "expect": "Category 1 is in two levels." },
+    { "name": "a category in a level and untracked", "levels": [{ "id": "a", "label": "A", "categories": ["1"], "mix": 100, "target": 85 }], "untracked": ["1"], "expect": "Category 1 is in a level and also marked not tracked." },
+    { "name": "a share of the mix with no target", "levels": [{ "id": "a", "label": "A", "categories": ["1"], "mix": 100, "target": 0 }], "untracked": [], "expect": "A has a share of the mix but no utilization target." }
+  ]
+}

@@ -24,9 +24,11 @@ import { renderPipDetail } from '/modules/pip/ui/detail.js';
 import { pipAdminCards } from '/modules/pip/ui/admin.js';
 import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
 import { renderBoardTab, isTab } from '/modules/dashboard/ui/tabs.js';
+import { renderStaffing } from '/modules/staffing/ui/page.js';
+import { staffingAdminCards } from '/modules/staffing/ui/admin.js';
 const lastDashTab = {}; // the dashboard tab a project was opened from, so Back returns there
 
-const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Accountability, Billing, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Accountability, Billing, Staffing, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -48,6 +50,7 @@ const NAV = [
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'accountability', area: 'accountability', href: '#/accountability', icon: 'users', label: 'Accountability', blurb: 'Each PIC against their billed goal, with profit, backlog and MWIP.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
+  { id: 'staffing', area: 'staffing', href: '#/staffing', icon: 'briefcase', label: 'Staffing', blurb: 'People the forecast needs each month, by role, against the people on staff.' },
   { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
   { id: 'pip', area: 'pip', href: '#/pip', icon: 'file-plus-2', label: 'Projects in Pursuit', blurb: 'Start tracking a pursuit: the PiP form, and where each one stands.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
@@ -194,6 +197,11 @@ async function pageAccountability(id) {
   await renderAccountability(ctx, body, id);
 }
 
+async function pageStaffing() {
+  const body = frame('staffing', [crumb('Compass', '#/'), sep(), crumb('Staffing')], 'Staffing projections', 'The people the revenue forecast needs each month, by role, against the people on staff today.');
+  await renderStaffing(ctx, body);
+}
+
 async function pageBilling() {
   const me = Session.me();
   const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing')], 'Billing', me.role === 'pm' || me.role === 'pic' ? 'Your projects this billing month. Tell accounting what to bill.' : 'Every project this billing month, and where each one stands.');
@@ -241,7 +249,7 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', accountability: 'Accountability', pipeline: 'Pipeline alerts', billing: 'Billing', pip: 'Projects in Pursuit', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', accountability: 'Accountability', pipeline: 'Pipeline alerts', staffing: 'Staffing', billing: 'Billing', pip: 'Projects in Pursuit', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
   'pip.stageProbabilities': 'Probability by stage', 'pip.cfoThreshold': 'Coordinate with the CFO at', 'pip.recentDays': 'Recent list covers',
   'pip.admins': 'PiP admins', 'pip.viewers': 'Can also see PiPs', 'pip.primaryAdmin': 'Primary PiP admin', 'pip.cfo': 'CFO',
@@ -250,6 +258,7 @@ const SETTING_LABEL = {
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
   'acct.projectSizes': 'Project sizes for projects to reach goal', 'acct.overheadRule': 'Overhead in YTD profit', 'acct.assignedOverheadPct': 'Assigned overhead rate',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
+  'staffing.levels': 'Staffing roles, mix and targets', 'staffing.untracked': 'Staffing: categories not counted', 'staffing.hoursPerMonth': 'Staffing: hours in a month', 'staffing.monthsShown': 'Staffing: months shown', 'staffing.firmMonths': 'Staffing: less certain after', 'staffing.rateOverrides': 'Staffing: billing rates used instead', 'staffing.leaders': 'Neighborhood leaders',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
@@ -271,7 +280,7 @@ const CHOICE_LABEL = {
   'bd.mwipPeriod': { daily: 'Daily', semimonthly: 'Semi-monthly', monthly: 'Monthly' },
   'bd.mwipStart': { afterReportMonth: 'the first day after the report month', buildDay: 'the day the report is built' },
   'bd.mwipThrough': { yearEnd: 'December 31', 3: '3 months', 6: '6 months', 12: '12 months' },
-  'bd.contractAmount': { feeConsult: 'fee + consultant fees', feeConsultReimb: 'fee + consultant fees + reimbursable allowance' },
+  'bd.contractAmount': { vpActual: "Vantagepoint's Consultants % (direct costs / earned revenue to date)", feeConsult: 'consultant fee / (fee + consultant fee)', feeConsultReimb: 'consultant fee / (fee + consultant fee + reimbursable allowance)' },
   'bd.noSector': { keep: 'keep in Unassigned', ask: 'ask before publishing', other: 'put in Other' },
   'include.noPic': { 'leave-out-warn': 'leave out and warn', unassigned: 'show as Unassigned' },
 };
@@ -323,6 +332,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const s = await Admin.settings();
       slot.textContent = '';
       slot.append(...pipelineAdminCards(ctx, s, canEdit, rerender));
+    } else if (tab === 'staffing') {
+      const [s, inputs, people] = await Promise.all([Admin.settings(), Staffing.adminInputs(), Admin.people()]);
+      slot.textContent = '';
+      slot.append(...staffingAdminCards(ctx, s, inputs, people, canEdit, rerender));
     } else if (tab === 'billing') {
       // a System admin may read the settings but is not a Billing user; they get the settings alone
       const isBillingUser = !!Session.me().areas.billing;
@@ -584,20 +597,59 @@ function runsCard(runs, canEdit, onBuilt, onError) {
   const build = h('button', { class: 'btn primary', type: 'button', text: 'Build a run', onclick: async () => {
     try { const r = await Admin.buildRun(Number(sel.value), kindSel.value); location.hash = KIND_HREF[kindSel.value] + r.run.id; } catch (e) { onError(e); }
   } });
-  const fillMonths = () => { // a month already built for the chosen report is greyed out
-    const live = new Set(runs.filter(r => r.kind === kindSel.value && r.status !== 'archived').map(r => r.period));
-    sel.textContent = '';
-    for (const p of periods) sel.append(h('option', { value: String(p), text: window.CompassTurnaround.periodLabel(p) + (live.has(p) ? ' (already built)' : ''), disabled: live.has(p) }));
-    const first = periods.find(p => !live.has(p));
-    if (first) sel.value = String(first);
-    build.disabled = !first;
+  // every month can be picked (a built month can still be pulled again before a rebuild); Build is off for a month already built
+  const builtNote = h('div', { class: 'help' });
+  const builtMonths = () => new Set(runs.filter(r => r.kind === kindSel.value && r.status !== 'archived').map(r => r.period));
+  const checkBuilt = () => {
+    const built = builtMonths().has(Number(sel.value));
+    build.disabled = built;
+    builtNote.textContent = built ? 'This month is already built. Open it below and use Rebuild draft (a draft) or Archive and rerun (published).' : '';
   };
-  kindSel.addEventListener('change', fillMonths);
+  const fillMonths = () => {
+    const keep = sel.value, built = builtMonths();
+    sel.textContent = '';
+    for (const p of periods) sel.append(h('option', { value: String(p), text: window.CompassTurnaround.periodLabel(p) + (built.has(p) ? ' (already built)' : '') }));
+    sel.value = keep && periods.includes(Number(keep)) ? keep : String(periods[0]); // the last closed month first
+    checkBuilt();
+  };
+  // live mode: pull the Marketing Report's month from Vantagepoint first (read only, on this computer), then build
+  const live = Session.me().dataMode === 'live';
+  const pullMsg = h('div', { class: 'help', role: 'status' });
+  const pull = h('button', { class: 'btn', type: 'button', text: 'Pull from Vantagepoint' });
+  const pullRow = live && canEdit ? h('div', { class: 'set-row', style: 'padding:12px 20px;align-items:center' },
+    h('div', { class: 'what' }, h('div', { class: 'lab', text: '1. Pull from Vantagepoint' }), h('div', { class: 'help', text: 'Reads the month you pick (read only): YTD revenue, the PMs’ plan entries, pursuits and the figures behind the Consultants %. Do this after the month is closed, and again before rebuilding a draft if plans or pursuits changed. It takes about a minute.' }), pullMsg),
+    h('div', { class: 'ctl' }, pull)) : null;
+  const whenText = s => { const d = new Date(s); return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+  const showPull = async () => {
+    if (!pullRow) return;
+    pullRow.hidden = kindSel.value !== 'bd';
+    if (kindSel.value !== 'bd' || !sel.value) return;
+    const label = window.CompassTurnaround.periodLabel(Number(sel.value));
+    try {
+      const st = await Admin.bdPullStatus(Number(sel.value));
+      pullMsg.textContent = st.latest
+        ? `Latest pull for ${label}: ${whenText(st.latest.pulledAt)} (${st.latest.projects} projects, ${st.latest.forecastEntries} forecast entries, ${st.latest.pursuits} pursuits). Building uses this pull.`
+        : `${label} has not been pulled yet. Pull it before building.`;
+      pull.disabled = !!st.busy;
+    } catch (e) { pullMsg.textContent = e.message; }
+  };
+  pull.addEventListener('click', async () => {
+    const label = window.CompassTurnaround.periodLabel(Number(sel.value));
+    pull.disabled = true; build.disabled = true; pull.textContent = 'Pulling…';
+    pullMsg.textContent = `Reading ${label} from Vantagepoint. This takes about a minute; keep this page open.`;
+    try { await Admin.bdPull(Number(sel.value)); await showPull(); }
+    catch (e) { pullMsg.textContent = e.message; }
+    finally { pull.disabled = false; pull.textContent = 'Pull from Vantagepoint'; checkBuilt(); }
+  });
+  kindSel.addEventListener('change', () => { fillMonths(); showPull(); });
+  sel.addEventListener('change', () => { checkBuilt(); showPull(); });
   fillMonths();
+  showPull();
   return h('section', { class: 'sec' },
-    h('div', { class: 'sec-head' }, h('h2', { text: 'Report runs' }), h('p', { text: 'Every run the system has built. A published run is locked.' })),
+    h('div', { class: 'sec-head' }, h('h2', { text: 'Report runs' }), h('p', { text: 'Every run built so far. A published run is locked.' })),
+    pullRow,
     canEdit ? h('div', { class: 'set-row', style: 'padding:12px 20px;align-items:center' },
-      h('div', { class: 'what' }, h('div', { class: 'lab', text: 'Build a run now' }), h('div', { class: 'help', text: 'The scheduled job does this on the first business day. Use this to build one by hand. It builds a draft only; nothing is visible to PICs.' })),
+      h('div', { class: 'what' }, h('div', { class: 'lab', text: live ? '2. Build a run' : 'Build a run now' }), h('div', { class: 'help', text: 'Builds a draft of the month you pick. Nothing is visible to anyone else until you publish it.' }), builtNote),
       h('div', { class: 'ctl' }, kindSel, sel, build)) : null,
     runs.length ? h('div', { class: 'tblwrap' }, h('table', { class: 'dt' },
       h('thead', {}, h('tr', {}, ...['Report', 'Period', 'Version', 'Status', 'Projects', 'Created', 'Published', ''].map(x => h('th', { text: x })))),
@@ -691,6 +743,7 @@ function auditText(e) {
   if (e.action === 'bd.factor') return ['Added an MWIP factor', `${e.detail.factorBp / 10000} from ${e.detail.effectiveFrom}`];
   if (e.action === 'bd.sector') return [e.object, e.detail.sector ? `Assigned to ${e.detail.sector}` : 'Assignment removed'];
   if (e.action === 'name.set') return [`Changed the name shown for ${e.object}`, `${e.detail.from} to ${e.detail.to}`];
+  if (e.action === 'bd.pull') return [`Pulled from Vantagepoint: ${e.object}`, `${e.detail.projects} projects, ${e.detail.forecastEntries} forecast entries, ${e.detail.pursuits} pursuits`];
   if (e.action === 'pipeline.snapshot') return ['Saved a pipeline snapshot', e.object];
   if (e.action === 'pipeline.clear') return ['Cleared a pipeline alert', e.object];
   if (e.action === 'pipeline.note') return ['Added a note on a pursuit', e.object];
@@ -743,6 +796,7 @@ function route() {
   if (hash === '#/pip/new') return me.pip && me.pip.submit ? pagePipForm(null) : pageNoAccess();
   if ((m = /^#\/pip\/([0-9a-f-]{36})(\/edit)?$/.exec(hash))) return me.areas.pip ? (m[2] ? pagePipForm(m[1]) : pagePipDetail(m[1])) : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
+  if (hash === '#/staffing') return me.areas.staffing ? pageStaffing() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);

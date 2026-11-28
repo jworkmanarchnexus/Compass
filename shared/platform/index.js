@@ -10,3 +10,4 @@ export { Pipeline } from './pipeline.js';
 export { Billing } from './billing.js';
 export { Dashboard } from './dashboard.js';
 export { Pip } from './pip.js';
+export { Staffing } from './staffing.js';

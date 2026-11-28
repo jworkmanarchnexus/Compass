@@ -378,3 +378,35 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Backlog stays gross (Josh, 2026-11-28)**, although the October sheet's backlog looks net of consultants. Accountability's backlog will not tie to the old sheet; that is intended.
 - **Reconciling never discloses amounts.** The checks ran on Josh's computer and printed only exact / within 1% / 5% / 20% / off per PIC.
 - **`VP_ENV_FILE`** points a worktree at the `.env.vp` in the main folder, so the login is never copied.
+
+## Staffing projections (2026-11-27; `docs/SPEC-staffing.md`)
+
+- 2026-11-27 (Josh): **firm-wide first**; neighborhoods maybe later. **Visible to Principals and neighborhood leaders**, role grid included. A neighborhood leader is a principal or associate who leads a neighborhood, so leaders are a list of people in Admin, not a role.
+- 2026-11-27 (Josh): **one standard mix** in settings; **a project's own mix is possible but has no screen** (huge projects only, not advertised). **Roles** group Vantagepoint billing categories as in the spec; Info Tech, Administration, Building Performance Analyst, CFO and Communications are not counted.
+- 2026-11-27 (Josh): **billing rates from Vantagepoint's "Current Standard Rates"** (Utah and California merged), kept as settings the Admin can override; the blended rate is the mix times each role's rate. **Utilization targets per role, set in Admin**: Principal 60%, Graphic Design 50%, everyone else 85% (not read from the employee records).
+- **The mix is a share of hours**, so blended rate = sum of mix x rate, and people = hours / (hours in a month x target). Hours are what rates and targets are measured in.
+- **A role's rate is the average of its categories, weighted by people on staff**, so a role with eleven PMs and five senior PMs is priced like that mix of people. Open to change (S2).
+- **The page is worked out when it is opened**, not built and published like the Marketing Report: there is nothing to lock and the forecast has no history. If Josh wants a monthly record, it can become a run later.
+- **A category with people and no place is flagged, not dropped**, and the rule never guesses a rate: work that needs an unpriced role is listed instead.
+- **A project that uses its own mix is named on the page** ("How this is worked out"), so no number quietly departs from the standard rule.
+- **Contracted work and pursuits are never added into one figure without being shown separately** (chart stacks them; the grid has a switch), following "MWIP and forecast always separate".
+
+## The forecast's consultant share is Vantagepoint's Consultants % (2026-11-28, Josh)
+
+- **Default `bd.contractAmount` = `vpActual`:** direct costs to date ÷ earned revenue to date, through the report month, exactly as the firm's Vantagepoint forecast report defines its "Consultants %" (`[dirjtd] / [JTDEarnedRevenue]`, read from the report definition Josh downloaded). It reproduces 143 of 144 projects, and the October forecast by PIC to within cents. The contract split (`feeConsult`, `feeConsultReimb`) stays available as a choice.
+- **Why it differs from consultant fee ÷ our fee:** it is actual-to-date, not the contract; it also takes out direct expenses (62xx); it leaves out consultants booked to reimbursable accounts (51xx); and timing of costs and revenue moves it. Moving dollars between our fee and the consultant fee shows up only as costs post.
+- **Known inconsistency, kept on purpose to match the firm's reports:** YTD revenue takes out only consultants (type 8), while this share also takes out direct expenses (type 7).
+- **The pull now carries each project's direct costs and earned revenue to date** (statement `toDate`); a draft built before this has no such figures, so rebuild it after a new pull.
+
+## The Marketing Report is run by hand, with a Pull button (2026-11-28, Josh)
+
+- **Nothing runs on its own.** Accounting closes a month anywhere from the 3rd to the 7th, so Josh pulls, builds, reviews, publishes and exports the PDF himself. Nothing is scheduled; the monthly job is not used for the Marketing Report.
+- **"Pull from Vantagepoint" button on Admin > Report runs, live mode only, Admin only** (Josh asked). This bends the handoff rule "only a scheduled job reads Vantagepoint": the pull is still run by the server with the same fixed, read-only statements and the same snapshot, the browser never reaches Vantagepoint, and the demo has no such button. One pull at a time; each pull is in the audit log; a failed pull says why and leaves nothing half-saved (the snapshot is written only after every statement has run).
+- **The page shows when the month was last pulled and what it holds**, since the forecast and MWIP are whatever Vantagepoint says at that moment.
+- **Josh is the only reader for now:** he exports the PDF. Hosting for others waits for Kent.
+
+## Small amounts on the Marketing Report bars: a colour key after the bar (2026-11-28, Josh)
+
+- **Chosen from four mock-ups** (above the bar as before, an outlined chip, a colour key, only the row total): a square of the slice's colour and the plain number after the bar. It reads like the legend, never collides with the next row, and a thin slice no longer sits beside a same-coloured chip that looked like a second piece of bar.
+- **One rule in all three places** (main charts, drill-downs, PDF), in `shared/ui/charts.js` and `modules/bd/ui/export-draw.js`; the `smallAtEnd` option is gone. MWIP lost its special "amount after every bar" text; $0K labels are gone.
+- **One dashed line on the PIC chart, the YTD goal** (Josh: two lines were confusing at first); the full annual goal is the end of the Goal bar.

@@ -104,13 +104,18 @@ table.bd-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-siz
 .bd-drill table.bd-t td.bd-name { white-space: normal; min-width: 180px; }
 .bd-drill .bd-zero { color: var(--text-3); }
 
-/* the dashed lines down the PIC chart: where each should be by now, and the full goal */
+/* the dashed line down the PIC chart: the YTD goal, where each should be by now (the goal style stays for any other use) */
 .sb .sb-guide { fill: none; stroke-dasharray: 6 5; stroke-width: 1.75; pointer-events: none; }
 .sb .sb-guide-pace { stroke: var(--bd-pace); }
 .sb .sb-guide-goal { stroke: var(--bd-navy); }
 .bd-key .sw.sb-markpace, .bd-key .sw.sb-markgoal { width: 2px; height: 14px; background: repeating-linear-gradient(var(--bd-pace) 0 4px, transparent 4px 7px); }
 .bd-key .sw.sb-markgoal { background: repeating-linear-gradient(var(--bd-navy) 0 4px, transparent 4px 7px); }
 
-/* a segment's amount too long for the segment sits just above it; neither label should catch the pointer */
-.sb .sb-out { font: 700 10.5px var(--f-cond); fill: var(--text-strong); pointer-events: none; }
+/* a segment's amount too long for the segment goes after the bar: a square of the segment's colour (as in the legend) and the plain
+   number (Josh, 2026-11-28). No label catches the pointer. */
+.sb .sb-key { pointer-events: none; }
+.sb .sb-key.sb-forecast { stroke: var(--line-strong); stroke-width: 1; }
+.sb .sb-keyv { font: 700 11px var(--f-cond); fill: var(--text-strong); pointer-events: none; }
+/* a dashed pace or goal line may run through a number after a bar: a halo in the card's colour keeps the number whole */
+.sb .sb-keyv, .sb .sb-end { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .sb .sb-in { pointer-events: none; }

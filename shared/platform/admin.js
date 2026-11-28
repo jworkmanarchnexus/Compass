@@ -16,5 +16,8 @@ export const Admin = {
   buildRun(period, kind) { return request('POST', '/api/admin/runs', Object.assign(period ? { period } : {}, kind ? { kind } : {})); },
   rebuildRun(id) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/rebuild', {}); },
   publishRun(id) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/publish', {}); },
+  /* live mode: the Marketing Report's Vantagepoint pull for a month. Status: { available, busy, latest: { pulledAt, projects, ... } | null } */
+  bdPullStatus(period) { return request('GET', '/api/admin/bd/pull?period=' + encodeURIComponent(period)); },
+  bdPull(period) { return request('POST', '/api/admin/bd/pull', { period }); },
   archiveRun(id, reason, confirm) { return request('POST', '/api/admin/runs/' + encodeURIComponent(id) + '/archive', { reason, confirm }); },
 };

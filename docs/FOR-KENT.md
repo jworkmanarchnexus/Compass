@@ -67,6 +67,7 @@ JSON over HTTP. Every call except health and the dev picker needs a signed-in pe
 | `POST /api/projects/:wbs1/plan/midmonth` | the project's PIC | the mid-month update: `{ status: progress | done | stuck, comment }`\| done \| stuck, comment }` |
 | `GET /api/admin/settings`, `PUT /api/admin/settings` | Admin edit; System admin read | settings; save `{ changes: { key: value } }` |
 | `GET /api/admin/people`, `PUT /api/admin/people/:id` | Admin edit; System admin read | people; change role, active, draft name |
+| `GET /api/admin/bd/pull?period=`, `POST /api/admin/bd/pull` `{ period }` | Admin (POST); Admin and System admin (GET) | live mode only (`createServer` option `vpPull`, given by `server/live.js`): the Marketing Report's read-only Vantagepoint pull for a closed month, by hand, one at a time, audited; GET says when the month was last pulled. The demo answers `{ available: false }` |
 | `GET /api/admin/names`, `PUT /api/admin/names/:code` | Admin edit; System admin read | the name shown for a Vantagepoint person (`{ name }`; empty = the Vantagepoint name). Table `employee_names`; every name shown goes through `server/names.js` |
 | `GET /api/admin/audit` | Admin, System admin | the audit log |
 | `GET /api/admin/runs` | Admin, System admin | the run list |
@@ -156,3 +157,9 @@ Every call is checked on the server (`server/billing.js`); a PM or PIC reaches o
 | `POST /api/pip/:id/<action>` (review, return, resubmit, created, withdraw) `{ status, note, number, fields }` | see the spec, section 4 | `status` is what the person saw (409 if it moved) |
 
 **For the pull:** clients and contacts (open PIP4), and whether employees carry a licensed-architect flag (PIP3). **For mail:** `pip_notifications` holds each email to send (PIP5).
+
+## Staffing projections (mockup; see `docs/SPEC-staffing.md`)
+
+- API: `GET /api/staffing` (Admin, Principals, the neighborhood leaders in `staffing.leaders`), `GET /api/admin/staffing` (Admin tab, view or edit).
+- Seam: the source's `loadStaffing()`; the Vantagepoint tables are in the spec, section 5. Add them to the policy's approved list before the pull.
+- `staffing_custom_mix` is append-only and has no screen on purpose (spec, section 4).

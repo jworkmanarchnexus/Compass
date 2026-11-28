@@ -30,6 +30,9 @@ const rows = {
     { project: 'Z000902.00', name: 'Awarded Pursuit', pic_code: 'P02', pic: 'Roe, Sam', sector: 'Civic', revenue: 100000, weighted: 90000, stage: '004', probability: 90, est_start: '2026-11-01', est_completion: '2026-12-31' },
   ],
   principals: [{ code: 'P01', first_name: 'Pat', last_name: 'Doe' }, { code: 'P02', first_name: 'Sam', last_name: 'Roe' }],
+  // Vantagepoint's Consultants % inputs: the Clinic has spent 25% of its earned revenue on direct costs; the School has earned nothing yet;
+  // the Lab has no forecast, so its row is not used
+  toDate: [{ project: '0000101.00', direct_cost: 25000, earned: 100000 }, { project: '0000104.00', direct_cost: 0, earned: 0 }, { project: '0000102.00', direct_cost: 5, earned: 10 }],
 };
 const config = {
   goals: { 2026: { pic: [{ code: 'P01', amount: 1500000 }, { code: 'P02', amount: 1500000 }], sector: [{ name: 'Civic', amount: 1000000 }, { name: 'Healthcare', amount: 1500000 }, { name: 'K-12 Education', amount: 500000 }] } },
@@ -49,7 +52,8 @@ test('the statements: one plain SELECT each, the report month in the right place
 test('rows become a snapshot: cents, revenue net of consultants, fees on forecast projects, ids trimmed, holidays once', () => {
   const s = toSnapshot(rows, { period: 202610, pulledAt: '2026-11-26T16:00:00.000Z' });
   assert.deepStrictEqual(s.revenue, [{ wbs1: '0000101.00', period: 202610, amount: 7000015 }, { wbs1: '0000102.00', period: 202610, amount: 5000000 }, { wbs1: '0000103.00', period: 202610, amount: 200000 }]);
-  assert.deepStrictEqual(s.projects.find(p => p.wbs1 === '0000101.00'), { wbs1: '0000101.00', name: 'Made-up Clinic', principal: 'P01', sector: 'Healthcare', fee: 7000000, consultFee: 3000000, reimbAllow: 0 });
+  assert.deepStrictEqual(s.projects.find(p => p.wbs1 === '0000101.00'), { wbs1: '0000101.00', name: 'Made-up Clinic', principal: 'P01', sector: 'Healthcare', fee: 7000000, consultFee: 3000000, reimbAllow: 0, directCostToDate: 2500000, earnedToDate: 10000000 });
+  assert.strictEqual('directCostToDate' in s.projects.find(p => p.wbs1 === '0000102.00'), false, 'only projects with a forecast carry the Consultants % inputs');
   assert.deepStrictEqual(s.projects.find(p => p.wbs1 === '0000103.00'), { wbs1: '0000103.00', name: 'No PIC Project', principal: '', sector: '' }, 'no PIC and no sector stay empty, never guessed');
   assert.deepStrictEqual(s.forecastEntries[1], { wbs1: '0000104.00', start: '2026-12-01', end: '2026-12-31', amount: 1000000 });
   assert.deepStrictEqual(s.pursuits[0], { id: 'Z000901.00', name: 'Made-up Pursuit', pic: 'P01', sector: 'Civic', stage: '015', estFee: 10000000, weightedFee: 5000000, estStart: '2026-11-01', estCompletion: '2026-12-31' });
@@ -99,8 +103,9 @@ test('end to end: a report built from a snapshot has the right YTD, forecast and
     const built = await call('POST', '/api/admin/runs', { kind: 'bd', period: 202610 });
     const r = await call('GET', `/api/bd/reports/${built.run.id}`);
     assert.strictEqual(r.firm.ytd, 7000015 + 5000000 + 200000, 'YTD: every project, net of consultants');
-    // forecast: Clinic Nov-Dec 400.00 x 70% (fee 70k, consultants 30k) = 280.00; School Dec 100.00 x 100% = 100.00
-    assert.strictEqual(r.firm.forecast, 3800000);
+    // forecast, with Vantagepoint's Consultants % (the default): Clinic Nov-Dec 40,000.00 x (1 - 25%) = 30,000.00 (the contract
+    // split would say 30%); School Dec 10,000.00 x 100% (nothing earned yet: 0%) = 10,000.00
+    assert.strictEqual(r.firm.forecast, 4000000);
     // MWIP: one pursuit counts (the awarded stage does not), 50,000 weighted, Nov and Dec are its whole span, x 0.65
     assert.strictEqual(r.firm.mwip, 3250000);
     const doe = r.pic.find(p => p.key === 'P01');

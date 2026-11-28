@@ -1,0 +1,353 @@
+Kind,Id,Name,Month,Amount
+contract,2025-1001,Murray Clinic,202611,19099.89
+contract,2025-1001,Murray Clinic,202612,20408.32
+contract,2025-1001,Murray Clinic,202701,18247.86
+contract,2025-1001,Murray Clinic,202702,21023.24
+contract,2025-1001,Murray Clinic,202703,20593.66
+contract,2025-1001,Murray Clinic,202704,21112.36
+contract,2025-1001,Murray Clinic,202705,10784.62
+contract,2025-1001,Murray Clinic,202706,10744.53
+contract,2025-1002,Park City Medical Office,202611,48889.24
+contract,2025-1002,Park City Medical Office,202612,49810.94
+contract,2025-1002,Park City Medical Office,202701,50051.09
+contract,2025-1002,Park City Medical Office,202702,44158.89
+contract,2025-1002,Park City Medical Office,202703,44192.98
+contract,2025-1002,Park City Medical Office,202704,45004.61
+contract,2025-1002,Park City Medical Office,202705,48524.55
+contract,2025-1002,Park City Medical Office,202706,52580.75
+contract,2025-1002,Park City Medical Office,202707,47254.74
+contract,2025-1002,Park City Medical Office,202708,46162.22
+contract,2025-1002,Park City Medical Office,202709,52361.74
+contract,2025-1002,Park City Medical Office,202710,44772.51
+contract,2025-1002,Park City Medical Office,202711,26384.63
+contract,2025-1002,Park City Medical Office,202712,24611.43
+contract,2025-1004,Cedar City Library,202611,17097.56
+contract,2025-1004,Cedar City Library,202612,18307.40
+contract,2025-1004,Cedar City Library,202701,15669.43
+contract,2025-1004,Cedar City Library,202702,15335.52
+contract,2025-1004,Cedar City Library,202703,16399.18
+contract,2025-1004,Cedar City Library,202704,15514.93
+contract,2025-1004,Cedar City Library,202705,17484.84
+contract,2025-1004,Cedar City Library,202706,16729.31
+contract,2025-1004,Cedar City Library,202707,9625.77
+contract,2025-1004,Cedar City Library,202708,9297.85
+contract,2025-1005,Draper Fire Station,202611,15500.69
+contract,2025-1005,Draper Fire Station,202612,16139.56
+contract,2025-1005,Draper Fire Station,202701,17358.89
+contract,2025-1005,Draper Fire Station,202702,15645.15
+contract,2025-1005,Draper Fire Station,202703,16954.29
+contract,2025-1005,Draper Fire Station,202704,15207.96
+contract,2025-1005,Draper Fire Station,202705,9686.58
+contract,2025-1005,Draper Fire Station,202706,9970.87
+contract,2025-1007,Provo Maintenance Hangar,202611,21865.86
+contract,2025-1007,Provo Maintenance Hangar,202612,24286.53
+contract,2025-1007,Provo Maintenance Hangar,202701,24399.25
+contract,2025-1007,Provo Maintenance Hangar,202702,23487.39
+contract,2025-1007,Provo Maintenance Hangar,202703,22321.78
+contract,2025-1007,Provo Maintenance Hangar,202704,23352.12
+contract,2025-1007,Provo Maintenance Hangar,202705,12219.60
+contract,2025-1007,Provo Maintenance Hangar,202706,13813.22
+contract,2025-1008,Layton Distribution Warehouse,202611,51692.19
+contract,2025-1008,Layton Distribution Warehouse,202612,53445.62
+contract,2025-1008,Layton Distribution Warehouse,202701,49627.58
+contract,2025-1008,Layton Distribution Warehouse,202702,54871.42
+contract,2025-1008,Layton Distribution Warehouse,202703,53590.68
+contract,2025-1008,Layton Distribution Warehouse,202704,26607.43
+contract,2025-1008,Layton Distribution Warehouse,202705,27155.89
+contract,2025-1010,Logan Office Fit-Out,202611,40725.38
+contract,2025-1010,Logan Office Fit-Out,202612,43907.94
+contract,2025-1010,Logan Office Fit-Out,202701,45161.60
+contract,2025-1010,Logan Office Fit-Out,202702,47526.90
+contract,2025-1010,Logan Office Fit-Out,202703,48603.08
+contract,2025-1010,Logan Office Fit-Out,202704,43275.94
+contract,2025-1010,Logan Office Fit-Out,202705,41336.55
+contract,2025-1010,Logan Office Fit-Out,202706,47246.04
+contract,2025-1010,Logan Office Fit-Out,202707,23342.39
+contract,2025-1010,Logan Office Fit-Out,202708,26013.39
+contract,2025-1011,Tooele Retail Center,202611,63780.10
+contract,2025-1011,Tooele Retail Center,202612,60747.90
+contract,2025-1011,Tooele Retail Center,202701,58827.27
+contract,2025-1011,Tooele Retail Center,202702,66699.59
+contract,2025-1011,Tooele Retail Center,202703,57049.76
+contract,2025-1011,Tooele Retail Center,202704,55106.61
+contract,2025-1011,Tooele Retail Center,202705,65227.26
+contract,2025-1011,Tooele Retail Center,202706,58023.57
+contract,2025-1011,Tooele Retail Center,202707,55219.14
+contract,2025-1011,Tooele Retail Center,202708,36240.74
+contract,2025-1011,Tooele Retail Center,202709,35390.83
+contract,2025-1013,Vernal Elementary Addition,202611,44601.64
+contract,2025-1013,Vernal Elementary Addition,202612,21301.20
+contract,2025-1013,Vernal Elementary Addition,202701,21270.84
+contract,2025-1014,Lehi Science Wing,202611,34435.27
+contract,2025-1014,Lehi Science Wing,202612,30284.27
+contract,2025-1014,Lehi Science Wing,202701,31010.92
+contract,2025-1014,Lehi Science Wing,202702,28883.90
+contract,2025-1014,Lehi Science Wing,202703,17909.50
+contract,2025-1014,Lehi Science Wing,202704,18180.98
+contract,2025-1016,Ogden Chapel,202611,60933.24
+contract,2025-1016,Ogden Chapel,202612,56059.55
+contract,2025-1016,Ogden Chapel,202701,63751.09
+contract,2025-1016,Ogden Chapel,202702,56410.60
+contract,2025-1016,Ogden Chapel,202703,59780.80
+contract,2025-1016,Ogden Chapel,202704,65565.63
+contract,2025-1016,Ogden Chapel,202705,67653.96
+contract,2025-1016,Ogden Chapel,202706,66411.81
+contract,2025-1016,Ogden Chapel,202707,63826.94
+contract,2025-1016,Ogden Chapel,202708,31962.74
+contract,2025-1016,Ogden Chapel,202709,35018.40
+contract,2025-1017,Murray Museum Annex,202611,45431.85
+contract,2025-1017,Murray Museum Annex,202612,42825.90
+contract,2025-1017,Murray Museum Annex,202701,48562.08
+contract,2025-1017,Murray Museum Annex,202702,46095.62
+contract,2025-1017,Murray Museum Annex,202703,50117.02
+contract,2025-1017,Murray Museum Annex,202704,25414.56
+contract,2025-1017,Murray Museum Annex,202705,27422.43
+contract,2025-1019,Orem Clinic,202611,34293.15
+contract,2025-1019,Orem Clinic,202612,35388.62
+contract,2025-1019,Orem Clinic,202701,35079.57
+contract,2025-1019,Orem Clinic,202702,38831.93
+contract,2025-1019,Orem Clinic,202703,21064.04
+contract,2025-1019,Orem Clinic,202704,18322.00
+contract,2025-1020,Cedar City Medical Office,202611,59079.48
+contract,2025-1020,Cedar City Medical Office,202612,57567.44
+contract,2025-1020,Cedar City Medical Office,202701,54704.48
+contract,2025-1020,Cedar City Medical Office,202702,55711.26
+contract,2025-1020,Cedar City Medical Office,202703,34632.13
+contract,2025-1020,Cedar City Medical Office,202704,28877.58
+contract,2025-1022,Moab Library,202611,43058.46
+contract,2025-1022,Moab Library,202612,46912.57
+contract,2025-1022,Moab Library,202701,41407.55
+contract,2025-1022,Moab Library,202702,26359.78
+contract,2025-1022,Moab Library,202703,26069.16
+contract,2025-1023,Provo Fire Station,202611,23408.05
+contract,2025-1023,Provo Fire Station,202612,24309.58
+contract,2025-1023,Provo Fire Station,202701,21167.91
+contract,2025-1023,Provo Fire Station,202702,22936.78
+contract,2025-1023,Provo Fire Station,202703,24385.05
+contract,2025-1023,Provo Fire Station,202704,24146.10
+contract,2025-1023,Provo Fire Station,202705,13384.57
+contract,2025-1023,Provo Fire Station,202706,13450.15
+contract,2025-1025,Bountiful Maintenance Hangar,202611,57069.28
+contract,2025-1025,Bountiful Maintenance Hangar,202612,56964.69
+contract,2025-1025,Bountiful Maintenance Hangar,202701,58721.94
+contract,2025-1025,Bountiful Maintenance Hangar,202702,34048.73
+contract,2025-1025,Bountiful Maintenance Hangar,202703,35597.98
+contract,2025-1026,Logan Distribution Warehouse,202611,30671.54
+contract,2025-1026,Logan Distribution Warehouse,202612,26694.36
+contract,2025-1026,Logan Distribution Warehouse,202701,28228.57
+contract,2025-1026,Logan Distribution Warehouse,202702,29081.50
+contract,2025-1026,Logan Distribution Warehouse,202703,26436.65
+contract,2025-1026,Logan Distribution Warehouse,202704,27705.95
+contract,2025-1026,Logan Distribution Warehouse,202705,30085.85
+contract,2025-1026,Logan Distribution Warehouse,202706,26563.79
+contract,2025-1026,Logan Distribution Warehouse,202707,16706.64
+contract,2025-1026,Logan Distribution Warehouse,202708,14566.78
+contract,2025-1028,Sandy Office Fit-Out,202611,21992.52
+contract,2025-1028,Sandy Office Fit-Out,202612,18909.48
+contract,2025-1028,Sandy Office Fit-Out,202701,20761.83
+contract,2025-1028,Sandy Office Fit-Out,202702,20447.21
+contract,2025-1028,Sandy Office Fit-Out,202703,11202.42
+contract,2025-1028,Sandy Office Fit-Out,202704,11778.15
+contract,2025-1029,Vernal Retail Center,202611,22242.31
+contract,2025-1029,Vernal Retail Center,202612,22674.18
+contract,2025-1029,Vernal Retail Center,202701,11885.96
+contract,2025-1029,Vernal Retail Center,202702,12050.40
+contract,2025-1031,Heber Elementary Addition,202611,51509.85
+contract,2025-1031,Heber Elementary Addition,202612,50245.92
+contract,2025-1031,Heber Elementary Addition,202701,50885.87
+contract,2025-1031,Heber Elementary Addition,202702,49579.26
+contract,2025-1031,Heber Elementary Addition,202703,50310.93
+contract,2025-1031,Heber Elementary Addition,202704,57871.58
+contract,2025-1031,Heber Elementary Addition,202705,30779.59
+contract,2025-1031,Heber Elementary Addition,202706,32417.42
+contract,2025-1032,Ogden Science Wing,202611,33849.62
+contract,2025-1032,Ogden Science Wing,202612,35110.79
+contract,2025-1032,Ogden Science Wing,202701,36073.87
+contract,2025-1032,Ogden Science Wing,202702,36313.63
+contract,2025-1032,Ogden Science Wing,202703,34150.51
+contract,2025-1032,Ogden Science Wing,202704,35502.93
+contract,2025-1032,Ogden Science Wing,202705,36376.58
+contract,2025-1032,Ogden Science Wing,202706,40361.20
+contract,2025-1032,Ogden Science Wing,202707,18519.63
+contract,2025-1032,Ogden Science Wing,202708,20047.76
+contract,2025-1034,Park City Chapel,202611,54117.83
+contract,2025-1034,Park City Chapel,202612,63969.84
+contract,2025-1034,Park City Chapel,202701,56577.37
+contract,2025-1034,Park City Chapel,202702,61116.50
+contract,2025-1034,Park City Chapel,202703,55249.33
+contract,2025-1034,Park City Chapel,202704,55294.87
+contract,2025-1034,Park City Chapel,202705,55386.33
+contract,2025-1034,Park City Chapel,202706,55145.60
+contract,2025-1034,Park City Chapel,202707,53995.19
+contract,2025-1034,Park City Chapel,202708,34740.14
+contract,2025-1034,Park City Chapel,202709,30037.79
+contract,2025-1035,Orem Museum Annex,202611,44987.85
+contract,2025-1035,Orem Museum Annex,202612,46233.69
+contract,2025-1035,Orem Museum Annex,202701,50758.63
+contract,2025-1035,Orem Museum Annex,202702,51016.87
+contract,2025-1035,Orem Museum Annex,202703,50910.50
+contract,2025-1035,Orem Museum Annex,202704,25333.48
+contract,2025-1035,Orem Museum Annex,202705,27824.77
+contract,2025-1037,Draper Clinic,202611,63939.27
+contract,2025-1037,Draper Clinic,202612,34890.85
+contract,2025-1037,Draper Clinic,202701,32632.26
+contract,2025-1038,Moab Medical Office,202611,49470.69
+contract,2025-1038,Moab Medical Office,202612,26960.51
+contract,2025-1038,Moab Medical Office,202701,28353.74
+contract,2025-1040,Layton Library,202611,51291.26
+contract,2025-1040,Layton Library,202612,49345.62
+contract,2025-1040,Layton Library,202701,26889.27
+contract,2025-1040,Layton Library,202702,25645.50
+contract,2025-1041,Bountiful Fire Station,202611,34589.97
+contract,2025-1041,Bountiful Fire Station,202612,33144.15
+contract,2025-1041,Bountiful Fire Station,202701,29990.18
+contract,2025-1041,Bountiful Fire Station,202702,32501.35
+contract,2025-1041,Bountiful Fire Station,202703,19605.69
+contract,2025-1041,Bountiful Fire Station,202704,17640.85
+contract,2025-1043,Tooele Maintenance Hangar,202611,57505.09
+contract,2025-1043,Tooele Maintenance Hangar,202612,56884.70
+contract,2025-1043,Tooele Maintenance Hangar,202701,58537.59
+contract,2025-1043,Tooele Maintenance Hangar,202702,65878.84
+contract,2025-1043,Tooele Maintenance Hangar,202703,58749.72
+contract,2025-1043,Tooele Maintenance Hangar,202704,54737.18
+contract,2025-1043,Tooele Maintenance Hangar,202705,66165.37
+contract,2025-1043,Tooele Maintenance Hangar,202706,35799.45
+contract,2025-1043,Tooele Maintenance Hangar,202707,35617.46
+contract,2025-1044,Sandy Distribution Warehouse,202611,22870.89
+contract,2025-1044,Sandy Distribution Warehouse,202612,26771.80
+contract,2025-1044,Sandy Distribution Warehouse,202701,27253.33
+contract,2025-1044,Sandy Distribution Warehouse,202702,26198.08
+contract,2025-1044,Sandy Distribution Warehouse,202703,14526.92
+contract,2025-1044,Sandy Distribution Warehouse,202704,13038.44
+pursuit,P-0003,Draper Clinic Expansion,202705,10226.91
+pursuit,P-0003,Draper Clinic Expansion,202706,20453.82
+pursuit,P-0003,Draper Clinic Expansion,202707,20453.82
+pursuit,P-0003,Draper Clinic Expansion,202708,20453.82
+pursuit,P-0003,Draper Clinic Expansion,202709,20453.82
+pursuit,P-0003,Draper Clinic Expansion,202710,20453.82
+pursuit,P-0012,Park City Office Renovation,202701,10989.12
+pursuit,P-0012,Park City Office Renovation,202702,21978.24
+pursuit,P-0012,Park City Office Renovation,202703,21978.24
+pursuit,P-0012,Park City Office Renovation,202704,21978.24
+pursuit,P-0012,Park City Office Renovation,202705,21978.24
+pursuit,P-0012,Park City Office Renovation,202706,21978.24
+pursuit,P-0012,Park City Office Renovation,202707,21978.24
+pursuit,P-0021,Heber Clinic Expansion,202707,13350.43
+pursuit,P-0021,Heber Clinic Expansion,202708,26700.85
+pursuit,P-0021,Heber Clinic Expansion,202709,26700.85
+pursuit,P-0021,Heber Clinic Expansion,202710,26700.85
+pursuit,P-0021,Heber Clinic Expansion,202711,26700.85
+pursuit,P-0021,Heber Clinic Expansion,202712,26700.85
+pursuit,P-0024,Murray City Hall Annex,202702,24885.85
+pursuit,P-0024,Murray City Hall Annex,202703,49771.70
+pursuit,P-0024,Murray City Hall Annex,202704,49771.70
+pursuit,P-0024,Murray City Hall Annex,202705,49771.70
+pursuit,P-0024,Murray City Hall Annex,202706,49771.70
+pursuit,P-0024,Murray City Hall Annex,202707,49771.70
+pursuit,P-0024,Murray City Hall Annex,202708,49771.70
+pursuit,P-0024,Murray City Hall Annex,202709,49771.70
+pursuit,P-0030,Moab Office Renovation,202704,23357.05
+pursuit,P-0030,Moab Office Renovation,202705,46714.10
+pursuit,P-0030,Moab Office Renovation,202706,46714.10
+pursuit,P-0030,Moab Office Renovation,202707,46714.10
+pursuit,P-0030,Moab Office Renovation,202708,46714.10
+pursuit,P-0030,Moab Office Renovation,202709,46714.10
+pursuit,P-0030,Moab Office Renovation,202710,46714.10
+pursuit,P-0030,Moab Office Renovation,202711,46714.10
+pursuit,P-0030,Moab Office Renovation,202712,46714.10
+pursuit,P-0033,Provo Elementary School,202705,20880.59
+pursuit,P-0033,Provo Elementary School,202706,41761.18
+pursuit,P-0033,Provo Elementary School,202707,41761.18
+pursuit,P-0033,Provo Elementary School,202708,41761.18
+pursuit,P-0033,Provo Elementary School,202709,41761.18
+pursuit,P-0033,Provo Elementary School,202710,41761.18
+pursuit,P-0033,Provo Elementary School,202711,41761.18
+pursuit,P-0033,Provo Elementary School,202712,41761.18
+pursuit,P-0036,Orem Community Hall,202701,7929.34
+pursuit,P-0036,Orem Community Hall,202702,15858.67
+pursuit,P-0036,Orem Community Hall,202703,15858.67
+pursuit,P-0036,Orem Community Hall,202704,15858.67
+pursuit,P-0036,Orem Community Hall,202705,15858.67
+pursuit,P-0042,Layton City Hall Annex,202702,12587.29
+pursuit,P-0042,Layton City Hall Annex,202703,25174.58
+pursuit,P-0042,Layton City Hall Annex,202704,25174.58
+pursuit,P-0042,Layton City Hall Annex,202705,25174.58
+pursuit,P-0042,Layton City Hall Annex,202706,25174.58
+pursuit,P-0042,Layton City Hall Annex,202707,25174.58
+pursuit,P-0042,Layton City Hall Annex,202708,25174.58
+pursuit,P-0042,Layton City Hall Annex,202709,25174.58
+pursuit,P-0042,Layton City Hall Annex,202710,25174.58
+pursuit,P-0042,Layton City Hall Annex,202711,25174.58
+pursuit,P-0045,Draper Maintenance Hangar,202702,24420.67
+pursuit,P-0045,Draper Maintenance Hangar,202703,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202704,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202705,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202706,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202707,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202708,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202709,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202710,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202711,48841.34
+pursuit,P-0045,Draper Maintenance Hangar,202712,48841.34
+pursuit,P-0051,Lehi Elementary School,202612,10834.76
+pursuit,P-0051,Lehi Elementary School,202701,21669.51
+pursuit,P-0051,Lehi Elementary School,202702,21669.51
+pursuit,P-0051,Lehi Elementary School,202703,21669.51
+pursuit,P-0051,Lehi Elementary School,202704,21669.51
+pursuit,P-0051,Lehi Elementary School,202705,21669.51
+pursuit,P-0051,Lehi Elementary School,202706,21669.51
+pursuit,P-0051,Lehi Elementary School,202707,21669.51
+pursuit,P-0054,Park City Community Hall,202702,11625.03
+pursuit,P-0054,Park City Community Hall,202703,23250.06
+pursuit,P-0054,Park City Community Hall,202704,23250.06
+pursuit,P-0054,Park City Community Hall,202705,23250.06
+pursuit,P-0054,Park City Community Hall,202706,23250.06
+pursuit,P-0054,Park City Community Hall,202707,23250.06
+pursuit,P-0054,Park City Community Hall,202708,23250.06
+pursuit,P-0054,Park City Community Hall,202709,23250.06
+pursuit,P-0054,Park City Community Hall,202710,23250.06
+pursuit,P-0057,Vernal Clinic Expansion,202706,5274.53
+pursuit,P-0057,Vernal Clinic Expansion,202707,10549.07
+pursuit,P-0057,Vernal Clinic Expansion,202708,10549.07
+pursuit,P-0057,Vernal Clinic Expansion,202709,10549.07
+pursuit,P-0057,Vernal Clinic Expansion,202710,10549.07
+pursuit,P-0063,Heber Maintenance Hangar,202702,12047.90
+pursuit,P-0063,Heber Maintenance Hangar,202703,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202704,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202705,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202706,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202707,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202708,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202709,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202710,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202711,24095.81
+pursuit,P-0063,Heber Maintenance Hangar,202712,24095.81
+pursuit,P-0066,Murray Office Renovation,202702,11497.98
+pursuit,P-0066,Murray Office Renovation,202703,22995.95
+pursuit,P-0066,Murray Office Renovation,202704,22995.95
+pursuit,P-0066,Murray Office Renovation,202705,22995.95
+pursuit,P-0066,Murray Office Renovation,202706,22995.95
+pursuit,P-0066,Murray Office Renovation,202707,22995.95
+pursuit,P-0066,Murray Office Renovation,202708,22995.95
+pursuit,P-0066,Murray Office Renovation,202709,22995.95
+pursuit,P-0066,Murray Office Renovation,202710,22995.95
+pursuit,P-0066,Murray Office Renovation,202711,22995.95
+pursuit,P-0066,Murray Office Renovation,202712,22995.95
+pursuit,P-0069,Ogden Elementary School,202704,13060.11
+pursuit,P-0069,Ogden Elementary School,202705,26120.21
+pursuit,P-0069,Ogden Elementary School,202706,26120.21
+pursuit,P-0069,Ogden Elementary School,202707,26120.21
+pursuit,P-0069,Ogden Elementary School,202708,26120.21
+pursuit,P-0069,Ogden Elementary School,202709,26120.21
+pursuit,P-0069,Ogden Elementary School,202710,26120.21
+pursuit,P-0069,Ogden Elementary School,202711,26120.21
+pursuit,P-0069,Ogden Elementary School,202712,26120.21
+pursuit,P-0075,Provo Clinic Expansion,202704,11637.00
+pursuit,P-0075,Provo Clinic Expansion,202705,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202706,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202707,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202708,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202709,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202710,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202711,23274.00
+pursuit,P-0075,Provo Clinic Expansion,202712,23274.00

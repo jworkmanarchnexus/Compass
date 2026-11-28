@@ -229,7 +229,7 @@ test('the contract amount rule is an Admin setting: validated, defaulted, and re
   const josh = api('j.workman');
   assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'bd.contractAmount': 'everything' } })).status, 400);
   const first = (await josh.post('/api/admin/runs', { kind: 'bd', period: 202609 })).body;
-  assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', first.run.id).r, 'feeConsult', 'the default');
+  assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', first.run.id).r, 'vpActual', "the default: Vantagepoint's Consultants %");
   assert.strictEqual((await josh.put('/api/admin/settings', { changes: { 'bd.contractAmount': 'feeConsultReimb' } })).status, 200);
   const rebuilt = (await josh.post(`/api/admin/bd/runs/${first.run.id}/rebuild`)).body;
   assert.strictEqual(db.get('SELECT contract_amount_rule AS r FROM bd_run_meta WHERE run_id = ?', rebuilt.run.id).r, 'feeConsultReimb', 'the report records the rule it was built with');
@@ -240,7 +240,8 @@ test('a source with plan entries: the forecast is spread by working days, scaled
   const local = require('../vp-local').createLocalSource();
   const source = { name: 'test: plan entries', loadBd(period) {
     const d = local.loadBd(period);
-    d.projects = d.projects.map(p => (p.wbs1 === '2025-1001' ? { ...p, fee: 7000000, consultFee: 3000000, reimbAllow: 0 } : p));
+    // 30% of earned revenue to date went to direct costs (Vantagepoint's Consultants %, the default)
+    d.projects = d.projects.map(p => (p.wbs1 === '2025-1001' ? { ...p, fee: 7000000, consultFee: 3000000, reimbAllow: 0, directCostToDate: 3000000, earnedToDate: 10000000 } : p));
     d.forecastEntries = [
       { wbs1: '2025-1001', start: '2026-10-01', end: '2026-12-31', amount: 6200000 }, // Oct 22, Nov 19, Dec 21 working days = 62
       { wbs1: '2025-1001', start: null, end: '2026-11-30', amount: 100000 },

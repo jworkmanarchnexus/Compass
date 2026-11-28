@@ -18,6 +18,7 @@ const tdb = require('./turnaround');
 const billing = require('./billing');
 const dashboard = require('./dashboard');
 const pip = require('./pip');
+const staffingDb = require('./staffing');
 const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
@@ -75,6 +76,7 @@ function createServer(db, opts) {
   // COMPASS_TODAY=2026-10-07 pins the date for a local demo (the seed data is written around that day)
   const today = o.today || (() => process.env.COMPASS_TODAY || planDb.localDate(Date.now()));
   const baseUrl = o.baseUrl || 'http://localhost:5281';
+  let pulling = false; // a Vantagepoint pull is running (live mode): one at a time
   // the local date and time as 'YYYY-MM-DDTHH:MM', for the email rules (quiet hours); tests pin it with opts.nowLocal
   const nowLocal = o.nowLocal || (() => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${today()}T${p(d.getHours())}:${p(d.getMinutes())}`; });
   /* ---- settings (effective-dated rows, only ever added) ---- */
@@ -154,6 +156,7 @@ function createServer(db, opts) {
         const known = new Set(db.all('SELECT id FROM users').map(u => u.id));
         if (Object.values(changes.release).some(r => r.testers.some(id => !known.has(id)))) throw new HttpError(400, 'One of the preview testers is not in People.');
       }
+      if (changes['staffing.leaders']) staffingDb.checkLeaders(db, changes['staffing.leaders']);
       const before = currentSettings();
       const merged = Object.assign({}, before, changes);
       const problem = settingsRules.crossCheck(merged);
@@ -238,6 +241,33 @@ function createServer(db, opts) {
     if (p === '/api/admin/runs' && method === 'GET') {
       requireTab(user, 'runs', 'view'); // the list (status, version, counts) only; run contents need 'edit'
       return sendJson(res, 200, runsDb.listRuns(db));
+    }
+    /* the Marketing Report's Vantagepoint pull, by hand (live mode only: o.vpPull is given by server/live.js). The server runs the
+       fixed, read-only statements; the browser only asks for it and never reaches Vantagepoint. One pull at a time. */
+    if (p === '/api/admin/bd/pull' && method === 'GET') {
+      requireTab(user, 'runs', 'view');
+      if (!o.vpPull) return sendJson(res, 200, { available: false });
+      const period = Number(url.searchParams.get('period'));
+      if (!Number.isInteger(period) || period < 200001 || period % 100 < 1 || period % 100 > 12) throw new HttpError(400, 'That is not a valid month.');
+      return sendJson(res, 200, { available: true, busy: pulling, latest: o.vpPull.latest(period) });
+    }
+    if (p === '/api/admin/bd/pull' && method === 'POST') {
+      requireTab(user, 'runs', 'edit');
+      if (!o.vpPull) throw new HttpError(404, 'Pulling from Vantagepoint is only available in live mode (npm run live).');
+      const body = await readJson(req);
+      const period = body.period;
+      if (!Number.isInteger(period) || period < 200001 || period % 100 < 1 || period % 100 > 12) throw new HttpError(400, 'That is not a valid month.');
+      if (period > schedule.lastClosedPeriod(today())) throw new HttpError(400, 'That month has not ended yet.');
+      if (pulling) throw new HttpError(409, 'A pull is already running. Wait for it to finish.');
+      pulling = true;
+      try {
+        const info = await o.vpPull.pull(period);
+        audit(user, 'bd.pull', `Marketing Report ${schedule.periodLabel(period)}`, info);
+        return sendJson(res, 200, { latest: info });
+      } catch (e) {
+        if (e instanceof HttpError) throw e;
+        throw new HttpError(502, 'The pull from Vantagepoint did not finish: ' + String(e.message || e).slice(0, 300));
+      } finally { pulling = false; }
     }
     if (p === '/api/admin/runs' && method === 'POST') {
       requireTab(user, 'runs', 'edit');
@@ -362,6 +392,14 @@ function createServer(db, opts) {
       audit(user, 'pipeline.snapshot', `Snapshot ${date}`, { created: out.created });
       return sendJson(res, out.created ? 201 : 200, { created: out.created, date, alerts: pipeDb.alertCount(db) });
     }
+
+    /* ---- Staffing projections: Admin, Principals and the neighborhood leaders picked in Admin (shared/rules/roles.js canUse) ---- */
+    if (p === '/api/staffing' && method === 'GET') {
+      const s = currentSettings();
+      if (!roles.canUse(user, 'staffing', s)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, staffingDb.page(db, source, s, today()));
+    }
+    if (p === '/api/admin/staffing' && method === 'GET') { requireTab(user, 'staffing', 'view'); return sendJson(res, 200, staffingDb.adminInputs(source, currentSettings(), today())); }
 
     /* ---- Principal Accountability: its own monthly run. Read: the Admin, Finance, and PICs when allowed. Build, publish, archive: the Admin. ---- */
     const canAcct = () => { if (!roles.canUse(user, 'accountability', currentSettings())) throw new HttpError(403, 'You do not have access to this.'); };

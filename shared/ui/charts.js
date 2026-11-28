@@ -93,10 +93,11 @@ export function wrapLabel(text, max) {
    `groupLabel` on a group's first row names it for screen readers.
    Labels: labelWidth widens the name column (default 170 of 1100); wrapLabels lets a long name take two lines (its row grows to fit, and a
    name still too long ends in an ellipsis). A row's labelTitle shows on pointing at its name.
-   A segment's text sits inside it when it fits. When it does not: by default just above the bar; with smallAtEnd, in a small chip of the
-   segment's colour after the bar, before the endText ("+" for any segment after the first), so every number stays on its own row. */
-export function stackedBars(rows, { fmt, aria, max, onPick, guides, rowHeight, tight, labelWidth, wrapLabels, smallAtEnd }) {
-  const W = 1100, L = labelWidth || 170, R = smallAtEnd ? 140 : 80, T = 8, B = 30, RH = rowHeight || (rows.length > 2 ? 38 : 44), GAP = tight ? 20 : 16;
+   A segment's text sits inside it when it fits. When it does not, it goes after the bar as a small square of the segment's colour (like
+   the legend) and the plain number, "+" for any segment after the first, before the endText; so every number stays on its own row and
+   nothing floats above the bar (Josh, 2026-11-28). A zero segment has no bar and no number. */
+export function stackedBars(rows, { fmt, aria, max, onPick, guides, rowHeight, tight, labelWidth, wrapLabels }) {
+  const W = 1100, L = labelWidth || 170, R = 170, T = 8, B = 30, RH = rowHeight || (rows.length > 2 ? 38 : 44), GAP = tight ? 20 : 16;
   // a row with gapBefore starts a new group (a bar and its goal bar sit together); guides are dashed lines down the whole chart
   const lines = rows.map(r => (wrapLabels ? wrapLabel(r.label, Math.floor((L - 14) / LABEL_CHAR)) : [r.label]));
   const rhs = lines.map(ls => RH + (ls.length - 1) * LABEL_LINE);
@@ -141,23 +142,23 @@ export function stackedBars(rows, { fmt, aria, max, onPick, guides, rowHeight, t
     for (const s of r.segs) {
       if (s.v <= 0) continue;
       into.append(el('rect', { x: x(acc), y: by, width: Math.max(1, x(acc + s.v) - x(acc)), height: bh, class: 'sb-' + s.kind }, el('title', {}, `${s.title || s.kind}: ${fmt(s.v)}`)));
-      if (s.text) {
+      if (s.text && s.text !== fmt(0)) { // an amount that rounds to nothing shows no number (a cent of MWIP is not "$0K")
         const cx = (x(acc) + x(acc + s.v)) / 2, fits = x(acc + s.v) - x(acc) >= s.text.length * 6.4 + 8;
-        // too narrow for its words: inside if it fits, otherwise just above the bar (where there is room: not on a goal bar tucked under its pair)
-        if (!fits && smallAtEnd) atEnd.push({ kind: s.kind, text: (acc > 0 ? '+' : '') + s.text });
-        else if (fits) into.append(el('text', { x: cx, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
-        else if (!tight || r.gapBefore) into.append(el('text', { x: cx, y: by - 4, 'text-anchor': 'middle', class: 'sb-out' }, s.text));
+        // inside if it fits; otherwise after the bar with a colour key
+        if (fits) into.append(el('text', { x: cx, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + s.kind }, s.text));
+        else atEnd.push({ kind: s.kind, text: (acc > 0 ? '+' : '') + s.text });
       }
       acc += s.v;
     }
     for (const m of r.marks || []) into.append(el('line', { x1: x(m.v), x2: x(m.v), y1: by - 4, y2: by + bh + 4, class: 'sb-mark-' + m.kind }, el('title', {}, m.title || '')));
-    let ex = x(acc) + 6;
+    let ex = x(acc) + 8;
+    const ky = by + bh / 2;
     for (const c of atEnd) {
-      const cw = c.text.length * 6.4 + 10, ch = Math.min(bh, 18);
-      into.append(el('rect', { x: ex, y: by + (bh - ch) / 2, width: cw, height: ch, rx: 4, class: 'sb-chip sb-' + c.kind }), el('text', { x: ex + cw / 2, y: by + bh / 2 + 4, 'text-anchor': 'middle', class: 'sb-in sb-in-' + c.kind }, c.text));
-      ex += cw + 6;
+      into.append(el('rect', { x: ex, y: ky - 5, width: 10, height: 10, rx: 2, class: 'sb-key sb-' + c.kind }),
+        el('text', { x: ex + 14, y: ky + 4, class: 'sb-keyv' }, c.text));
+      ex += 14 + c.text.length * 6.6 + 12;
     }
-    if (r.endText) into.append(el('text', { x: ex, y: by + bh / 2 + 4, class: 'sb-end' }, r.endText));
+    if (r.endText) into.append(el('text', { x: ex, y: ky + 4, class: 'sb-end' }, r.endText));
   });
   for (const g of guides || []) svg.append(el('line', { x1: x(g.v), x2: x(g.v), y1: T, y2: H - B, class: 'sb-guide sb-guide-' + g.kind }, el('title', {}, g.title || '')));
   svg.append(el('line', { x1: L, x2: L, y1: T, y2: H - B, class: 'ch-zero' }));

@@ -61,7 +61,8 @@ function compute(db, source, period, settings, today) {
   if (data.forecastEntries) {
     const f = forecastRule.computeForecast({ entries: data.forecastEntries, holidays: data.holidays || [], period });
     const fees = Object.fromEntries(data.projects.map(p => [p.wbs1, p]));
-    data.forecast = Object.entries(f.gross).map(([wbs1, gross]) => ({ wbs1, gross, fee: (fees[wbs1] || {}).fee || 0, consultFee: (fees[wbs1] || {}).consultFee || 0, reimbAllow: (fees[wbs1] || {}).reimbAllow || 0 }));
+    // the inputs of every consultant-share rule: the contract split, and Vantagepoint's direct costs and invoicing to date
+    data.forecast = Object.entries(f.gross).map(([wbs1, gross]) => { const p = fees[wbs1] || {}; return { wbs1, gross, fee: p.fee || 0, consultFee: p.consultFee || 0, reimbAllow: p.reimbAllow || 0, directCostToDate: p.directCostToDate || 0, earnedToDate: p.earnedToDate || 0 }; });
     data.forecastMonths = f.forecastMonths;
     forecastSkipped = f.skipped;
   }
@@ -86,7 +87,8 @@ function fill(db, runId, period, settings, c) {
   // 'keep' (the default, as Vantagepoint does it): the revenue stays in its own Unassigned row and publishing is not held up
   for (const u of out.unassignedSector) warn(settings['bd.noSector'] === 'keep' ? 'note' : 'no_sector', u.wbs1, settings['bd.noSector'] === 'keep' ? `${name(u.wbs1)}: revenue with no market sector stays in Unassigned` : `${name(u.wbs1)}: revenue with no market sector`, u.amount);
   for (const u of out.unassignedPic) warn('no_pic', u.wbs1, `${name(u.wbs1)}: no PIC in Vantagepoint`, u.amount);
-  for (const n of out.forecastNotes) warn('note', n.wbs1, n.issue === 'no-contract-fee' ? `${name(n.wbs1)}: forecast kept at its full amount (no contract fee on the project record)` : `${name(n.wbs1)}: forecast kept at its full amount (consultant fee is above the contract amount)`, n.amount);
+  const why = { 'no-contract-fee': 'no contract fee on the project record', 'consultants-exceed-contract': 'consultant fee is above the contract amount', 'costs-exceed-earned': 'direct costs to date are more than earned revenue to date' };
+  for (const n of out.forecastNotes) warn('note', n.wbs1, `${name(n.wbs1)}: forecast kept at its full amount (${why[n.issue] || n.issue})`, n.amount);
   for (const p of mwipLeftOut || []) warn('note', p.id, `${p.name}: pursuit left out of MWIP (its estimated dates are missing in Vantagepoint)`, 0);
   for (const w of forecastSkipped || []) warn('note', w, `${name(w)}: a forecast entry with no date was left out`, 0);
   // a report built from a Vantagepoint pull says when the pull was: the forecast and MWIP are what Vantagepoint said at that moment

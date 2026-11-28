@@ -102,3 +102,8 @@ Both run tables are keyed by an Accountability run (`runs.kind = 'acct'`) and lo
 | `pip_notifications` | the emails the rules say to send: who, why, subject, body | append-only; nothing is sent yet |
 
 The PiP settings (`pip.*`) live in `settings` like every other.
+
+## Staffing projections (docs/SPEC-staffing.md; `server/staffing.js`)
+
+- `staffing_custom_mix` (wbs1, effective_from YYYY-MM-DD, mix_json, note, set_by, set_at; key wbs1 + effective_from): a project's own staffing mix. **Append-only** (no UPDATE, no DELETE: triggers). The latest row on or before today counts; `mix_json` 'null' puts the project back on the standard mix.
+- Everything else lives in settings (`staffing.*`, effective-dated) or comes from the pull each time the page opens; nothing is stored per month.

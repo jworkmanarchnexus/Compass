@@ -683,3 +683,21 @@ CREATE TRIGGER IF NOT EXISTS pip_notifications_no_update BEFORE UPDATE ON pip_no
 CREATE TRIGGER IF NOT EXISTS pip_notifications_no_delete BEFORE DELETE ON pip_notifications BEGIN SELECT RAISE(ABORT, 'PiP notifications are never deleted'); END;
 CREATE TRIGGER IF NOT EXISTS pip_requests_no_delete BEFORE DELETE ON pip_requests BEGIN SELECT RAISE(ABORT, 'PiPs are never deleted; withdraw one instead'); END;
 CREATE TRIGGER IF NOT EXISTS pip_requests_final BEFORE UPDATE ON pip_requests WHEN OLD.status IN ('created','withdrawn') BEGIN SELECT RAISE(ABORT, 'a created or withdrawn PiP takes no more changes'); END;
+
+-- ---- Staffing projections (docs/SPEC-staffing.md) ----
+-- A project (or pursuit) with its own staffing mix instead of the standard one: for very large projects only (Josh, 2026-11-27).
+-- There is deliberately no screen for this; Josh asks and it is added here. mix_json = { levelId: percent } adding to 100, or
+-- 'null' to put the project back on the standard mix. Append-only, like the settings: the latest row on or before today counts.
+CREATE TABLE IF NOT EXISTS staffing_custom_mix (
+  wbs1           TEXT NOT NULL,           -- project number, or a pursuit's number
+  effective_from TEXT NOT NULL,           -- YYYY-MM-DD
+  mix_json       TEXT NOT NULL,
+  note           TEXT NOT NULL DEFAULT '',-- why this project is different
+  set_by         TEXT NOT NULL,
+  set_at         INTEGER NOT NULL,
+  PRIMARY KEY (wbs1, effective_from)
+);
+CREATE TRIGGER IF NOT EXISTS staffing_custom_mix_no_update BEFORE UPDATE ON staffing_custom_mix
+BEGIN SELECT RAISE(ABORT, 'staffing_custom_mix is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS staffing_custom_mix_no_delete BEFORE DELETE ON staffing_custom_mix
+BEGIN SELECT RAISE(ABORT, 'staffing_custom_mix is append-only'); END;
