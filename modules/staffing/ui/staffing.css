@@ -1,0 +1,51 @@
+/* Staffing projections (modules/staffing). Tokens and shared classes only: no hex colors. */
+:root {
+  --st-contract: var(--nx-d20);   /* contracted work */
+  --st-pipe: var(--nx-t40);       /* pipeline, weighted */
+  --st-cap: var(--text-strong);   /* people on staff */
+}
+
+.st-legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin-top: var(--s2); font-size: 13px; color: var(--text-2); }
+.st-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.st-sw { width: 11px; height: 11px; border-radius: 2px; flex: none; }
+.st-sw.c { background: var(--st-contract); } .st-sw.p { background: var(--st-pipe); }
+.st-sw.cap { height: 0; width: 16px; border-top: 2px dashed var(--st-cap); border-radius: 0; }
+.st-sw.band { background: var(--surface-2); border: 1px solid var(--line); }
+
+svg.st-chart { width: 100%; height: auto; display: block; margin-top: var(--s3); }
+.st-chart .st-c { fill: var(--st-contract); }
+.st-chart .st-p { fill: var(--st-pipe); }
+.st-chart .st-cap { stroke: var(--st-cap); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.st-chart .st-cap-label { font: 700 11.5px var(--f-cond); fill: var(--text-strong); }
+.st-chart .st-band { fill: var(--surface-2); }
+.st-chart .st-band-label { font: 700 11px var(--f-cond); fill: var(--text-2); letter-spacing: .05em; text-transform: uppercase; }
+.st-chart .st-total { font: 11px var(--f-cond); fill: var(--text-2); }
+
+.st-grid-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); padding: var(--s3) var(--s5) 0; }
+table.st-grid { min-width: 860px; font-variant-numeric: tabular-nums; }
+table.st-grid th, table.st-grid td { text-align: right; }
+table.st-grid th:first-child, table.st-grid td:first-child { text-align: left; }
+table.st-grid th.st-later { color: var(--text-3); }
+table.st-grid td.st-cell { min-width: 52px; }
+table.st-grid td.st-short { background: var(--crit-bg); color: var(--crit); font-weight: 700; }
+table.st-grid td.st-spare { background: var(--accent-softer); color: var(--accent-text); }
+table.st-grid td.st-even { color: var(--text-2); }
+table.st-grid tr.st-total td { border-top: 1.5px solid var(--line-strong); font-weight: 700; }
+table.st-grid td.st-onstaff { color: var(--text-2); border-right: 1px solid var(--line); }
+.st-key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); padding: var(--s2) var(--s5) var(--s4); font-size: 13px; color: var(--text-2); }
+.st-key span { display: inline-flex; align-items: center; gap: 6px; }
+.st-key .st-sw.short { background: var(--crit-bg); border: 1px solid var(--crit); }
+.st-key .st-sw.spare { background: var(--accent-softer); border: 1px solid var(--accent); }
+
+.st-how { padding: var(--s3) var(--s5) var(--s4); max-width: 92ch; }
+.st-how p { margin: 0 0 var(--s2); }
+.st-formula { font: 700 14px/1.6 var(--f-cond); color: var(--text-strong); margin: var(--s2) 0; }
+.st-warn { margin: 0; padding-left: 1.2em; }
+.st-warn li { margin: 2px 0; }
+
+/* Admin > Staffing */
+table.st-admin input.txt { width: 72px; text-align: right; }
+table.st-admin select.txt { width: 220px; }
+table.st-admin td.r, table.st-admin th.r { text-align: right; }
+.st-mixsum { font-weight: 700; }
+.st-mixsum.bad { color: var(--crit); }

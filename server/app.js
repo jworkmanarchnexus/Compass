@@ -17,6 +17,7 @@ const { buildHome } = require('./home');
 const tdb = require('./turnaround');
 const billing = require('./billing');
 const dashboard = require('./dashboard');
+const staffingDb = require('./staffing');
 const names = require('./names');
 const planLogic = require('../modules/turnaround/logic/plan');
 const lifecycleLogic = require('../modules/turnaround/logic/lifecycle');
@@ -149,6 +150,7 @@ function createServer(db, opts) {
         const known = new Set(db.all('SELECT id FROM users').map(u => u.id));
         if (Object.values(changes.release).some(r => r.testers.some(id => !known.has(id)))) throw new HttpError(400, 'One of the preview testers is not in People.');
       }
+      if (changes['staffing.leaders']) staffingDb.checkLeaders(db, changes['staffing.leaders']);
       const before = currentSettings();
       const merged = Object.assign({}, before, changes);
       const problem = settingsRules.crossCheck(merged);
@@ -348,6 +350,14 @@ function createServer(db, opts) {
       audit(user, 'pipeline.snapshot', `Snapshot ${date}`, { created: out.created });
       return sendJson(res, out.created ? 201 : 200, { created: out.created, date, alerts: pipeDb.alertCount(db) });
     }
+
+    /* ---- Staffing projections: Admin, Principals and the neighborhood leaders picked in Admin (shared/rules/roles.js canUse) ---- */
+    if (p === '/api/staffing' && method === 'GET') {
+      const s = currentSettings();
+      if (!roles.canUse(user, 'staffing', s)) throw new HttpError(403, 'You do not have access to this.');
+      return sendJson(res, 200, staffingDb.page(db, source, s, today()));
+    }
+    if (p === '/api/admin/staffing' && method === 'GET') { requireTab(user, 'staffing', 'view'); return sendJson(res, 200, staffingDb.adminInputs(source, currentSettings(), today())); }
 
     /* ---- Principal Accountability: read (Admin and Finance). Built, published and archived with the Marketing Report. ---- */
     const canAcct = () => { if (!roles.canView(user.role, 'accountability', currentSettings().access)) throw new HttpError(403, 'You do not have access to this.'); };

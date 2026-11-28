@@ -20,9 +20,11 @@ import { remindersCards, patternsCards } from '/modules/turnaround/ui/admin.js';
 import { renderDashboard } from '/modules/dashboard/ui/page.js';
 import { renderDashboardProject } from '/modules/dashboard/ui/project.js';
 import { renderBoardTab, isTab } from '/modules/dashboard/ui/tabs.js';
+import { renderStaffing } from '/modules/staffing/ui/page.js';
+import { staffingAdminCards } from '/modules/staffing/ui/admin.js';
 const lastDashTab = {}; // the dashboard tab a project was opened from, so Back returns there
 
-const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Accountability, Billing, ApiError } = platform;
+const { configure, Session, Admin, Turnaround, Checkins, Home, Bd, Accountability, Billing, Staffing, ApiError } = platform;
 const T = window.Toolbox;
 const R = window.CompassRules;
 const h = T.h;
@@ -44,6 +46,7 @@ const NAV = [
   { id: 'bd', area: 'bd', href: '#/bd', icon: 'table-2', label: 'Marketing Report', blurb: 'Revenue against goal, by PIC and by market sector.' },
   { id: 'accountability', area: 'accountability', href: '#/accountability', icon: 'users', label: 'Accountability', blurb: 'Each PIC against their billed goal, with profit, backlog and MWIP.' },
   { id: 'pipeline', area: 'pipeline', href: '#/pipeline', icon: 'eye', label: 'Pipeline watch', blurb: 'Weekly snapshots of MWIP and forecast, with alerts.' },
+  { id: 'staffing', area: 'staffing', href: '#/staffing', icon: 'briefcase', label: 'Staffing', blurb: 'People the forecast needs each month, by role, against the people on staff.' },
   { id: 'billing', area: 'billing', href: '#/billing', icon: 'file-text', label: 'Billing', blurb: 'Tell accounting what to bill on each project this month.' },
   { id: 'admin', area: 'admin', href: '#/admin', icon: 'sliders-horizontal', label: 'Admin', blurb: 'Settings, people, report runs and the audit log.' },
 ];
@@ -189,6 +192,11 @@ async function pageAccountability(id) {
   await renderAccountability(ctx, body, id);
 }
 
+async function pageStaffing() {
+  const body = frame('staffing', [crumb('Compass', '#/'), sep(), crumb('Staffing')], 'Staffing projections', 'The people the revenue forecast needs each month, by role, against the people on staff today.');
+  await renderStaffing(ctx, body);
+}
+
 async function pageBilling() {
   const me = Session.me();
   const body = frame('billing', [crumb('Compass', '#/'), sep(), crumb('Billing')], 'Billing', me.role === 'pm' || me.role === 'pic' ? 'Your projects this billing month. Tell accounting what to bill.' : 'Every project this billing month, and where each one stands.');
@@ -220,13 +228,14 @@ function pageNoAccess() {
 }
 
 /* ---- Admin ---- */
-const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', accountability: 'Accountability', pipeline: 'Pipeline alerts', billing: 'Billing', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
+const TAB_LABEL = { turnaround: 'Project Turnaround', reminders: 'Reminders and standing', bd: 'Marketing Reports', accountability: 'Accountability', pipeline: 'Pipeline alerts', staffing: 'Staffing', billing: 'Billing', dashboards: 'Dashboards', people: 'People', runs: 'Report runs', patterns: 'Commitment patterns', audit: 'Audit log' };
 const SETTING_LABEL = {
   'dashboard.projectedSpendPct': 'Fee burn: projected spend', 'dashboard.watchProfitPct': 'Project status: Watch below', 'dashboard.endingSoonDays': 'Ending soon within',
   'billing.rolloverDay': 'Clock reset day', 'billing.varianceThreshold': 'Note required above', 'billing.businessHours': 'Business hours',
   'bd.mwipBasis': 'Calculate pursuit amounts using', 'bd.mwipAllocation': 'Fee allocation', 'bd.mwipPeriod': 'Calculation period', 'bd.mwipStart': 'Count from', 'bd.mwipThrough': 'Count through',
   'acct.projectSizes': 'Project sizes for projects to reach goal',
   'pipeline.rules': 'Pipeline alert rules', 'pipeline.emailAdmin': 'Monday pipeline email',
+  'staffing.levels': 'Staffing roles, mix and targets', 'staffing.untracked': 'Staffing: categories not counted', 'staffing.hoursPerMonth': 'Staffing: hours in a month', 'staffing.monthsShown': 'Staffing: months shown', 'staffing.firmMonths': 'Staffing: less certain after', 'staffing.rateOverrides': 'Staffing: billing rates used instead', 'staffing.leaders': 'Neighborhood leaders',
   'run.day': 'Monthly run day', 'run.time': 'Monthly run time', 'run.emailAdmin': 'Email when the draft is ready', 'run.showOnHome': 'Show the draft on Home',
   'run.createCheckinDrafts': 'Create check-in drafts', 'include.status': 'Project status included',
   'include.ytdProfitBelow': 'YTD profit is below', 'include.ignoreBilledUnder': 'Ignore projects billed under', 'include.noPic': 'Projects with no PIC',
@@ -300,6 +309,10 @@ async function renderTab(tab, slot, canEdit, rerender, body) {
       const s = await Admin.settings();
       slot.textContent = '';
       slot.append(...pipelineAdminCards(ctx, s, canEdit, rerender));
+    } else if (tab === 'staffing') {
+      const [s, inputs, people] = await Promise.all([Admin.settings(), Staffing.adminInputs(), Admin.people()]);
+      slot.textContent = '';
+      slot.append(...staffingAdminCards(ctx, s, inputs, people, canEdit, rerender));
     } else if (tab === 'billing') {
       // a System admin may read the settings but is not a Billing user; they get the settings alone
       const isBillingUser = !!Session.me().areas.billing;
@@ -712,6 +725,7 @@ function route() {
   if (hash === '#/billing') return me.areas.billing ? pageBilling() : pageNoAccess();
   if ((m = /^#\/billing\/([^/]+)(?:\/([0-9a-f-]+))?$/.exec(hash))) return me.areas.billing ? pageBillingProject(decodeURIComponent(m[1]), m[2]) : pageNoAccess();
   if (hash === '#/pipeline') return me.areas.pipeline ? pagePipeline() : pageNoAccess();
+  if (hash === '#/staffing') return me.areas.staffing ? pageStaffing() : pageNoAccess();
   if (hash === '#/turnaround') return me.areas.turnaround ? pageTurnaround() : pageNoAccess();
   if (hash === '#/turnaround/checkins') return me.areas.checkins ? pageCheckins() : pageNoAccess();
   const n = flatNav.find(x => x.phase && x.href === hash);

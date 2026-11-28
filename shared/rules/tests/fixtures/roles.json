@@ -10,7 +10,8 @@
         "accountability",
         "pipeline",
         "billing",
-        "admin"
+        "admin",
+        "staffing"
       ]
     },
     {
@@ -18,7 +19,8 @@
       "access": {},
       "see": [
         "turnaround",
-        "billing"
+        "billing",
+        "staffing"
       ]
     },
     {
@@ -31,7 +33,8 @@
         "turnaround",
         "bd",
         "pipeline",
-        "billing"
+        "billing",
+        "staffing"
       ]
     },
     {
@@ -92,7 +95,8 @@
       "see": [
         "turnaround",
         "accountability",
-        "billing"
+        "billing",
+        "staffing"
       ]
     }
   ],
@@ -160,6 +164,21 @@
     {
       "role": "pic",
       "tab": "billing",
+      "expect": null
+    },
+    {
+      "role": "admin",
+      "tab": "staffing",
+      "expect": "edit"
+    },
+    {
+      "role": "sysadmin",
+      "tab": "staffing",
+      "expect": "view"
+    },
+    {
+      "role": "pic",
+      "tab": "staffing",
       "expect": null
     }
   ],
@@ -339,7 +358,8 @@
       },
       "see": [
         "turnaround",
-        "billing"
+        "billing",
+        "staffing"
       ],
       "preview": []
     },
@@ -354,7 +374,8 @@
       },
       "see": [
         "turnaround",
-        "billing"
+        "billing",
+        "staffing"
       ],
       "preview": []
     },
@@ -390,7 +411,8 @@
       },
       "see": [
         "turnaround",
-        "billing"
+        "billing",
+        "staffing"
       ],
       "preview": [
         "billing"
@@ -427,7 +449,8 @@
         }
       },
       "see": [
-        "turnaround"
+        "turnaround",
+        "staffing"
       ],
       "preview": []
     },
@@ -505,7 +528,8 @@
         "accountability",
         "pipeline",
         "billing",
-        "admin"
+        "admin",
+        "staffing"
       ],
       "preview": [
         "billing"
@@ -579,7 +603,8 @@
       },
       "see": [
         "turnaround",
-        "billing"
+        "billing",
+        "staffing"
       ],
       "preview": []
     },
@@ -617,7 +642,8 @@
       "see": [
         "turnaround",
         "bd",
-        "billing"
+        "billing",
+        "staffing"
       ],
       "preview": [
         "bd"
@@ -720,6 +746,153 @@
       },
       "see": [
         "turnaround",
+        "billing",
+        "staffing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "staffing: a neighborhood leader picked in Admin opens it whatever their role",
+      "user": {
+        "id": "u-fin-1",
+        "role": "finance"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        },
+        "staffing.leaders": [
+          "u-fin-1"
+        ]
+      },
+      "see": [
+        "turnaround",
+        "bd",
+        "accountability",
+        "pipeline",
+        "staffing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "staffing: a PM who leads a neighborhood opens it",
+      "user": {
+        "id": "u-pm-1",
+        "role": "pm"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        },
+        "staffing.leaders": [
+          "u-pm-1"
+        ]
+      },
+      "see": [
+        "staffing",
+        "billing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "staffing: a PM who is not picked does not",
+      "user": {
+        "id": "u-pm-2",
+        "role": "pm"
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        },
+        "staffing.leaders": [
+          "u-pm-1"
+        ]
+      },
+      "see": [
+        "billing"
+      ],
+      "preview": []
+    },
+    {
+      "name": "staffing: a deactivated leader does not",
+      "user": {
+        "id": "u-pm-1",
+        "role": "pm",
+        "active": false
+      },
+      "settings": {
+        "access": {},
+        "release": {
+          "turnaround": {
+            "stage": "live",
+            "testers": []
+          },
+          "bd": {
+            "stage": "live",
+            "testers": []
+          },
+          "pipeline": {
+            "stage": "live",
+            "testers": []
+          },
+          "billing": {
+            "stage": "live",
+            "testers": []
+          }
+        },
+        "staffing.leaders": [
+          "u-pm-1"
+        ]
+      },
+      "see": [
         "billing"
       ],
       "preview": []

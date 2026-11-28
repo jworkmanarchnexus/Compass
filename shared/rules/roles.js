@@ -8,7 +8,7 @@ const ROLES = ['admin', 'pic', 'pm', 'processor', 'finance', 'marketing', 'sysad
 const ROLE_LABEL = { admin: 'Admin', pic: 'PIC', pm: 'Project manager (Billing only)', processor: 'Invoice processor (Billing)', finance: 'Finance, view only', marketing: 'Marketing director, view only', sysadmin: 'System admin' };
 
 /* areas of the app that have a page of their own */
-const AREAS = ['turnaround', 'checkins', 'bd', 'accountability', 'pipeline', 'billing', 'admin'];
+const AREAS = ['turnaround', 'checkins', 'bd', 'accountability', 'pipeline', 'staffing', 'billing', 'admin'];
 
 function canView(role, area, access) {
   const a = access || {};
@@ -20,13 +20,15 @@ function canView(role, area, access) {
     case 'accountability': return role === 'admin' || role === 'finance' || (role === 'pic' && !!a.picAccountability);
     case 'pipeline': return role === 'admin' || role === 'finance' || role === 'marketing' || (role === 'pic' && !!a.picPipeline);
     case 'billing': return role === 'admin' || role === 'processor' || role === 'pic' || role === 'pm'; // a PIC or PM sees only their own projects (modules/billing/logic/access.js)
+    // staffing projections: the Admin and Principals (Josh, 2026-11-27). Neighborhood leaders are people, not a role: see canUse.
+    case 'staffing': return role === 'admin' || role === 'pic';
     case 'admin': return role === 'admin' || role === 'sysadmin';
     default: return false;
   }
 }
 
 /* Admin tabs, in display order. 'edit' = may change it, 'view' = may read it, null = hidden. */
-const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'accountability', 'pipeline', 'billing', 'dashboards', 'people', 'runs', 'patterns', 'audit'];
+const ADMIN_TABS = ['turnaround', 'reminders', 'bd', 'accountability', 'pipeline', 'staffing', 'billing', 'dashboards', 'people', 'runs', 'patterns', 'audit'];
 function adminTab(role, tab) {
   if (role === 'admin') return 'edit';
   if (role === 'sysadmin') {
@@ -54,6 +56,8 @@ function released(user, area, release) {
 /* the one check the server makes: may this person open this area today? settings = all settings in force */
 function canUse(user, area, settings) {
   const s = settings || {};
+  // a neighborhood leader picked in Admin > Staffing opens Staffing projections whatever their role (an associate may lead a neighborhood)
+  if (area === 'staffing' && user.active !== false && user.active !== 0 && Array.isArray(s['staffing.leaders']) && s['staffing.leaders'].includes(user.id)) return true;
   return canView(user.role, area, s.access) && released(user, area, s.release);
 }
 
