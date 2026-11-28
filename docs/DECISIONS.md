@@ -377,3 +377,9 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **"Pull from Vantagepoint" button on Admin > Report runs, live mode only, Admin only** (Josh asked). This bends the handoff rule "only a scheduled job reads Vantagepoint": the pull is still run by the server with the same fixed, read-only statements and the same snapshot, the browser never reaches Vantagepoint, and the demo has no such button. One pull at a time; each pull is in the audit log; a failed pull says why and leaves nothing half-saved (the snapshot is written only after every statement has run).
 - **The page shows when the month was last pulled and what it holds**, since the forecast and MWIP are whatever Vantagepoint says at that moment.
 - **Josh is the only reader for now:** he exports the PDF. Hosting for others waits for Kent.
+
+## Small amounts on the Marketing Report bars: a colour key after the bar (2026-11-28, Josh)
+
+- **Chosen from four mock-ups** (above the bar as before, an outlined chip, a colour key, only the row total): a square of the slice's colour and the plain number after the bar. It reads like the legend, never collides with the next row, and a thin slice no longer sits beside a same-coloured chip that looked like a second piece of bar.
+- **One rule in all three places** (main charts, drill-downs, PDF), in `shared/ui/charts.js` and `modules/bd/ui/export-draw.js`; the `smallAtEnd` option is gone. MWIP lost its special "amount after every bar" text; $0K labels are gone.
+- **One dashed line on the PIC chart, the YTD goal** (Josh: two lines were confusing at first); the full annual goal is the end of the Goal bar.
