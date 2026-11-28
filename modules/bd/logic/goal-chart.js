@@ -2,7 +2,8 @@
    Pure. Used by the page and the PDF so both draw the same thing (from Dave's reports):
 
    By PIC, when every PIC has the same goal: ONE "Goal" bar at the top (dark = where each should be by this month, light = the rest of the
-   year's goal) with a dashed line down the whole chart at the pace and at the full goal, so any PIC's bar can be read against them.
+   year's goal) with a dashed line down the whole chart at the YTD goal (pace), so any PIC's bar can be read against it. (Only that line
+   since 2026-11-28; the full goal is the end of the Goal bar.)
    By PIC when the goals differ, and always By market sector: each row is a pair, the actual bar and its own goal bar underneath.
    Rows are biggest total first. Every PIC or sector with a row is shown, even with nothing yet; "Unassigned" only if it has something.
 

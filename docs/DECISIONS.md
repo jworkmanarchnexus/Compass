@@ -370,3 +370,8 @@ Josh asked how to let a few people try a module before everyone gets it.
 - **Why it differs from consultant fee ÷ our fee:** it is actual-to-date, not the contract; it also takes out direct expenses (62xx); it leaves out consultants booked to reimbursable accounts (51xx); and timing of costs and revenue moves it. Moving dollars between our fee and the consultant fee shows up only as costs post.
 - **Known inconsistency, kept on purpose to match the firm's reports:** YTD revenue takes out only consultants (type 8), while this share also takes out direct expenses (type 7).
 - **The pull now carries each project's direct costs and earned revenue to date** (statement `toDate`); a draft built before this has no such figures, so rebuild it after a new pull.
+
+## Small amounts on the Marketing Report bars: a colour key after the bar (2026-11-28, Josh)
+
+- **Chosen from four mock-ups** (above the bar as before, an outlined chip, a colour key, only the row total): a square of the slice's colour and the plain number after the bar. It reads like the legend, never collides with the next row, and a thin slice no longer sits beside a same-coloured chip that looked like a second piece of bar.
+- **One rule in all three places** (main charts, drill-downs, PDF), in `shared/ui/charts.js` and `modules/bd/ui/export-draw.js`; the `smallAtEnd` option is gone. MWIP lost its special "amount after every bar" text; $0K labels are gone.
